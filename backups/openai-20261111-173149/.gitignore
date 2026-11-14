@@ -1,0 +1,11 @@
+API.env
+.env
+API_*.env
+*.env.bak
+API_env.bak
+node_modules/
+photon-profile-data.json.lock
+.photon-server.lock
+.photon-gemini-keys.json
+.photon-openrouter-keys.json
+*.log

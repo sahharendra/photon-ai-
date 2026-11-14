@@ -1,0 +1,20 @@
+{
+  "name": "photon-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PHOTON AI server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test test/unit.test.js test/openrouter-unit.test.js test/gemini-unit.test.js test/openrouter-keys.test.js test/openrouter-integration.test.js test/integration.test.js",
+    "test:live": "node scripts/test-claude-live.js",
+    "test:live:openrouter": "node scripts/test-openrouter-live.js",
+    "test:live:gemini": "node scripts/test-gemini-live.js",
+    "build": "node --check server.js && node --check anthropic-provider.js && node --check openrouter-provider.js && node --check openrouter-keys.js && node --check gemini-keys.js && node --check gemini-provider.js && node --check photon-limits.js && node --check photon-usage.js && node -e \"const fs=require('fs');const h=fs.readFileSync('index.html','utf8');if(!/<\\/html>/i.test(h)||!/function photonStream\\(/.test(h))process.exit(1)\"",
+    "test:live:openrouter-keys": "node scripts/test-openrouter-keys-live.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {}
+}

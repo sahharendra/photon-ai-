@@ -1,0 +1,1587 @@
+﻿<!doctype html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="content-language" content="en"><meta name="google" content="notranslate"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow,noarchive"><title>PHOTON Admin</title><style>
+:root{color-scheme:dark;--bg:#0b0b0b;--card:#141414;--line:#37332d;--cream:#e3dbcc;--text:#f3f0e9;--muted:#a39d91;--green:#8fd5a6;--red:#e89797}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#181714,#0b0b0b 52%);color:var(--text);font:14px/1.5 system-ui,sans-serif}.wrap{width:min(1440px,calc(100% - 40px));margin:32px auto 60px}.top,.head,.item{display:flex;justify-content:space-between;align-items:center;gap:14px}.top{margin-bottom:24px}.brand{font-weight:800;letter-spacing:.12em}.brand small,.muted,th{display:block;color:var(--muted)}.brand small{font-size:11px;font-weight:500;letter-spacing:0}.actions{display:flex;align-items:center;gap:10px}.badge,.pill{border:1px solid var(--line);border-radius:99px;padding:4px 9px;font-size:11px}.pill.ok{color:var(--green);border-color:#31503b}.pill.no{color:var(--red);border-color:#593434}button{border:1px solid var(--line);border-radius:8px;background:#171717;color:var(--text);padding:9px 14px;font:inherit;cursor:pointer}button:hover{border-color:var(--cream)}h1{font:600 clamp(25px,4vw,36px) Georgia,serif;margin:0 0 5px}.sub{color:var(--muted);margin:0 0 22px}.status,.card{background:#121212;border:1px solid var(--line);border-radius:12px;padding:16px}.status{margin-bottom:16px;color:var(--muted)}.status.error{border-color:#754141;color:#ffdede}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:16px}.kpi small,.head small{color:var(--muted)}.kpi b{display:block;font-size:27px;margin-top:5px}.columns{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,.8fr);gap:16px;margin-bottom:16px}.head{margin-bottom:12px}.head h2{font-size:17px;margin:0}.scroll{overflow:auto}table{width:100%;border-collapse:collapse;min-width:620px}th,td{text-align:left;padding:10px 8px;border-bottom:1px solid #292826;white-space:nowrap}#users-section table{min-width:1240px}.pill.online{color:var(--green);border-color:#31503b;background:#102018}.pill.offline{color:#bbb;border-color:#474747;background:#171717}th{font-size:10px;text-transform:uppercase;letter-spacing:.06em}td small{display:block;color:var(--muted)}.list{display:grid;gap:8px}.item{padding:9px 0;border-bottom:1px solid #292826}.item:last-child{border-bottom:0}.item b{display:block;font-size:13px}.item small{display:block;color:var(--muted)}.empty{color:var(--muted);padding:16px 4px}.notice{color:var(--muted);font-size:12px;margin-top:20px}@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}.columns{grid-template-columns:1fr}}@media(max-width:520px){.wrap{width:calc(100% - 24px);margin:16px auto}.top{align-items:flex-start}.actions{align-items:flex-end;flex-direction:column}.grid{gap:9px}.card{padding:12px}}
+
+.app{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:100vh}.sidebar{position:sticky;top:0;height:100vh;padding:22px 14px;background:#0b1020;border-right:1px solid #202a40}.sidebar .brand{font-size:17px;letter-spacing:.04em;color:#f5f6fb}.sidebar .brand span{color:#f34d84}.sidebar nav{display:grid;gap:5px;margin-top:30px}.sidebar nav a{color:#c4ccdc;text-decoration:none;border-radius:7px;padding:10px 11px;font-size:13px}.sidebar nav a:hover,.sidebar nav a.active{background:#17213a;color:#fff}.sidebar .nav-label{font-size:10px;color:#72809a;letter-spacing:.12em;padding:18px 10px 6px}.wrap{width:100%;max-width:none;margin:0;padding:28px 32px 55px}.card{background:#0d1426;border-color:#22304a;border-radius:11px}.status{background:#10192c;border-color:#273550}.grid{gap:12px}.kpi{min-height:108px}.kpi b{font-size:29px}.columns{grid-template-columns:minmax(0,1.7fr) minmax(280px,.8fr)}.notice{border-top:1px solid #202a40;padding-top:17px}.settings-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.field{display:grid;gap:6px}.field label{color:#abb6ca;font-size:12px}.field input{height:40px;border:1px solid #2b3953;border-radius:7px;background:#090e1c;color:#fff;padding:0 11px;font:inherit}.field input:focus{outline:2px solid #405b91}.plan-edit{border:1px solid #26334b;border-radius:9px;padding:14px}.plan-edit h3{font-size:14px;margin:0 0 10px}.plan-edit .field+.field{margin-top:10px}.save-row{display:flex;justify-content:flex-end;align-items:center;gap:12px;margin-top:16px}.save-row button{background:#e3dbcc;color:#151515;font-weight:700;border:0}.save-row button:disabled{opacity:.6;cursor:wait}.section{scroll-margin-top:18px;margin-bottom:16px}.page-view{display:none}.page-view.active{display:block}.page-view.active.grid{display:grid}.authpill{display:inline-block;border:1px solid #33425c;border-radius:20px;padding:3px 8px;font-size:11px}.table-hint{color:var(--muted);font-size:11px;margin-top:10px}
+@media(max-width:1000px){.app{grid-template-columns:190px minmax(0,1fr)}.wrap{padding:22px 18px}.settings-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.app{display:block}.sidebar{position:static;width:100%;height:auto;padding:13px 14px;border-right:0;border-bottom:1px solid #202a40}.sidebar nav{display:flex;overflow:auto;gap:4px;margin-top:9px}.sidebar nav a{white-space:nowrap;font-size:12px;padding:8px}.sidebar .nav-label{display:none}.wrap{padding:18px 12px 40px}.columns{grid-template-columns:1fr}.settings-grid{grid-template-columns:1fr}.top{align-items:flex-start}.actions{flex-wrap:wrap;justify-content:flex-end}}
+[hidden]{display:none!important}.login-screen{min-height:100vh;display:grid;place-items:center;padding:24px}.login-card{width:min(420px,100%);padding:30px;background:#10192c;border:1px solid #273550;border-radius:14px;box-shadow:0 22px 80px #0008}.login-card h1{margin:24px 0 4px}.login-card p{margin:0 0 22px}.login-card label{display:block;color:#abb6ca;font-size:12px;margin:14px 0 6px}.login-card input{width:100%;height:42px;border:1px solid #2b3953;border-radius:7px;background:#090e1c;color:#fff;padding:0 11px;font:inherit}.login-card input:focus{outline:2px solid #405b91}.login-card button{width:100%;margin-top:18px;background:#e3dbcc;color:#151515;font-weight:700;border:0}.login-card button:disabled{opacity:.65;cursor:wait}.login-error{margin-top:14px;padding:10px;border:1px solid #754141;border-radius:7px;color:#ffdede;background:#261414}.login-screen{min-height:100vh;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);padding:10px;background:#0c0c0c}.login-intro{position:relative;min-height:calc(100vh - 20px);border-radius:4px;background:radial-gradient(ellipse 95% 75% at 25% 18%,#23211e 0%,#1a1917 38%,#131210 68%,#0a0a0a 100%);display:flex;align-items:flex-end;justify-content:center;padding:48px 32px}.login-brand{position:absolute;top:28px;left:32px;display:flex;align-items:center;gap:9px;color:#fffaf0;font-weight:700;letter-spacing:.08em;font-size:14px}.login-brand small{font-size:10px;color:#e3dbcc;border:1px solid #645d50;border-radius:20px;padding:2px 7px}.orbit{font-size:22px;line-height:1}.login-intro-content{width:100%;max-width:370px;margin-bottom:4vh}.login-intro-content h2{font-size:27px;margin:0 0 8px;color:#fffaf0}.login-intro-content p{margin:0 0 22px;color:#e3dbcc;font-size:13px}.login-highlights{display:grid;gap:8px}.login-highlights div{display:flex;align-items:center;gap:12px;background:rgba(24,24,24,.8);border-radius:3px;padding:12px;color:#f3f0e9;font-size:12px}.login-highlights i{font-style:normal;width:20px;height:20px;border-radius:50%;background:#e3dbcc;color:#111;display:grid;place-items:center;font-size:9px;flex-shrink:0}.login-panel{display:flex;align-items:center;justify-content:center;padding:36px;background:#101010}.login-card{width:100%;max-width:370px;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none}.login-card h1{font:600 22px system-ui,sans-serif;text-align:center;margin:0 0 5px;color:#fffaf0}.login-card>p{text-align:center;margin:0 0 22px;color:#a39d91}.login-card label{display:block;color:#f3f0e9;font-size:12px;margin:13px 0 6px}.login-card input{width:100%;height:42px;border:1px solid rgba(227,219,204,.2);border-radius:3px;background:#141414;color:#fffaf0;padding:0 11px;font:inherit}.login-card input:focus{outline:none;border-color:#e3dbcc;box-shadow:0 0 0 2px rgba(227,219,204,.17)}.login-card button{width:100%;margin-top:20px;padding:12px 14px;background:linear-gradient(135deg,#e3dbcc,#c8bea9);color:#101010;font-weight:700;border:0;border-radius:3px}.login-card button:disabled{opacity:.65;cursor:wait}.login-note{display:block;text-align:center;color:#8e897e;font-size:11px;margin-top:18px}.credentials-note{margin-top:12px;text-align:center;color:#a39d91;font-size:12px;line-height:1.8}.credentials-note b{color:#e3dbcc;font-weight:600}.login-error{margin-top:14px;padding:10px;border:1px solid #754141;border-radius:4px;color:#ffdede;background:#261414}@media(max-width:820px){.login-screen{grid-template-columns:minmax(0,1fr)}.login-intro{display:none}.login-panel{min-height:calc(100vh - 20px);padding:28px 20px}}
+.user-table{display:table;width:100%;min-width:1240px;border-collapse:separate;border-spacing:0;background:#0d1426}.user-table thead{display:table-header-group}.user-table thead tr{display:table-row}.user-table thead th{display:table-cell;background:#101a2e;color:#91a0b7;padding:15px 12px;border-bottom:1px solid #26334a;font-size:10px;letter-spacing:.07em}.user-table tbody{display:table-row-group}.user-table tbody tr{display:table-row;background:#111b30;transition:background .15s}.user-table tbody tr:nth-child(even){background:#141f35}.user-table tbody tr:hover{background:#19263d}.user-table tbody td{display:table-cell;height:82px;padding:13px 12px;border-bottom:1px solid #202c42;vertical-align:middle;color:#d7deeb}.user-table tbody tr:last-child td{border-bottom:0}.user-table .customer-cell{min-width:180px;white-space:normal}.customer-identity{display:flex;align-items:center;gap:12px}.customer-avatar{flex:0 0 42px;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#261b31;border:1px solid #6b3154;color:#ff6c9d;font-weight:700;font-size:15px}.customer-identity b{display:block;color:#f5f7fc;font-size:13px;line-height:1.3}.customer-identity small,.cell-note{display:block;margin-top:4px;color:#f35b8c;font-size:10px}.user-table td:nth-child(2){color:#bac5d8}.signin-pill{display:inline-flex;align-items:center;border:1px solid #31415b;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:650}.signin-pill.google{color:#9ed9bc;border-color:#285442;background:#10261f}.signin-pill.email{color:#c5d1ed;border-color:#384564;background:#17223a}.signin-pill.unknown{color:#a4aabb}.user-table .cell-note{color:#74839d;font-weight:450}.metric-badge{display:inline-grid;min-width:30px;height:28px;place-items:center;border-radius:8px;border:1px solid #2c3c56;background:#1a2840;color:#f2f5fb;font-weight:700}.tokens-cell b{display:block;color:#00d7a0;font-size:14px}.tokens-cell small{color:#74839d;font-size:10px}.user-table .plan-name{display:block;color:#e1e8f5;font-size:12px}.account-status{display:inline-flex;border-radius:999px;padding:5px 10px;border:1px solid #2b3c54;font-size:10px;font-weight:650}.account-status.online{color:#00d7a0;border-color:#075b49;background:#09251f}.account-status.offline{color:#a4afc1;background:#151f30}.user-table td:nth-child(7) b{display:block;color:#dce3ef;font-size:11px}.user-table td:nth-child(7) small{display:block;color:#77859b;font-size:10px;margin-top:3px}
+.subscriptions-table{display:table;width:100%;min-width:760px;border-collapse:separate;border-spacing:0;background:#0d1426}.subscriptions-table thead{display:table-header-group}.subscriptions-table thead tr{display:table-row}.subscriptions-table thead th{display:table-cell;background:#101a2e;color:#91a0b7;padding:15px 14px;border-bottom:1px solid #26334a;text-align:left;white-space:nowrap;font-size:10px;letter-spacing:.07em;text-transform:uppercase}.subscriptions-table tbody{display:table-row-group}.subscriptions-table tbody tr{display:table-row;background:#111b30}.subscriptions-table tbody tr:nth-child(even){background:#141f35}.subscriptions-table tbody tr:hover{background:#19263d}.subscriptions-table tbody td{display:table-cell;padding:16px 14px;border-bottom:1px solid #202c42;vertical-align:middle;color:#d7deeb}.subscriptions-table tbody tr:last-child td{border-bottom:0}.subscriptions-table tbody td:first-child{font-weight:650;color:#f5f7fc;min-width:220px}.subscriptions-table tbody td:first-child small{display:block;margin-top:4px;color:#8795ad;font-size:11px;font-weight:450}.subscriptions-table .empty{text-align:center;color:#91a0b7;padding:28px}.subscriptions-table .demo-subscription{color:#e3dbcc;font-weight:650}.subscriptions-table .demo-subscription::before{content:"DEMO · ";color:#d3a85b;font-size:10px}
+.users-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:16px}
+.users-kpi{background:#111b30;border:1px solid #22304a;border-radius:10px;padding:12px 14px}
+.users-kpi small{display:block;color:#91a0b7;font-size:11px;margin-bottom:4px}
+.users-kpi b{display:block;font-size:22px;color:#f5f7fc}
+.users-kpi span{display:block;color:#74839d;font-size:10px;margin-top:2px}
+.users-filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px;padding:12px;background:#10192c;border:1px solid #22304a;border-radius:10px}
+.users-filters .field label{font-size:11px}
+.users-filters .field input,.users-filters .field select{height:36px;border:1px solid #2b3953;border-radius:7px;background:#090e1c;color:#fff;padding:0 10px;font:inherit;font-size:12px}
+.users-export-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.users-export-bar select{height:36px;border:1px solid #2b3953;border-radius:7px;background:#090e1c;color:#fff;padding:0 10px;font:inherit;font-size:12px}
+.users-pagination{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid #202c42;font-size:12px;color:#91a0b7}
+.users-pagination .page-controls{display:flex;align-items:center;gap:8px}
+.users-pagination select{height:32px;border:1px solid #2b3953;border-radius:7px;background:#090e1c;color:#fff;padding:0 8px;font-size:12px}
+.customer-avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block}
+.link-btn{background:transparent;border:1px solid #2c3c56;border-radius:8px;color:#e3dbcc;padding:5px 10px;font-size:12px;font-weight:650;cursor:pointer}
+.link-btn:hover{border-color:#e3dbcc;background:#1a2840}
+.uid-btn{background:transparent;border:0;color:#9bb3db;padding:0;font:600 12px monospace;cursor:pointer;text-decoration:underline}
+.uid-btn:hover{color:#fff}
+.users-row-clickable{cursor:pointer}
+.plan-demo-tag{display:inline-block;margin-top:3px;font-size:10px;color:#d3a85b;border:1px solid rgba(211,168,91,.35);border-radius:99px;padding:1px 6px}
+.admin-modal-bg{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.75);display:grid;place-items:center;padding:18px}
+.admin-modal{width:min(960px,100%);max-height:90vh;display:flex;flex-direction:column;background:#0d1426;border:1px solid #2e4063;border-radius:14px;padding:20px;box-shadow:0 24px 90px #000}
+.admin-modal-body{overflow:auto;margin-top:12px}
+.admin-tabs{display:flex;gap:8px;border-bottom:1px solid #202c42;padding-bottom:10px;flex-wrap:wrap}
+.admin-tabs button{background:#111b30;border:1px solid #26334a;color:#c4ccdc;font-size:12px;padding:7px 13px;border-radius:8px}
+.admin-tabs button.active{background:#e3dbcc;color:#111;border-color:#e3dbcc;font-weight:700}
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:14px}
+.detail-box{background:#111b30;border:1px solid #22304a;border-radius:9px;padding:11px 13px}
+.detail-box small{display:block;color:#91a0b7;font-size:11px;margin-bottom:3px}
+.detail-box b{display:block;color:#f5f7fc;font-size:13px;word-break:break-word}
+.gw-card{background:#0e172c;border:1px solid #263656;border-radius:12px;padding:16px;margin-bottom:18px}
+.gw-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.gw-meta{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:#b4c0d4;margin-bottom:12px}
+.subhead-row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:22px 0 12px}
+.inline-add-box{background:#0e172c;border:1px dashed #354a73;border-radius:10px;padding:14px;margin-bottom:16px}
+@media(max-width:700px){.users-export-bar{width:100%}.users-pagination{flex-direction:column;align-items:flex-start}}</style></head><body><section id="login-screen" class="login-screen" hidden><aside class="login-intro"><div class="login-brand"><span class="orbit">◉</span><span>PHOTON</span><small>ADMIN</small></div><div class="login-intro-content"><h2>Welcome Back</h2><p>Manage your AI workspace with confidence.</p><div class="login-highlights"><div><i>01</i><span>Review accounts and sign-in activity</span></div><div><i>02</i><span>Manage subscriptions and plan pricing</span></div><div><i>03</i><span>Control daily and activity token limits</span></div></div></div></aside><div class="login-panel"><form id="login-form" class="login-card"><h1>Admin Sign In</h1><p class="muted">Enter your admin credentials to continue.</p><label for="admin-email">Email address</label><input id="admin-email" type="email" autocomplete="username" value="admin@just4madam.com" required><label for="admin-password">Password</label><input id="admin-password" type="password" autocomplete="current-password" required><div id="login-error" class="login-error" role="alert" hidden></div><button id="login-button" type="submit">Sign In</button><small class="login-note">Secure access to PHOTON AI administration.</small><div class="credentials-note"><b>Admin email:</b> admin@just4madam.com<br><b>Password:</b> use the password you set when starting the server.</div></form></div></section><div class="app"><aside class="sidebar"><div class="brand">PHOTON <span>ADMIN</span><small>Control center</small></div><nav aria-label="Admin sections"><div class="nav-label">MANAGEMENT</div><a class="active" href="#overview">Dashboard</a><a href="#users-section">Users &amp; Sign-ins</a><a href="#subscriptions">Subscriptions</a><a href="#settings">Pricing &amp; Tokens</a><div class="nav-label">SYSTEM</div><a href="#providers">AI Provider Settings</a></nav></aside><main class="wrap"><header class="top"><div><h1 id="page-title">Dashboard</h1><small class="muted" id="page-description">Live overview of Photon accounts and usage.</small></div><div class="actions"><button id="logout" type="button">Sign out</button></div></header><section id="overview" class="section page-view active" aria-label="Admin metrics">
+  <!-- A. 6 Summary Cards -->
+  <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px;">
+    <article class="card kpi"><small>Total Registered Users</small><b id="dash-total-users">—</b><span class="muted" style="font-size:11px">All registered accounts</span></article>
+    <article class="card kpi"><small>Users Logged In Today</small><b id="dash-login-today">—</b><span class="muted" style="font-size:11px">Unique users today</span></article>
+    <article class="card kpi"><small>Currently Online Users</small><b id="dash-online-users">—</b><span class="muted" style="font-size:11px">Active 5m heartbeat</span></article>
+    <article class="card kpi"><small>Active Paid Subscribers</small><b id="dash-paid-users">—</b><span class="muted" style="font-size:11px">Paid active subscriptions</span></article>
+    <article class="card kpi"><small>Free Plan Users</small><b id="dash-free-users">—</b><span class="muted" style="font-size:11px">Free & demo accounts</span></article>
+    <article class="card kpi"><small>Plan Tokens Used Today</small><b id="dash-tokens-today">—</b><span class="muted" style="font-size:11px"><span id="dash-tokens-sub">Customer tokens deducted</span></span></article>
+  </div>
+
+  <!-- B. Daily Token Usage Banner with Progress Bar -->
+  <article class="card" style="padding: 20px 24px; margin-bottom: 20px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
+      <div>
+        <h3 style="margin:0 0 4px; font-size:16px;">Daily Token Usage</h3>
+        <small class="muted">Total customer tokens consumed today vs total active plan allowances across all eligible users</small>
+      </div>
+      <div style="text-align:right;">
+        <span id="dash-token-headline" style="font-size:18px; font-weight:700; color:#fff;">0 / 0 Tokens Used Today</span>
+      </div>
+    </div>
+    <div style="background:rgba(255,255,255,0.08); border-radius:8px; height:12px; overflow:hidden; position:relative; margin-bottom:12px;">
+      <div id="dash-token-bar" style="background:linear-gradient(90deg, #4ade80, #38bdf8); height:100%; width:0%; transition:width 0.4s ease;"></div>
+    </div>
+    <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:16px; font-size:13px;" class="muted">
+      <span>Total daily allowance: <strong id="dash-token-allowance" style="color:#fff;">0</strong></span>
+      <span>Plan tokens consumed: <strong id="dash-token-consumed" style="color:#fff;">0</strong></span>
+      <span>Remaining tokens: <strong id="dash-token-remaining" style="color:#fff;">0</strong></span>
+      <span>Usage percentage: <strong id="dash-token-pct" style="color:#4ade80;">0%</strong> utilized</span>
+      <span>API key tokens today: <strong id="dash-api-tokens" style="color:#38bdf8;">0</strong> <small id="dash-api-breakdown" class="muted">(0 in / 0 out)</small></span>
+    </div>
+  </article>
+
+  <!-- C. Dashboard Analytics with Date Filtering -->
+  <article class="card" style="padding: 20px 24px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; margin-bottom:18px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:14px;">
+      <div>
+        <h3 style="margin:0 0 4px; font-size:16px;">Dashboard Analytics</h3>
+        <small class="muted">Business trends and activity analytics over selectable time windows</small>
+      </div>
+      <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px;">
+        <select id="dash-date-range" style="padding:6px 12px; background:#111; color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:6px; font-size:13px;">
+          <option value="today">Today</option>
+          <option value="7d">Last 7 days</option>
+          <option value="30d" selected>Last 30 days</option>
+          <option value="this_month">This month</option>
+          <option value="custom">Custom date range</option>
+        </select>
+        <span id="dash-custom-dates" style="display:none; gap:6px; align-items:center;">
+          <input id="dash-date-from" type="date" style="padding:5px 8px; background:#111; color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:6px; font-size:12px;">
+          <span class="muted">to</span>
+          <input id="dash-date-to" type="date" style="padding:5px 8px; background:#111; color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:6px; font-size:12px;">
+        </span>
+        <button id="dash-filter-btn" type="button" style="padding:6px 14px; background:rgba(255,255,255,0.12); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:6px; cursor:pointer; font-size:13px;">Apply</button>
+      </div>
+    </div>
+
+    <!-- Range Summary Cards -->
+    <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px;">
+      <div style="background:#111; border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:12px 14px;">
+        <small class="muted" style="display:block; font-size:11px;">Registrations in Range</small>
+        <b id="dash-range-reg" style="font-size:18px; color:#fff;">—</b>
+      </div>
+      <div style="background:#111; border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:12px 14px;">
+        <small class="muted" style="display:block; font-size:11px;">Sign-ins in Range</small>
+        <b id="dash-range-signins" style="font-size:18px; color:#fff;">—</b>
+      </div>
+      <div style="background:#111; border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:12px 14px;">
+        <small class="muted" style="display:block; font-size:11px;">Tokens Consumed</small>
+        <b id="dash-range-tokens" style="font-size:18px; color:#fff;">—</b>
+      </div>
+      <div style="background:#111; border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:12px 14px;">
+        <small class="muted" style="display:block; font-size:11px;">Net Revenue in Range</small>
+        <b id="dash-range-rev" style="font-size:18px; color:#4ade80;">—</b>
+      </div>
+      <div style="background:#111; border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:12px 14px;">
+        <small class="muted" style="display:block; font-size:11px;">Paid Purchases in Range</small>
+        <b id="dash-range-purchases" style="font-size:18px; color:#fff;">—</b>
+      </div>
+    </div>
+  </article>
+</section><section id="users-section" class="card section page-view"><div class="head"><div><h2>Users &amp; Sign-ins</h2><small>Online session tracking, auth providers, verified subscriptions, and AI token consumption.</small></div><div class="users-export-bar"><select id="users-export-scope" aria-label="Export scope"><option value="all">Export: All users</option><option value="filtered">Export: Filtered users</option><option value="logins">Export: Sign-in history</option><option value="usage">Export: Token usage</option><option value="subscriptions">Export: Subscriptions</option></select><select id="users-export-format" aria-label="Export format"><option value="csv">CSV (.csv)</option><option value="excel">Excel (.xls)</option></select><button id="users-export-btn" type="button">Download</button><button id="refresh-users" type="button">Refresh</button></div></div><div class="users-token-aggregate-banner" style="background:#151515;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:12px 18px;margin-bottom:14px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:13.5px;">
+  <span>Total Daily Allowance: <strong id="users-agg-allowance" style="color:#fff">—</strong></span>
+  <span>Total Tokens Used Today: <strong id="users-agg-used" style="color:#fff">—</strong></span>
+  <span>Remaining: <strong id="users-agg-remaining" style="color:#fff">—</strong></span>
+  <span>Utilization: <strong id="users-agg-pct" style="color:#4ade80">—</strong></span>
+</div>
+<div class="users-kpis" aria-label="Users summary KPIs"><article class="users-kpi"><small>Total Registered Users</small><b id="kpi-reg">—</b><span>All database profiles</span></article><article class="users-kpi"><small>Logged In Today</small><b id="kpi-logged-today">—</b><span>Unique users today</span></article><article class="users-kpi"><small>Currently Online</small><b id="kpi-online">—</b><span id="kpi-online-note">Active 5m heartbeat</span></article><article class="users-kpi"><small>Total Sign-ins</small><b id="kpi-signins">—</b><span>Verified successful logins</span></article><article class="users-kpi"><small>Total Tokens Used</small><b id="kpi-tokens">—</b><span>Lifetime Input + Output</span></article><article class="users-kpi"><small>Active Paid Subscribers</small><b id="kpi-paid">—</b><span>Verified payment active</span></article><article class="users-kpi"><small>Free Plan Users</small><b id="kpi-free">—</b><span>Free &amp; unverified plans</span></article></div><div class="users-filters"><div class="field"><label for="users-search">Search user</label><input id="users-search" type="search" placeholder="Name, email, or USR ID..."></div><div class="field"><label for="users-plan-filter">Plan</label><select id="users-plan-filter"><option value="all">All plans</option><option value="basic">Free (Basic)</option><option value="pro">Pro</option><option value="premium">Premium</option></select></div><div class="field"><label for="users-status-filter">Account status</label><select id="users-status-filter"><option value="all">All statuses</option><option value="online">Online</option><option value="offline">Offline</option></select></div><div class="field"><label for="users-provider-filter">Sign-in method</label><select id="users-provider-filter"><option value="all">All methods</option><option value="google">Google</option><option value="gmail">Gmail / Password</option><option value="other">Other OAuth</option></select></div><div class="field"><label for="users-sub-filter">Subscription</label><select id="users-sub-filter"><option value="all">All subscriptions</option><option value="active">Active Paid</option><option value="inactive">Free / Inactive</option><option value="demo">Demo Selection</option></select></div><div class="field"><label for="users-reg-from">Registered from</label><input id="users-reg-from" type="date"></div><div class="field"><label for="users-last-from">Last sign-in from</label><input id="users-last-from" type="date"></div><div class="field"><label for="users-sort">Sort by</label><select id="users-sort"><option value="last_sign_in">Last sign-in (newest)</option><option value="newest">Newest registration</option><option value="sign_ins">Most sign-ins</option><option value="tokens">Highest token usage</option></select></div><div class="field" style="align-self:end"><button id="users-reset-filters" type="button" style="width:100%;height:36px">Reset filters</button></div></div><div id="users-state" class="status" hidden></div><div class="scroll"><table class="user-table"><thead><tr><th>User ID</th><th>User Name</th><th>Email</th><th>Plan</th><th>Total Sign-ins</th><th>Tokens Used Today</th><th>Daily Token Allowance</th><th>Created Date</th><th>Account Status</th><th>Last Sign-in</th><th>Sign-in Method</th></tr></thead><tbody id="users"></tbody></table></div><div class="users-pagination" id="users-pagination"><span id="users-page-info">Showing 0 users</span><div class="page-controls"><label for="users-page-size">Per page</label><select id="users-page-size"><option value="10">10</option><option value="20" selected>20</option><option value="50">50</option></select><button id="users-prev-page" type="button">← Prev</button><span id="users-page-num">Page 1 of 1</span><button id="users-next-page" type="button">Next →</button></div></div><p class="table-hint">Click any User ID, row, Total Sign-ins, or Tokens Used cell to inspect complete login history, daily/monthly/lifetime provider token usage, and subscription verification.</p></section><div id="user-detail-modal" class="admin-modal-bg" hidden><section class="admin-modal" role="dialog" aria-modal="true" aria-labelledby="ud-title"><div class="head" style="margin-bottom:8px"><div><h2 id="ud-title">User Details</h2><small id="ud-subtitle"></small></div><button id="ud-close" type="button">✕ Close</button></div><div class="admin-tabs" id="ud-tabs"><button type="button" class="active" data-ud-tab="overview">Profile &amp; Auth</button><button type="button" data-ud-tab="logins">Login History</button><button type="button" data-ud-tab="usage">Token Usage</button><button type="button" data-ud-tab="subscriptions">Subscriptions</button></div><div class="admin-modal-body" id="ud-body"></div></section></div><section id="providers" class="card section page-view"><div class="head"><div><h2>Model Providers</h2><small>Configuration status only; API keys are never shown.</small></div></div><div id="models" class="list"></div><div class="head" style="margin-top:28px"><div><h2>Gemini API Keys</h2><small>Keys are read only from the server secret file. Only a masked fingerprint is shown after saving.</small></div><button id="gemini-test-all" type="button">Test all keys</button></div><div class="scroll"><table class="user-table"><thead><tr><th>Provider</th><th>Key label</th><th>API key</th><th>Status</th><th>Last validation</th><th>Actions</th></tr></thead><tbody id="gemini-keys"></tbody></table></div><form id="gemini-add-form" style="margin-top:18px"><div class="settings-grid"><div class="field"><label for="gemini-label">Key label</label><input id="gemini-label" type="text" maxlength="40" placeholder="Primary"></div><div class="field"><label for="gemini-key">Gemini API key</label><input id="gemini-key" type="password" autocomplete="new-password" required placeholder="AIza..."></div></div><div class="save-row"><small class="muted">Several keys can share one Google Cloud project quota. PHOTON never rotates keys to bypass quota limits.</small><button id="gemini-add" type="submit">Add key</button></div></form>
+<div class="head" style="margin-top:28px"><div><h2>Gemini Models</h2><small>Live models loaded via Google Gemini API. Click Test Model to verify response.</small></div></div>
+<div class="scroll"><table class="subscriptions-table"><thead><tr><th>Model</th><th>Provider</th><th>Status</th><th>Actions</th></tr></thead><tbody id="gemini-models"></tbody></table></div>
+<div class="head" style="margin-top:34px"><div><h2>OpenRouter API Keys</h2><small>Up to 10 keys: OPENROUTER_API_KEY, OPENROUTER_API_KEY_2 ... _10. Read only from the server secret file; only a masked fingerprint is shown after saving.</small></div><button id="openrouter-test-all" type="button">Test all keys</button></div><div id="openrouter-diag" class="list"></div><div class="scroll" style="margin-top:14px"><table class="user-table"><thead><tr><th>#</th><th>Key name</th><th>API key</th><th>Provider status</th><th>Validation</th><th>Last successful validation</th><th>Last error</th><th>Actions</th></tr></thead><tbody id="openrouter-keys"></tbody></table></div><form id="openrouter-add-form" style="margin-top:18px"><div class="settings-grid"><div class="field"><label for="openrouter-label">Key name</label><input id="openrouter-label" type="text" maxlength="40" placeholder="Key name"></div><div class="field"><label for="openrouter-key">OpenRouter API key</label><input id="openrouter-key" type="password" autocomplete="new-password" required placeholder="sk-or-..."></div></div><div class="save-row"><small class="muted" id="openrouter-slots">Keys from one OpenRouter account share one credit balance and rate limit. PHOTON never switches keys to get around a rate limit or billing error.</small><button id="openrouter-add" type="submit">Add key</button></div></form><div class="head" style="margin-top:28px"><div><h2>OpenRouter free models</h2><small>Read from the live OpenRouter catalog; only models whose pricing metadata is zero are listed.</small></div></div><div class="scroll"><table class="subscriptions-table"><thead><tr><th>Model</th><th>Provider</th><th>Pricing (per 1M tokens)</th><th>Availability</th><th>Actions</th></tr></thead><tbody id="openrouter-models"></tbody></table></div><div class="head" style="margin-top:34px"><div><h2>OpenAI GPT</h2><small>OPENAI_API_KEY is read only from the backend environment and is never shown. Models stay disabled until an administrator verifies them with a real test completion. Every cost is an estimate, not an invoice.</small></div><div class="actions"><button id="openai-test-connection" type="button">Test connection</button><button id="openai-refresh" type="button">Refresh models</button></div></div><div id="openai-diag" class="list"></div>
+<form id="openai-key-form" class="inline-add-box" style="margin-top:14px">
+  <div class="settings-grid">
+    <div class="field">
+      <label for="openai-key-input">API Key</label>
+      <div style="display:flex;gap:6px">
+        <input id="openai-key-input" type="password" autocomplete="new-password" placeholder="Enter OpenAI API key (sk-...)">
+        <button type="button" id="openai-key-eye" style="padding:0 12px;background:#17213a;border:1px solid #2e4063;border-radius:7px;color:#c4ccdc;cursor:pointer" title="Show/Hide key">👁</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Configured Status</label>
+      <div style="display:flex;align-items:center;gap:8px;height:40px;padding:0 4px">
+        <span id="openai-key-badge" class="pill">Checking...</span>
+        <code id="openai-masked-key" style="color:#b4c0d4">••••</code>
+      </div>
+    </div>
+  </div>
+  <div class="save-row" style="margin-top:10px">
+    <button id="openai-remove-key" type="button" style="border-color:#593434;color:#ffdede;display:none">Remove Key</button>
+    <button id="openai-save-key" type="submit">Save API Key</button>
+  </div>
+</form>
+<div class="settings-grid" style="margin-top:18px"><div class="field"><label>Request &amp; token usage</label><div id="openai-usage" class="muted">Not loaded.</div></div><div class="field"><label>Estimated spend this month</label><div id="openai-spend" class="muted">Not loaded.</div></div></div><form id="openai-settings-form" style="margin-top:14px"><div class="settings-grid"><div class="field"><label for="openai-enabled">Provider state</label><select id="openai-enabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div><div class="field"><label for="openai-paid-fallback">Paid fallback</label><select id="openai-paid-fallback"><option value="false">Off: free and local models only</option><option value="true">Allow OpenAI within the spend cap</option></select></div><div class="field"><label for="openai-spend-limit">Monthly spend cap (USD)</label><input id="openai-spend-limit" type="number" min="0" step="0.01" value="0"></div></div><div class="save-row"><small class="muted">Users are never switched to a paid provider silently. A spend cap of 0 blocks all paid fallback.</small><button id="openai-save-settings" type="submit">Save OpenAI settings</button></div></form><div class="head" style="margin-top:28px"><div><h2>OpenAI models</h2><small>Discovered from GET /v1/models. Visibility does not prove access or pricing, so verify a model before enabling it.</small></div></div><div class="scroll"><table class="subscriptions-table"><thead><tr><th>Model</th><th>Status</th><th>Minimum plan</th><th>Price per 1M tokens (USD)</th><th>Actions</th></tr></thead><tbody id="openai-models"></tbody></table></div><div class="head" style="margin-top:28px"><div><h2>Recent OpenAI errors</h2><small>Key-free error codes only.</small></div></div><div id="openai-errors" class="list"></div><div class="head" style="margin-top:34px"><div><h2>CodeCraft API</h2><small>CODECRAFT_API_KEY is read only from the backend environment and is never shown. Zero-billing policy blocks requests by default; set spending policy to allow_free_only in settings below.</small></div><div class="actions"><button id="codecraft-test-connection" type="button">Test connection</button><button id="codecraft-refresh" type="button">Refresh models</button></div></div><div id="codecraft-diag" class="list"></div>
+<form id="codecraft-key-form" class="inline-add-box" style="margin-top:14px">
+  <div class="settings-grid">
+    <div class="field">
+      <label for="codecraft-key-input">API Key</label>
+      <div style="display:flex;gap:6px">
+        <input id="codecraft-key-input" type="password" autocomplete="new-password" placeholder="Enter CodeCraft API key">
+        <button type="button" id="codecraft-key-eye" style="padding:0 12px;background:#17213a;border:1px solid #2e4063;border-radius:7px;color:#c4ccdc;cursor:pointer" title="Show/Hide key">👁</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Configured Status</label>
+      <div style="display:flex;align-items:center;gap:8px;height:40px;padding:0 4px">
+        <span id="codecraft-key-badge" class="pill">Checking...</span>
+        <code id="codecraft-masked-key" style="color:#b4c0d4">••••</code>
+      </div>
+    </div>
+  </div>
+  <div class="save-row" style="margin-top:10px">
+    <button id="codecraft-remove-key" type="button" style="border-color:#593434;color:#ffdede;display:none">Remove Key</button>
+    <button id="codecraft-save-key" type="submit">Save API Key</button>
+  </div>
+</form>
+<div class="settings-grid" style="margin-top:18px"><div class="field"><label>Request &amp; token usage</label><div id="codecraft-usage" class="muted">Not loaded.</div></div></div><form id="codecraft-settings-form" style="margin-top:14px"><div class="settings-grid"><div class="field"><label for="codecraft-enabled">Provider state</label><select id="codecraft-enabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div><div class="field"><label for="codecraft-spending-policy">Spending policy</label><select id="codecraft-spending-policy"><option value="block">Block all requests (zero-billing safe)</option><option value="allow_free_only">Allow free models only</option></select></div></div><div class="save-row"><small class="muted">Default is 'block'. Set to 'allow_free_only' only after confirming free tier availability at codecraftapi.com/dashboard. API key is never stored or shown.</small><button id="codecraft-save-settings" type="submit">Save CodeCraft settings</button></div></form><div class="head" style="margin-top:28px"><div><h2>CodeCraft models</h2><small>Discovered from GET /v1/models. Enable each model after verifying it works with Test model.</small></div></div><div class="scroll"><table class="subscriptions-table"><thead><tr><th>Model</th><th>Status</th><th>Pricing</th><th>Actions</th></tr></thead><tbody id="codecraft-models"></tbody></table></div><div class="head" style="margin-top:28px"><div><h2>Recent CodeCraft errors</h2><small>Key-free error codes only.</small></div></div><div id="codecraft-errors" class="list"></div><div class="head" style="margin-top:34px"><div><h2>GroqCloud API</h2><small>GROQ_API_KEY is read only from the backend environment and is never shown. Ultra-fast inference with Llama 3, Mixtral, and open models.</small></div><div class="actions"><button id="groq-test-connection" type="button">Test connection</button><button id="groq-refresh" type="button">Refresh models</button></div></div><div id="groq-diag" class="list"></div>
+<form id="groq-key-form" class="inline-add-box" style="margin-top:14px">
+  <div class="settings-grid">
+    <div class="field">
+      <label for="groq-key-input">API Key</label>
+      <div style="display:flex;gap:6px">
+        <input id="groq-key-input" type="password" autocomplete="new-password" placeholder="Enter Groq API key (gsk_...)">
+        <button type="button" id="groq-key-eye" style="padding:0 12px;background:#17213a;border:1px solid #2e4063;border-radius:7px;color:#c4ccdc;cursor:pointer" title="Show/Hide key">👁</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Configured Status</label>
+      <div style="display:flex;align-items:center;gap:8px;height:40px;padding:0 4px">
+        <span id="groq-key-badge" class="pill">Checking...</span>
+        <code id="groq-masked-key" style="color:#b4c0d4">••••</code>
+      </div>
+    </div>
+  </div>
+  <div class="save-row" style="margin-top:10px">
+    <button id="groq-remove-key" type="button" style="border-color:#593434;color:#ffdede;display:none">Remove Key</button>
+    <button id="groq-save-key" type="submit">Save API Key</button>
+  </div>
+</form>
+<div class="settings-grid" style="margin-top:18px"><div class="field"><label>Request &amp; token usage</label><div id="groq-usage" class="muted">Not loaded.</div></div></div><form id="groq-settings-form" style="margin-top:14px"><div class="settings-grid"><div class="field"><label for="groq-enabled">Provider state</label><select id="groq-enabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div><div class="field"><label for="groq-spending-policy">Spending policy</label><select id="groq-spending-policy"><option value="allow_free_only">Allow free models only (zero-billing safe)</option><option value="block">Block all requests</option></select></div></div><div class="save-row"><small class="muted">Groq free tier has generous rate limits. API key is never stored or shown.</small><button id="groq-save-settings" type="submit">Save Groq settings</button></div></form><div class="head" style="margin-top:28px"><div><h2>Groq models</h2><small>Discovered from GET /openai/v1/models. High-speed open models.</small></div></div><div class="scroll"><table class="subscriptions-table"><thead><tr><th>Model</th><th>Status</th><th>Context window</th><th>Actions</th></tr></thead><tbody id="groq-models"></tbody></table></div><div class="head" style="margin-top:28px"><div><h2>Recent Groq errors</h2><small>Key-free error codes only.</small></div></div><div id="groq-errors" class="list"></div><div class="head" style="margin-top:34px"><div><h2>NVIDIA NIM API</h2><small>NVIDIA_API_KEY is read only from the backend environment and is never shown. High-performance open models via build.nvidia.com.</small></div><div class="actions"><button id="nvidia-test-connection" type="button">Test connection</button><button id="nvidia-refresh" type="button">Refresh models</button></div></div><div id="nvidia-diag" class="list"></div>
+<form id="nvidia-key-form" class="inline-add-box" style="margin-top:14px">
+  <div class="settings-grid">
+    <div class="field">
+      <label for="nvidia-key-input">API Key</label>
+      <div style="display:flex;gap:6px">
+        <input id="nvidia-key-input" type="password" autocomplete="new-password" placeholder="Enter NVIDIA API key (nvapi-...)">
+        <button type="button" id="nvidia-key-eye" style="padding:0 12px;background:#17213a;border:1px solid #2e4063;border-radius:7px;color:#c4ccdc;cursor:pointer" title="Show/Hide key">👁</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Configured Status</label>
+      <div style="display:flex;align-items:center;gap:8px;height:40px;padding:0 4px">
+        <span id="nvidia-key-badge" class="pill">Checking...</span>
+        <code id="nvidia-masked-key" style="color:#b4c0d4">••••</code>
+      </div>
+    </div>
+  </div>
+  <div class="save-row" style="margin-top:10px">
+    <button id="nvidia-remove-key" type="button" style="border-color:#593434;color:#ffdede;display:none">Remove Key</button>
+    <button id="nvidia-save-key" type="submit">Save API Key</button>
+  </div>
+</form>
+<div class="settings-grid" style="margin-top:18px"><div class="field"><label>Request &amp; token usage</label><div id="nvidia-usage" class="muted">Not loaded.</div></div></div><form id="nvidia-settings-form" style="margin-top:14px"><div class="settings-grid"><div class="field"><label for="nvidia-enabled">Provider state</label><select id="nvidia-enabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div><div class="field"><label for="nvidia-spending-policy">Spending policy</label><select id="nvidia-spending-policy"><option value="allow_free_only">Allow free credits only (zero-billing safe)</option><option value="block">Block all requests</option></select></div></div><div class="save-row"><small class="muted">NVIDIA NIM free trial credits only. API key is never stored or shown.</small><button id="nvidia-save-settings" type="submit">Save NVIDIA settings</button></div></form><div class="head" style="margin-top:28px"><div><h2>NVIDIA NIM models</h2><small>Discovered from GET /v1/models. High-speed open models.</small></div></div><div class="scroll"><table class="subscriptions-table"><thead><tr><th>Model</th><th>Status</th><th>Context window</th><th>Actions</th></tr></thead><tbody id="nvidia-models"></tbody></table></div><div class="head" style="margin-top:28px"><div><h2>Recent NVIDIA errors</h2><small>Key-free error codes only.</small></div></div><div id="nvidia-errors" class="list"></div><div class="head" style="margin-top:34px"><div><h2>Local Ollama / Gemma</h2><small>Optional free local fallback. No API key; models are read live from OLLAMA_BASE_URL.</small></div><button id="ollama-test" type="button">Test local server</button></div><div id="ollama-status" class="list"></div></section><section id="subscriptions" class="card section page-view"><div class="head"><div><h2>Subscriptions &amp; Purchases</h2><small>Verified payments, actual collected revenue, recurring MRR, refunds, and Cashfree gateway settings.</small></div><div class="actions"><button id="refresh-subs" type="button">Refresh</button></div></div><div class="gw-card" id="cashfree-gateway-card"><div class="gw-head"><div><h3 style="margin:0;font-size:15px">Cashfree Payments</h3><small class="muted">Credit Card &amp; UPI Checkout · Secrets stay backend-only</small></div><div class="actions"><span id="gw-status-pill" class="pill no">Checking...</span><button id="gw-test-conn" type="button">Test connection</button></div></div><div class="gw-meta"><span>Provider: <strong>Cashfree Payments</strong></span><span>Environment: <strong id="gw-key-mode">SANDBOX</strong></span><span>Client ID: <strong id="gw-masked-key">Not set</strong></span><span>Client Secret: <strong id="gw-secret-status">Not set</strong></span><span>Webhook Secret: <strong id="gw-webhook-status">Not set</strong></span><span>Credit Card: <strong id="gw-card-status">Enabled</strong></span><span>UPI: <strong id="gw-upi-status">Enabled</strong></span><span>Webhook URL: <code>/api/payments/webhook</code></span><span>Last Webhook: <strong id="gw-last-webhook">None yet</strong></span><span>Last Connection Check: <strong id="gw-last-check">Never</strong></span></div><form id="gw-config-form" class="settings-grid" style="align-items:end"><div class="field"><label for="gw-client-id">Client ID</label><input id="gw-client-id" type="text" placeholder="Enter Cashfree Client ID" autocomplete="off"></div><div class="field"><label for="gw-client-secret">Client Secret</label><input id="gw-client-secret" type="password" placeholder="Enter Client Secret" autocomplete="off"></div><div class="field"><label for="gw-webhook-secret">Webhook Secret</label><input id="gw-webhook-secret" type="password" placeholder="Optional Webhook Secret" autocomplete="off"></div><div class="field"><label for="gw-enabled">Gateway status</label><select id="gw-enabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div><div class="field"><label for="gw-mode">Environment</label><select id="gw-mode"><option value="sandbox">Sandbox (Test)</option><option value="production">Production (Live)</option></select></div><div class="field"><button id="gw-save-btn" type="submit">Save Gateway Settings</button></div></form><div id="gw-state" class="status" hidden style="margin-top:10px"></div></div><div class="users-kpis" aria-label="Subscription revenue KPIs"><article class="users-kpi"><small>Total Subscribers</small><b id="sub-kpi-subscribers">—</b><span>Active verified paid</span></article><article class="users-kpi"><small>Successful Purchases</small><b id="sub-kpi-purchases">—</b><span>Paid &amp; partial transactions</span></article><article class="users-kpi"><small>Total Net Revenue</small><b id="sub-kpi-revenue">—</b><span id="sub-kpi-gross">Gross: ₹0</span></article><article class="users-kpi"><small>Monthly Recurring (MRR)</small><b id="sub-kpi-mrr">—</b><span>Active recurring plans only</span></article><article class="users-kpi"><small>Pending Payments</small><b id="sub-kpi-pending">—</b><span id="sub-kpi-pending-amt">₹0 pending</span></article><article class="users-kpi"><small>Refunded Amount</small><b id="sub-kpi-refunded">—</b><span id="sub-kpi-demo">Demo unpaid: 0</span></article></div><div class="users-filters"><div class="field"><label for="subs-search">Search customer</label><input id="subs-search" type="search" placeholder="Name, email, or Tx ID..."></div><div class="field"><label for="subs-plan-filter">Plan</label><select id="subs-plan-filter"><option value="all">All plans</option><option value="pro">Pro</option><option value="premium">Premium</option></select></div><div class="field"><label for="subs-status-filter">Payment status</label><select id="subs-status-filter"><option value="all">All statuses</option><option value="paid">Paid</option><option value="pending">Pending</option><option value="failed">Failed</option><option value="partially_refunded">Partially Refunded</option><option value="refunded">Refunded</option><option value="demo">Demo (No Payment)</option></select></div><div class="field"><label for="subs-interval-filter">Billing cycle</label><select id="subs-interval-filter"><option value="all">All cycles</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option><option value="one_time">One-time</option></select></div><div class="field"><label for="subs-date-from">Payment date from</label><input id="subs-date-from" type="date"></div><div class="field"><label for="subs-sort">Sort by</label><select id="subs-sort"><option value="latest_payment">Latest payment</option><option value="highest_amount">Highest amount paid</option><option value="user_name">User name</option></select></div><div class="field" style="align-self:end"><button id="subs-reset-filters" type="button" style="width:100%;height:36px">Reset filters</button></div></div><div id="subs-state" class="status" hidden></div><div class="scroll"><table class="subscriptions-table"><thead><tr><th>User Name</th><th>Email</th><th>Plan</th><th>Price</th><th>Payment Method</th><th>Payment Gateway</th><th>Payment Status</th><th>Last Payment</th><th>Subscription Status</th></tr></thead><tbody id="subscriptions-list"></tbody></table></div><div class="users-pagination" id="subs-pagination"><span id="subs-page-info">Showing 0 subscribers</span><div class="page-controls"><label for="subs-page-size">Per page</label><select id="subs-page-size"><option value="10">10</option><option value="20" selected>20</option><option value="50">50</option></select><button id="subs-prev-page" type="button">← Prev</button><span id="subs-page-num">Page 1 of 1</span><button id="subs-next-page" type="button">Next →</button></div></div><p class="table-hint">Click any subscriber row to inspect full transaction history, transaction IDs, discounts/coupons, subscription renewal dates, and refunds.</p></section><div id="sub-detail-modal" class="admin-modal-bg" hidden><section class="admin-modal" role="dialog" aria-modal="true" aria-labelledby="sd-title"><div class="head" style="margin-bottom:8px"><div><h2 id="sd-title">Subscription &amp; Payment Details</h2><small id="sd-subtitle"></small></div><button id="sd-close" type="button">✕ Close</button></div><div class="admin-tabs" id="sd-tabs"><button type="button" class="active" data-sd-tab="overview">Subscription Overview</button><button type="button" data-sd-tab="payments">Payment History</button><button type="button" data-sd-tab="refunds">Refund History</button></div><div class="admin-modal-body" id="sd-body"></div></section></div><section id="settings" class="card section page-view"><div class="head"><div><h2>Pricing &amp; Token Rules</h2><small>Dynamic plan tiers, billing periods, daily token allowances, and AI activity token costs synced across backend and user dashboards.</small></div><div class="actions"><button id="toggle-add-plan" type="button">+ Add New Plan</button><button id="settings-cancel-btn" type="button">Reset / Cancel</button></div></div><div id="settings-state" class="status" hidden style="margin-bottom:14px"></div><form id="add-plan-form" class="inline-add-box" hidden><div class="gw-head" style="margin-bottom:8px"><strong>Add New Subscription Plan</strong><button type="button" id="cancel-add-plan">✕ Close</button></div><div class="settings-grid"><div class="field"><label for="new-plan-name">Plan Name</label><input id="new-plan-name" type="text" required minlength="2" maxlength="40" placeholder="e.g. Studio"></div><div class="field"><label for="new-plan-price">Price (₹)</label><input id="new-plan-price" type="number" min="0" step="1" required value="799"></div><div class="field"><label for="new-plan-period">Billing Period</label><select id="new-plan-period"><option value="free">Free</option><option value="monthly" selected>Monthly</option><option value="yearly">Yearly</option></select></div><div class="field"><label for="new-plan-tokens">Tokens Per Day</label><input id="new-plan-tokens" type="number" min="1" step="1" required value="500"></div><div class="field"><label for="new-plan-order">Display Order</label><input id="new-plan-order" type="number" min="1" max="999" step="1" required value="4"></div><div class="field"><label for="new-plan-desc">Description</label><input id="new-plan-desc" type="text" maxlength="240" placeholder="Short plan summary"></div></div><div class="save-row"><small class="muted">Validates unique name &amp; ID slug before saving.</small><button type="submit" id="save-new-plan">Create Plan</button></div></form><form id="settings-form"><div class="subhead-row"><h2 style="font-size:16px;margin:0">Plan Management</h2><div class="field" style="flex-direction:row;align-items:center;gap:8px"><label for="allowance-policy" style="white-space:nowrap">Plan limit updates:</label><select id="allowance-policy"><option value="immediate">Apply immediately</option><option value="next_billing_period">Next billing period for active paid users</option></select></div></div><div class="settings-grid" id="plan-fields"></div><div class="subhead-row"><h2 style="font-size:16px;margin:0">AI Activity Token Rules</h2><button type="button" id="toggle-add-rule">+ Add Activity Rule</button></div><div id="add-rule-box" class="inline-add-box" hidden><div class="gw-head" style="margin-bottom:8px"><strong>Add New AI Activity Rule</strong><button type="button" id="cancel-add-rule">✕ Close</button></div><div class="settings-grid"><div class="field"><label for="new-rule-name">Activity Name</label><input id="new-rule-name" type="text" minlength="2" maxlength="50" placeholder="e.g. Deep Research"></div><div class="field"><label for="new-rule-id">Activity Identifier</label><input id="new-rule-id" type="text" maxlength="32" pattern="[a-z0-9_-]{2,32}" placeholder="e.g. deep_research"></div><div class="field"><label for="new-rule-cost">Token Cost</label><input id="new-rule-cost" type="number" min="1" step="1" value="10"></div></div><div class="save-row"><small class="muted">Lowercase identifier used by backend endpoints.</small><button type="button" id="save-new-rule">Add Activity Rule</button></div></div><div class="scroll"><table class="subscriptions-table"><thead><tr><th>Activity Name</th><th>Identifier</th><th>Token Cost</th><th>Status</th><th>Last Updated</th><th>Updated By</th></tr></thead><tbody id="token-rules-body"></tbody></table></div><div class="save-row" style="margin-top:16px"><small class="muted">Integer values only · INR prices · Changes update backend &amp; client pricing immediately</small><button id="save-settings" type="submit">Save Pricing &amp; Token Rules</button></div></form><div class="gw-card" id="config-verification" style="margin-top:24px"><div class="gw-head"><div><h2 style="font-size:16px;margin:0">Configuration Verification</h2><small class="muted">Compares database-saved rules with active backend runtime values without deducting user tokens.</small></div><div class="actions"><span id="verify-status-pill" class="pill no">Not checked</span><button type="button" id="verify-token-calc-btn">Test Token Calculation</button></div></div><div class="gw-meta"><span>Last Updated: <strong id="verify-last-updated">—</strong></span><span>Policy: <strong id="verify-policy">—</strong></span><span>Checked: <strong id="verify-checked-at">—</strong></span></div><div class="scroll"><table class="subscriptions-table"><thead><tr><th>Item / Activity</th><th>Database Saved Value</th><th>Active Backend Value</th><th>Live AI Deduction Test</th><th>Status</th></tr></thead><tbody id="verify-calc-body"></tbody></table></div></div><div class="subhead-row" style="margin-top:28px"><h2 style="font-size:16px;margin:0">Recent Pricing Audit Log</h2></div><div class="scroll"><table class="subscriptions-table"><thead><tr><th>When</th><th>Admin</th><th>Action</th><th>Target</th></tr></thead><tbody id="pricing-audit-body"></tbody></table></div></section><div id="test-result-modal" class="admin-modal-bg" hidden>
+  <div class="admin-modal" style="max-width:540px">
+    <div class="head">
+      <div>
+        <h2 id="trm-title" style="margin:0;font-size:18px">Test Result</h2>
+        <small id="trm-subtitle" class="muted">Live provider verification</small>
+      </div>
+      <button id="trm-close" type="button" style="padding:4px 10px;background:none;border:0;color:#bbb;font-size:18px;cursor:pointer">✕</button>
+    </div>
+    <div class="admin-modal-body" id="trm-body" style="display:grid;gap:12px;margin-top:14px"></div>
+    <div class="save-row" style="margin-top:16px">
+      <button id="trm-ok" type="button">Close</button>
+    </div>
+  </div>
+</div>
+</main></div><script>
+(()=>{
+ if(location.protocol==='file:'){
+   document.body.innerHTML='<main style="min-height:100vh;display:grid;place-items:center;padding:24px;background:#0b0b0b;color:#f3f0e9;font:16px/1.55 system-ui,sans-serif"><section style="width:min(560px,100%);padding:30px;border:1px solid #37332d;border-radius:14px;background:#141414"><h1 style="margin:0 0 10px;font:600 30px Georgia,serif">Open PHOTON Admin from localhost</h1><p style="margin:0;color:#c4bdae">The admin page cannot work when <code>admin.html</code> is opened directly as a file.</p><ol style="padding-left:22px"><li>Run <strong>start.bat</strong>.</li><li>Open <strong>http://localhost:3002/admin</strong> in your browser.</li></ol></section></main>';
+   return;
+ }
+ const $=id=>document.getElementById(id),fmt=n=>Number(n||0).toLocaleString(),date=v=>{if(!v)return'—';const d=new Date(v);return Number.isNaN(+d)?'—':d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'})},dateTime=v=>{if(!v)return'Never';const d=new Date(v);return Number.isNaN(+d)?'Never':d.toLocaleString(undefined,{year:'numeric',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})};const localDay=(v,tz)=>{const d=v instanceof Date?v:new Date(v);if(Number.isNaN(+d))return'';try{return new Intl.DateTimeFormat('en-CA',{timeZone:tz||'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(d)}catch{return d.toISOString().slice(0,10)}};const loginsToday=u=>Math.max(Number(u.signInCountToday)||0,localDay(u.lastSignInAt,u.timezone)===localDay(new Date(),u.timezone)?1:0);
+ let refreshing=false;
+  function showLogin(msg){
+    const ls=$('login-screen');
+    const app=document.querySelector('.app');
+    if(ls)ls.hidden=false;
+    if(app)app.hidden=true;
+    const err=$('login-error');
+    if(err){
+      if(msg){err.hidden=false;err.textContent=msg;}
+      else{err.hidden=true;err.textContent='';}
+    }
+  }
+  function showApp(){
+    const ls=$('login-screen');
+    const app=document.querySelector('.app');
+    if(ls)ls.hidden=true;
+    if(app)app.hidden=false;
+  }
+  function status(msg, isErr) {
+    if (!msg) return;
+    console.log('[PHOTON ADMIN]', isErr ? 'ERROR:' : 'INFO:', msg);
+    let toast = $('admin-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'admin-toast';
+      toast.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:99999;max-width:440px;padding:12px 18px;border-radius:8px;font-size:13px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,0.6);transition:all 0.3s ease;pointer-events:none;';
+      document.body.appendChild(toast);
+    }
+    toast.style.background = isErr ? '#451a1a' : '#064e3b';
+    toast.style.border = isErr ? '1px solid #dc2626' : '1px solid #059669';
+    toast.style.color = isErr ? '#fecaca' : '#a7f3d0';
+    toast.textContent = msg;
+    toast.style.opacity = '1';
+    clearTimeout(window.__toastTimer);
+    window.__toastTimer = setTimeout(() => {
+      toast.style.opacity = '0';
+    }, 4500);
+  }
+ function td(row,value){const e=document.createElement('td');e.textContent=value==null?'':String(value);row.appendChild(e);return e}
+ function rowItem(parent,title,detail,right){const row=document.createElement('div');row.className='item';const info=document.createElement('span'),b=document.createElement('b'),small=document.createElement('small');b.textContent=title;small.textContent=detail||'';info.append(b,small);row.append(info,right);parent.appendChild(row)}
+ async function request(url,method,body){const response=await fetch(url,{method:method||'GET',credentials:'same-origin',cache:'no-store',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined}),data=await response.json().catch(()=>({}));if(!response.ok||!data.success){const error=new Error(data.error&&data.error.message||'The admin request could not be completed.');error.status=response.status;error.code=data.error&&data.error.code;throw error}return data.data}
+ function showSettingsMsg(msg,err){const el=$('settings-state');if(!el)return;el.hidden=!msg;el.className='status'+(err?' error':'');el.textContent=msg||''}
+ function showGwMsg(msg,err){const el=$('gw-state');if(!el)return;el.hidden=!msg;el.className='status'+(err?' error':'');el.textContent=msg||''}
+ let cachedSettings=null,settingsDirty=false,savingSettings=false;
+ function renderVerifyReport(rep){
+  if(!rep)return;
+  const pill=$('verify-status-pill');
+  if(pill){pill.className='pill '+(rep.status==='synced'?'ok':'no');pill.textContent=rep.status==='synced'?'Synced (DB = Active Backend)':'Drift detected'}
+  $('verify-last-updated').textContent=rep.lastUpdatedAt?dateTime(rep.lastUpdatedAt):'Default seed';
+  $('verify-policy').textContent=rep.allowancePolicy==='next_billing_period'?'Next billing period':'Immediate';
+  $('verify-checked-at').textContent=rep.checkedAt?dateTime(rep.checkedAt):'Now';
+  const root=$('verify-calc-body');if(!root)return;root.replaceChildren();
+  (rep.activeBackend&&rep.activeBackend.plans||[]).forEach(p=>{
+   const dbP=(rep.databaseSaved&&rep.databaseSaved.plans||[]).find(x=>x.id===p.id)||{};
+   const tr=document.createElement('tr');
+   td(tr,'Plan: '+p.name+' ('+p.id+')');
+   td(tr,'₹'+fmt(dbP.price)+' · '+fmt(dbP.dailyTokens)+' tokens/day');
+   td(tr,'₹'+fmt(p.price)+' · '+fmt(p.dailyTokens)+' tokens/day');
+   td(tr,p.enabled?'Active for users':'Disabled');
+   const sc=td(tr,'');sc.appendChild(orBadge(dbP.price===p.price&&dbP.dailyTokens===p.dailyTokens?'Synced':'Mismatch',dbP.price===p.price&&dbP.dailyTokens===p.dailyTokens));
+   root.appendChild(tr);
+  });
+  (rep.testCalculations||[]).forEach(t=>{
+   const dbVal=rep.databaseSaved&&rep.databaseSaved.tokenCosts?rep.databaseSaved.tokenCosts[t.activityId]:'—';
+   const tr=document.createElement('tr');
+   td(tr,'Activity: '+t.activityName+' ('+t.activityId+')');
+   td(tr,fmt(dbVal)+' token'+(dbVal===1?'':'s'));
+   td(tr,fmt(t.tokensPerRequest)+' token'+(t.tokensPerRequest===1?'':'s'));
+   td(tr,t.enabled?('Would deduct '+fmt(t.tokensPerRequest)+' token'+(t.tokensPerRequest===1?'':'s')+' (dry-run)'):'Blocked (Disabled)');
+   const sc=td(tr,'');sc.appendChild(orBadge(dbVal===t.tokensPerRequest?(t.enabled?'Synced':'Disabled'):'Drift',dbVal===t.tokensPerRequest&&t.enabled));
+   root.appendChild(tr);
+  });
+ }
+ async function runConfigVerification(quiet){
+  const btn=$('verify-token-calc-btn');
+  if(btn&&!quiet){btn.disabled=true;btn.textContent='Verifying...'}
+  try{
+   const rep=await request('/api/admin/pricing/verify','POST',{});
+   renderVerifyReport(rep);
+  }catch(e){if(!quiet)showSettingsMsg(e.message||'Verification failed.',true)}
+  finally{if(btn&&!quiet){btn.disabled=false;btn.textContent='Test Token Calculation'}}
+ }
+ function syncPlanFilters(plans){
+  ['users-plan-filter','subs-plan-filter'].forEach(selId=>{
+   const sel=$(selId);if(!sel)return;const prev=sel.value;
+   sel.innerHTML='<option value="all">All plans</option>';
+   (plans||[]).forEach(p=>{if(selId==='subs-plan-filter'&&p.id==='basic')return;const o=document.createElement('option');o.value=p.id;o.textContent=p.name;sel.appendChild(o)});
+   if(Array.from(sel.options).some(o=>o.value===prev))sel.value=prev;
+  });
+ }
+ function renderPlanFields(settings){
+  cachedSettings=settings;
+  if($('allowance-policy')&&settings.allowancePolicy)$('allowance-policy').value=settings.allowancePolicy;
+  syncPlanFilters(settings.plans||[]);
+  const root=$('plan-fields');root.replaceChildren();
+  (settings.plans||[]).forEach(plan=>{
+   const card=document.createElement('div');card.className='plan-edit';
+   const top=document.createElement('div');top.className='gw-head';top.style.marginBottom='10px';
+   const title=document.createElement('h3');title.style.margin='0';title.textContent=plan.name+' plan';
+   const badge=orBadge(plan.enabled!==false?'Enabled':'Disabled',plan.enabled!==false);
+   top.append(title,badge);card.appendChild(top);
+   const nameWrap=document.createElement('div');nameWrap.className='field';const nl=document.createElement('label');nl.textContent='Plan Name';const ni=document.createElement('input');ni.type='text';ni.minLength=2;ni.maxLength=40;ni.required=true;ni.value=plan.name;ni.dataset.plan=plan.id;ni.dataset.key='name';ni.addEventListener('input',()=>{title.textContent=(ni.value.trim()||plan.name)+' plan'});nameWrap.append(nl,ni);card.appendChild(nameWrap);
+   const periodWrap=document.createElement('div');periodWrap.className='field';const pl=document.createElement('label');pl.textContent='Billing Period';const ps=document.createElement('select');[['free','Free'],['monthly','Monthly'],['yearly','Yearly']].forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;ps.appendChild(o)});ps.value=plan.billingPeriod||(Number(plan.price)===0?'free':'monthly');ps.dataset.plan=plan.id;ps.dataset.key='billingPeriod';if(plan.id==='basic')ps.disabled=true;periodWrap.append(pl,ps);card.appendChild(periodWrap);
+   [['Price (₹)','price',plan.price,'0'],['Tokens Per Day','dailyTokens',plan.dailyTokens,'1'],['Display Order','displayOrder',plan.displayOrder||1,'1']].forEach(([label,key,val,minV])=>{
+    const wrap=document.createElement('div');wrap.className='field';const l=document.createElement('label');l.textContent=label;const inp=document.createElement('input');inp.type='number';inp.min=minV;inp.step='1';inp.required=true;inp.value=val;inp.dataset.plan=plan.id;inp.dataset.key=key;if(plan.id==='basic'&&key==='price')inp.title='Free tier is normally ₹0 INR';wrap.append(l,inp);card.appendChild(wrap);
+   });
+   const descWrap=document.createElement('div');descWrap.className='field';const dl=document.createElement('label');dl.textContent='Description';const di=document.createElement('input');di.type='text';di.maxLength=240;di.value=plan.description||'';di.dataset.plan=plan.id;di.dataset.key='description';descWrap.append(dl,di);card.appendChild(descWrap);
+   const enWrap=document.createElement('div');enWrap.className='field';const el=document.createElement('label');el.textContent='Plan Status';const es=document.createElement('select');[['true','Enabled (Visible at checkout)'],['false','Disabled (Hidden from new checkout)']].forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;es.appendChild(o)});es.value=plan.enabled!==false?'true':'false';es.dataset.plan=plan.id;es.dataset.key='enabled';if(plan.id==='basic')es.disabled=true;es.addEventListener('change',()=>{badge.className='pill '+(es.value==='true'?'ok':'no');badge.textContent=es.value==='true'?'Enabled':'Disabled'});enWrap.append(el,es);card.appendChild(enWrap);
+   root.appendChild(card);
+  });
+ }
+ function renderTokenRulesTable(settings){
+  const root=$('token-rules-body');if(!root)return;root.replaceChildren();
+  const rules=(settings&&settings.tokenRules)||[];
+  rules.forEach(rule=>{
+   const row=document.createElement('tr');
+   const nameCell=td(row,'');const ni=document.createElement('input');ni.type='text';ni.minLength=2;ni.maxLength=50;ni.required=true;ni.value=rule.name;ni.dataset.rule=rule.id;ni.dataset.ruleKey='name';ni.style.width='100%';ni.style.minWidth='150px';nameCell.appendChild(ni);
+   const idCell=td(row,'');const codeEl=document.createElement('code');codeEl.textContent=rule.id;idCell.appendChild(codeEl);
+   const costCell=td(row,'');const ci=document.createElement('input');ci.type='number';ci.min='1';ci.step='1';ci.required=true;ci.value=rule.tokenCost;ci.dataset.rule=rule.id;ci.dataset.ruleKey='tokenCost';ci.style.width='96px';costCell.append(ci,document.createTextNode(' tokens'));
+   const stCell=td(row,'');const sel=document.createElement('select');sel.dataset.rule=rule.id;sel.dataset.ruleKey='enabled';[['true','Enabled'],['false','Disabled']].forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;sel.appendChild(o)});sel.value=rule.enabled!==false?'true':'false';stCell.appendChild(sel);
+   td(row,dateTime(rule.updatedAt));
+   td(row,rule.updatedBy||'system');
+   root.appendChild(row);
+  });
+ }
+ function renderPricingAudit(logs){
+  const root=$('pricing-audit-body');if(!root)return;root.replaceChildren();
+  (logs||[]).slice(0,20).forEach(entry=>{
+   const row=document.createElement('tr');
+   td(row,dateTime(entry.at));td(row,entry.actor||'admin');td(row,entry.action||'update');td(row,entry.targetType+': '+entry.targetId);
+   root.appendChild(row);
+  });
+  if(!(logs||[]).length){const row=document.createElement('tr'),e=td(row,'No pricing changes logged yet.');e.colSpan=4;e.className='empty';root.appendChild(row)}
+ }
+ function renderGatewayConfig(gw){
+  if(!gw)return;
+  const pill=$('gw-status-pill');
+  const isConn=Boolean(gw.lastConnectionCheck&&gw.lastConnectionCheck.ok);
+  if(pill){
+   pill.className='pill '+(isConn&&gw.ready?'ok':!gw.configured?'no':!gw.enabled?'no':isConn?'ok':'no');
+   pill.textContent=!gw.configured?'Not Configured':!gw.enabled?'Disabled':isConn?('Connected ('+(gw.mode||'sandbox').toUpperCase()+')'):'Disconnected';
+  }
+  if($('gw-masked-key')) $('gw-masked-key').textContent=gw.maskedClientId||gw.maskedKeyId||'Not Configured';
+  if($('gw-secret-status')) $('gw-secret-status').textContent=gw.clientSecretConfigured||gw.configured?'Configured':'Not Configured';
+  if($('gw-key-mode')) $('gw-key-mode').textContent=(gw.mode||'sandbox').toUpperCase();
+  if($('gw-webhook-status')) $('gw-webhook-status').textContent=gw.webhookConfigured?'Configured':'Not Configured';
+  if($('gw-card-status')) $('gw-card-status').textContent=gw.enabled!==false?'Enabled':'Disabled';
+  if($('gw-upi-status')) $('gw-upi-status').textContent=gw.enabled!==false?'Enabled':'Disabled';
+  if($('gw-last-webhook')) $('gw-last-webhook').textContent=gw.lastWebhookAt?(dateTime(gw.lastWebhookAt)+(gw.lastWebhookEvent?' ('+gw.lastWebhookEvent+')':'')):'None yet';
+  if($('gw-last-check')) $('gw-last-check').textContent=gw.lastConnectionCheck?(gw.lastConnectionCheck.ok?'Connected · '+dateTime(gw.lastConnectionCheck.at):'Failed · '+(gw.lastConnectionCheck.message||gw.lastConnectionCheck.code)):'Never';
+  if($('gw-enabled')) $('gw-enabled').value=gw.enabled!==false?'true':'false';
+  if($('gw-mode')) $('gw-mode').value=gw.mode==='production'?'production':'sandbox';
+ }
+ async function loadGatewayConfig(){try{renderGatewayConfig(await request('/api/admin/payments/config'))}catch(e){showGwMsg(e.message||'Could not load gateway status.',true)}}
+ let usersPage=1,usersTotalPages=1,currentDetail=null,currentDetailTab='overview',usersSearchTimer=null;
+ function usersQueryParams(includePaging=true){
+  const p=new URLSearchParams();
+  const q=$('users-search').value.trim();if(q)p.set('q',q);
+  const plan=$('users-plan-filter').value;if(plan&&plan!=='all')p.set('plan',plan);
+  const st=$('users-status-filter').value;if(st&&st!=='all')p.set('status',st);
+  const prov=$('users-provider-filter').value;if(prov&&prov!=='all')p.set('provider',prov);
+  const sub=$('users-sub-filter').value;if(sub&&sub!=='all')p.set('subStatus',sub);
+  const regFrom=$('users-reg-from').value;if(regFrom)p.set('regFrom',regFrom);
+  const lastFrom=$('users-last-from').value;if(lastFrom)p.set('lastSignInFrom',lastFrom);
+  const sort=$('users-sort').value;if(sort)p.set('sort',sort);
+  if(includePaging){p.set('page',String(usersPage));p.set('pageSize',$('users-page-size').value||'20');}
+  return p;
+ }
+ function renderUsersKpis(kpis,timeoutMs){
+  const k=kpis||{};
+  if($('kpi-reg'))$('kpi-reg').textContent=fmt(k.totalRegisteredUsers);
+  if($('kpi-logged-today'))$('kpi-logged-today').textContent=fmt(k.loggedInToday);
+  if($('kpi-online'))$('kpi-online').textContent=fmt(k.currentlyOnlineUsers);
+  if($('kpi-signins'))$('kpi-signins').textContent=fmt(k.totalSignIns);
+  if($('kpi-tokens'))$('kpi-tokens').textContent=fmt(k.totalTokensUsed);
+  if($('kpi-paid'))$('kpi-paid').textContent=fmt(k.activePaidSubscribers);
+  if($('kpi-free'))$('kpi-free').textContent=fmt(k.freePlanUsers);
+  if(timeoutMs&&$('kpi-online-note'))$('kpi-online-note').textContent='Active '+Math.round(timeoutMs/60000)+'m heartbeat';
+
+  const allowance = Number(k.totalDailyAllowance||0);
+  const used = Number(k.totalTokensToday||0);
+  const remaining = k.remainingTokens!=null ? k.remainingTokens : Math.max(0, allowance - used);
+  const pct = k.percentUtilized!=null ? k.percentUtilized : (allowance>0 ? Math.round((used/allowance)*100) : 0);
+  if($('users-agg-allowance')) $('users-agg-allowance').textContent = fmt(allowance);
+  if($('users-agg-used')) $('users-agg-used').textContent = fmt(used);
+  if($('users-agg-remaining')) $('users-agg-remaining').textContent = fmt(remaining);
+  if($('users-agg-pct')) $('users-agg-pct').textContent = pct + '%';
+ }
+ function renderUsers(data){
+  const k=data.kpis||data.metrics;if(k)renderUsersKpis(k,data.onlineTimeoutMs);
+  const list=data.items||data.users||[];
+  const pag=data.pagination||{total:list.length,page:1,pageSize:list.length||20,totalPages:1};
+  usersPage=pag.page||1;usersTotalPages=pag.totalPages||1;
+  const start=pag.total?((usersPage-1)*pag.pageSize+1):0,end=Math.min(pag.total,usersPage*pag.pageSize);
+  $('users-page-info').textContent='Showing '+fmt(start)+'–'+fmt(end)+' of '+fmt(pag.total)+' user'+(pag.total===1?'':'s');
+  $('users-page-num').textContent='Page '+usersPage+' of '+usersTotalPages;
+  $('users-prev-page').disabled=usersPage<=1;
+  $('users-next-page').disabled=usersPage>=usersTotalPages;
+  const root=$('users');root.replaceChildren();
+  list.forEach(u=>{
+    const row=document.createElement('tr');row.className='users-row-clickable';
+    row.addEventListener('click',()=>openUserDetail(u.uid,'overview'));
+    
+    // 1. User ID
+    const uidCell=td(row,'');
+    const uidBtn=document.createElement('button');uidBtn.type='button';uidBtn.className='uid-btn';uidBtn.textContent=u.accountId||('USR-'+String(u.uid||'').slice(0,8).toUpperCase());
+    uidBtn.addEventListener('click',e=>{e.stopPropagation();openUserDetail(u.uid,'overview')});
+    uidCell.appendChild(uidBtn);
+
+    // 2. User Name
+    let cell=td(row,'');cell.className='customer-cell';
+    const identity=document.createElement('div');identity.className='customer-identity';
+    const avatar=document.createElement('span');avatar.className='customer-avatar';
+    const initial=String(u.fullName||u.email||'U').trim().charAt(0).toUpperCase();
+    if(u.photoURL){const img=document.createElement('img');img.src=u.photoURL;img.alt=u.fullName||'User';img.referrerPolicy='no-referrer';img.onerror=()=>{avatar.textContent=initial};avatar.appendChild(img)}else avatar.textContent=initial;
+    const nameBlock=document.createElement('span'),name=document.createElement('b'),uname=document.createElement('small');
+    name.textContent=u.fullName||'Photon user';uname.textContent=u.username?('@'+u.username):'';nameBlock.append(name,uname);identity.append(avatar,nameBlock);cell.appendChild(identity);
+
+    // 3. Email
+    td(row,u.email||'—');
+
+    // 4. Plan
+    cell=td(row,'');
+    const sub=u.subscription||{};
+    const planB=document.createElement('b');planB.className='plan-name';planB.textContent=u.planName||'Free';
+    const priceSmall=document.createElement('small');priceSmall.className='cell-note';
+    priceSmall.textContent=sub.isPaidActive?('₹'+fmt(u.planPrice)+(u.planInterval==='yearly'?'/year':'/month')):'₹0 (Free)';
+    cell.append(planB,priceSmall);
+    if(sub.isDemoSelection){const dt=document.createElement('span');dt.className='plan-demo-tag';dt.textContent='Demo: '+(sub.selectedPlanName||'');cell.appendChild(dt)}
+
+    // 5. Total Sign-ins
+    cell=td(row,'');
+    const signBtn=document.createElement('button');signBtn.type='button';signBtn.className='link-btn';signBtn.textContent=fmt(u.signInCount);signBtn.title='View login & session history';
+    signBtn.addEventListener('click',e=>{e.stopPropagation();openUserDetail(u.uid,'logins')});
+    const signToday=document.createElement('small');signToday.className='cell-note';signToday.textContent=fmt(u.signInCountToday)+' today';
+    cell.append(signBtn,signToday);
+
+    // 6. Tokens Used Today (75 / 200 Tokens)
+    cell=td(row,'');cell.className='tokens-cell';
+    const tokBtn=document.createElement('button');tokBtn.type='button';tokBtn.className='link-btn';
+    const usedTok=u.todayTokens!=null?u.todayTokens:0;
+    const allowTok=u.dailyTokens!=null?u.dailyTokens:50;
+    tokBtn.textContent=fmt(usedTok)+' / '+fmt(allowTok)+' Tokens';
+    tokBtn.title='View detailed token consumption';
+    tokBtn.addEventListener('click',e=>{e.stopPropagation();openUserDetail(u.uid,'usage')});
+    const tokSub=document.createElement('small');tokSub.className='cell-note';
+    const remTok=u.remainingTokensToday!=null?u.remainingTokensToday:Math.max(0, allowTok - usedTok);
+    tokSub.textContent=fmt(remTok)+' remaining · '+(u.usagePercentage!=null?u.usagePercentage:0)+'%';
+    cell.append(tokBtn,tokSub);
+
+    // 7. Daily Token Allowance
+    cell=td(row,'');
+    const daB=document.createElement('b');daB.textContent=fmt(allowTok);
+    const daSub=document.createElement('small');daSub.className='cell-note';daSub.textContent='tokens/day';
+    cell.append(daB,daSub);
+
+    // 8. Created Date
+    td(row,date(u.joinedAt));
+
+    // 9. Account Status (Online / Offline)
+    cell=td(row,'');
+    const statusBadge=document.createElement('span');
+    statusBadge.className='account-status '+(u.online?'online':'offline');
+    statusBadge.textContent=u.online?'Online':'Offline';
+    statusBadge.title=u.online?('Active session · last seen '+dateTime(u.lastSeenAt)):u.lastSeenAt?('Last activity: '+dateTime(u.lastSeenAt)):'No verified activity yet';
+    cell.appendChild(statusBadge);
+
+    // 10. Last Sign-in
+    cell=td(row,'');
+    if(u.lastSignInAt){
+      const stamp=new Date(u.lastSignInAt),day=document.createElement('b'),time=document.createElement('small');
+      day.textContent=date(stamp);time.textContent=stamp.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+      cell.append(day,time);
+    } else {
+      cell.textContent='—';
+    }
+
+    // 11. Sign-in Method (Google vs Gmail / Password)
+    cell=td(row,'');
+    const methodBadge=document.createElement('span');
+    const mStr=String(u.signInMethod||u.primarySignInMethod||'').toLowerCase();
+    if(mStr.includes('google')){
+      methodBadge.className='pill ok';
+      methodBadge.textContent='Google';
+    }else{
+      methodBadge.className='pill';
+      methodBadge.style.borderColor='#38bdf8';
+      methodBadge.style.color='#38bdf8';
+      methodBadge.textContent='Gmail / Password';
+    }
+    cell.appendChild(methodBadge);
+
+    root.appendChild(row);
+  });
+  if(!root.children.length){const r=document.createElement('tr'),empty=td(r,'No matching users found.');empty.colSpan=11;empty.className='empty';root.appendChild(r)}
+ }
+ async function loadUsersAdmin(){
+  const stEl=$('users-state');if(stEl){stEl.hidden=false;stEl.className='status';stEl.textContent='Loading users & sign-in telemetry...'}
+  try{
+    const data=await request('/api/admin/users?'+usersQueryParams(true).toString());
+    renderUsers(data);
+    if(stEl)stEl.hidden=true;
+  }catch(error){
+    if(stEl){stEl.hidden=false;stEl.className='status error';stEl.textContent=error.message||'Could not load users.'}
+  }
+ }
+ function renderUserDetailModal(){
+  if(!currentDetail)return;
+  const {user:u,logins,usageLogs,subscriptions}=currentDetail;
+  $('ud-title').textContent=(u.fullName||'Photon User')+' ('+u.accountId+')';
+  $('ud-subtitle').textContent=(u.email||'—')+' · '+(u.online?'Online':'Offline');
+  document.querySelectorAll('#ud-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.udTab===currentDetailTab));
+  const body=$('ud-body');body.replaceChildren();
+  if(currentDetailTab==='overview'){
+    const grid=document.createElement('div');grid.className='detail-grid';
+    [
+      ['Account ID',u.accountId],['UID',u.uid],['Full Name',u.fullName||'—'],['Username',u.username?('@'+u.username):'—'],
+      ['Email',u.email||'—'],['Created Date',dateTime(u.joinedAt)],
+      ['Primary Creation Method',u.primarySignInMethod||'Unknown'],['Latest Sign-in Method',u.signInMethod||'Unknown'],
+      ['All Verified Auth Methods',(u.authMethods||[]).join(', ')||'None'],['Account Status',u.online?'Online (active session)':'Offline'],
+      ['Last Sign-in',dateTime(u.lastSignInAt)],['Last Heartbeat',dateTime(u.lastSeenAt)],
+      ['Session Expires',dateTime(u.sessionExpiresAt)],['Verified Plan',u.planName||'Free']
+    ].forEach(([k,v])=>{const box=document.createElement('div');box.className='detail-box';const s=document.createElement('small');s.textContent=k;const b=document.createElement('b');b.textContent=v;box.append(s,b);grid.appendChild(box)});
+    body.appendChild(grid);
+  }else if(currentDetailTab==='logins'){
+    const wrap=document.createElement('div');wrap.className='scroll';
+    const tbl=document.createElement('table');tbl.className='subscriptions-table';
+    tbl.innerHTML='<thead><tr><th>Status</th><th>Date &amp; Time</th><th>Auth Method</th><th>Session Start</th><th>Session End / Expiry</th><th>IP Address</th><th>Device</th></tr></thead>';
+    const tb=document.createElement('tbody');
+    (logins||[]).forEach(l=>{
+      const tr=document.createElement('tr');
+      const stCell=td(tr,'');stCell.appendChild(orBadge(l.status==='success'?'Success':'Failed',l.status==='success'));
+      td(tr,dateTime(l.at));td(tr,l.providerLabel||l.provider||'Unknown');
+      td(tr,dateTime(l.sessionStart));td(tr,l.sessionEnd?('Ended: '+dateTime(l.sessionEnd)):l.expiresAt?('Expires: '+dateTime(l.expiresAt)):'—');
+      td(tr,l.ip||'—');td(tr,l.deviceSummary||(l.failureReason||'—'));
+      tb.appendChild(tr);
+    });
+    if(!(logins||[]).length){const tr=document.createElement('tr'),e=td(tr,'No login events recorded yet.');e.colSpan=7;e.className='empty';tb.appendChild(tr)}
+    tbl.appendChild(tb);wrap.appendChild(tbl);body.appendChild(wrap);
+  }else if(currentDetailTab==='usage'){
+    const ts=u.tokenStats||{daily:{},monthly:{},lifetime:{},byProvider:{}};
+    const grid=document.createElement('div');grid.className='detail-grid';
+    [
+      ['Daily Tokens',fmt(ts.daily.total)+' ('+fmt(ts.daily.input)+' in / '+fmt(ts.daily.output)+' out)'],
+      ['Monthly Tokens',fmt(ts.monthly.total)+' ('+fmt(ts.monthly.input)+' in / '+fmt(ts.monthly.output)+' out)'],
+      ['Lifetime Tokens',fmt(ts.lifetime.total)+' ('+fmt(ts.lifetime.input)+' in / '+fmt(ts.lifetime.output)+' out)'],
+      ['Actual vs Estimated',fmt(ts.lifetime.actualTotal)+' actual · '+fmt(ts.lifetime.estimatedTotal)+' estimated']
+    ].forEach(([k,v])=>{const box=document.createElement('div');box.className='detail-box';const s=document.createElement('small');s.textContent=k;const b=document.createElement('b');b.textContent=v;box.append(s,b);grid.appendChild(box)});
+    body.appendChild(grid);
+    const provWrap=document.createElement('div');provWrap.className='scroll';provWrap.style.marginBottom='14px';
+    const provTbl=document.createElement('table');provTbl.className='subscriptions-table';
+    provTbl.innerHTML='<thead><tr><th>Provider</th><th>Requests</th><th>Input Tokens</th><th>Output Tokens</th><th>Total Tokens</th><th>Actual / Estimated</th></tr></thead>';
+    const ptb=document.createElement('tbody');
+    Object.entries(ts.byProvider||{}).forEach(([prov,b])=>{
+      const tr=document.createElement('tr');
+      td(tr,prov.toUpperCase());td(tr,fmt(b.requests));td(tr,fmt(b.input));td(tr,fmt(b.output));td(tr,fmt(b.total));
+      td(tr,fmt(b.actualTotal)+' / '+fmt(b.estimatedTotal));ptb.appendChild(tr);
+    });
+    if(!Object.keys(ts.byProvider||{}).length){const tr=document.createElement('tr'),e=td(tr,'No provider usage recorded yet.');e.colSpan=6;e.className='empty';ptb.appendChild(tr)}
+    provTbl.appendChild(ptb);provWrap.appendChild(provTbl);body.appendChild(provWrap);
+    const logWrap=document.createElement('div');logWrap.className='scroll';
+    const logTbl=document.createElement('table');logTbl.className='subscriptions-table';
+    logTbl.innerHTML='<thead><tr><th>Date</th><th>Provider</th><th>Model</th><th>Input</th><th>Output</th><th>Total</th><th>Source</th></tr></thead>';
+    const ltb=document.createElement('tbody');
+    (usageLogs||[]).slice(0,50).forEach(r=>{
+      const tr=document.createElement('tr');
+      td(tr,dateTime(r.at));td(tr,r.provider);td(tr,r.model||'—');td(tr,fmt(r.inputTokens));td(tr,fmt(r.outputTokens));td(tr,fmt(r.totalTokens));
+      const sc=td(tr,'');sc.appendChild(orBadge(r.estimated?'Estimated':'Actual',!r.estimated));ltb.appendChild(tr);
+    });
+    if(!(usageLogs||[]).length){const tr=document.createElement('tr'),e=td(tr,'No token usage logs recorded.');e.colSpan=7;e.className='empty';ltb.appendChild(tr)}
+    logTbl.appendChild(ltb);logWrap.appendChild(logTbl);body.appendChild(logWrap);
+  }else if(currentDetailTab==='subscriptions'){
+    const sub=u.subscription||{};
+    const grid=document.createElement('div');grid.className='detail-grid';
+    [
+      ['Verified Plan',sub.effectivePlanName||'Free'],['Status',sub.status||'free'],['Payment Status',sub.paymentStatus||'free'],
+      ['Purchase / Selected Date',dateTime(sub.purchaseDate)],['Expiry Date',dateTime(sub.expiryDate)],['Next Renewal',dateTime(sub.nextRenewalDate)]
+    ].forEach(([k,v])=>{const box=document.createElement('div');box.className='detail-box';const s=document.createElement('small');s.textContent=k;const b=document.createElement('b');b.textContent=v;box.append(s,b);grid.appendChild(box)});
+    body.appendChild(grid);
+    const sw=document.createElement('div');sw.className='scroll';
+    const st=document.createElement('table');st.className='subscriptions-table';
+    st.innerHTML='<thead><tr><th>Plan</th><th>Status</th><th>Payment Taken</th><th>Interval</th><th>Price</th><th>Date</th></tr></thead>';
+    const stb=document.createElement('tbody');
+    (subscriptions||[]).forEach(s=>{
+      const tr=document.createElement('tr');
+      td(tr,s.planName||s.plan);td(tr,s.status||s.billingStatus||'—');
+      const pc=td(tr,'');pc.appendChild(orBadge(s.paymentTaken?'Verified Paid':'Not Paid (Demo)',Boolean(s.paymentTaken)));
+      td(tr,s.interval||'none');td(tr,'₹'+fmt(s.basePrice??s.planPrice??0));td(tr,dateTime(s.purchaseDate||s.selectedAt));
+      stb.appendChild(tr);
+    });
+    if(!(subscriptions||[]).length){const tr=document.createElement('tr'),e=td(tr,'No subscription history recorded.');e.colSpan=6;e.className='empty';stb.appendChild(tr)}
+    st.appendChild(stb);sw.appendChild(st);body.appendChild(sw);
+  }
+ }
+ async function openUserDetail(uid,tab='overview'){
+  currentDetailTab=tab;
+  $('ud-body').textContent='Loading user details...';
+  $('user-detail-modal').hidden=false;
+  try{
+    currentDetail=await request('/api/admin/users/'+encodeURIComponent(uid));
+    renderUserDetailModal();
+  }catch(error){$('ud-body').textContent=error.message||'Could not load user details.'}
+ }
+ let subsPage=1,subsTotalPages=1,currentSubDetail=null,currentSubTab='overview',subsSearchTimer=null;
+ function subsQueryParams(){
+  const p=new URLSearchParams();
+  const q=$('subs-search').value.trim();if(q)p.set('q',q);
+  const plan=$('subs-plan-filter').value;if(plan&&plan!=='all')p.set('plan',plan);
+  const st=$('subs-status-filter').value;if(st&&st!=='all')p.set('paymentStatus',st);
+  const iv=$('subs-interval-filter').value;if(iv&&iv!=='all')p.set('interval',iv);
+  const df=$('subs-date-from').value;if(df)p.set('dateFrom',df);
+  const sort=$('subs-sort').value;if(sort)p.set('sort',sort);
+  p.set('page',String(subsPage));p.set('pageSize',$('subs-page-size').value||'20');
+  return p;
+ }
+ function subStatusPill(st){
+  const labelMap={paid:'Paid',pending:'Pending',failed:'Failed',cancelled:'Cancelled',refunded:'Refunded',partially_refunded:'Partially Refunded',demo:'Demo · No Payment',free:'Free'};
+  const ok=(st==='paid'||st==='partially_refunded');
+  const b=document.createElement('span');b.className='pill '+(ok?'ok':'no');b.textContent=labelMap[st]||st||'Unknown';return b;
+ }
+ function renderSubscriptions(data){
+  const k=data.kpis;
+  if(k){
+    $('sub-kpi-subscribers').textContent=fmt(k.totalSubscribers);
+    $('sub-kpi-purchases').textContent=fmt(k.totalSuccessfulPurchases);
+    $('sub-kpi-revenue').textContent='₹'+fmt(k.totalRevenue);
+    $('sub-kpi-gross').textContent='Gross: ₹'+fmt(k.grossRevenue);
+    $('sub-kpi-mrr').textContent='₹'+fmt(k.mrr);
+    $('sub-kpi-pending').textContent=fmt(k.pendingPaymentsCount);
+    $('sub-kpi-pending-amt').textContent='₹'+fmt(k.pendingPaymentsAmount)+' pending';
+    $('sub-kpi-refunded').textContent='₹'+fmt(k.refundedAmount);
+    $('sub-kpi-demo').textContent='Demo unpaid: '+fmt(k.demoSelectionsCount);
+  }
+  const items=data.items||[];
+  const pag=data.pagination||{total:items.length,page:1,pageSize:20,totalPages:1};
+  subsPage=pag.page||1;subsTotalPages=pag.totalPages||1;
+  const start=pag.total?((subsPage-1)*pag.pageSize+1):0,end=Math.min(pag.total,subsPage*pag.pageSize);
+  $('subs-page-info').textContent='Showing '+fmt(start)+'–'+fmt(end)+' of '+fmt(pag.total)+' subscriber'+(pag.total===1?'':'s');
+  $('subs-page-num').textContent='Page '+subsPage+' of '+subsTotalPages;
+  $('subs-prev-page').disabled=subsPage<=1;
+  $('subs-next-page').disabled=subsPage>=subsTotalPages;
+  const root=$('subscriptions-list');root.replaceChildren();
+  items.forEach(s=>{
+    const row=document.createElement('tr');row.className='users-row-clickable';
+    row.addEventListener('click',()=>openSubscriberDetail(s.uid,'overview'));
+    
+    // 1. User Name
+    const nameCell=td(row,s.fullName||'Photon user');
+    if(s.accountId){const subId=document.createElement('small');subId.textContent=s.accountId;nameCell.appendChild(subId)}
+
+    // 2. Email
+    td(row,s.email||'—');
+
+    // 3. Plan
+    const planCell=td(row,'');
+    const pTitle=document.createElement('b');pTitle.textContent=s.planName||'Free';planCell.appendChild(pTitle);
+    const pSub=document.createElement('small');pSub.textContent=s.billingType==='one_time'?'One-time':(s.interval==='yearly'?'Yearly':s.interval==='monthly'?'Monthly':'None');planCell.appendChild(pSub);
+
+    // 4. Price
+    const priceCell=td(row,'');
+    if(s.successfulPaymentsCount>0){
+      const amt=document.createElement('b');amt.textContent='₹'+fmt(s.actualAmountPaid)+' '+(s.currency||'INR');priceCell.appendChild(amt);
+      if(s.refundedAmount>0){const rf=document.createElement('small');rf.textContent='Refunded: ₹'+fmt(s.refundedAmount);priceCell.appendChild(rf)}
+      else if(s.couponCode){const cp=document.createElement('small');cp.textContent='Coupon: '+s.couponCode+' (-₹'+fmt(s.discountAmount)+')';priceCell.appendChild(cp)}
+    }else{
+      const np=document.createElement('b');np.textContent='₹0 (Free)';priceCell.appendChild(np);
+    }
+
+    // 5. Payment Method
+    td(row, s.paymentMethod || s.methodDetails || (s.successfulPaymentsCount>0 ? 'Credit Card / UPI' : '—'));
+
+    // 6. Payment Gateway
+    const gwCell=td(row,'');
+    const gwPill=document.createElement('span');gwPill.className='pill ok';gwPill.textContent=s.paymentGateway||'Cashfree';gwCell.appendChild(gwPill);
+
+    // 7. Payment Status
+    const statusCell=td(row,'');
+    statusCell.appendChild(subStatusPill(s.paymentStatus || (s.successfulPaymentsCount>0 ? 'paid' : 'pending')));
+    if(s.latestTransactionId){const tx=document.createElement('small');tx.textContent='Ref: '+s.latestTransactionId;statusCell.appendChild(tx)}
+
+    // 8. Last Payment
+    const payCell=td(row,'');
+    if(s.lastPaymentAt){const stamp=new Date(s.lastPaymentAt),dEl=document.createElement('b'),tEl=document.createElement('small');dEl.textContent=date(stamp);tEl.textContent=stamp.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});payCell.append(dEl,tEl)}
+    else payCell.textContent='No payment yet';
+
+    // 9. Subscription Status
+    const subStatusCell=td(row,'');
+    const ssPill=document.createElement('span');
+    ssPill.className='account-status '+(s.isPaidActive?'online':'offline');
+    ssPill.textContent=s.subscriptionStatus ? (s.subscriptionStatus.charAt(0).toUpperCase() + s.subscriptionStatus.slice(1)) : (s.isPaidActive ? 'Active' : 'Expired');
+    subStatusCell.appendChild(ssPill);
+
+    root.appendChild(row);
+  });
+  if(!root.children.length){const row=document.createElement('tr'),empty=td(row,'No matching subscriptions or purchases found.');empty.colSpan=9;empty.className='empty';root.appendChild(row)}
+ }
+ async function loadSubscriptionsAdmin(){
+  const stEl=$('subs-state');if(stEl){stEl.hidden=false;stEl.className='status';stEl.textContent='Loading subscriptions & payment records...'}
+  try{
+    const data=await request('/api/admin/subscriptions?'+subsQueryParams().toString());
+    renderSubscriptions(data);
+    if(stEl)stEl.hidden=true;
+  }catch(error){
+    if(stEl){stEl.hidden=false;stEl.className='status error';stEl.textContent=error.message||'Could not load subscriptions.'}
+  }
+ }
+ function renderSubDetailModal(){
+  if(!currentSubDetail)return;
+  const {subscriber:u,currentSubscription:cs,paymentSummary:ps,paymentHistory,refundHistory}=currentSubDetail;
+  $('sd-title').textContent=(u.fullName||'Photon User')+' ('+u.accountId+')';
+  $('sd-subtitle').textContent=(u.email||'—')+' · Plan: '+(u.planName||'Free');
+  document.querySelectorAll('#sd-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.sdTab===currentSubTab));
+  const body=$('sd-body');body.replaceChildren();
+  if(currentSubTab==='overview'){
+    const grid=document.createElement('div');grid.className='detail-grid';
+    [
+      ['Customer Name',u.fullName||'—'],['Email',u.email||'—'],['Current Plan',u.planName||'Free'],
+      ['Subscription Status',cs.status||'free'],['Purchase Date',dateTime(cs.purchaseDate)],
+      ['Start Date',dateTime(cs.startDate)],['Expiry Date',dateTime(cs.expiryDate)],
+      ['Next Renewal Date',dateTime(cs.nextRenewalDate)],['Gross Paid','₹'+fmt(ps.grossPaid)],
+      ['Refunded Total','₹'+fmt(ps.refundedAmount)],['Net Paid','₹'+fmt(ps.netPaid)],
+      ['Counts',ps.successfulCount+' Paid · '+ps.failedCount+' Failed · '+ps.pendingCount+' Pending']
+    ].forEach(([k,v])=>{const box=document.createElement('div');box.className='detail-box';const s=document.createElement('small');s.textContent=k;const b=document.createElement('b');b.textContent=v;box.append(s,b);grid.appendChild(box)});
+    body.appendChild(grid);
+  }else if(currentSubTab==='payments'){
+    const wrap=document.createElement('div');wrap.className='scroll';
+    const tbl=document.createElement('table');tbl.className='subscriptions-table';
+    tbl.innerHTML='<thead><tr><th>Date &amp; Time</th><th>Plan</th><th>Actual Paid</th><th>Method / Discount</th><th>Gateway &amp; Tx ID</th><th>Status</th><th>Action</th></tr></thead>';
+    const tb=document.createElement('tbody');
+    (paymentHistory||[]).forEach(p=>{
+      const tr=document.createElement('tr');
+      td(tr,dateTime(p.paidAt||p.createdAt));td(tr,(p.planName||p.planId)+(p.isRenewal?' (Renewal)':''));
+      td(tr,'₹'+fmt(p.amountPaid)+' '+(p.currency||'INR'));
+      const metaText=p.methodDetails||p.paymentMethod||(p.couponCode?(p.couponCode+' (-₹'+fmt(p.discountAmount)+')'):(p.discountAmount>0?'-₹'+fmt(p.discountAmount):'—'));
+      td(tr,metaText);
+      td(tr,(p.gateway||'—')+' · '+(p.transactionId||'—'));
+      const sc=td(tr,'');sc.appendChild(subStatusPill(p.status));
+      const ac=td(tr,'');
+      if(p.status==='paid'||p.status==='partially_refunded'){
+       const rem=Math.max(0,(Number(p.amountPaid)||0)-(Number(p.refundedAmount)||0));
+       const rb=document.createElement('button');rb.type='button';rb.textContent='Refund';
+       rb.addEventListener('click',async()=>{
+        const amtStr=prompt('Enter refund amount in INR (max ₹'+rem+'):',String(rem));
+        if(amtStr===null)return;
+        const reason=prompt('Refund reason:','admin_refund')||'admin_refund';
+        rb.disabled=true;rb.textContent='Refunding...';
+        try{
+         await request('/api/admin/payments/refund','POST',{transactionId:p.transactionId,paymentId:p.id,amount:Number(amtStr),reason});
+         await openSubscriberDetail(u.uid,'payments');
+         await loadSubscriptionsAdmin();
+        }catch(err){alert(err.message||'Refund failed.');rb.disabled=false;rb.textContent='Refund'}
+       });
+       ac.appendChild(rb);
+      }else{ac.textContent='—'}
+      tb.appendChild(tr);
+    });
+    if(!(paymentHistory||[]).length){const tr=document.createElement('tr'),e=td(tr,'No payment transactions recorded yet.');e.colSpan=7;e.className='empty';tb.appendChild(tr)}
+    tbl.appendChild(tb);wrap.appendChild(tbl);body.appendChild(wrap);
+  }else if(currentSubTab==='refunds'){
+    const wrap=document.createElement('div');wrap.className='scroll';
+    const tbl=document.createElement('table');tbl.className='subscriptions-table';
+    tbl.innerHTML='<thead><tr><th>Refund Date</th><th>Plan</th><th>Refunded Amount</th><th>Original Tx ID</th><th>Refund Ref</th><th>Reason</th></tr></thead>';
+    const tb=document.createElement('tbody');
+    (refundHistory||[]).forEach(rf=>{
+      const tr=document.createElement('tr');
+      td(tr,dateTime(rf.at));td(tr,rf.planName||'—');td(tr,'₹'+fmt(rf.amount)+' '+(rf.currency||'INR'));
+      td(tr,rf.transactionId||'—');td(tr,rf.refundRef||'—');td(tr,rf.reason||'—');
+      tb.appendChild(tr);
+    });
+    if(!(refundHistory||[]).length){const tr=document.createElement('tr'),e=td(tr,'No refunds recorded.');e.colSpan=6;e.className='empty';tb.appendChild(tr)}
+    tbl.appendChild(tb);wrap.appendChild(tbl);body.appendChild(wrap);
+  }
+ }
+ async function openSubscriberDetail(uid,tab='overview'){
+  currentSubTab=tab;
+  $('sd-body').textContent='Loading subscription & payment history...';
+  $('sub-detail-modal').hidden=false;
+  try{
+    currentSubDetail=await request('/api/admin/subscriptions/'+encodeURIComponent(uid));
+    renderSubDetailModal();
+  }catch(error){$('sd-body').textContent=error.message||'Could not load subscription details.'}
+ }
+  function showTestResultModal(opts) {
+    $('trm-title').textContent = opts.title || 'Verification Result';
+    $('trm-subtitle').textContent = opts.provider ? (opts.provider + ' live verification') : 'Provider response';
+    const body = $('trm-body');
+    body.replaceChildren();
+
+    const ok = Boolean(opts.ok);
+    const s = String(opts.status || opts.code || (ok ? 'connected' : 'failed')).toLowerCase();
+    let badgeText = 'Connected';
+    let badgePill = 'pill ok';
+
+    if (opts.title && opts.title.toLowerCase().includes('model')) {
+      if (ok || s === 'working' || s === 'ok') {
+        badgeText = 'Working';
+        badgePill = 'pill ok';
+      } else {
+        badgeText = 'Failed';
+        badgePill = 'pill no';
+      }
+    } else {
+      if (ok || s === 'connected' || s === 'ok') {
+        badgeText = 'Connected';
+        badgePill = 'pill ok';
+      } else if (s.includes('invalid') || s.includes('auth') || s.includes('unauthorized') || s === 'invalid_api_key' || s === 'invalid_key') {
+        badgeText = 'Invalid API Key';
+        badgePill = 'pill no';
+      } else if (s.includes('quota') || s.includes('rate_limit') || s === 'quota_exceeded' || s === 'rate_limited') {
+        badgeText = 'Quota Exceeded';
+        badgePill = 'pill warn';
+      } else if (s.includes('denied') || s.includes('forbidden') || s.includes('permission') || s === 'access_denied') {
+        badgeText = 'Access Denied';
+        badgePill = 'pill warn';
+      } else if (s.includes('not_configured')) {
+        badgeText = 'Not Configured';
+        badgePill = 'pill';
+      } else {
+        badgeText = 'Connection Failed';
+        badgePill = 'pill no';
+      }
+    }
+
+    const banner = document.createElement('div');
+    banner.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px 14px;background:#141c2e;border:1px solid #283754;border-radius:8px';
+    const bSpan = document.createElement('span');
+    bSpan.className = badgePill;
+    bSpan.style.cssText = 'font-size:12px;font-weight:700;padding:4px 12px';
+    bSpan.textContent = badgeText;
+    const timeSpan = document.createElement('span');
+    timeSpan.className = 'muted';
+    timeSpan.style.cssText = 'margin-left:auto;font-size:12px';
+    timeSpan.textContent = (opts.responseTimeMs !== undefined && opts.responseTimeMs !== null && opts.responseTimeMs > 0) ? (fmt(opts.responseTimeMs) + ' ms response') : '';
+    banner.append(bSpan, timeSpan);
+    body.appendChild(banner);
+
+    const list = document.createElement('div');
+    list.className = 'list';
+    if (opts.provider) rowItem(list, 'Provider', opts.provider);
+    if (opts.modelName || opts.model) rowItem(list, 'Model', String(opts.modelName || opts.model) + (opts.model && opts.modelName !== opts.model ? (' (' + opts.model + ')') : ''));
+    rowItem(list, 'Test Date & Time', dateTime(opts.testedAt || new Date().toISOString()));
+    if (opts.responseTimeMs) rowItem(list, 'Response Time', fmt(opts.responseTimeMs) + ' ms');
+    if (opts.modelCount) rowItem(list, 'Available Models', fmt(opts.modelCount) + ' model(s) verified');
+    if (opts.reply) rowItem(list, 'Sample Response', '"' + String(opts.reply).trim() + '"');
+    if (opts.message || (!ok && opts.code)) {
+      const errBox = document.createElement('div');
+      errBox.className = 'item';
+      errBox.style.cssText = 'padding:10px;background:#251214;border:1px solid #592424;border-radius:6px;margin-top:6px';
+      const bTitle = document.createElement('b');
+      bTitle.style.cssText = 'color:#ff9e9e;font-size:12px';
+      bTitle.textContent = 'Error Details:';
+      const sDesc = document.createElement('small');
+      sDesc.style.cssText = 'color:#ffdede;margin-top:4px';
+      sDesc.textContent = String(opts.message || opts.code);
+      errBox.append(bTitle, sDesc);
+      list.appendChild(errBox);
+    }
+    body.appendChild(list);
+    $('test-result-modal').hidden = false;
+  }
+  if($('trm-close')) $('trm-close').addEventListener('click', () => { if($('test-result-modal')) $('test-result-modal').hidden = true; });
+  if($('trm-ok')) $('trm-ok').addEventListener('click', () => { if($('test-result-modal')) $('test-result-modal').hidden = true; });
+  if($('test-result-modal')) $('test-result-modal').addEventListener('click', e => { if (e.target === $('test-result-modal')) $('test-result-modal').hidden = true; });
+
+  function setupProviderKeyEye(btnId, inputId) {
+    const btn = $(btnId), inp = $(inputId);
+    if (btn && inp) {
+      btn.addEventListener('click', () => {
+        inp.type = inp.type === 'password' ? 'text' : 'password';
+        btn.textContent = inp.type === 'password' ? '👁' : '🔒';
+      });
+    }
+  }
+  setupProviderKeyEye('nvidia-key-eye', 'nvidia-key-input');
+  setupProviderKeyEye('groq-key-eye', 'groq-key-input');
+  setupProviderKeyEye('codecraft-key-eye', 'codecraft-key-input');
+  setupProviderKeyEye('openai-key-eye', 'openai-key-input');
+
+  function updateKeyFormUi(prefix, configured, maskedKey, placeholderName) {
+    const badge = $(prefix + '-key-badge');
+    const masked = $(prefix + '-masked-key');
+    const input = $(prefix + '-key-input');
+    const removeBtn = $(prefix + '-remove-key');
+    const saveBtn = $(prefix + '-save-key');
+    if (!badge) return;
+    if (configured) {
+      badge.className = 'pill ok';
+      badge.textContent = 'Configured';
+      masked.textContent = maskedKey || '••••';
+      if (input) input.placeholder = 'Enter replacement key to update...';
+      if (removeBtn) removeBtn.style.display = 'inline-block';
+      if (saveBtn) saveBtn.textContent = 'Update API Key';
+    } else {
+      badge.className = 'pill no';
+      badge.textContent = 'Not Configured';
+      masked.textContent = 'None';
+      if (input) input.placeholder = 'Enter ' + placeholderName + ' API key...';
+      if (removeBtn) removeBtn.style.display = 'none';
+      if (saveBtn) saveBtn.textContent = 'Save API Key';
+    }
+  }
+
+  // Key form event wireups
+  $('nvidia-key-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = $('nvidia-save-key');
+    const val = $('nvidia-key-input').value.trim();
+    if (!val) { alert('Please enter an NVIDIA API key.'); return; }
+    btn.disabled = true; btn.textContent = 'Saving...';
+    try {
+      const data = await request('/api/admin/nvidia/key', 'POST', { key: val });
+      $('nvidia-key-input').value = '';
+      renderNvidia(data);
+      status('NVIDIA API Key saved successfully.');
+      alert('NVIDIA API Key saved successfully.');
+    } catch (err) {
+      status(err.message || 'Could not save NVIDIA API key.', true);
+      alert(err.message || 'Could not save NVIDIA API key.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $('nvidia-remove-key').addEventListener('click', async () => {
+    if (!confirm('Are you sure you want to remove the saved NVIDIA API key?')) return;
+    const btn = $('nvidia-remove-key');
+    btn.disabled = true;
+    try {
+      const data = await request('/api/admin/nvidia/key', 'DELETE', {});
+      renderNvidia(data);
+      status('NVIDIA API Key removed.');
+      alert('NVIDIA API Key removed.');
+    } catch (err) {
+      status(err.message || 'Could not remove NVIDIA API key.', true);
+      alert(err.message || 'Could not remove NVIDIA API key.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $('groq-key-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = $('groq-save-key');
+    const val = $('groq-key-input').value.trim();
+    if (!val) { alert('Please enter a Groq API key.'); return; }
+    btn.disabled = true; btn.textContent = 'Saving...';
+    try {
+      const data = await request('/api/admin/groq/key', 'POST', { key: val });
+      $('groq-key-input').value = '';
+      renderGroq(data);
+      status('Groq API Key saved successfully.');
+      alert('Groq API Key saved successfully.');
+    } catch (err) {
+      status(err.message || 'Could not save Groq API key.', true);
+      alert(err.message || 'Could not save Groq API key.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $('groq-remove-key').addEventListener('click', async () => {
+    if (!confirm('Are you sure you want to remove the saved Groq API key?')) return;
+    const btn = $('groq-remove-key');
+    btn.disabled = true;
+    try {
+      const data = await request('/api/admin/groq/key', 'DELETE', {});
+      renderGroq(data);
+      status('Groq API Key removed.');
+      alert('Groq API Key removed.');
+    } catch (err) {
+      status(err.message || 'Could not remove Groq API key.', true);
+      alert(err.message || 'Could not remove Groq API key.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $('codecraft-key-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = $('codecraft-save-key');
+    const val = $('codecraft-key-input').value.trim();
+    if (!val) { alert('Please enter a CodeCraft API key.'); return; }
+    btn.disabled = true; btn.textContent = 'Saving...';
+    try {
+      const data = await request('/api/admin/codecraft/key', 'POST', { key: val });
+      $('codecraft-key-input').value = '';
+      renderCodeCraft(data);
+      status('CodeCraft API Key saved successfully.');
+      alert('CodeCraft API Key saved successfully.');
+    } catch (err) {
+      status(err.message || 'Could not save CodeCraft API key.', true);
+      alert(err.message || 'Could not save CodeCraft API key.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $('codecraft-remove-key').addEventListener('click', async () => {
+    if (!confirm('Are you sure you want to remove the saved CodeCraft API key?')) return;
+    const btn = $('codecraft-remove-key');
+    btn.disabled = true;
+    try {
+      const data = await request('/api/admin/codecraft/key', 'DELETE', {});
+      renderCodeCraft(data);
+      status('CodeCraft API Key removed.');
+      alert('CodeCraft API Key removed.');
+    } catch (err) {
+      status(err.message || 'Could not remove CodeCraft API key.', true);
+      alert(err.message || 'Could not remove CodeCraft API key.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $('openai-key-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = $('openai-save-key');
+    const val = $('openai-key-input').value.trim();
+    if (!val) { alert('Please enter an OpenAI API key.'); return; }
+    btn.disabled = true; btn.textContent = 'Saving...';
+    try {
+      const data = await request('/api/admin/openai/key', 'POST', { key: val });
+      $('openai-key-input').value = '';
+      renderOpenAI(data);
+      status('OpenAI API Key saved successfully.');
+      alert('OpenAI API Key saved successfully.');
+    } catch (err) {
+      status(err.message || 'Could not save OpenAI API key.', true);
+      alert(err.message || 'Could not save OpenAI API key.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $('openai-remove-key').addEventListener('click', async () => {
+    if (!confirm('Are you sure you want to remove the saved OpenAI API key?')) return;
+    const btn = $('openai-remove-key');
+    btn.disabled = true;
+    try {
+      const data = await request('/api/admin/openai/key', 'DELETE', {});
+      renderOpenAI(data);
+      status('OpenAI API Key removed.');
+      alert('OpenAI API Key removed.');
+    } catch (err) {
+      status(err.message || 'Could not remove OpenAI API key.', true);
+      alert(err.message || 'Could not remove OpenAI API key.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  async function geminiTestModel(m) {
+    try {
+      const data = await request('/api/admin/gemini/test-model', 'POST', { model: m.id });
+      const r = data.result || {};
+      showTestResultModal({
+        title: 'Gemini Model Test',
+        provider: 'Google Gemini',
+        model: m.id,
+        modelName: m.name || m.id,
+        ok: r.ok,
+        status: r.status,
+        code: r.code,
+        message: r.message,
+        responseTimeMs: r.responseTimeMs,
+        testedAt: r.testedAt,
+        reply: r.reply
+      });
+    } catch (err) {
+      showTestResultModal({
+        title: 'Gemini Model Test',
+        provider: 'Google Gemini',
+        model: m.id,
+        modelName: m.name || m.id,
+        ok: false,
+        status: 'failed',
+        message: err.message || 'Could not test Gemini model.'
+      });
+    }
+  }
+
+ function renderProviders(models){const root=$('models');root.replaceChildren();(models||[]).forEach(model=>{const badge=document.createElement('span');badge.className='pill '+(model.available?'ok':'no');badge.textContent=model.available?'Ready':'Setup needed';rowItem(root,model.name,model.provider+(model.reason?' · '+model.reason:''),badge)})}
+ let geminiKeysCache=[];
+ function geminiBadge(text,ok){const badge=document.createElement('span');badge.className='pill '+(ok?'ok':'no');badge.textContent=text;return badge}
+ function renderGeminiKeys(data){
+  const root=$('gemini-keys');root.replaceChildren();
+  const keys=(data&&data.keys)||geminiKeysCache;
+  geminiKeysCache=keys;
+
+  const gmRoot=$('gemini-models');
+  if(gmRoot){
+    gmRoot.replaceChildren();
+    const gModels=(data&&data.status&&data.status.models&&data.status.models.length)?data.status.models:['gemini-1.5-flash','gemini-1.5-pro','gemini-2.0-flash'];
+    gModels.forEach(mid=>{
+      const row=document.createElement('tr');
+      td(row,mid);
+      td(row,'Google Gemini');
+      const sc=td(row,'');
+      sc.appendChild(geminiBadge('Ready',true));
+      const ac=td(row,'');
+      const b=document.createElement('button');
+      b.type='button';
+      b.textContent='Test model';
+      b.addEventListener('click',()=>geminiTestModel({id:mid,name:mid}));
+      ac.appendChild(b);
+      gmRoot.appendChild(row);
+    });
+  }
+
+  keys.forEach(k=>{
+    const row=document.createElement('tr');
+    td(row,'Google Gemini');
+    td(row,k.label||'—');
+    td(row,k.masked||'••••');
+    const statusCell=td(row,'');const validation=k.lastValidation;
+    statusCell.appendChild(geminiBadge(k.enabled?'Enabled':'Disabled',Boolean(k.enabled&&(!validation||validation.status==='ok'))));
+    td(row,validation?(validation.status==='ok'?'OK'+(validation.modelCount?' · '+validation.modelCount+' models':''):'Failed: '+validation.status):'Not tested');
+    td(row,validation&&validation.at?dateTime(validation.at):'Never');
+    const actions=td(row,'');actions.style.whiteSpace='nowrap';
+    const test=document.createElement('button');test.type='button';test.textContent='Test';test.addEventListener('click',()=>geminiTest(k.id));
+    const toggle=document.createElement('button');toggle.type='button';toggle.textContent=k.enabled?'Disable':'Enable';toggle.addEventListener('click',()=>geminiUpdate(k.id,{enabled:!k.enabled}));
+    const edit=document.createElement('button');edit.type='button';edit.textContent='Edit';edit.addEventListener('click',()=>geminiEdit(k));
+    const del=document.createElement('button');del.type='button';del.textContent='Delete';del.addEventListener('click',()=>geminiDelete(k));
+    actions.append(test,toggle,edit,del);
+    root.appendChild(row);
+  });
+  if(!keys.length){const row=document.createElement('tr'),empty=td(row,'No Gemini keys configured. Add one above or set GEMINI_API_KEY / GEMINI_API_KEY_2 in API.env.');empty.colSpan=6;empty.className='empty';root.appendChild(row)}
+ }
+ async function loadGemini(){try{const data=await request('/api/admin/gemini');renderGeminiKeys(data)}catch(error){status(error.message||'Could not load Gemini keys.',true)}}
+ async function geminiUpdate(id,patch){
+  try{
+    const data=await request('/api/admin/gemini/keys/'+id,'PUT',patch);
+    renderGeminiKeys({keys:geminiKeysCache.map(k=>k.id===id?data.key:k)});
+    await load();
+    status('Gemini key updated successfully.');
+    alert('Gemini key updated successfully.');
+  }catch(error){status(error.message||'Could not update the key.',true);alert(error.message||'Could not update the key.');}
+ }
+ async function geminiTest(id){
+  try{
+    const data=await request('/api/admin/gemini/keys/'+id+'/test','POST',{});
+    const validation=data.result.status==='ok'?{status:'ok',at:data.result.checkedAt,modelCount:data.result.modelCount}:{status:data.result.status,at:data.result.checkedAt};
+    renderGeminiKeys({keys:geminiKeysCache.map(k=>k.id===id?Object.assign({},k,{lastValidation:validation}):k)});
+    await load();
+    showTestResultModal({title:'Gemini Key Test',provider:'Google Gemini',ok:data.result.status==='ok',status:data.result.status,message:data.result.message||(data.result.status==='ok'?'Gemini key is valid.':'Gemini key validation failed.'),modelCount:data.result.modelCount||0,responseTimeMs:data.result.responseTimeMs||0});
+  }catch(error){status(error.message||'Could not test the key.',true);alert(error.message||'Could not test the key.');}
+ }
+ async function geminiEdit(k){
+  const label=prompt('Key label',k.label||'');if(label===null)return;
+  const replacement=prompt('New API key (leave blank to keep the current key)','');if(replacement===null)return;
+  const patch={label};if(replacement.trim())patch.key=replacement.trim();
+  await geminiUpdate(k.id,patch);
+ }
+ async function geminiDelete(k){
+  if(!confirm('Delete the Gemini key "'+(k.label||k.masked)+'"? This removes it from the server secret file.'))return;
+  try{await request('/api/admin/gemini/keys/'+k.id,'DELETE');await load();status('Gemini key deleted successfully.');alert('Gemini key deleted successfully.');}catch(error){status(error.message||'Could not delete the key.',true);alert(error.message||'Could not delete the key.');}
+ }
+ 
+function renderDashboard(data){
+  if(!data)return;
+  const m=data.metrics||{};
+  const k=data.kpis||{};
+  if($('dash-total-users'))$('dash-total-users').textContent=fmt(m.totalRegisteredUsers||m.totalUsers||k.totalRegisteredUsers||0);
+  if($('dash-login-today'))$('dash-login-today').textContent=fmt(m.loggedInToday||k.loggedInToday||0);
+  if($('dash-online-users'))$('dash-online-users').textContent=fmt(m.currentlyOnlineUsers||m.onlineUsers||k.currentlyOnlineUsers||0);
+  if($('dash-paid-users'))$('dash-paid-users').textContent=fmt(m.activePaidSubscribers||m.paidSubscribers||k.activePaidSubscribers||0);
+  if($('dash-free-users'))$('dash-free-users').textContent=fmt(m.freePlanUsers||m.freeUsers||k.freePlanUsers||0);
+  if($('dash-tokens-today'))$('dash-tokens-today').textContent=fmt(m.totalTokensToday||m.tokensToday||k.totalTokensToday||0);
+  if($('dash-tokens-sub'))$('dash-tokens-sub').textContent=m.providerTokensToday ? (fmt(m.providerTokensToday)+' API tokens ('+fmt(m.providerInputToday||0)+' in / '+fmt(m.providerOutputToday||0)+' out)') : 'Customer tokens today';
+
+  // Daily Token Usage
+  const allowance = Number(m.totalDailyAllowance||k.totalDailyAllowance||0);
+  const consumed = Number(m.totalTokensToday||m.tokensToday||k.totalTokensToday||0);
+  const remaining = Math.max(0, allowance - consumed);
+  const pct = allowance > 0 ? Math.min(100, Math.round((consumed / allowance) * 100)) : 0;
+  if($('dash-token-headline'))$('dash-token-headline').textContent=fmt(consumed)+' / '+fmt(allowance)+' Plan Tokens Used Today';
+  if($('dash-token-allowance'))$('dash-token-allowance').textContent=fmt(allowance);
+  if($('dash-token-consumed'))$('dash-token-consumed').textContent=fmt(consumed);
+  if($('dash-token-remaining'))$('dash-token-remaining').textContent=fmt(remaining);
+  if($('dash-token-pct'))$('dash-token-pct').textContent=pct+'%';
+  if($('dash-token-bar'))$('dash-token-bar').style.width=Math.max(consumed>0?2:0, pct)+'%';
+  if($('dash-api-tokens'))$('dash-api-tokens').textContent=fmt(m.providerTokensToday||k.providerTokensToday||0);
+  if($('dash-api-breakdown'))$('dash-api-breakdown').textContent='('+fmt(m.providerInputToday||k.providerInputToday||0)+' in / '+fmt(m.providerOutputToday||k.providerOutputToday||0)+' out)';
+
+  // Analytics
+  const an=data.analytics;
+  if(an){
+    const inR=an.inRange||{};
+    if($('dash-range-reg'))$('dash-range-reg').textContent=fmt(inR.registrations||0);
+    if($('dash-range-signins'))$('dash-range-signins').textContent=fmt(inR.signIns||0);
+    if($('dash-range-tokens'))$('dash-range-tokens').textContent=fmt(inR.tokensUsed||0);
+    if($('dash-range-rev'))$('dash-range-rev').textContent='₹'+fmt(inR.revenue||0);
+    if($('dash-range-purchases'))$('dash-range-purchases').textContent=fmt(inR.purchases||0);
+
+      }
+}
+
+function setupDashboardAnalyticsFilter(){
+  const sel=$('dash-date-range');
+  const customSpan=$('dash-custom-dates');
+  const btn=$('dash-filter-btn');
+  if(!sel||sel.dataset.bound)return;
+  sel.dataset.bound='1';
+  sel.addEventListener('change',()=>{
+    if(sel.value==='custom'){
+      customSpan.style.display='inline-flex';
+    }else{
+      customSpan.style.display='none';
+      applyDashFilter();
+    }
+  });
+  if(btn){
+    btn.addEventListener('click',applyDashFilter);
+  }
+  async function applyDashFilter(){
+    const range=sel.value;
+    let url='/api/admin/overview?range='+encodeURIComponent(range);
+    if(range==='custom'){
+      const from=$('dash-date-from')?.value;
+      const to=$('dash-date-to')?.value;
+      if(from)url+='&from='+encodeURIComponent(from);
+      if(to)url+='&to='+encodeURIComponent(to);
+    }
+    try{
+      const data=await request(url);
+      renderDashboard(data);
+    }catch(err){
+      status(err.message||'Could not filter dashboard.',true);
+    }
+  }
+}
+
+async function load(forceSettings=false){if(refreshing)return;refreshing=true;status('Loading admin data...');try{const data=await request('/api/admin/overview');showApp();const m=data.metrics||{};$('logout').hidden=!!data.localAccess;if($('total'))$('total').textContent=fmt(m.totalUsers);if($('login-today'))$('login-today').textContent=fmt(Math.max(Number(m.signInsToday)||0,(data.users||[]).reduce((total,u)=>total+loginsToday(u),0)));if($('tokens'))$('tokens').textContent=fmt(m.tokensToday);renderDashboard(data);setupDashboardAnalyticsFilter();loadUsersAdmin();loadSubscriptionsAdmin();if(data.paymentGateway)renderGatewayConfig(data.paymentGateway);else loadGatewayConfig();renderProviders(data.models);loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();if(forceSettings||!settingsDirty){renderPlanFields(data.settings||{});renderTokenRulesTable(data.settings||{});settingsDirty=false}renderPricingAudit(data.pricingAuditLogs||[]);runConfigVerification(true);status('Admin data loaded.')}catch(error){if(error.status===401){showLogin();return}if(error.status===503&&error.code==='admin_not_configured'){showLogin('Admin sign-in is not configured. Set PHOTON_ADMIN_PASSWORD and restart the server.');return}status(error.message||'Could not load admin data.',true)}finally{refreshing=false}}
+ $('login-form').addEventListener('submit',async event=>{event.preventDefault();const button=$('login-button');button.disabled=true;button.textContent='Signing in...';$('login-error').hidden=true;try{await request('/api/admin/login','POST',{email:$('admin-email').value.trim(),password:$('admin-password').value});$('admin-password').value='';await load(true)}catch(error){showLogin(error.message||'Sign-in failed. Check the username and password.')}finally{button.disabled=false;button.textContent='Sign in'}});
+ $('logout').addEventListener('click',async()=>{try{await request('/api/admin/logout','POST',{})}finally{showLogin('You have signed out.')}});
+ const pageMeta={overview:['Dashboard','Live overview of Photon accounts and usage.'],'users-section':['Users & Sign-ins','Account access, sign-in methods, activity, and plan status.'],subscriptions:['Subscriptions & Purchases','Verified payments, revenue, MRR, and Cashfree gateway configuration.'],settings:['Pricing & Token Rules','Manage plan pricing, daily limits, and AI activity token costs.'],providers:['AI Provider Settings','Check and manage server-side AI provider keys. Secrets are never shown.']};function showPage(){let id=location.hash.slice(1)||'overview';if(!pageMeta[id])id='overview';document.querySelectorAll('.page-view').forEach(page=>page.classList.toggle('active',page.id===id));document.querySelectorAll('.sidebar nav a[href^="#"]').forEach(link=>link.classList.toggle('active',link.getAttribute('href')==='#'+id));$('page-title').textContent=pageMeta[id][0];$('page-description').textContent=pageMeta[id][1];if(id==='overview'){load()}else if(id==='users-section'){loadUsersAdmin()}else if(id==='subscriptions'){loadGatewayConfig();loadSubscriptionsAdmin()}else if(id==='settings'){load(true)}else if(id==='providers'){loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia()}}window.addEventListener('hashchange',showPage);showPage();
+ $('settings-form').addEventListener('input',()=>{settingsDirty=true});
+ $('settings-form').addEventListener('change',()=>{settingsDirty=true});
+ $('verify-token-calc-btn').addEventListener('click',()=>runConfigVerification(false));
+ $('toggle-add-plan').addEventListener('click',()=>{$('add-plan-form').hidden=!$('add-plan-form').hidden});
+ $('cancel-add-plan').addEventListener('click',()=>{$('add-plan-form').hidden=true});
+ $('toggle-add-rule').addEventListener('click',()=>{$('add-rule-box').hidden=!$('add-rule-box').hidden});
+ $('cancel-add-rule').addEventListener('click',()=>{$('add-rule-box').hidden=true});
+ $('settings-cancel-btn').addEventListener('click',async()=>{settingsDirty=false;await load(true);showSettingsMsg('Restored saved pricing and token rules from the database.',false)});
+ $('add-plan-form').addEventListener('submit',async event=>{
+  event.preventDefault();const btn=$('save-new-plan');btn.disabled=true;btn.textContent='Creating...';showSettingsMsg('');
+  try{
+   const saved=await request('/api/admin/pricing/plans','POST',{name:$('new-plan-name').value.trim(),price:Number($('new-plan-price').value),billingPeriod:$('new-plan-period').value,dailyTokens:Number($('new-plan-tokens').value),displayOrder:Number($('new-plan-order').value),description:$('new-plan-desc').value.trim(),enabled:true});
+   $('add-plan-form').reset();$('add-plan-form').hidden=true;settingsDirty=false;
+   renderPlanFields(saved.settings||{});renderTokenRulesTable(saved.settings||{});renderPricingAudit(saved.pricingAuditLogs||[]);await runConfigVerification(true);
+   showSettingsMsg('Created plan "'+(saved.plan?.name||'New plan')+'" cleanly.',false);
+  }catch(e){showSettingsMsg(e.message||'Could not create plan.',true)}finally{btn.disabled=false;btn.textContent='Create Plan'}
+ });
+ $('save-new-rule').addEventListener('click',async()=>{
+  const btn=$('save-new-rule');btn.disabled=true;btn.textContent='Adding...';showSettingsMsg('');
+  try{
+   const saved=await request('/api/admin/pricing/rules','POST',{name:$('new-rule-name').value.trim(),id:$('new-rule-id').value.trim(),tokenCost:Number($('new-rule-cost').value),enabled:true});
+   $('new-rule-name').value='';$('new-rule-id').value='';$('new-rule-cost').value='10';$('add-rule-box').hidden=true;settingsDirty=false;
+   renderTokenRulesTable(saved.settings||{});renderPricingAudit(saved.pricingAuditLogs||[]);await runConfigVerification(true);
+   showSettingsMsg('Added AI activity rule "'+(saved.rule?.name||'')+'".',false);
+  }catch(e){showSettingsMsg(e.message||'Could not create activity rule.',true)}finally{btn.disabled=false;btn.textContent='Add Activity Rule'}
+ });
+ $('settings-form').addEventListener('submit',async event=>{event.preventDefault();if(savingSettings)return;savingSettings=true;const button=$('save-settings');button.disabled=true;button.textContent='Saving...';showSettingsMsg('');try{
+  const plans=Array.from(document.querySelectorAll('[data-plan]')).reduce((out,el)=>{
+   let plan=out.find(item=>item.id===el.dataset.plan);
+   if(!plan){plan={id:el.dataset.plan};out.push(plan)}
+   const k=el.dataset.key;
+   if(k==='name'||k==='description'||k==='billingPeriod')plan[k]=el.value.trim();
+   else if(k==='enabled')plan[k]=el.value==='true';
+   else plan[k]=Number(el.value);
+   return out;
+  },[]);
+  const tokenRules=Array.from(document.querySelectorAll('[data-rule]')).reduce((out,el)=>{
+   let rule=out.find(item=>item.id===el.dataset.rule);
+   if(!rule){rule={id:el.dataset.rule};out.push(rule)}
+   const k=el.dataset.ruleKey;
+   if(k==='name')rule[k]=el.value.trim();
+   else if(k==='enabled')rule[k]=el.value==='true';
+   else rule[k]=Number(el.value);
+   return out;
+  },[]);
+  await request('/api/admin/settings','PUT',{plans,tokenRules,allowancePolicy:$('allowance-policy').value});
+  const fresh=await request('/api/admin/settings');
+  settingsDirty=false;
+  renderPlanFields(fresh);renderTokenRulesTable(fresh);renderPricingAudit(fresh.pricingAuditLogs||[]);
+  await runConfigVerification(true);
+  showSettingsMsg('Saved & reloaded from database. Plan names, prices, daily allowances, and AI activity costs are now active.',false);
+ }catch(error){showSettingsMsg(error.message||'Could not save settings.',true)}finally{savingSettings=false;button.disabled=false;button.textContent='Save Pricing & Token Rules'}});
+ $('gw-config-form').addEventListener('submit',async event=>{
+   event.preventDefault();const btn=$('gw-save-btn');btn.disabled=true;showGwMsg('');
+   const mode=$('gw-mode').value;
+   if(mode==='production'&&!confirm('Switch Cashfree gateway to PRODUCTION mode? Real charges require Live keys and verified Cashfree activation.')){btn.disabled=false;return}
+   try{
+    const payload={enabled:$('gw-enabled').value==='true',mode};
+    const cid=$('gw-client-id')?$('gw-client-id').value.trim():'';
+    const csec=$('gw-client-secret')?$('gw-client-secret').value.trim():'';
+    const wsec=$('gw-webhook-secret')?$('gw-webhook-secret').value.trim():'';
+    if(cid)payload.clientId=cid;
+    if(csec)payload.clientSecret=csec;
+    if(wsec)payload.webhookSecret=wsec;
+    const gw=await request('/api/admin/payments/config','PUT',payload);
+    renderGatewayConfig(gw);
+    if($('gw-client-secret')) $('gw-client-secret').value='';
+    if($('gw-webhook-secret')) $('gw-webhook-secret').value='';
+    showGwMsg('Gateway configuration saved ('+(gw.mode==='production'?'PRODUCTION':'SANDBOX')+' mode).',false);
+   }catch(e){showGwMsg(e.message||'Could not save gateway config.',true)}finally{btn.disabled=false}
+  });
+ $('gw-test-conn').addEventListener('click',async()=>{
+  const btn=$('gw-test-conn');btn.disabled=true;btn.textContent='Testing...';showGwMsg('');
+  try{
+   const res=await request('/api/admin/payments/test-connection','POST',{});
+   renderGatewayConfig(res.status);
+   showGwMsg(res.ok?('Cashfree connection OK ('+(res.mode||'sandbox').toUpperCase()+' mode).'):('Connection test failed: '+(res.message||res.code)),!res.ok);
+  }catch(e){showGwMsg(e.message||'Could not test Cashfree connection.',true)}finally{btn.disabled=false;btn.textContent='Test connection'}
+ });
+ $('refresh-users').addEventListener('click',()=>loadUsersAdmin());
+ $('users-search').addEventListener('input',()=>{clearTimeout(usersSearchTimer);usersSearchTimer=setTimeout(()=>{usersPage=1;loadUsersAdmin()},220)});
+ ['users-plan-filter','users-status-filter','users-provider-filter','users-sub-filter','users-reg-from','users-last-from','users-sort','users-page-size'].forEach(id=>{
+  $(id).addEventListener('change',()=>{usersPage=1;loadUsersAdmin()});
+ });
+ $('users-reset-filters').addEventListener('click',()=>{
+  $('users-search').value='';$('users-plan-filter').value='all';$('users-status-filter').value='all';
+  $('users-provider-filter').value='all';$('users-sub-filter').value='all';$('users-reg-from').value='';
+  $('users-last-from').value='';$('users-sort').value='last_sign_in';usersPage=1;loadUsersAdmin();
+ });
+ $('users-prev-page').addEventListener('click',()=>{if(usersPage>1){usersPage--;loadUsersAdmin()}});
+ $('users-next-page').addEventListener('click',()=>{if(usersPage<usersTotalPages){usersPage++;loadUsersAdmin()}});
+ $('users-export-btn').addEventListener('click',()=>{
+  const p=usersQueryParams(false);
+  p.set('scope',$('users-export-scope').value);
+  p.set('format',$('users-export-format').value);
+  window.location.href='/api/admin/users/export?'+p.toString();
+ });
+ $('ud-close').addEventListener('click',()=>{$('user-detail-modal').hidden=true});
+ $('user-detail-modal').addEventListener('click',e=>{if(e.target===$('user-detail-modal'))$('user-detail-modal').hidden=true});
+ document.querySelectorAll('#ud-tabs button').forEach(btn=>{btn.addEventListener('click',()=>{currentDetailTab=btn.dataset.udTab;renderUserDetailModal()})});
+ $('refresh-subs').addEventListener('click',()=>loadSubscriptionsAdmin());
+ $('subs-search').addEventListener('input',()=>{clearTimeout(subsSearchTimer);subsSearchTimer=setTimeout(()=>{subsPage=1;loadSubscriptionsAdmin()},220)});
+ ['subs-plan-filter','subs-status-filter','subs-interval-filter','subs-date-from','subs-sort','subs-page-size'].forEach(id=>{
+  $(id).addEventListener('change',()=>{subsPage=1;loadSubscriptionsAdmin()});
+ });
+ $('subs-reset-filters').addEventListener('click',()=>{
+  $('subs-search').value='';$('subs-plan-filter').value='all';$('subs-status-filter').value='all';
+  $('subs-interval-filter').value='all';$('subs-date-from').value='';$('subs-sort').value='latest_payment';subsPage=1;loadSubscriptionsAdmin();
+ });
+ $('subs-prev-page').addEventListener('click',()=>{if(subsPage>1){subsPage--;loadSubscriptionsAdmin()}});
+ $('subs-next-page').addEventListener('click',()=>{if(subsPage<subsTotalPages){subsPage++;loadSubscriptionsAdmin()}});
+ $('sd-close').addEventListener('click',()=>{$('sub-detail-modal').hidden=true});
+ $('sub-detail-modal').addEventListener('click',e=>{if(e.target===$('sub-detail-modal'))$('sub-detail-modal').hidden=true});
+ document.querySelectorAll('#sd-tabs button').forEach(btn=>{btn.addEventListener('click',()=>{currentSubTab=btn.dataset.sdTab;renderSubDetailModal()})});
+ $('gemini-add-form').addEventListener('submit',async event=>{
+    event.preventDefault();
+    const button=$('gemini-add');
+    const val=$('gemini-key').value.trim();
+    const lbl=$('gemini-label').value.trim();
+    if(!val){alert('Please enter a Gemini API key.');return;}
+    button.disabled=true;button.textContent='Adding...';
+    try{
+      await request('/api/admin/gemini/keys','POST',{label:lbl,key:val});
+      $('gemini-label').value='';$('gemini-key').value='';
+      await loadGemini();
+      await load();
+      status('Gemini API key added successfully.');
+      alert('Gemini API key added successfully.');
+    }catch(error){
+      status(error.message||'Could not add the Gemini key.',true);
+      alert(error.message||'Could not add the Gemini key.');
+    }finally{
+      button.disabled=false;button.textContent='Add key';
+    }
+  });
+ $('gemini-test-all').addEventListener('click',async()=>{const button=$('gemini-test-all');button.disabled=true;button.textContent='Testing...';try{const data=await request('/api/admin/gemini/test-all','POST',{});renderGeminiKeys(data);const res=data.results||[];const allOk=res.length>0&&res.every(x=>x.status==='ok');showTestResultModal({title:'Gemini API Key Test',provider:'Google Gemini',ok:allOk,status:allOk?'connected':(res[0]?res[0].status:'not_configured'),code:allOk?'ok':(res[0]?res[0].status:'failed'),message:allOk?(res.length+' key(s) tested and valid.'):(res[0]?res[0].message:'No Gemini keys configured.'),modelCount:res.reduce((t,x)=>Math.max(t,x.modelCount||0),0),responseTimeMs:res.reduce((t,x)=>t+(x.responseTimeMs||0),0)});status('Gemini validation finished: '+(allOk?'All keys valid':'Validation errors found')+'.');}catch(error){showTestResultModal({title:'Gemini API Key Test',provider:'Google Gemini',ok:false,status:'connection_failed',message:error.message||'Could not validate Gemini keys.'});}finally{button.disabled=false;button.textContent='Test all keys'}});
+ let orKeysCache=[],orStatusCache=null;
+ function orBadge(text,ok){const b=document.createElement('span');b.className='pill '+(ok?'ok':'no');b.textContent=text;return b}
+ function orHealthText(k){const h=k.health||{};switch(h.state){case'active':return['Active',true];case'disabled':return['Disabled',false];case'invalid':return['Invalid / revoked',false];case'cooling_down':return['Paused until '+dateTime(h.cooldownUntil),false];case'unverified':return['Unverified – retrying',false];default:return['Not validated',false]}}
+ function orMoney(v){const n=Number(v);return Number.isFinite(n)?'$'+(n*1e6).toFixed(2):'—'}
+ function renderOpenRouter(data){
+  const keys=(data&&data.keys)||orKeysCache;orKeysCache=keys;
+  const st=(data&&data.status)||orStatusCache||{};orStatusCache=st;
+  const diag=$('openrouter-diag');diag.replaceChildren();
+  rowItem(diag,'OpenRouter configured',st.validated?'At least one key passed a live validation request.':(st.validation&&st.validation!=='not_configured'?'Not validated: '+st.validation:'No OpenRouter key is configured.'),orBadge(st.validated?'true':'false',Boolean(st.validated)));
+  [['Total configured keys',st.totalKeys],['Enabled keys',st.enabledKeys],['Valid keys',st.validKeys],['Invalid keys',st.invalidKeys],['Temporarily unavailable keys',st.temporarilyUnavailableKeys],['Available free models',st.freeModelCount]].forEach(p=>{const v=document.createElement('b');v.textContent=fmt(p[1]);rowItem(diag,p[0],'',v)});
+  const last=document.createElement('b');last.textContent=st.lastSuccessfulRequestAt?dateTime(st.lastSuccessfulRequestAt):'None yet';rowItem(diag,'Last successful API request','',last);
+  if(st.ignoredEnvNames&&st.ignoredEnvNames.length){const w=document.createElement('b');w.textContent='Ignored';rowItem(diag,'Unsupported variables: '+st.ignoredEnvNames.join(', '),'Use OPENROUTER_API_KEY for slot 1 and OPENROUTER_API_KEY_2 ... _10 for the rest.',w)}
+  const root=$('openrouter-keys');root.replaceChildren();
+  keys.forEach(k=>{
+    const row=document.createElement('tr');
+    td(row,k.slot);td(row,k.label||'—');td(row,k.masked||'••••');
+    const h=orHealthText(k);let cell=td(row,'');cell.appendChild(orBadge(h[0],h[1]));
+    if(k.health&&k.health.rateLimitedUntil){const s=document.createElement('small');s.className='cell-note';s.textContent='Rate limited until '+dateTime(k.health.rateLimitedUntil);cell.appendChild(s)}
+    const v=k.lastValidation;
+    td(row,v?(v.status==='ok'?'Valid'+(v.isFreeTier===true?' · free tier':''):'Failed: '+(v.message||v.status)):'Not tested');
+    td(row,k.lastOkAt?dateTime(k.lastOkAt):'Never');
+    const e=k.stats&&k.stats.lastError;td(row,e?e.code+(e.message?': '+e.message:'')+' ('+dateTime(e.at)+')':'—');
+    const actions=td(row,'');actions.style.whiteSpace='nowrap';
+    const btn=(label,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.addEventListener('click',fn);return b};
+    actions.append(btn('Test connection',()=>orTest(k.id)),btn(k.enabled?'Disable':'Enable',()=>orUpdate(k.id,{enabled:!k.enabled})),btn('Edit',()=>orEdit(k)),btn('Delete',()=>orDelete(k)));
+    root.appendChild(row);
+  });
+  if(!keys.length){const row=document.createElement('tr'),empty=td(row,'No OpenRouter keys configured. Add one below or set OPENROUTER_API_KEY in API.env.');empty.colSpan=8;empty.className='empty';root.appendChild(row)}
+  const max=Number((data&&data.maxKeys)||10);$('openrouter-add').disabled=keys.length>=max;$('openrouter-slots').textContent=keys.length+' of '+max+' key slots used.'+(keys.length>=max?' (All 10 slots filled. Click "Edit" on an existing key row to update it, or "Delete" to free a slot.)':' Keys from one OpenRouter account share one credit balance and rate limit; PHOTON never switches keys to get around a rate limit or billing error.');
+  const mroot=$('openrouter-models');mroot.replaceChildren();
+  (st.freeModels||[]).forEach(m=>{const row=document.createElement('tr');td(row,m.name);td(row,m.provider||'—');td(row,m.pricing?orMoney(m.pricing.prompt)+' in / '+orMoney(m.pricing.completion)+' out':'—');let c=td(row,'');c.appendChild(orBadge(m.available?'Available':'Unavailable',Boolean(m.available)));c=td(row,'');const b=document.createElement('button');b.type='button';b.textContent='Test model';b.addEventListener('click',()=>orTestModel(m));c.appendChild(b);mroot.appendChild(row)});
+  if(!(st.freeModels||[]).length){const row=document.createElement('tr'),empty=td(row,'No free models available. Add and validate a key first.');empty.colSpan=5;empty.className='empty';mroot.appendChild(row)}
+ }
+ async function loadOpenRouter(){try{renderOpenRouter(await request('/api/admin/openrouter'))}catch(error){status(error.message||'Could not load OpenRouter keys.',true)}}
+ async function orUpdate(id,patch){
+  try{
+    renderOpenRouter(await request('/api/admin/openrouter/keys/'+id,'PUT',patch));
+    await load();
+    status('OpenRouter key updated successfully.');
+    alert('OpenRouter key updated successfully.');
+  }catch(error){
+    status(error.message||'Could not update the key.',true);
+    alert(error.message||'Could not update the key.');
+  }
+ }
+ async function orTest(id){
+  try{
+    const data=await request('/api/admin/openrouter/keys/'+id+'/test','POST',{});
+    renderOpenRouter(data);
+    if(data.result.status!=='ok')alert('Key test failed: '+(data.result.message||data.result.status));
+    else status('OpenRouter key connection verified.');
+  }catch(error){
+    status(error.message||'Could not test the key.',true);
+    alert(error.message||'Could not test the key.');
+  }
+ }
+ async function orTestModel(m){
+  try{
+    const data=await request('/api/admin/openrouter/test-model','POST',{model:m.id});
+    renderOpenRouter(data);
+    const r=data.result||{};
+    showTestResultModal({title:'OpenRouter Model Test',provider:'OpenRouter',model:m.id,modelName:m.name||m.id,ok:r.ok,status:r.status,code:r.code,message:r.message,responseTimeMs:r.responseTimeMs,testedAt:r.testedAt,reply:r.reply||(r.ok?'ok':'')});
+  }catch(err){
+    showTestResultModal({title:'OpenRouter Model Test',provider:'OpenRouter',model:m.id,modelName:m.name||m.id,ok:false,status:'failed',message:err.message||'Could not test model.'});
+  }
+ }
+ async function orEdit(k){
+  const label=prompt('Key label',k.label||'');if(label===null)return;
+  const replacement=prompt('New API key (leave blank to keep the current key)','');if(replacement===null)return;
+  const patch={label};if(replacement.trim())patch.key=replacement.trim();
+  await orUpdate(k.id,patch);
+ }
+ async function orDelete(k){
+  if(!confirm('Delete OpenRouter key #'+k.slot+' "'+(k.label||k.masked)+'"? This removes it from the server secret file.'))return;
+  try{
+    renderOpenRouter(await request('/api/admin/openrouter/keys/'+k.id,'DELETE'));
+    await load();
+    status('OpenRouter key deleted successfully.');
+    alert('OpenRouter key deleted successfully.');
+  }catch(error){
+    status(error.message||'Could not delete the key.',true);
+    alert(error.message||'Could not delete the key.');
+  }
+ }
+ $('openrouter-add-form').addEventListener('submit',async event=>{
+    event.preventDefault();
+    const button=$('openrouter-add');
+    const val=$('openrouter-key').value.trim();
+    const lbl=$('openrouter-label').value.trim();
+    if(!val){alert('Please enter an OpenRouter API key.');return;}
+    button.disabled=true;button.textContent='Adding...';
+    try{
+      renderOpenRouter(await request('/api/admin/openrouter/keys','POST',{label:lbl,key:val}));
+      $('openrouter-label').value='';$('openrouter-key').value='';
+      await loadOpenRouter();
+      await load();
+      status('OpenRouter API key added successfully.');
+      alert('OpenRouter API key added successfully.');
+    }catch(error){
+      status(error.message||'Could not add the OpenRouter key.',true);
+      alert(error.message||'Could not add the OpenRouter key.');
+    }finally{
+      button.textContent='Add key';
+      button.disabled=orKeysCache.length>=10;
+    }
+  });
+ $('openrouter-test-all').addEventListener('click',async()=>{const button=$('openrouter-test-all');button.disabled=true;button.textContent='Testing...';try{const data=await request('/api/admin/openrouter/test-all','POST',{});renderOpenRouter(data);const res=data.results||[];const anyOk=res.some(x=>x.status==='ok');showTestResultModal({title:'OpenRouter API Key Test',provider:'OpenRouter',ok:anyOk,status:anyOk?'connected':'failed',code:anyOk?'ok':'failed',message:anyOk?'At least one OpenRouter key is valid.':'All OpenRouter keys failed validation.',modelCount:(data.status&&data.status.freeModels&&data.status.freeModels.length)||0});status('OpenRouter validation finished.');}catch(error){showTestResultModal({title:'OpenRouter API Key Test',provider:'OpenRouter',ok:false,status:'connection_failed',message:error.message||'Could not validate OpenRouter keys.'});}finally{button.disabled=false;button.textContent='Test all keys'}});
+  function openaiUsageText(u){u=u||{};return fmt(u.requests)+' requests, '+fmt(u.failures)+' failed, '+fmt(u.inputTokens)+' input / '+fmt(u.outputTokens)+' output tokens ('+fmt(u.totalTokens)+' total), estimated $'+Number(u.estimatedCostUsd||0).toFixed(4)}
+  function renderOllama(st){const root=$('ollama-status');root.replaceChildren();st=st||{};rowItem(root,'Local Ollama',(st.configured?'endpoint '+(st.endpoint||''):'not configured')+'; '+(st.modelCount||0)+' installed model(s)'+(st.defaultModel?'; default '+st.defaultModel:''),orBadge(st.connected?'Connected':'Not reachable '+(st.validation||''),Boolean(st.connected)));(st.models||[]).forEach(m=>rowItem(root,m.name,m.family||'local model',orBadge('Free / local',true)))}
+  async function loadOllama(){try{renderOllama(await request('/api/admin/ollama'))}catch(error){$('ollama-status').textContent=error.message||'Could not load local Ollama status.'}}
+  function renderOpenAI(view){const st=(view&&view.status)||view||{};updateKeyFormUi('openai',st.configured,st.maskedKey,'OpenAI');const diag=$('openai-diag');diag.replaceChildren();rowItem(diag,'OpenAI GPT',(st.configured?'key '+(st.maskedKey||'configured'):'OPENAI_API_KEY is not set')+'; '+(st.modelCount||0)+' visible models, '+(st.enabledModelCount||0)+' enabled',orBadge(st.validation==='ok'?'Connected':(st.validation||'Not checked'),st.validation==='ok'));if(st.keyFormatWarning)rowItem(diag,'Key format warning',st.keyFormatWarning,orBadge('Check key',false));$('openai-usage').textContent=openaiUsageText(st.usage);const sp=st.spend||{};$('openai-spend').textContent=(sp.month||'no month')+': $'+Number(sp.costUsd||0).toFixed(4)+' of $'+Number(st.monthlySpendLimitUsd||0).toFixed(2)+' cap'+(st.allowPaidFallback?' (paid fallback allowed)':' (free/local fallback only)');$('openai-enabled').value=st.enabled===false?'false':'true';$('openai-paid-fallback').value=st.allowPaidFallback?'true':'false';$('openai-spend-limit').value=String(Number(st.monthlySpendLimitUsd||0));const root=$('openai-models');root.replaceChildren();const models=(view&&view.models)||st.models||[];models.forEach(m=>{const row=document.createElement('tr');td(row,m.name+(m.vision?' (vision)':''));const statusCell=td(row,'');statusCell.appendChild(orBadge(m.available?'Enabled':m.enabled?'Enabled (unverified)':m.verifiedAt?'Verified, disabled':'Not verified',Boolean(m.available)));if(m.pricing&&m.pricing.source==='unknown'){const note=document.createElement('small');note.className='cell-note';note.textContent='Price unknown';statusCell.appendChild(note)}const planCell=td(row,'');const sel=document.createElement('select');['basic','pro','premium'].forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p.charAt(0).toUpperCase()+p.slice(1);sel.appendChild(o)});sel.value=m.minPlan||'pro';planCell.appendChild(sel);const priceCell=td(row,'');const pin=document.createElement('input');pin.type='number';pin.min='0';pin.step='0.0001';pin.placeholder='input';pin.style.width='88px';pin.value=m.pricing&&m.pricing.inputPer1M!=null?String(m.pricing.inputPer1M):'';const pout=document.createElement('input');pout.type='number';pout.min='0';pout.step='0.0001';pout.placeholder='output';pout.style.width='88px';pout.value=m.pricing&&m.pricing.outputPer1M!=null?String(m.pricing.outputPer1M):'';priceCell.append(pin,document.createTextNode(' in / '),pout,document.createTextNode(' out'));const actions=td(row,'');actions.style.whiteSpace='nowrap';const btn=(label,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.addEventListener('click',fn);return b};actions.append(btn('Test model',()=>openaiTestModel(m)),btn(m.enabled?'Disable':'Enable',()=>openaiPatchModel(m.id,{enabled:!m.enabled})),btn('Save price',()=>openaiPatchModel(m.id,{inputPer1M:pin.value,outputPer1M:pout.value})),btn('Reset price',()=>openaiPatchModel(m.id,{resetPricing:true})),btn('Set plan',()=>openaiPatchModel(m.id,{planTier:sel.value})));root.appendChild(row)});if(!models.length){const row=document.createElement('tr'),empty=td(row,st.configured?'No OpenAI models discovered yet. Refresh models after checking the key.':'Set OPENAI_API_KEY to discover models.');empty.colSpan=5;empty.className='empty';root.appendChild(row)}const errors=$('openai-errors');errors.replaceChildren();const recent=(view&&view.recentErrors)||st.recentErrors||[];recent.slice(0,10).forEach(e=>rowItem(errors,(e.code||'error')+(e.model?' ('+e.model+')':''),(e.message||'')+' '+(e.at||''),orBadge('Failed',false)));if(!recent.length)rowItem(errors,'No recent OpenAI errors','Successful requests and failures are tracked here.',orBadge('Clear',true))}
+  async function loadOpenAI(){try{renderOpenAI(await request('/api/admin/openai'))}catch(error){status(error.message||'Could not load OpenAI status.',true)}loadOllama()}
+  async function openaiPatchModel(id,patch){try{renderOpenAI(await request('/api/admin/openai/models/'+id,'PUT',patch));await loadOllama()}catch(error){alert(error.message||'Could not update the OpenAI model.');await loadOpenAI()}}
+  async function openaiTestModel(m){
+    try{
+      const data=await request('/api/admin/openai/test-model','POST',{model:m.id});
+      renderOpenAI(data);
+      const r=data.result||{};
+      showTestResultModal({title:'OpenAI Model Test',provider:'OpenAI GPT',model:m.id,modelName:m.name||m.id,ok:r.ok,status:r.status,code:r.code,message:r.message,responseTimeMs:r.responseTimeMs,testedAt:r.testedAt,reply:r.reply||(r.ok?'Verified completion':'')});
+    }catch(error){
+      showTestResultModal({title:'OpenAI Model Test',provider:'OpenAI GPT',model:m.id,modelName:m.name||m.id,ok:false,status:'failed',message:error.message||'Could not test model.'});
+    }
+  }
+  $('openai-save-settings').addEventListener('click',async()=>{
+    const button=$('openai-save-settings');button.disabled=true;
+    try{
+      renderOpenAI(await request('/api/admin/openai','PUT',{enabled:$('openai-enabled').value==='true',allowPaidFallback:$('openai-paid-fallback').value==='true',monthlySpendLimitUsd:Number($('openai-spend-limit').value)}));
+    }catch(error){
+      alert(error.message||'Could not save OpenAI settings.');
+    }finally{
+      button.disabled=false;
+    }
+  });
+  $('openai-test-connection').addEventListener('click',async()=>{const button=$('openai-test-connection');button.disabled=true;button.textContent='Testing...';try{const data=await request('/api/admin/openai/connection','POST',{});renderOpenAI(data);const r=data.result||{};showTestResultModal({title:'OpenAI Connection Test',provider:'OpenAI GPT',ok:r.ok,status:r.status,code:r.code,message:r.message,responseTimeMs:r.responseTimeMs,testedAt:r.checkedAt||r.testedAt,modelCount:r.modelCount});}catch(error){showTestResultModal({title:'OpenAI Connection Test',provider:'OpenAI GPT',ok:false,status:'connection_failed',message:error.message||'Could not test OpenAI connection.'});}finally{button.disabled=false;button.textContent='Test connection'}});
+  $('openai-refresh').addEventListener('click',async()=>{const button=$('openai-refresh');button.disabled=true;try{renderOpenAI(await request('/api/admin/openai/refresh','POST',{}))}catch(error){alert(error.message||'Could not refresh OpenAI models.')}finally{button.disabled=false}});
+  $('ollama-test').addEventListener('click',async()=>{const button=$('ollama-test');button.disabled=true;button.textContent='Testing...';try{const data=await request('/api/admin/ollama/test','POST',{});renderOllama(data.status);const r=data.result||{};alert(r.ok?'Local Ollama OK: '+(r.modelCount||0)+' model(s).':'Local Ollama failed: '+(r.message||r.code))}catch(error){alert(error.message||'Could not test local Ollama.')}finally{button.disabled=false;button.textContent='Test local server'}});
+  function ccUsageText(u){u=u||{};return fmt(u.requests)+' requests, '+fmt(u.failures)+' failed, '+fmt(u.inputTokens)+' in / '+fmt(u.outputTokens)+' out tokens ('+fmt(u.totalTokens)+' total), est. $'+Number(u.estimatedCostUsd||0).toFixed(4)}
+  function renderCodeCraft(view){const st=(view&&view.status)||view||{};updateKeyFormUi('codecraft',st.configured,st.maskedKey,'CodeCraft');const diag=$('codecraft-diag');diag.replaceChildren();rowItem(diag,'CodeCraft API',(st.configured?'key '+(st.maskedKey||'configured'):'CODECRAFT_API_KEY is not set')+'; '+(st.modelCount||0)+' discovered, '+(st.enabledModelCount||0)+' enabled',orBadge(st.validation==='ok'?'Connected':(st.validation||'Not checked'),st.validation==='ok'));if(st.keyFormatWarning)rowItem(diag,'Key format warning',st.keyFormatWarning,orBadge('Check key',false));rowItem(diag,'Spending policy',st.spendingPolicy==='block'?'Block all requests (zero-billing safe)':'Allow free models only',orBadge(st.spendingPolicy==='block'?'Blocked':'Free only',st.spendingPolicy!=='block'));$('codecraft-usage').textContent=ccUsageText(st.usage);$('codecraft-enabled').value=st.enabled===false?'false':'true';$('codecraft-spending-policy').value=st.spendingPolicy||'block';const root=$('codecraft-models');root.replaceChildren();(st.models||[]).forEach(m=>{const row=document.createElement('tr');td(row,m.name||m.id);const statusCell=td(row,'');statusCell.appendChild(orBadge(m.enabled?'Enabled':'Disabled',Boolean(m.enabled)));const priceCell=td(row,'');priceCell.textContent=m.pricing?('$'+(Number(m.pricing.prompt||0)*1e6).toFixed(4)+' in / $'+(Number(m.pricing.completion||0)*1e6).toFixed(4)+' out per 1M'):(m.free?'Free':'Unknown');const actions=td(row,'');actions.style.whiteSpace='nowrap';const btn=(label,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.addEventListener('click',fn);return b};actions.append(btn('Test model',()=>ccTestModel(m)),btn(m.enabled?'Disable':'Enable',()=>ccPatchModel(m.id,{enabled:!m.enabled})));root.appendChild(row)});if(!(st.models||[]).length){const row=document.createElement('tr'),empty=td(row,st.configured?'No models discovered yet. Test connection and refresh models.':'Set CODECRAFT_API_KEY to discover models.');empty.colSpan=4;empty.className='empty';root.appendChild(row)}const errors=$('codecraft-errors');errors.replaceChildren();(st.recentErrors||[]).slice(0,10).forEach(e=>rowItem(errors,(e.code||'error')+(e.model?' ('+e.model+')':''),(e.message||'')+' '+(e.at||''),orBadge('Failed',false)));if(!(st.recentErrors||[]).length)rowItem(errors,'No recent CodeCraft errors','Successful requests and failures are tracked here.',orBadge('Clear',true))}
+  
+  async function ccPatchModel(id,patch){try{renderCodeCraft(await request('/api/admin/codecraft/models/'+id,'PUT',patch))}catch(err){alert(err.message||'Could not update CodeCraft model.');await loadCodeCraft()}}
+  async function gqPatchModel(id,patch){try{renderGroq(await request('/api/admin/groq/models/'+id,'PUT',patch))}catch(err){alert(err.message||'Could not update Groq model.');await loadGroq()}}
+  async function nvPatchModel(id,patch){try{renderNvidia(await request('/api/admin/nvidia/models/'+id,'PUT',patch))}catch(err){alert(err.message||'Could not update NVIDIA model.');await loadNvidia()}}
+  async function loadCodeCraft(){try{renderCodeCraft(await request('/api/admin/codecraft'))}catch(error){status(error.message||'Could not load CodeCraft status.',true)}}
+  async function ccTestModel(m){try{const data=await request('/api/admin/codecraft/test-model','POST',{model:m.id});renderCodeCraft(data);const r=data.result||{};showTestResultModal({title:'CodeCraft Model Test',provider:'CodeCraft',model:m.id,modelName:m.name||m.id,ok:r.ok,status:r.status,code:r.code,message:r.message,responseTimeMs:r.responseTimeMs,testedAt:r.testedAt,reply:r.output});}catch(error){showTestResultModal({title:'CodeCraft Model Test',provider:'CodeCraft',model:m.id,modelName:m.name||m.id,ok:false,status:'failed',message:error.message||'Could not test model.'});}await loadCodeCraft()}
+  $('codecraft-settings-form').addEventListener('submit',async event=>{event.preventDefault();const button=$('codecraft-save-settings');button.disabled=true;try{renderCodeCraft(await request('/api/admin/codecraft','PUT',{enabled:$('codecraft-enabled').value==='true',spendingPolicy:$('codecraft-spending-policy').value}))}catch(error){alert(error.message||'Could not save CodeCraft settings.')}finally{button.disabled=false}});
+  $('codecraft-test-connection').addEventListener('click',async()=>{const button=$('codecraft-test-connection');button.disabled=true;button.textContent='Testing...';try{const data=await request('/api/admin/codecraft/connection','POST',{});renderCodeCraft(data);const r=data.result||{};showTestResultModal({title:'CodeCraft Connection Test',provider:'CodeCraft',ok:r.ok,status:r.status,code:r.code,message:r.message,responseTimeMs:r.responseTimeMs,testedAt:r.testedAt,modelCount:r.modelCount});}catch(error){showTestResultModal({title:'CodeCraft Connection Test',provider:'CodeCraft',ok:false,status:'connection_failed',message:error.message||'Could not test CodeCraft connection.'});}finally{button.disabled=false;button.textContent='Test connection'}});
+  $('codecraft-refresh').addEventListener('click',async()=>{const button=$('codecraft-refresh');button.disabled=true;try{renderCodeCraft(await request('/api/admin/codecraft/refresh','POST',{}))}catch(error){alert(error.message||'Could not refresh CodeCraft models.')}finally{button.disabled=false}});
+  function gqUsageText(u){u=u||{};return fmt(u.requests)+' requests, '+fmt(u.failures)+' failed, '+fmt(u.inputTokens)+' in / '+fmt(u.outputTokens)+' out tokens ('+fmt(u.totalTokens)+' total)'}
+  function renderGroq(view){const st=(view&&view.status)||view||{};updateKeyFormUi('groq',st.configured,st.maskedKey,'Groq');const diag=$('groq-diag');diag.replaceChildren();rowItem(diag,'GroqCloud API',(st.configured?'key '+(st.maskedKey||'configured'):'GROQ_API_KEY is not set')+'; '+(st.modelCount||0)+' discovered, '+(st.enabledModelCount||0)+' enabled',orBadge(st.validation==='ok'?'Connected':(st.validation||'Not checked'),st.validation==='ok'));if(st.keyFormatWarning)rowItem(diag,'Key format warning',st.keyFormatWarning,orBadge('Check key',false));rowItem(diag,'Spending policy',st.spendingPolicy==='block'?'Block all requests':'Allow free models only (zero-billing safe)',orBadge(st.spendingPolicy==='block'?'Blocked':'Free only',st.spendingPolicy!=='block'));if(st.rateLimits&&st.rateLimits.remainingRequests!=null)rowItem(diag,'Rate limit remaining',st.rateLimits.remainingRequests+' req / '+(st.rateLimits.remainingTokens!=null?st.rateLimits.remainingTokens+' tokens':''),orBadge('Active',true));$('groq-usage').textContent=gqUsageText(st.usage);$('groq-enabled').value=st.enabled===false?'false':'true';$('groq-spending-policy').value=st.spendingPolicy||'allow_free_only';const root=$('groq-models');root.replaceChildren();(st.models||[]).forEach(m=>{const row=document.createElement('tr');td(row,m.name||m.id);const statusCell=td(row,'');statusCell.appendChild(orBadge(m.enabled?'Enabled':'Disabled',Boolean(m.enabled)));const ctxCell=td(row,'');ctxCell.textContent=m.contextWindow?(m.contextWindow.toLocaleString()+' tokens'):'131,072 tokens';const actions=td(row,'');actions.style.whiteSpace='nowrap';const btn=(label,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.addEventListener('click',fn);return b};actions.append(btn('Test model',()=>gqTestModel(m)),btn(m.enabled?'Disable':'Enable',()=>gqPatchModel(m.id,{enabled:!m.enabled})));root.appendChild(row)});if(!(st.models||[]).length){const row=document.createElement('tr'),empty=td(row,st.configured?'No models discovered yet. Test connection or refresh models.':'Set GROQ_API_KEY to discover models.');empty.colSpan=4;empty.className='empty';root.appendChild(row)}const errors=$('groq-errors');errors.replaceChildren();(st.recentErrors||[]).slice(0,10).forEach(e=>rowItem(errors,(e.code||'error')+(e.model?' ('+e.model+')':''),(e.message||'')+' '+(e.at||''),orBadge('Failed',false)));if(!(st.recentErrors||[]).length)rowItem(errors,'No recent Groq errors','Successful requests and failures are tracked here.',orBadge('Clear',true))}
+  async function loadGroq(){try{renderGroq(await request('/api/admin/groq'))}catch(error){status(error.message||'Could not load Groq status.',true)}}
+  async function gqTestModel(m){try{const data=await request('/api/admin/groq/test-model','POST',{model:m.id});renderGroq(data);const r=data.result||{};showTestResultModal({title:'Groq Model Test',provider:'GroqCloud',model:m.id,modelName:m.name||m.id,ok:r.ok,status:r.status,code:r.code,message:r.message,responseTimeMs:r.responseTimeMs,testedAt:r.testedAt,reply:r.reply});}catch(error){showTestResultModal({title:'Groq Model Test',provider:'GroqCloud',model:m.id,modelName:m.name||m.id,ok:false,status:'failed',message:error.message||'Could not test model.'});}await loadGroq()}
+  $('groq-settings-form').addEventListener('submit',async event=>{event.preventDefault();const button=$('groq-save-settings');button.disabled=true;try{renderGroq(await request('/api/admin/groq','PUT',{enabled:$('groq-enabled').value==='true',spendingPolicy:$('groq-spending-policy').value}))}catch(error){alert(error.message||'Could not save Groq settings.')}finally{button.disabled=false}});
+  $('groq-test-connection').addEventListener('click',async()=>{const button=$('groq-test-connection');button.disabled=true;button.textContent='Testing...';try{const data=await request('/api/admin/groq/connection','POST',{});renderGroq(data);const r=data.result||{};showTestResultModal({title:'Groq Connection Test',provider:'GroqCloud',ok:r.ok,status:r.status,code:r.code,message:r.message,responseTimeMs:r.responseTimeMs,testedAt:r.testedAt,modelCount:r.modelCount});}catch(error){showTestResultModal({title:'Groq Connection Test',provider:'GroqCloud',ok:false,status:'connection_failed',message:error.message||'Could not test Groq connection.'});}finally{button.disabled=false;button.textContent='Test connection'}});
+  $('groq-refresh').addEventListener('click',async()=>{const button=$('groq-refresh');button.disabled=true;try{renderGroq(await request('/api/admin/groq/refresh','POST',{}))}catch(error){alert(error.message||'Could not refresh Groq models.')}finally{button.disabled=false}});
+  function nvUsageText(u){u=u||{};return fmt(u.requests)+' requests, '+fmt(u.failures)+' failed, '+fmt(u.inputTokens)+' in / '+fmt(u.outputTokens)+' out tokens ('+fmt(u.totalTokens)+' total)'}
+  function renderNvidia(view){const st=(view&&view.status)||view||{};updateKeyFormUi('nvidia',st.configured,st.maskedKey,'NVIDIA');const diag=$('nvidia-diag');diag.replaceChildren();rowItem(diag,'NVIDIA NIM API',(st.configured?'key '+(st.maskedKey||'configured'):'NVIDIA_API_KEY is not set')+'; '+(st.modelCount||0)+' discovered, '+(st.enabledModelCount||0)+' enabled',orBadge(st.validation==='ok'?'Connected':(st.validation||'Not checked'),st.validation==='ok'));if(st.keyFormatWarning)rowItem(diag,'Key format warning',st.keyFormatWarning,orBadge('Check key',false));rowItem(diag,'Spending policy',st.spendingPolicy==='block'?'Block all requests':'Allow free credits only (zero-billing safe)',orBadge(st.spendingPolicy==='block'?'Blocked':'Free only',st.spendingPolicy!=='block'));if(st.usage&&st.usage.lastSuccessAt)rowItem(diag,'Last successful request',dateTime(st.usage.lastSuccessAt),'');if(st.usage&&st.usage.lastError)rowItem(diag,'Last error',st.usage.lastError,orBadge('Error',false));$('nvidia-usage').textContent=nvUsageText(st.usage);$('nvidia-enabled').value=st.enabled===false?'false':'true';$('nvidia-spending-policy').value=st.spendingPolicy||'allow_free_only';const root=$('nvidia-models');root.replaceChildren();(st.models||[]).forEach(m=>{const row=document.createElement('tr');td(row,(m.name||m.id)+(st.defaultModelId===m.id?' ★ Default':''));const statusCell=td(row,'');statusCell.appendChild(orBadge(m.enabled?'Enabled':'Disabled',Boolean(m.enabled)));const ctxCell=td(row,'');ctxCell.textContent=m.contextWindow?(m.contextWindow.toLocaleString()+' tokens'):'131,072 tokens';const actions=td(row,'');actions.style.whiteSpace='nowrap';const btn=(label,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.addEventListener('click',fn);return b};actions.append(btn('Test model',()=>nvTestModel(m)),btn(m.enabled?'Disable':'Enable',()=>nvPatchModel(m.id,{enabled:!m.enabled})),btn('Set default',()=>nvSetDefault(m.id)));root.appendChild(row)});if(!(st.models||[]).length){const row=document.createElement('tr'),empty=td(row,st.configured?'No models discovered yet. Test connection or refresh models.':'Set NVIDIA_API_KEY to discover models.');empty.colSpan=4;empty.className='empty';root.appendChild(row)}const errors=$('nvidia-errors');errors.replaceChildren();(st.recentErrors||[]).slice(0,10).forEach(e=>rowItem(errors,(e.code||'error')+(e.model?' ('+e.model+')':''),(e.message||'')+' '+(e.at||''),orBadge('Failed',false)));if(!(st.recentErrors||[]).length)rowItem(errors,'No recent NVIDIA errors','Successful requests and failures are tracked here.',orBadge('Clear',true))}
+  async function loadNvidia(){try{renderNvidia(await request('/api/admin/nvidia'))}catch(error){status(error.message||'Could not load NVIDIA status.',true)}}
+  async function nvTestModel(m){try{const data=await request('/api/admin/nvidia/test-model','POST',{model:m.id});renderNvidia(data);const r=data.result||{};showTestResultModal({title:'NVIDIA Model Test',provider:'NVIDIA NIM',model:m.id,modelName:m.name||m.id,ok:r.ok,status:r.status,code:r.code,message:r.message,responseTimeMs:r.responseTimeMs,testedAt:r.testedAt,reply:r.reply});}catch(error){showTestResultModal({title:'NVIDIA Model Test',provider:'NVIDIA NIM',model:m.id,modelName:m.name||m.id,ok:false,status:'failed',message:error.message||'Could not test model.'});}await loadNvidia()}
+  async function nvSetDefault(id){try{renderNvidia(await request('/api/admin/nvidia','PUT',{defaultModelId:id}))}catch(error){alert(error.message||'Could not set default NVIDIA model.');await loadNvidia()}}
+  $('nvidia-settings-form').addEventListener('submit',async event=>{event.preventDefault();const button=$('nvidia-save-settings');button.disabled=true;try{renderNvidia(await request('/api/admin/nvidia','PUT',{enabled:$('nvidia-enabled').value==='true',spendingPolicy:$('nvidia-spending-policy').value}))}catch(error){alert(error.message||'Could not save NVIDIA settings.')}finally{button.disabled=false}});
+  $('nvidia-test-connection').addEventListener('click',async()=>{const button=$('nvidia-test-connection');button.disabled=true;button.textContent='Testing...';try{const data=await request('/api/admin/nvidia/connection','POST',{});renderNvidia(data);const r=data.result||{};showTestResultModal({title:'NVIDIA Connection Test',provider:'NVIDIA NIM',ok:r.ok,status:r.status,code:r.code,message:r.message,responseTimeMs:r.responseTimeMs,testedAt:r.testedAt,modelCount:r.modelCount});}catch(error){showTestResultModal({title:'NVIDIA Connection Test',provider:'NVIDIA NIM',ok:false,status:'connection_failed',message:error.message||'Could not test NVIDIA connection.'});}finally{button.disabled=false;button.textContent='Test connection'}});
+  $('nvidia-refresh').addEventListener('click',async()=>{const button=$('nvidia-refresh');button.disabled=true;try{renderNvidia(await request('/api/admin/nvidia/refresh','POST',{}))}catch(error){alert(error.message||'Could not refresh NVIDIA models.')}finally{button.disabled=false}});
+  load();setInterval(function(){if(document.visibilityState==="visible")load()},30000);
+})();</script>
+</body></html>
+
