@@ -221,6 +221,23 @@ describe('Direct UPI Payment & Admin Page Verification', () => {
       const imgRes = await fetch(`http://127.0.0.1:${port}/upi-qr.jpg`);
       assert.equal(imgRes.status, 200);
 
+      // 1b. Private mode verification endpoint
+      const badPass = await fetch(`http://127.0.0.1:${port}/api/private-access/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ passcode: 'wrong_code' }),
+      });
+      assert.equal(badPass.status, 401);
+
+      const goodPass = await fetch(`http://127.0.0.1:${port}/api/private-access/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ passcode: 'photon2026' }),
+      });
+      assert.equal(goodPass.status, 200);
+      const goodPassData = await goodPass.json();
+      assert.equal(goodPassData.data.authorized, true);
+
       // 2. Unauthenticated submit endpoint requires auth
       const unauthSubmit = await fetch(`http://127.0.0.1:${port}/api/payments/direct-upi/submit`, {
         method: 'POST',

@@ -1614,9 +1614,23 @@ const server = http.createServer(async (req, res) => {
             payeeName: data.settings?.directUpi?.payeeName || 'Photon AI',
             qrImageUrl: '/upi-qr.jpg',
           },
+          privateMode: {
+            enabled: data.settings?.privateMode?.enabled !== undefined ? Boolean(data.settings.privateMode.enabled) : true,
+            message: data.settings?.privateMode?.message || 'Photon AI is currently in private preview & maintenance. Public access will reopen in a few days!',
+          },
           refreshedAt: new Date().toISOString(),
         },
       });
+    }
+    if (req.method === 'POST' && pathname === '/api/private-access/verify') {
+      const body = await readBody(req);
+      const data = loadStore();
+      const expectedPasscode = String(data.settings?.privateMode?.passcode || process.env.PHOTON_PRIVATE_PASSCODE || 'photon2026').trim();
+      const enteredPasscode = String(body.passcode || '').trim();
+      if (!enteredPasscode || enteredPasscode !== expectedPasscode) {
+        throw new HttpError(401, 'invalid_passcode', 'Incorrect access passcode. Please try again.');
+      }
+      return reply(res, 200, { success: true, data: { authorized: true } });
     }
     if (req.method.startsWith('POST') || req.method === 'PUT' || req.method === 'DELETE' || pathname.startsWith('/api/profile') || pathname.startsWith('/api/payments') || pathname.startsWith('/api/chat') || pathname.startsWith('/api/generate')) {
       if (pathname.startsWith('/api/')) {

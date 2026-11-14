@@ -301,8 +301,17 @@ function normalizeSettings(raw) {
   const directUpi = {
     enabled: directUpiRaw.enabled !== false,
     upiId: String(directUpiRaw.upiId || '9773747095@yapl').trim(),
-    payeeName: String(directUpiRaw.payeeName || 'BABITA SAH').trim(),
+    payeeName: String(directUpiRaw.payeeName || 'Photon AI').trim(),
     qrImageUrl: '/upi-qr.jpg',
+  };
+
+  const privateModeRaw = (input.privateMode && typeof input.privateMode === 'object')
+    ? input.privateMode
+    : (input.maintenance && typeof input.maintenance === 'object') ? input.maintenance : {};
+  const privateMode = {
+    enabled: privateModeRaw.enabled !== undefined ? Boolean(privateModeRaw.enabled) : true,
+    passcode: String(privateModeRaw.passcode || process.env.PHOTON_PRIVATE_PASSCODE || 'photon2026').trim(),
+    message: String(privateModeRaw.message || 'Photon AI is currently in private preview & maintenance. Public access will reopen in a few days!').trim(),
   };
 
   return {
@@ -314,6 +323,7 @@ function normalizeSettings(raw) {
     cashfree,
     activeGateway,
     directUpi,
+    privateMode,
     settingsVersion: SETTINGS_VERSION,
     rulesVersion: RULES_VERSION,
   };

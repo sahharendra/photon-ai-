@@ -546,7 +546,50 @@ function putUsers(u){try{localStorage.setItem("photon-users",JSON.stringify(u))}
 async function hash(t){try{var b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,"0")}).join("")}catch(e){var h=5381;for(var i=0;i<t.length;i++)h=(h*33)^t.charCodeAt(i);return"x"+(h>>>0)}}
 var PLANS=[{id:"basic",n:"Free",m:0,tok:50,billingPeriod:"free",description:"Perfect for trying Photon, casual chats and light creative work.",displayOrder:1},{id:"pro",n:"Pro",m:399,tok:200,billingPeriod:"monthly",description:"More daily tokens for creators, students and professionals.",displayOrder:2},{id:"premium",n:"Premium",m:1499,tok:2000,billingPeriod:"monthly",description:"Maximum daily tokens for heavy creators and developers.",displayOrder:3}];var planBillingCycle="monthly";var paymentGateway={gateway:"direct_upi",ready:true,configured:true,enabled:true,mode:"live",supportedMethods:["upi"],currency:"INR"};var TOKEN_RULES=[];
 function syncProfileUsage(pu){if(!pu||!user)return;tokSave({d:dayKey(),u:Number(pu.used)||0,by:pu.by||{}});if(photonProfile){photonProfile.usage=Object.assign({},photonProfile.usage||{},pu)}tokUI()}
-function applyPublicConfig(cfg){if(!cfg)return;billingAvailable=!!cfg.billingAvailable;if(cfg.paymentGateway)paymentGateway=Object.assign({},paymentGateway,cfg.paymentGateway);if(Array.isArray(cfg.plans)&&cfg.plans.length){PLANS=cfg.plans.map(function(p){var price=Number(p.price)||0,bp=p.billingPeriod||(price===0?"free":"monthly");return{id:p.id,n:p.name,m:price,tok:Number(p.dailyTokens)||1,billingPeriod:bp,description:p.description||"",displayOrder:Number(p.displayOrder)||99,y:bp==="yearly"?price:price*12}}).sort(function(a,b){return(a.displayOrder-b.displayOrder)||a.n.localeCompare(b.n)})}if(Array.isArray(cfg.tokenRules)&&cfg.tokenRules.length){TOKEN_RULES=cfg.tokenRules.slice();cfg.tokenRules.forEach(function(r){COST[r.id]=Number(r.tokenCost)||1;KLAB[r.id]=r.name||r.id})}if(cfg.tokenCosts){COST=Object.assign({},COST,cfg.tokenCosts)}if(user){$("upl").parentNode.firstChild.textContent=planName()+" plan - ";tokUI()}}
+function applyPublicConfig(cfg){if(!cfg)return;billingAvailable=!!cfg.billingAvailable;if(cfg.paymentGateway)paymentGateway=Object.assign({},paymentGateway,cfg.paymentGateway);if(Array.isArray(cfg.plans)&&cfg.plans.length){PLANS=cfg.plans.map(function(p){var price=Number(p.price)||0,bp=p.billingPeriod||(price===0?"free":"monthly");return{id:p.id,n:p.name,m:price,tok:Number(p.dailyTokens)||1,billingPeriod:bp,description:p.description||"",displayOrder:Number(p.displayOrder)||99,y:bp==="yearly"?price:price*12}}).sort(function(a,b){return(a.displayOrder-b.displayOrder)||a.n.localeCompare(b.n)})}if(Array.isArray(cfg.tokenRules)&&cfg.tokenRules.length){TOKEN_RULES=cfg.tokenRules.slice();cfg.tokenRules.forEach(function(r){COST[r.id]=Number(r.tokenCost)||1;KLAB[r.id]=r.name||r.id})}if(cfg.tokenCosts){COST=Object.assign({},COST,cfg.tokenCosts)}if(user){$("upl").parentNode.firstChild.textContent=planName()+" plan - ";tokUI()};checkPrivateModeGate();}
+function checkPrivateModeGate(){
+  if(!profileConfig||!profileConfig.privateMode||!profileConfig.privateMode.enabled){
+    var ex=document.getElementById("private-mode-overlay");if(ex)ex.remove();return;
+  }
+  var unlocked=sessionStorage.getItem("photon_unlocked")==="1"||localStorage.getItem("photon_unlocked")==="1";
+  if(unlocked){
+    var ex=document.getElementById("private-mode-overlay");if(ex)ex.remove();return;
+  }
+  if(document.getElementById("private-mode-overlay"))return;
+  var msg=profileConfig.privateMode.message||"Photon AI is currently in private maintenance & preview. Public access will reopen in a few days!";
+  var overlay=document.createElement("div");
+  overlay.id="private-mode-overlay";
+  overlay.style.cssText="position:fixed;inset:0;background:#0a0a0a;z-index:999999;display:flex;align-items:center;justify-content:center;padding:20px;font-family:system-ui,-apple-system,sans-serif;";
+  overlay.innerHTML='<div style="max-width:440px;width:100%;background:#141414;border:1px solid #282828;border-radius:16px;padding:36px;box-shadow:0 25px 80px rgba(0,0,0,0.85);text-align:center">'+
+    '<div style="display:inline-flex;align-items:center;justify-content:center;width:58px;height:58px;border-radius:50%;background:#ea580c18;border:1px solid #ea580c44;margin-bottom:18px">'+
+      '<span style="font-size:24px">🔒</span>'+
+    '</div>'+
+    '<div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:#f97316;text-transform:uppercase;margin-bottom:8px">Private Mode Active</div>'+
+    '<h1 style="font-size:24px;color:#fff;margin:0 0 10px;font-weight:600">Photon AI is Temporarily Private</h1>'+
+    '<p style="color:#a3a3a3;font-size:13.5px;line-height:1.6;margin:0 0 22px">'+esc(msg)+'</p>'+
+    '<div style="background:#1b1b1b;border:1px solid #2e2e2e;border-radius:12px;padding:18px;text-align:left">'+
+      '<label style="display:block;font-size:12px;font-weight:600;color:#e5e5e5;margin-bottom:8px">Have an Access Passcode?</label>'+
+      '<input id="pm-passcode" type="password" placeholder="Enter private passcode..." style="width:100%;padding:11px 14px;background:#0d0d0d;border:1px solid #3a3a3a;border-radius:8px;color:#fff;font-size:14px;box-sizing:border-box;margin-bottom:10px">'+
+      '<button id="pm-unlock-btn" style="width:100%;padding:11px;background:#ea580c;color:#fff;font-size:14px;font-weight:600;border:0;border-radius:8px;cursor:pointer">Unlock Access</button>'+
+      '<div id="pm-error" style="color:#ef4444;font-size:12.5px;margin-top:8px;text-align:center" hidden></div>'+
+    '</div>'+
+    '<div style="margin-top:18px;font-size:11.5px;color:#555">Authorized team members: enter your passcode to access.</div>'+
+  '</div>';
+  document.body.appendChild(overlay);
+  var input=overlay.querySelector("#pm-passcode"),btn=overlay.querySelector("#pm-unlock-btn"),errEl=overlay.querySelector("#pm-error");
+  async function tryUnlock(){
+    var val=(input.value||"").trim();
+    if(!val){errEl.textContent="Please enter the access passcode.";errEl.hidden=false;return}
+    btn.disabled=true;btn.textContent="Verifying...";errEl.hidden=true;
+    try{
+      var r=await fetch("/api/private-access/verify",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({passcode:val})});
+      var j=await r.json();
+      if(r.ok&&j.success){sessionStorage.setItem("photon_unlocked","1");localStorage.setItem("photon_unlocked","1");overlay.remove();toast("Private access granted!")}
+      else{btn.disabled=false;btn.textContent="Unlock Access";errEl.textContent=(j.error&&j.error.message)||"Incorrect passcode. Please try again.";errEl.hidden=false}
+    }catch(e){btn.disabled=false;btn.textContent="Unlock Access";errEl.textContent="Could not verify passcode. Check network connection.";errEl.hidden=false}
+  }
+  btn.onclick=tryUnlock;input.onkeydown=function(e){if(e.key==="Enter")tryUnlock()};input.focus();
+}
 async function loadPublicConfig(){try{var r=await fetch("/api/profile/config",{cache:"no-store"}),j=await r.json();if(r.ok&&j.success){profileConfig=j.data;profileConfigFetchedAt=Date.now();applyPublicConfig(j.data)}}catch(e){}}
 async function syncAuthenticatedAccount(){if(!user)return;try{await loadPublicConfig();var account=await profileApi("/api/profile");if(!account)return;photonProfile=account;user.name=account.fullName||user.name;user.plan=(account.plan&&account.plan.id)||user.plan||"basic";user.planInterval=account.subscriptionInterval||(user.plan==="basic"?"none":"monthly");var U=users();if(U[user.email]){U[user.email].name=user.name;U[user.email].plan=user.plan;U[user.email].planInterval=user.planInterval;putUsers(U)}if(account.usage)syncProfileUsage(account.usage);else tokUI();$("upl").parentNode.firstChild.textContent=planName()+" plan - "}catch(e){}}
 function inr(n){return"₹"+n.toLocaleString("en-IN")}
