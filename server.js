@@ -1611,7 +1611,7 @@ const server = http.createServer(async (req, res) => {
           directUpi: {
             enabled: data.settings?.directUpi?.enabled !== false,
             upiId: data.settings?.directUpi?.upiId || '9773747095@yapl',
-            payeeName: data.settings?.directUpi?.payeeName || 'BABITA SAH',
+            payeeName: data.settings?.directUpi?.payeeName || 'Photon AI',
             qrImageUrl: '/upi-qr.jpg',
           },
           refreshedAt: new Date().toISOString(),
@@ -1759,7 +1759,7 @@ const server = http.createServer(async (req, res) => {
             transactionId: cleanUtr,
             orderId: 'upi_' + cleanUtr,
             paymentMethod: 'UPI',
-            methodDetails: 'Amazon Pay / Direct UPI · Babita Sah (9773747095@yapl)',
+            methodDetails: 'Direct UPI · (9773747095@yapl)',
             mode: 'live',
             signatureVerified: true,
             status: 'paid',

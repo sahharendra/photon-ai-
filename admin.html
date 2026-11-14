@@ -746,11 +746,14 @@
     }
 
     // 5. Payment Method
-    td(row, s.paymentMethod || s.methodDetails || (s.successfulPaymentsCount>0 ? 'Credit Card / UPI' : '—'));
+    td(row, s.paymentMethod || s.methodDetails || (s.successfulPaymentsCount>0 ? 'Direct UPI' : '—'));
 
     // 6. Payment Gateway
     const gwCell=td(row,'');
-    const gwPill=document.createElement('span');gwPill.className='pill ok';gwPill.textContent=s.paymentGateway||'Cashfree';gwCell.appendChild(gwPill);
+    const gwPill=document.createElement('span');gwPill.className='pill ok';
+    const gwRaw = s.paymentGateway || 'direct_upi';
+    const gwName = gwRaw === 'direct_upi' ? 'Direct UPI' : (gwRaw === 'razorpay' ? 'Razorpay' : (gwRaw === 'cashfree' ? 'Cashfree' : gwRaw));
+    gwPill.textContent=gwName;gwCell.appendChild(gwPill);
 
     // 7. Payment Status
     const statusCell=td(row,'');
