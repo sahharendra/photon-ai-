@@ -544,7 +544,7 @@ function save(){try{localStorage.setItem(CK(),JSON.stringify(chats.filter(functi
 function users(){try{return JSON.parse(localStorage.getItem("photon-users")||localStorage.getItem("orca-users")||"{}")}catch(e){return{}}}
 function putUsers(u){try{localStorage.setItem("photon-users",JSON.stringify(u))}catch(e){}}
 async function hash(t){try{var b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,"0")}).join("")}catch(e){var h=5381;for(var i=0;i<t.length;i++)h=(h*33)^t.charCodeAt(i);return"x"+(h>>>0)}}
-var PLANS=[{id:"basic",n:"Free",m:0,tok:50,billingPeriod:"free",description:"Perfect for trying Photon, casual chats and light creative work.",displayOrder:1},{id:"pro",n:"Pro",m:399,tok:200,billingPeriod:"monthly",description:"More daily tokens for creators, students and professionals.",displayOrder:2},{id:"premium",n:"Premium",m:1499,tok:2000,billingPeriod:"monthly",description:"Maximum daily tokens for heavy creators and developers.",displayOrder:3}];var planBillingCycle="monthly";var paymentGateway={gateway:"razorpay",ready:false,configured:false,enabled:true,mode:"test",supportedMethods:["card","upi"],currency:"INR"};var TOKEN_RULES=[];
+var PLANS=[{id:"basic",n:"Free",m:0,tok:50,billingPeriod:"free",description:"Perfect for trying Photon, casual chats and light creative work.",displayOrder:1},{id:"pro",n:"Pro",m:399,tok:200,billingPeriod:"monthly",description:"More daily tokens for creators, students and professionals.",displayOrder:2},{id:"premium",n:"Premium",m:1499,tok:2000,billingPeriod:"monthly",description:"Maximum daily tokens for heavy creators and developers.",displayOrder:3}];var planBillingCycle="monthly";var paymentGateway={gateway:"direct_upi",ready:true,configured:true,enabled:true,mode:"live",supportedMethods:["upi"],currency:"INR"};var TOKEN_RULES=[];
 function syncProfileUsage(pu){if(!pu||!user)return;tokSave({d:dayKey(),u:Number(pu.used)||0,by:pu.by||{}});if(photonProfile){photonProfile.usage=Object.assign({},photonProfile.usage||{},pu)}tokUI()}
 function applyPublicConfig(cfg){if(!cfg)return;billingAvailable=!!cfg.billingAvailable;if(cfg.paymentGateway)paymentGateway=Object.assign({},paymentGateway,cfg.paymentGateway);if(Array.isArray(cfg.plans)&&cfg.plans.length){PLANS=cfg.plans.map(function(p){var price=Number(p.price)||0,bp=p.billingPeriod||(price===0?"free":"monthly");return{id:p.id,n:p.name,m:price,tok:Number(p.dailyTokens)||1,billingPeriod:bp,description:p.description||"",displayOrder:Number(p.displayOrder)||99,y:bp==="yearly"?price:price*12}}).sort(function(a,b){return(a.displayOrder-b.displayOrder)||a.n.localeCompare(b.n)})}if(Array.isArray(cfg.tokenRules)&&cfg.tokenRules.length){TOKEN_RULES=cfg.tokenRules.slice();cfg.tokenRules.forEach(function(r){COST[r.id]=Number(r.tokenCost)||1;KLAB[r.id]=r.name||r.id})}if(cfg.tokenCosts){COST=Object.assign({},COST,cfg.tokenCosts)}if(user){$("upl").parentNode.firstChild.textContent=planName()+" plan - ";tokUI()}}
 async function loadPublicConfig(){try{var r=await fetch("/api/profile/config",{cache:"no-store"}),j=await r.json();if(r.ok&&j.success){profileConfig=j.data;profileConfigFetchedAt=Date.now();applyPublicConfig(j.data)}}catch(e){}}
@@ -1647,7 +1647,7 @@ function drawPlansView(){
   var fromProfile=location.pathname==="/profile",backLabel=fromProfile?"Back to profile":"Back to chat";
   var st=$("ov").scrollTop,curP=PLANS.filter(function(x){return x.id===user.plan})[0]||PLANS[0],
   TAGS={basic:"Perfect for trying Photon, casual chats and light creative work.",pro:"More daily tokens for creators, students and professionals.",premium:"Maximum daily tokens for heavy creators and developers."};
-  var h='<div class="prg"><div class="pr-nav"><div class="logo" style="padding:0;font-size:14px">'+document.querySelector(".logo").innerHTML+'</div><div class="pr-nl"><a id="pusage">Token usage</a><button class="pr-dl" id="spb">'+backLabel+'</button></div></div><div class="pr-in"><h1>Pricing</h1><p class="pr-sub">Pick a plan and billing period. Yearly billing costs the same as 12 monthly payments unless priced yearly by admin.</p><div class="billing-cycle-toggle" role="group" aria-label="Subscription billing period"><button type="button" data-cycle="monthly" class="'+(planBillingCycle==="monthly"?"active":"")+'" aria-pressed="'+(planBillingCycle==="monthly")+'">Monthly</button><button type="button" data-cycle="yearly" class="'+(planBillingCycle==="yearly"?"active":"")+'" aria-pressed="'+(planBillingCycle==="yearly")+'">Yearly</button></div><div class="billing-cycle-note">Pay securely via '+(paymentGateway.gateway==='cashfree'?'Cashfree':'Razorpay')+' using Credit Card or UPI.</div><div class="pr-grid">';
+  var h='<div class="prg"><div class="pr-nav"><div class="logo" style="padding:0;font-size:14px">'+document.querySelector(".logo").innerHTML+'</div><div class="pr-nl"><a id="pusage">Token usage</a><button class="pr-dl" id="spb">'+backLabel+'</button></div></div><div class="pr-in"><h1>Pricing</h1><p class="pr-sub">Pick a plan and billing period. Yearly billing costs the same as 12 monthly payments unless priced yearly by admin.</p><div class="billing-cycle-toggle" role="group" aria-label="Subscription billing period"><button type="button" data-cycle="monthly" class="'+(planBillingCycle==="monthly"?"active":"")+'" aria-pressed="'+(planBillingCycle==="monthly")+'">Monthly</button><button type="button" data-cycle="yearly" class="'+(planBillingCycle==="yearly"?"active":"")+'" aria-pressed="'+(planBillingCycle==="yearly")+'">Yearly</button></div><div class="billing-cycle-note">Pay securely via Direct UPI (Amazon Pay / GPay / PhonePe / Paytm / BHIM) · 100% Direct Bank Deposit.</div><div class="pr-grid">';
   PLANS.forEach(function(p){
     var isFree=p.m===0||p.billingPeriod==="free";
     var isPlanYearlyOnly=p.billingPeriod==="yearly";
@@ -1664,7 +1664,7 @@ function drawPlansView(){
     var li=function(x){return'<li class="'+(x[0]?"y":"n")+'">'+(x[0]?CK_:XK_)+'<span>'+x[1]+'</span></li>'};
     h+='<div class="pr-card'+(cu?" cur":"")+(p.id==="pro"?" mid":"")+'"><div class="pr-gem">'+gemSvg+'</div><h3>'+esc(p.n)+'</h3><p class="pr-tg">'+esc(tg)+'</p><div class="pr-pr"><sup>₹</sup><b>'+price.toLocaleString("en-IN")+'</b><span>'+period+'</span></div><div class="pr-nt">'+noteText+'</div>'+btn+'<ul>'+f.map(li).join("")+'</ul><div class="pr-ah">Featured ADD-ONS</div><ul>'+a.map(li).join("")+'</ul></div>';
   });
-  h+='</div><div class="pr-ft">Tokens reset every day at 12:00 AM · text '+COST.text+' · voice '+COST.voice+' · image '+COST.image+' · video '+COST.video+' · code '+COST.code+' tokens · '+(paymentGateway.ready?'Secured by '+(paymentGateway.gateway==='cashfree'?'Cashfree':'Razorpay')+' Checkout ('+(paymentGateway.mode==='live'||paymentGateway.mode==='production'?'Live':'Test Mode')+').':'Payment gateway not enabled yet by administrator.')+'</div></div></div>';
+  h+='</div><div class="pr-ft">Tokens reset every day at 12:00 AM · text '+COST.text+' · voice '+COST.voice+' · image '+COST.image+' · video '+COST.video+' · code '+COST.code+' tokens · Instant subscription activation via Direct UPI QR & 12-digit UTR verification.</div></div></div>';
   ov(h,true);$("ov").scrollTop=st;var q=$("ovc");q.querySelectorAll("[data-cycle]").forEach(function(b){b.onclick=function(){planBillingCycle=b.dataset.cycle;drawPlansView()}});
   $("spb").onclick=function(){if(fromProfile)openProfile(false);else closeOv()};$("pusage").onclick=function(){closeOv();showUsage()};
   q.querySelectorAll("[data-p]").forEach(function(b){b.onclick=function(){var p=PLANS.filter(function(x){return x.id===b.dataset.p})[0];if(!p)return;if(!p.m){setPlan(p.id);return}checkout(p,b.dataset.effCycle||planBillingCycle)}})}
@@ -1674,95 +1674,45 @@ function salesForm(){
   document.body.append(g);var x=function(){g.remove()};
   $("smx").onclick=x;g.onclick=function(e){if(e.target===g)x()};
   $("smg").onclick=function(){g.querySelector(".card").innerHTML='<div class="ck-ok" style="margin:0"><div class="okc">'+SPI.check+'</div><h2 style="font-size:22px">Inquiry Submitted!</h2><p style="margin:0">Demo only: nothing was sent.</p></div>';setTimeout(x,1800)}}
-var razorpayScriptPromise=null;
-function loadRazorpayCheckout(){
-  if(window.Razorpay)return Promise.resolve(window.Razorpay);
-  if(!razorpayScriptPromise){
-    razorpayScriptPromise=new Promise(function(resolve,reject){
-      var s=document.createElement("script");
-      s.src="https://checkout.razorpay.com/v1/checkout.js";
-      s.async=true;
-      s.onload=function(){if(window.Razorpay)resolve(window.Razorpay);else reject(new Error("Razorpay SDK failed to initialize."))};
-      s.onerror=function(){razorpayScriptPromise=null;reject(new Error("Could not load Razorpay SDK script. Check your network connection."))};
-      document.head.appendChild(s);
-    });
-  }
-  return razorpayScriptPromise;
-}
-var cashfreeScriptPromise=null;
-function loadCashfreeCheckout(){
-  if(window.Cashfree)return Promise.resolve(window.Cashfree);
-  if(!cashfreeScriptPromise){
-    cashfreeScriptPromise=new Promise(function(resolve,reject){
-      var s=document.createElement("script");
-      s.src="https://sdk.cashfree.com/js/v3/cashfree.js";
-      s.onload=function(){if(window.Cashfree)resolve(window.Cashfree);else reject(new Error("Cashfree SDK failed to initialize."))};
-      s.onerror=function(){cashfreeScriptPromise=null;reject(new Error("Could not load Cashfree SDK script. Check your network connection."))};
-      document.head.appendChild(s);
-    });
-  }
-  return cashfreeScriptPromise;
-}
 function checkout(p,cy){
   var isYearly=p.billingPeriod==="yearly"||cy==="yearly";
   var effCycle=isYearly?"yearly":"monthly";
   var base=p.billingPeriod==="yearly"?p.m:(effCycle==="yearly"?p.y:p.m);
   var gst=Math.round(base*.18),tot=base+gst;
-  var selectedTab="direct_upi";
   var upiId="9773747095@yapl";
   var payeeName="BABITA SAH";
   var upiLink="upi://pay?pa="+encodeURIComponent(upiId)+"&pn="+encodeURIComponent(payeeName)+"&am="+tot+"&cu=INR&tn="+encodeURIComponent("Photon AI "+p.n+" Subscription");
-  var gwReady=Boolean(paymentGateway&&paymentGateway.ready);
 
   var markup='<div class="spg">'+topBar("Back to plans")+'<div class="sp-in">'+
     '<div class="sp-hd" style="margin-bottom:20px">'+
       '<span class="sp-badge" style="background:#22c55e22;color:#4ade80;border:1px solid #22c55e44">Direct UPI · Instant Bank Deposit</span>'+
       '<h1 style="font-size:clamp(24px,3.6vw,34px)">Subscribe to '+profileEscape(p.n)+' plan</h1>'+
-      '<p>Scan QR code or pay via any UPI App. Money goes 100% directly to bank account.</p>'+
+      '<p>Scan QR code or pay via any UPI App. Money goes 100% directly to Babita Sah bank account.</p>'+
     '</div>'+
     '<div class="ck">'+
       '<div class="ck-box">'+
-        '<div class="pm-grid" role="tablist" style="margin-bottom:18px">'+
-          '<button type="button" class="pm-opt active" id="tab-direct-upi"><strong>Direct UPI (Scan &amp; Pay)</strong><small>Instant deposit to Babita Sah (Amazon Pay / GPay / PhonePe / Paytm)</small></button>'+
-          '<button type="button" class="pm-opt" id="tab-razorpay"><strong>Cards / Razorpay (Test)</strong><small>Card, Netbanking, Test Simulator</small></button>'+
-        '</div>'+
-
-        '<!-- DIRECT UPI SECTION -->'+
-        '<div id="sec-direct-upi">'+
-          '<div style="text-align:center;background:#161616;border:1px solid #2a2a2a;border-radius:12px;padding:16px;margin-bottom:16px">'+
-            '<div style="font-size:12px;color:#a3a3a3;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Scan with any UPI App</div>'+
-            '<img src="/upi-qr.jpg" alt="UPI QR Code - Babita Sah" style="width:210px;height:auto;max-width:100%;border-radius:10px;margin:8px auto;display:block;border:2px solid #f97316;box-shadow:0 4px 16px rgba(0,0,0,0.5)">'+
-            '<div style="font-size:16px;font-weight:600;color:#fff;margin-top:8px">'+profileEscape(payeeName)+'</div>'+
-            '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px">'+
-              '<code style="font-size:15px;background:#222;padding:4px 10px;border-radius:6px;color:#fb923c">'+upiId+'</code>'+
-              '<button type="button" id="copy-upi-btn" style="padding:4px 10px;font-size:12px;background:#333;color:#fff;border:0;border-radius:6px;cursor:pointer">Copy UPI</button>'+
-            '</div>'+
-            '<div style="margin-top:10px">'+
-              '<a href="'+upiLink+'" style="display:inline-block;padding:8px 14px;background:#ea580c;color:#fff;font-size:13px;font-weight:600;border-radius:6px;text-decoration:none">⚡ Pay ₹'+tot+' with GPay / PhonePe / Paytm</a>'+
-            '</div>'+
+        '<div style="text-align:center;background:#161616;border:1px solid #2a2a2a;border-radius:12px;padding:16px;margin-bottom:16px">'+
+          '<div style="font-size:12px;color:#a3a3a3;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Scan with any UPI App (GPay / PhonePe / Paytm / Amazon Pay)</div>'+
+          '<img src="/upi-qr.jpg" alt="UPI QR Code - Babita Sah" style="width:210px;height:auto;max-width:100%;border-radius:10px;margin:8px auto;display:block;border:2px solid #f97316;box-shadow:0 4px 16px rgba(0,0,0,0.5)">'+
+          '<div style="font-size:16px;font-weight:600;color:#fff;margin-top:8px">'+profileEscape(payeeName)+'</div>'+
+          '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px">'+
+            '<code style="font-size:15px;background:#222;padding:4px 10px;border-radius:6px;color:#fb923c">'+upiId+'</code>'+
+            '<button type="button" id="copy-upi-btn" style="padding:4px 10px;font-size:12px;background:#333;color:#fff;border:0;border-radius:6px;cursor:pointer">Copy UPI</button>'+
           '</div>'+
-          '<div class="ck-row"><span>Plan</span><span>'+profileEscape(p.n)+' ('+effCycle+')</span></div>'+
-          '<div class="ck-row"><span>Daily token allowance</span><span>'+Number(p.tok).toLocaleString("en-IN")+' tokens/day</span></div>'+
-          '<div class="ck-row"><span>Plan price</span><span>'+inr(base)+'</span></div>'+
-          '<div class="ck-row"><span>GST (18%)</span><span>'+inr(gst)+'</span></div>'+
-          '<div class="ck-row tot"><span>Total Payable</span><span>'+inr(tot)+' INR</span></div>'+
-          '<div style="margin-top:14px">'+
-            '<label style="display:block;font-size:13px;font-weight:600;color:#fbbf24;margin-bottom:6px">After paying, enter your 12-digit UPI UTR / Reference No:</label>'+
-            '<input id="utr-input" type="text" maxlength="24" placeholder="e.g. 412345678901 (from your payment receipt)" style="width:100%;padding:11px 14px;background:#181818;border:1px solid #444;border-radius:8px;color:#fff;font-size:15px;box-sizing:border-box">'+
+          '<div style="margin-top:10px">'+
+            '<a href="'+upiLink+'" style="display:inline-block;padding:8px 14px;background:#ea580c;color:#fff;font-size:13px;font-weight:600;border-radius:6px;text-decoration:none">⚡ Pay ₹'+tot+' with UPI App</a>'+
           '</div>'+
-          '<button class="sp-btn pri2" id="upi-submit-btn" style="width:100%;margin-top:14px;background:#16a34a;border-color:#22c55e">Verify UTR &amp; Activate '+profileEscape(p.n)+' Plan</button>'+
         '</div>'+
-
-        '<!-- RAZORPAY SECTION -->'+
-        '<div id="sec-razorpay" style="display:none">'+
-          '<div class="ck-row"><span>Plan</span><span>'+profileEscape(p.n)+' ('+effCycle+')</span></div>'+
-          '<div class="ck-row"><span>Daily token allowance</span><span>'+Number(p.tok).toLocaleString("en-IN")+' tokens/day</span></div>'+
-          '<div class="ck-row"><span>Plan price</span><span>'+inr(base)+'</span></div>'+
-          '<div class="ck-row"><span>GST (18%)</span><span>'+inr(gst)+'</span></div>'+
-          '<div class="ck-row tot"><span>Total Payable</span><span>'+inr(tot)+' INR</span></div>'+
-          '<button class="sp-btn pri2" id="pay-rzp-btn" style="width:100%;margin-top:14px"'+(gwReady?'':' disabled')+'>Pay '+inr(tot)+' via Razorpay (Test Simulator)</button>'+
+        '<div class="ck-row"><span>Plan</span><span>'+profileEscape(p.n)+' ('+effCycle+')</span></div>'+
+        '<div class="ck-row"><span>Daily token allowance</span><span>'+Number(p.tok).toLocaleString("en-IN")+' tokens/day</span></div>'+
+        '<div class="ck-row"><span>Plan price</span><span>'+inr(base)+'</span></div>'+
+        '<div class="ck-row"><span>GST (18%)</span><span>'+inr(gst)+'</span></div>'+
+        '<div class="ck-row tot"><span>Total Payable</span><span>'+inr(tot)+' INR</span></div>'+
+        '<div style="margin-top:14px">'+
+          '<label style="display:block;font-size:13px;font-weight:600;color:#fbbf24;margin-bottom:6px">After paying, enter your 12-digit UPI UTR / Reference No:</label>'+
+          '<input id="utr-input" type="text" maxlength="24" placeholder="e.g. 412345678901 (from your payment receipt)" style="width:100%;padding:11px 14px;background:#181818;border:1px solid #444;border-radius:8px;color:#fff;font-size:15px;box-sizing:border-box">'+
         '</div>'+
-
+        '<button class="sp-btn pri2" id="upi-submit-btn" style="width:100%;margin-top:14px;background:#16a34a;border-color:#22c55e">Verify UTR &amp; Activate '+profileEscape(p.n)+' Plan</button>'+
         '<div class="ferr" id="cer" role="alert" style="margin-top:10px"></div>'+
       '</div>'+
     '</div>'+
@@ -1771,27 +1721,7 @@ function checkout(p,cy){
   ov(markup, true);
   $("spb").onclick=function(){showPlans(effCycle)};
 
-  var tabUpi = $("tab-direct-upi");
-  var tabRzp = $("tab-razorpay");
-  var secUpi = $("sec-direct-upi");
-  var secRzp = $("sec-razorpay");
   var er = $("cer");
-
-  tabUpi.onclick = function() {
-    tabUpi.classList.add("active");
-    tabRzp.classList.remove("active");
-    secUpi.style.display = "block";
-    secRzp.style.display = "none";
-    er.textContent = "";
-  };
-
-  tabRzp.onclick = function() {
-    tabRzp.classList.add("active");
-    tabUpi.classList.remove("active");
-    secRzp.style.display = "block";
-    secUpi.style.display = "none";
-    er.textContent = "";
-  };
 
   var copyBtn = $("copy-upi-btn");
   if (copyBtn) {
@@ -1834,84 +1764,6 @@ function checkout(p,cy){
         upiBtn.disabled = false;
         upiBtn.textContent = "Verify UTR & Activate " + profileEscape(p.n) + " Plan";
         er.textContent = profileApiError(err);
-      }
-    };
-  }
-
-  // Razorpay submit handler
-  var rzpBtn = $("pay-rzp-btn");
-  if (rzpBtn) {
-    rzpBtn.onclick = async function() {
-      rzpBtn.disabled = true;
-      rzpBtn.textContent = "Creating secure order...";
-      er.textContent = "";
-      try {
-        var order = await profileApi("/api/payments/create-order", {
-          method: "POST",
-          body: { planId: p.id, interval: effCycle, preferredMethod: "card" }
-        });
-        var RazorpaySDK = await loadRazorpayCheckout();
-        rzpBtn.textContent = "Opening Razorpay Checkout...";
-        var rzp = new RazorpaySDK({
-          key: order.keyId || paymentGateway.publicKeyId,
-          amount: order.amountPaise || (order.amount * 100),
-          currency: order.currency || "INR",
-          name: "PHOTON AI",
-          description: profileEscape(p.n) + " Plan (" + effCycle + ")",
-          order_id: order.orderId,
-          prefill: {
-            name: (user && user.name) || (photonProfile && photonProfile.fullName) || "",
-            email: (user && user.email) || (photonProfile && photonProfile.email) || "",
-            contact: (photonProfile && photonProfile.phone) || ""
-          },
-          theme: { color: "#111827" },
-          modal: {
-            ondismiss: async function() {
-              rzpBtn.disabled = false;
-              rzpBtn.textContent = "Pay " + inr(tot) + " via Razorpay (Test Simulator)";
-              er.textContent = "Checkout closed before payment completion.";
-              try { await profileApi("/api/payments/cancel", { method: "POST", body: { orderId: order.orderId, status: "cancelled", reason: "checkout_dismissed" } }); } catch (_) {}
-            }
-          },
-          handler: async function(resp) {
-            rzpBtn.disabled = true;
-            rzpBtn.textContent = "Verifying payment\u2026";
-            er.textContent = "";
-            try {
-              var verified = await profileApi("/api/payments/verify", {
-                method: "POST",
-                body: { orderId: order.orderId, paymentId: resp.razorpay_payment_id, signature: resp.razorpay_signature }
-              });
-              if (verified.profile) {
-                photonProfile = verified.profile;
-                user.plan = verified.profile.plan.id;
-                user.planInterval = verified.profile.subscriptionInterval || effCycle;
-                if (verified.profile.usage) syncProfileUsage(verified.profile.usage);
-              }
-              applyPlan(p.id, effCycle);
-              if (location.pathname === "/profile") openProfile(false); else goProfileHome();
-              toast(profileEscape(p.n) + " plan activated! Reference: " + profileEscape(verified.payment && verified.payment.transactionId || order.orderId));
-            } catch (verifyErr) {
-              rzpBtn.disabled = false;
-              rzpBtn.textContent = "Retry Verification / Pay";
-              er.textContent = profileApiError(verifyErr);
-            }
-          }
-        });
-        rzp.on("payment.failed", async function(resp) {
-          var msg = (resp && resp.error && (resp.error.description || resp.error.reason)) || "Payment failed. Please retry.";
-          rzpBtn.disabled = false;
-          rzpBtn.textContent = "Retry Payment (" + inr(tot) + ")";
-          er.textContent = msg;
-          try { await profileApi("/api/payments/cancel", { method: "POST", body: { orderId: order.orderId, status: "failed", reason: msg } }); } catch (_) {}
-        });
-        rzp.open();
-        rzpBtn.textContent = "Pay " + inr(tot) + " via Razorpay (Test Simulator)";
-        rzpBtn.disabled = false;
-      } catch (error) {
-        rzpBtn.disabled = false;
-        rzpBtn.textContent = "Pay " + inr(tot) + " via Razorpay (Test Simulator)";
-        er.textContent = profileApiError(error);
       }
     };
   }
