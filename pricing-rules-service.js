@@ -273,6 +273,17 @@ function normalizeSettings(raw) {
     ? input.allowancePolicy
     : 'immediate';
 
+  const razorpayRaw = (input.razorpay && typeof input.razorpay === 'object')
+    ? input.razorpay
+    : (input.cashfree && typeof input.cashfree === 'object') ? input.cashfree : {};
+  const razorpay = {
+    enabled: razorpayRaw.enabled !== false,
+    mode: razorpayRaw.mode === 'live' || razorpayRaw.mode === 'production' ? 'live' : 'test',
+    ...(razorpayRaw.lastConnectionCheck ? { lastConnectionCheck: razorpayRaw.lastConnectionCheck } : {}),
+    ...(razorpayRaw.lastWebhookAt ? { lastWebhookAt: razorpayRaw.lastWebhookAt } : {}),
+    ...(razorpayRaw.lastWebhookEvent ? { lastWebhookEvent: razorpayRaw.lastWebhookEvent } : {}),
+  };
+
   const cashfreeRaw = (input.cashfree && typeof input.cashfree === 'object')
     ? input.cashfree
     : (input.razorpay && typeof input.razorpay === 'object') ? input.razorpay : {};
@@ -284,12 +295,16 @@ function normalizeSettings(raw) {
     ...(cashfreeRaw.lastWebhookEvent ? { lastWebhookEvent: cashfreeRaw.lastWebhookEvent } : {}),
   };
 
+  const activeGateway = input.activeGateway === 'cashfree' ? 'cashfree' : 'razorpay';
+
   return {
     plans: mergedPlans,
     tokenCosts,
     tokenRules: mergedRules,
     allowancePolicy,
+    razorpay,
     cashfree,
+    activeGateway,
     settingsVersion: SETTINGS_VERSION,
     rulesVersion: RULES_VERSION,
   };

@@ -52,9 +52,13 @@ const {
   verifyConfiguration,
 } = require('./pricing-rules-service');
 const {
-  PaymentError,
+  PaymentError: CashfreePaymentError,
   createCashfreeService,
 } = require('./cashfree-service');
+const {
+  PaymentError: RazorpayPaymentError,
+  createRazorpayService,
+} = require('./razorpay-service');
 const {
   readOnlineTimeoutMs,
   readSessionTtlMs,
@@ -114,6 +118,19 @@ const nvidia = createNvidiaProvider({ HttpError, env: process.env, config: nvidi
 const openaiConfig = createOpenAIConfig({ dir: ROOT, env: process.env });
 const openai = createOpenAIProvider({ HttpError, env: process.env, config: openaiConfig });
 const cashfree = createCashfreeService({ env: process.env });
+const razorpay = createRazorpayService({ env: process.env });
+
+function getActiveGatewayName(data) {
+  if (process.env.RAZORPAY_KEY_ID && !process.env.CASHFREE_CLIENT_ID) return 'razorpay';
+  if (process.env.CASHFREE_CLIENT_ID && !process.env.RAZORPAY_KEY_ID) return 'cashfree';
+  if (data?.settings?.activeGateway === 'cashfree') return 'cashfree';
+  if (data?.settings?.activeGateway === 'razorpay') return 'razorpay';
+  return 'razorpay';
+}
+
+function getActiveGatewayService(data) {
+  return getActiveGatewayName(data) === 'cashfree' ? cashfree : razorpay;
+}
 
 // The default model is whatever the live Gemini catalog currently returns first. Nothing is
 // hardcoded: if the account has no Gemini models, the caller must choose another provider.
@@ -361,7 +378,11 @@ function reply(res, status, body) {
   res.end(JSON.stringify(body));
 }
 function fail(res, error, requestId) {
-  const knownError = error instanceof HttpError || error instanceof PricingRuleError || error instanceof PaymentError;
+  const knownError = error instanceof HttpError ||
+    error instanceof PricingRuleError ||
+    error instanceof RazorpayPaymentError ||
+    error instanceof CashfreePaymentError ||
+    (typeof error?.status === 'number' && typeof error?.code === 'string');
   const e = knownError ? error : new HttpError(500, 'internal_error', 'The request could not be completed. Please retry.');
   if (e.status >= 500) console.error(JSON.stringify({ request_id: requestId, category: e.code, status: e.status, cause: knownError ? undefined : { name: error?.name, code: error?.code || 'unknown' } }));
   return reply(res, e.status, { success: false, error: { code: e.code, message: e.message, request_id: requestId } });
@@ -536,7 +557,7 @@ function profileResponse(profile, uid) {
   const plan = resolved.plan;
   const dailyLimit = getDailyLimit(profile);
   const usage = usageSummary(uid, profile.timezone);
-  const gwStatus = cashfree.getGatewayStatus(data);
+  const gwStatus = getActiveGatewayService(data).getGatewayStatus(data);
   const sub = resolved.subscription;
   return {
     uid,
@@ -1142,7 +1163,7 @@ const server = http.createServer(async (req, res) => {
       }
       if (pathname === '/api/admin/settings' && req.method === 'GET') {
         const data = loadStore();
-        const gwStatus = cashfree.getGatewayStatus(data);
+        const gwStatus = getActiveGatewayService(data).getGatewayStatus(data);
         return reply(res, 200, {
           success: true,
           data: {
@@ -1159,7 +1180,7 @@ const server = http.createServer(async (req, res) => {
         const actor = isLocalAdminBypass(req) ? 'local-admin' : ADMIN_EMAIL;
         saveBulkSettings(data, body, { actor });
         saveStore();
-        const gwStatus = cashfree.getGatewayStatus(data);
+        const gwStatus = getActiveGatewayService(data).getGatewayStatus(data);
         return reply(res, 200, {
           success: true,
           data: {
@@ -1235,51 +1256,102 @@ const server = http.createServer(async (req, res) => {
       }
       if (pathname === '/api/admin/payments/config' && req.method === 'GET') {
         const data = loadStore();
-        const gwStatus = cashfree.getGatewayStatus(data);
-        return reply(res, 200, { success: true, data: { ...gwStatus } });
+        const gwName = getActiveGatewayName(data);
+        const gwService = getActiveGatewayService(data);
+        const gwStatus = gwService.getGatewayStatus(data);
+        return reply(res, 200, {
+          success: true,
+          data: {
+            ...gwStatus,
+            activeGateway: gwName,
+            gateways: {
+              razorpay: razorpay.getGatewayStatus(data),
+              cashfree: cashfree.getGatewayStatus(data),
+            },
+          },
+        });
       }
       if (pathname === '/api/admin/payments/config' && req.method === 'PUT') {
         const body = await readBody(req);
         const data = loadStore();
         data.settings = normalizeSettings(data.settings);
-        if (typeof body.enabled === 'boolean') data.settings.cashfree.enabled = body.enabled;
-        if (body.mode === 'sandbox' || body.mode === 'production') {
-          data.settings.cashfree.mode = body.mode;
-          process.env.CASHFREE_ENVIRONMENT = body.mode;
+        const envFile = resolveEnvFile(ROOT);
+
+        const targetGateway = body.activeGateway || body.gateway || (body.keyId !== undefined || body.keySecret !== undefined ? 'razorpay' : data.settings.activeGateway || 'razorpay');
+        data.settings.activeGateway = targetGateway === 'cashfree' ? 'cashfree' : 'razorpay';
+
+        // Update Razorpay credentials if provided
+        if (targetGateway === 'razorpay' || body.razorpay || body.keyId !== undefined || body.keySecret !== undefined) {
+          if (typeof body.enabled === 'boolean') data.settings.razorpay.enabled = body.enabled;
+          if (body.mode === 'test' || body.mode === 'live') {
+            data.settings.razorpay.mode = body.mode;
+          }
+          if (body.keyId !== undefined && String(body.keyId).trim() !== '') {
+            const kid = String(body.keyId).trim();
+            process.env.RAZORPAY_KEY_ID = kid;
+            upsertEnvValue(envFile, 'RAZORPAY_KEY_ID', kid);
+          }
+          if (body.keySecret !== undefined && String(body.keySecret).trim() !== '') {
+            const ksec = String(body.keySecret).trim();
+            process.env.RAZORPAY_KEY_SECRET = ksec;
+            upsertEnvValue(envFile, 'RAZORPAY_KEY_SECRET', ksec);
+          }
+          if (body.webhookSecret !== undefined && String(body.webhookSecret).trim() !== '') {
+            const wsec = String(body.webhookSecret).trim();
+            process.env.RAZORPAY_WEBHOOK_SECRET = wsec;
+            upsertEnvValue(envFile, 'RAZORPAY_WEBHOOK_SECRET', wsec);
+          }
         }
 
-        const envFile = resolveEnvFile(ROOT);
-        if (body.clientId !== undefined && String(body.clientId).trim() !== '') {
-          const cid = String(body.clientId).trim();
-          process.env.CASHFREE_CLIENT_ID = cid;
-          upsertEnvValue(envFile, 'CASHFREE_CLIENT_ID', cid);
-        }
-        if (body.clientSecret !== undefined && String(body.clientSecret).trim() !== '') {
-          const csec = String(body.clientSecret).trim();
-          process.env.CASHFREE_CLIENT_SECRET = csec;
-          upsertEnvValue(envFile, 'CASHFREE_CLIENT_SECRET', csec);
-        }
-        if (body.webhookSecret !== undefined && String(body.webhookSecret).trim() !== '') {
-          const wsec = String(body.webhookSecret).trim();
-          process.env.CASHFREE_WEBHOOK_SECRET = wsec;
-          upsertEnvValue(envFile, 'CASHFREE_WEBHOOK_SECRET', wsec);
-        }
-        if (body.mode) {
-          upsertEnvValue(envFile, 'CASHFREE_ENVIRONMENT', body.mode);
+        // Update Cashfree credentials if provided
+        if (targetGateway === 'cashfree' || body.cashfree || body.clientId !== undefined || body.clientSecret !== undefined) {
+          if (typeof body.enabled === 'boolean') data.settings.cashfree.enabled = body.enabled;
+          if (body.mode === 'sandbox' || body.mode === 'production') {
+            data.settings.cashfree.mode = body.mode;
+            process.env.CASHFREE_ENVIRONMENT = body.mode;
+            upsertEnvValue(envFile, 'CASHFREE_ENVIRONMENT', body.mode);
+          }
+          if (body.clientId !== undefined && String(body.clientId).trim() !== '') {
+            const cid = String(body.clientId).trim();
+            process.env.CASHFREE_CLIENT_ID = cid;
+            upsertEnvValue(envFile, 'CASHFREE_CLIENT_ID', cid);
+          }
+          if (body.clientSecret !== undefined && String(body.clientSecret).trim() !== '') {
+            const csec = String(body.clientSecret).trim();
+            process.env.CASHFREE_CLIENT_SECRET = csec;
+            upsertEnvValue(envFile, 'CASHFREE_CLIENT_SECRET', csec);
+          }
+          if (body.webhookSecret !== undefined && targetGateway === 'cashfree' && String(body.webhookSecret).trim() !== '') {
+            const wsec = String(body.webhookSecret).trim();
+            process.env.CASHFREE_WEBHOOK_SECRET = wsec;
+            upsertEnvValue(envFile, 'CASHFREE_WEBHOOK_SECRET', wsec);
+          }
         }
 
         appendAdminAuditLog(data, {
           actor: isLocalAdminBypass(req) ? 'local-admin' : ADMIN_EMAIL,
           action: 'update_payment_gateway',
-          details: { enabled: data.settings.cashfree.enabled, mode: data.settings.cashfree.mode },
+          details: {
+            activeGateway: data.settings.activeGateway,
+            razorpay: data.settings.razorpay,
+            cashfree: data.settings.cashfree,
+          },
         });
         saveStore();
-        const gwStatus = cashfree.getGatewayStatus(data);
-        return reply(res, 200, { success: true, data: { ...gwStatus } });
+        const gwService = getActiveGatewayService(data);
+        const gwStatus = gwService.getGatewayStatus(data);
+        return reply(res, 200, {
+          success: true,
+          data: {
+            ...gwStatus,
+            activeGateway: data.settings.activeGateway,
+          },
+        });
       }
       if (pathname === '/api/admin/payments/test-connection' && req.method === 'POST') {
         const data = loadStore();
-        const result = await cashfree.testConnection(data);
+        const gwService = getActiveGatewayService(data);
+        const result = await gwService.testConnection(data);
         saveStore();
         return reply(res, 200, { success: true, data: { ...result, status: { ...result.status, publicKeyId: undefined } } });
       }
@@ -1287,7 +1359,9 @@ const server = http.createServer(async (req, res) => {
         const body = await readBody(req);
         const data = loadStore();
         const actor = isLocalAdminBypass(req) ? 'local-admin' : ADMIN_EMAIL;
-        const result = await cashfree.issueAdminRefund(data, {
+        const tx = (data.payments || []).find(p => p.transactionId === body.transactionId || p.id === body.paymentId);
+        const gwService = (tx?.gateway === 'cashfree') ? cashfree : (tx?.gateway === 'razorpay' ? razorpay : getActiveGatewayService(data));
+        const result = await gwService.issueAdminRefund(data, {
           transactionId: body.transactionId,
           paymentId: body.paymentId,
           amountInr: body.amount,
@@ -1394,7 +1468,7 @@ const server = http.createServer(async (req, res) => {
       });
       const usersByPlan = Object.fromEntries(getPlans().map(plan => [plan.id, 0]));
       users.forEach(user => { usersByPlan[user.plan] = (usersByPlan[user.plan] || 0) + 1; });
-      const gwOverview = cashfree.getGatewayStatus(data);
+      const gwOverview = getActiveGatewayService(data).getGatewayStatus(data);
 
       const rangeParam = parsedUrl.searchParams.get('range') || '30d';
       const fromParam = parsedUrl.searchParams.get('from') || '';
@@ -1452,11 +1526,30 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === 'POST' && pathname === '/api/payments/webhook') {
       const rawBody = await readRawBody(req);
-      const signature = String(req.headers['x-cashfree-signature'] || req.headers['x-webhook-signature'] || '');
-      const timestamp = String(req.headers['x-webhook-timestamp'] || req.headers['x-cashfree-timestamp'] || '');
-      const eventId = String(req.headers['x-cashfree-event-id'] || req.headers['x-idempotency-key'] || '');
       const data = loadStore();
-      const outcome = cashfree.processWebhookEvent(data, { rawBody, signature, timestamp, eventId });
+      let outcome;
+      if (req.headers['x-razorpay-signature']) {
+        const signature = String(req.headers['x-razorpay-signature'] || '');
+        const eventId = String(req.headers['x-razorpay-event-id'] || '');
+        outcome = await razorpay.processWebhookEvent(data, { rawBody, signature, eventId });
+      } else if (req.headers['x-cashfree-signature'] || req.headers['x-cashfree-timestamp']) {
+        const signature = String(req.headers['x-cashfree-signature'] || req.headers['x-webhook-signature'] || '');
+        const timestamp = String(req.headers['x-webhook-timestamp'] || req.headers['x-cashfree-timestamp'] || '');
+        const eventId = String(req.headers['x-cashfree-event-id'] || req.headers['x-idempotency-key'] || '');
+        outcome = cashfree.processWebhookEvent(data, { rawBody, signature, timestamp, eventId });
+      } else {
+        const gwName = getActiveGatewayName(data);
+        if (gwName === 'cashfree') {
+          const signature = String(req.headers['x-cashfree-signature'] || req.headers['x-webhook-signature'] || '');
+          const timestamp = String(req.headers['x-webhook-timestamp'] || req.headers['x-cashfree-timestamp'] || '');
+          const eventId = String(req.headers['x-cashfree-event-id'] || req.headers['x-idempotency-key'] || '');
+          outcome = cashfree.processWebhookEvent(data, { rawBody, signature, timestamp, eventId });
+        } else {
+          const signature = String(req.headers['x-razorpay-signature'] || req.headers['x-webhook-signature'] || '');
+          const eventId = String(req.headers['x-razorpay-event-id'] || req.headers['x-idempotency-key'] || '');
+          outcome = await razorpay.processWebhookEvent(data, { rawBody, signature, eventId });
+        }
+      }
       saveStore();
       return reply(res, 200, { success: true, data: outcome });
     }
@@ -1473,7 +1566,7 @@ const server = http.createServer(async (req, res) => {
       const forceRefresh = parsedUrl.searchParams.get('refresh') === '1';
       await Promise.all([gemini.refreshModels(forceRefresh), openrouter.refreshModels(forceRefresh), codecraft.refreshModels(forceRefresh), groq.refreshModels(forceRefresh), nvidia.refreshModels(forceRefresh)]);
       const data = loadStore();
-      const gwStatus = cashfree.getGatewayStatus(data);
+      const gwStatus = getActiveGatewayService(data).getGatewayStatus(data);
 
       const allAvail = availableModels();
       let planModels = allAvail;
@@ -1502,14 +1595,15 @@ const server = http.createServer(async (req, res) => {
           allModels: allAvail,
           billingAvailable: gwStatus.ready,
           paymentGateway: {
-            gateway: 'cashfree',
+            gateway: getActiveGatewayName(data),
             ready: gwStatus.ready,
             configured: gwStatus.configured,
             enabled: gwStatus.enabled,
             mode: gwStatus.mode,
             keyModeMismatch: gwStatus.keyModeMismatch,
-            
-            supportedMethods: gwStatus.supportedMethods,
+            publicKeyId: gwStatus.publicKeyId || undefined,
+            maskedKeyId: gwStatus.maskedKeyId || undefined,
+            supportedMethods: gwStatus.supportedMethods || ['card', 'upi'],
             currency: 'INR',
           },
           refreshedAt: new Date().toISOString(),
@@ -1564,12 +1658,13 @@ const server = http.createServer(async (req, res) => {
           return reply(res, 200, { success: true, data: { defaultModel: profile.defaultModel } });
         }
         if (req.method === 'POST' && pathname === '/api/profile/demo-subscription') {
-          throw new HttpError(403, 'demo_checkout_disabled', 'Paid subscriptions require verified Cashfree Checkout payment.');
+          throw new HttpError(403, 'demo_checkout_disabled', 'Paid subscriptions require verified Checkout payment.');
         }
         if (req.method === 'POST' && pathname === '/api/payments/create-order') {
           const body = await readBody(req);
           const data = loadStore();
-          const order = await cashfree.createSubscriptionOrder(data, {
+          const gwService = getActiveGatewayService(data);
+          const order = await gwService.createSubscriptionOrder(data, {
             uid: claims.sub,
             profile,
             planId: body.planId,
@@ -1582,13 +1677,32 @@ const server = http.createServer(async (req, res) => {
         if (req.method === 'POST' && pathname === '/api/payments/verify') {
           const body = await readBody(req);
           const data = loadStore();
-          const result = await cashfree.verifyAndCapturePayment(data, {
-            uid: claims.sub,
-            orderId: body.orderId || body.cf_order_id,
-            cfPaymentId: body.cf_payment_id || body.paymentId,
-            cfSignature: body.cf_signature || body.signature || '',
-            cfTimestamp: body.cf_timestamp || '',
-          });
+          const orderId = body.orderId || body.razorpay_order_id || body.cf_order_id;
+          const order = (data.paymentOrders || []).find(o => o && o.orderId === orderId);
+          const isRazorpay = Boolean(
+            body.razorpay_payment_id ||
+            body.razorpay_signature ||
+            order?.gateway === 'razorpay' ||
+            (!body.cf_payment_id && getActiveGatewayName(data) === 'razorpay')
+          );
+
+          let result;
+          if (isRazorpay) {
+            result = await razorpay.verifyAndCaptureCheckout(data, {
+              uid: claims.sub,
+              orderId,
+              paymentId: body.paymentId || body.razorpay_payment_id,
+              signature: body.signature || body.razorpay_signature,
+            });
+          } else {
+            result = await cashfree.verifyAndCapturePayment(data, {
+              uid: claims.sub,
+              orderId,
+              cfPaymentId: body.cf_payment_id || body.paymentId,
+              cfSignature: body.cf_signature || body.signature || '',
+              cfTimestamp: body.cf_timestamp || '',
+            });
+          }
           saveStore();
           return reply(res, 200, {
             success: true,
@@ -1601,22 +1715,26 @@ const server = http.createServer(async (req, res) => {
         if (req.method === 'POST' && pathname === '/api/payments/cancel') {
           const body = await readBody(req);
           const data = loadStore();
-          const result = cashfree.markOrderFailedOrCancelled(data, {
+          const orderId = body.orderId || body.razorpay_order_id || body.cf_order_id;
+          const order = (data.paymentOrders || []).find(o => o && o.orderId === orderId);
+          const gwService = order?.gateway === 'cashfree' ? cashfree : (order?.gateway === 'razorpay' ? razorpay : getActiveGatewayService(data));
+          const result = gwService.markOrderFailedOrCancelled(data, {
             uid: claims.sub,
-            orderId: body.orderId || body.cf_order_id,
+            orderId,
             status: body.status === 'failed' ? 'Failed' : 'Cancelled',
             reason: body.reason || '',
-            paymentId: body.paymentId || body.cf_payment_id || '',
+            paymentId: body.paymentId || body.razorpay_payment_id || body.cf_payment_id || '',
           });
           saveStore();
           return reply(res, 200, { success: true, data: result });
         }
         if (req.method === 'GET' && pathname === '/api/payments/history') {
           const data = loadStore();
+          const gwService = getActiveGatewayService(data);
           return reply(res, 200, {
             success: true,
             data: {
-              items: cashfree.getUserPaymentHistory(data, claims.sub),
+              items: gwService.getUserPaymentHistory(data, claims.sub),
               subscription: profileResponse(profile, claims.sub).subscription,
             },
           });
@@ -1624,9 +1742,12 @@ const server = http.createServer(async (req, res) => {
         const paymentStatusRoute = /^\/api\/payments\/([^/]+)\/status$/.exec(pathname);
         if (req.method === 'GET' && paymentStatusRoute) {
           const data = loadStore();
+          const oid = decodeURIComponent(paymentStatusRoute[1]);
+          const order = (data.paymentOrders || []).find(o => o && o.orderId === oid);
+          const gwService = order?.gateway === 'cashfree' ? cashfree : (order?.gateway === 'razorpay' ? razorpay : getActiveGatewayService(data));
           return reply(res, 200, {
             success: true,
-            data: cashfree.getUserOrderStatus(data, claims.sub, decodeURIComponent(paymentStatusRoute[1])),
+            data: gwService.getUserOrderStatus(data, claims.sub, oid),
           });
         }
         if (req.method === 'DELETE' && pathname === '/api/profile') {

@@ -26,7 +26,7 @@ const FILES = [
   'groq-provider.js', 'nvidia-config.js', 'nvidia-provider.js', 'provider-fallback.js',
   'provider-access-service.js', 'dashboard-analytics.js',
   'photon-limits.js', 'photon-usage.js', 'photon-admin-users.js', 'photon-admin-subscriptions.js',
-  'pricing-rules-service.js', 'cashfree-service.js', 'index.html', 'admin.html',
+  'pricing-rules-service.js', 'cashfree-service.js', 'razorpay-service.js', 'index.html', 'admin.html',
 ];
 
 // Cashfree webhook signature: HMAC-SHA256(timestamp + rawBody, secret), base64
