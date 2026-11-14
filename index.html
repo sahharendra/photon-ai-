@@ -952,10 +952,10 @@ async function switchToFreeModelAndRetry(){
   var currentId=(cur&&cur.model)||(user&&user.defaultModel)||"";
   var currentObj=models.find(function(m){return m.id===currentId});
   var badProvider=currentObj&&currentObj.provider?currentObj.provider:"CodeCraft";
-  var pick=models.find(function(m){return m.available&&m.provider==="NVIDIA"})
-    ||models.find(function(m){return m.available&&m.provider==="Groq"})
+  var pick=models.find(function(m){return m.id==="openrouter/free"&&m.available})
+    ||models.find(function(m){return m.available&&m.provider==="OpenRouter"&&m.free!==false})
     ||models.find(function(m){return m.available&&m.provider==="OpenRouter"})
-    ||models.find(function(m){return m.available&&m.provider!==badProvider&&m.free!==false});
+    ||models.find(function(m){return m.available&&m.free!==false});
   if(!pick){toast("No alternative free model is currently available.");return}
   if(cur)cur.model=pick.id;
   if(user)user.defaultModel=pick.id;

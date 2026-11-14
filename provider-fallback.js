@@ -19,6 +19,8 @@ const FALLBACK_CODES = Object.freeze([
   'network_error',
   'provider_timeout',
   'invalid_model',
+  'billing_required',
+  'quota_or_rate_limit',
 ]);
 const FALLBACK_SET = new Set(FALLBACK_CODES);
 const FREE_PROVIDERS = new Set(['OpenRouter', 'Ollama']);

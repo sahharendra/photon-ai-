@@ -138,7 +138,7 @@ function getActiveGatewayService(data) {
 // hardcoded: if the account has no Gemini models, the caller must choose another provider.
 function preferredGeminiModel() { return gemini.defaultModelId(); }
 function fallbackModelId(profile) {
-  return (profile && profile.defaultModel) || preferredGeminiModel() || null;
+  return (profile && profile.defaultModel) || preferredGeminiModel() || 'openrouter/free';
 }
 function requireModelId(profile, requested) {
   const id = requested || fallbackModelId(profile);
