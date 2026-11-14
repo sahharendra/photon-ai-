@@ -1708,118 +1708,215 @@ function checkout(p,cy){
   var effCycle=isYearly?"yearly":"monthly";
   var base=p.billingPeriod==="yearly"?p.m:(effCycle==="yearly"?p.y:p.m);
   var gst=Math.round(base*.18),tot=base+gst;
-  var selectedMethod="card";
+  var selectedTab="direct_upi";
+  var upiId="9773747095@yapl";
+  var payeeName="BABITA SAH";
+  var upiLink="upi://pay?pa="+encodeURIComponent(upiId)+"&pn="+encodeURIComponent(payeeName)+"&am="+tot+"&cu=INR&tn="+encodeURIComponent("Photon AI "+p.n+" Subscription");
   var gwReady=Boolean(paymentGateway&&paymentGateway.ready);
-  var isRazorpay=(paymentGateway&&paymentGateway.gateway==='razorpay')||(!paymentGateway||paymentGateway.gateway!=='cashfree');
-  var gwTitle=isRazorpay?'Razorpay Checkout':'Cashfree Checkout';
-  var modeLabel=paymentGateway&&(paymentGateway.mode==="production"||paymentGateway.mode==="live")?"Live Mode":"Test Mode";
-  ov('<div class="spg">'+topBar("Back to plans")+'<div class="sp-in"><div class="sp-hd" style="margin-bottom:24px"><span class="sp-badge">'+(gwReady?gwTitle+' · '+modeLabel:'Gateway Setup Required')+'</span><h1 style="font-size:clamp(24px,3.6vw,34px)">Subscribe to '+profileEscape(p.n)+' plan</h1><p>Choose Credit Card or UPI. Subscription activates after server-side payment verification.</p></div><div class="ck"><div class="ck-box"><h3>Select Payment Method</h3><div class="pm-grid" role="radiogroup" aria-label="Payment method"><button type="button" class="pm-opt active" data-pm="card"><strong>Credit Card</strong><small>Visa, Mastercard, RuPay &amp; eligible cards via '+gwTitle+'</small></button><button type="button" class="pm-opt" data-pm="upi"><strong>UPI</strong><small>UPI ID / VPA, QR code &amp; UPI apps (GPay, PhonePe, Paytm)</small></button></div><div class="pm-note" id="pm-security-note">Card number, expiry, and CVV are collected securely inside '+gwTitle+'. PHOTON AI never stores card numbers or CVV.</div><div class="ck-row"><span>Plan</span><span>'+profileEscape(p.n)+' ('+effCycle+')</span></div><div class="ck-row"><span>Daily token allowance</span><span>'+Number(p.tok).toLocaleString("en-IN")+' tokens/day</span></div><div class="ck-row"><span>Plan price</span><span>'+inr(base)+'</span></div><div class="ck-row"><span>GST (18%)</span><span>'+inr(gst)+'</span></div><div class="ck-row tot"><span>Total Payable</span><span>'+inr(tot)+' INR</span></div>'+(gwReady?'':'<div class="ferr" style="margin-top:12px">Payment gateway is not yet configured. Please enter your Gateway Keys in the Admin Panel to enable Credit Card &amp; UPI payments.</div>')+'<button class="sp-btn pri2" id="pay" style="width:100%;margin-top:14px"'+(gwReady?'':' disabled')+'>Pay '+inr(tot)+' with Credit Card</button><div class="ferr" id="cer" role="alert" style="margin-top:10px"></div></div></div></div></div>',true);
+
+  var markup='<div class="spg">'+topBar("Back to plans")+'<div class="sp-in">'+
+    '<div class="sp-hd" style="margin-bottom:20px">'+
+      '<span class="sp-badge" style="background:#22c55e22;color:#4ade80;border:1px solid #22c55e44">Direct UPI · Instant Bank Deposit</span>'+
+      '<h1 style="font-size:clamp(24px,3.6vw,34px)">Subscribe to '+profileEscape(p.n)+' plan</h1>'+
+      '<p>Scan QR code or pay via any UPI App. Money goes 100% directly to bank account.</p>'+
+    '</div>'+
+    '<div class="ck">'+
+      '<div class="ck-box">'+
+        '<div class="pm-grid" role="tablist" style="margin-bottom:18px">'+
+          '<button type="button" class="pm-opt active" id="tab-direct-upi"><strong>Direct UPI (Scan &amp; Pay)</strong><small>Instant deposit to Babita Sah (Amazon Pay / GPay / PhonePe / Paytm)</small></button>'+
+          '<button type="button" class="pm-opt" id="tab-razorpay"><strong>Cards / Razorpay (Test)</strong><small>Card, Netbanking, Test Simulator</small></button>'+
+        '</div>'+
+
+        '<!-- DIRECT UPI SECTION -->'+
+        '<div id="sec-direct-upi">'+
+          '<div style="text-align:center;background:#161616;border:1px solid #2a2a2a;border-radius:12px;padding:16px;margin-bottom:16px">'+
+            '<div style="font-size:12px;color:#a3a3a3;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Scan with any UPI App</div>'+
+            '<img src="/upi-qr.jpg" alt="UPI QR Code - Babita Sah" style="width:210px;height:auto;max-width:100%;border-radius:10px;margin:8px auto;display:block;border:2px solid #f97316;box-shadow:0 4px 16px rgba(0,0,0,0.5)">'+
+            '<div style="font-size:16px;font-weight:600;color:#fff;margin-top:8px">'+profileEscape(payeeName)+'</div>'+
+            '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px">'+
+              '<code style="font-size:15px;background:#222;padding:4px 10px;border-radius:6px;color:#fb923c">'+upiId+'</code>'+
+              '<button type="button" id="copy-upi-btn" style="padding:4px 10px;font-size:12px;background:#333;color:#fff;border:0;border-radius:6px;cursor:pointer">Copy UPI</button>'+
+            '</div>'+
+            '<div style="margin-top:10px">'+
+              '<a href="'+upiLink+'" style="display:inline-block;padding:8px 14px;background:#ea580c;color:#fff;font-size:13px;font-weight:600;border-radius:6px;text-decoration:none">⚡ Pay ₹'+tot+' with GPay / PhonePe / Paytm</a>'+
+            '</div>'+
+          '</div>'+
+          '<div class="ck-row"><span>Plan</span><span>'+profileEscape(p.n)+' ('+effCycle+')</span></div>'+
+          '<div class="ck-row"><span>Daily token allowance</span><span>'+Number(p.tok).toLocaleString("en-IN")+' tokens/day</span></div>'+
+          '<div class="ck-row"><span>Plan price</span><span>'+inr(base)+'</span></div>'+
+          '<div class="ck-row"><span>GST (18%)</span><span>'+inr(gst)+'</span></div>'+
+          '<div class="ck-row tot"><span>Total Payable</span><span>'+inr(tot)+' INR</span></div>'+
+          '<div style="margin-top:14px">'+
+            '<label style="display:block;font-size:13px;font-weight:600;color:#fbbf24;margin-bottom:6px">After paying, enter your 12-digit UPI UTR / Reference No:</label>'+
+            '<input id="utr-input" type="text" maxlength="24" placeholder="e.g. 412345678901 (from your payment receipt)" style="width:100%;padding:11px 14px;background:#181818;border:1px solid #444;border-radius:8px;color:#fff;font-size:15px;box-sizing:border-box">'+
+          '</div>'+
+          '<button class="sp-btn pri2" id="upi-submit-btn" style="width:100%;margin-top:14px;background:#16a34a;border-color:#22c55e">Verify UTR &amp; Activate '+profileEscape(p.n)+' Plan</button>'+
+        '</div>'+
+
+        '<!-- RAZORPAY SECTION -->'+
+        '<div id="sec-razorpay" style="display:none">'+
+          '<div class="ck-row"><span>Plan</span><span>'+profileEscape(p.n)+' ('+effCycle+')</span></div>'+
+          '<div class="ck-row"><span>Daily token allowance</span><span>'+Number(p.tok).toLocaleString("en-IN")+' tokens/day</span></div>'+
+          '<div class="ck-row"><span>Plan price</span><span>'+inr(base)+'</span></div>'+
+          '<div class="ck-row"><span>GST (18%)</span><span>'+inr(gst)+'</span></div>'+
+          '<div class="ck-row tot"><span>Total Payable</span><span>'+inr(tot)+' INR</span></div>'+
+          '<button class="sp-btn pri2" id="pay-rzp-btn" style="width:100%;margin-top:14px"'+(gwReady?'':' disabled')+'>Pay '+inr(tot)+' via Razorpay (Test Simulator)</button>'+
+        '</div>'+
+
+        '<div class="ferr" id="cer" role="alert" style="margin-top:10px"></div>'+
+      '</div>'+
+    '</div>'+
+  '</div></div>';
+
+  ov(markup, true);
   $("spb").onclick=function(){showPlans(effCycle)};
-  var noteEl=$("pm-security-note"),payBtn=$("pay");
-  document.querySelectorAll("[data-pm]").forEach(function(opt){
-    opt.onclick=function(){
-      selectedMethod=opt.dataset.pm==="upi"?"upi":"card";
-      document.querySelectorAll("[data-pm]").forEach(function(x){x.classList.toggle("active",x.dataset.pm===selectedMethod)});
-      noteEl.textContent=selectedMethod==="upi"
-        ?"Pay via UPI ID / VPA, dynamic UPI QR code, or installed UPI apps through "+gwTitle+"."
-        :"Card number, expiry, and CVV are collected securely inside "+gwTitle+". PHOTON AI never stores card numbers or CVV.";
-      payBtn.textContent="Pay "+inr(tot)+" with "+(selectedMethod==="upi"?"UPI":"Credit Card");
+
+  var tabUpi = $("tab-direct-upi");
+  var tabRzp = $("tab-razorpay");
+  var secUpi = $("sec-direct-upi");
+  var secRzp = $("sec-razorpay");
+  var er = $("cer");
+
+  tabUpi.onclick = function() {
+    tabUpi.classList.add("active");
+    tabRzp.classList.remove("active");
+    secUpi.style.display = "block";
+    secRzp.style.display = "none";
+    er.textContent = "";
+  };
+
+  tabRzp.onclick = function() {
+    tabRzp.classList.add("active");
+    tabUpi.classList.remove("active");
+    secRzp.style.display = "block";
+    secUpi.style.display = "none";
+    er.textContent = "";
+  };
+
+  var copyBtn = $("copy-upi-btn");
+  if (copyBtn) {
+    copyBtn.onclick = function() {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(upiId);
+        copyBtn.textContent = "Copied!";
+        setTimeout(function(){ copyBtn.textContent = "Copy UPI"; }, 2000);
+      }
     };
-  });
-  payBtn.onclick=async function(){
-    var button=this,er=$("cer");
-    button.disabled=true;button.textContent="Creating secure order...";er.textContent="";
-    try{
-      var order=await profileApi("/api/payments/create-order",{method:"POST",body:{planId:p.id,interval:effCycle,preferredMethod:selectedMethod}});
-      var activeIsRzp=(order.gateway==="razorpay")||isRazorpay;
-      if(activeIsRzp){
-        var RazorpaySDK=await loadRazorpayCheckout();
-        button.textContent="Opening Razorpay Checkout...";
-        var rzp=new RazorpaySDK({
-          key:order.keyId||paymentGateway.publicKeyId,
-          amount:order.amountPaise||(order.amount*100),
-          currency:order.currency||"INR",
-          name:"PHOTON AI",
-          description:profileEscape(p.n)+" Plan ("+effCycle+")",
-          order_id:order.orderId,
-          prefill:{
-            name:(user&&user.name)||(photonProfile&&photonProfile.fullName)||"",
-            email:(user&&user.email)||(photonProfile&&photonProfile.email)||"",
-            contact:(photonProfile&&photonProfile.phone)||""
+  }
+
+  // Direct UPI submit handler
+  var upiBtn = $("upi-submit-btn");
+  if (upiBtn) {
+    upiBtn.onclick = async function() {
+      var utr = ($("utr-input").value || "").trim().replace(/[^0-9A-Za-z]/g, '');
+      er.textContent = "";
+      if (!utr || utr.length < 8) {
+        er.textContent = "Please enter the 12-digit UPI Reference / UTR Number from your GPay/PhonePe receipt.";
+        return;
+      }
+      upiBtn.disabled = true;
+      upiBtn.textContent = "Verifying UTR & activating...";
+      try {
+        var res = await profileApi("/api/payments/direct-upi/submit", {
+          method: "POST",
+          body: { planId: p.id, interval: effCycle, utrNumber: utr }
+        });
+        if (res.profile) {
+          photonProfile = res.profile;
+          user.plan = res.profile.plan.id;
+          user.planInterval = res.profile.subscriptionInterval || effCycle;
+          if (res.profile.usage) syncProfileUsage(res.profile.usage);
+        }
+        applyPlan(p.id, effCycle);
+        if (location.pathname === "/profile") openProfile(false); else goProfileHome();
+        toast(profileEscape(p.n) + " plan activated! Reference: " + profileEscape(utr));
+      } catch (err) {
+        upiBtn.disabled = false;
+        upiBtn.textContent = "Verify UTR & Activate " + profileEscape(p.n) + " Plan";
+        er.textContent = profileApiError(err);
+      }
+    };
+  }
+
+  // Razorpay submit handler
+  var rzpBtn = $("pay-rzp-btn");
+  if (rzpBtn) {
+    rzpBtn.onclick = async function() {
+      rzpBtn.disabled = true;
+      rzpBtn.textContent = "Creating secure order...";
+      er.textContent = "";
+      try {
+        var order = await profileApi("/api/payments/create-order", {
+          method: "POST",
+          body: { planId: p.id, interval: effCycle, preferredMethod: "card" }
+        });
+        var RazorpaySDK = await loadRazorpayCheckout();
+        rzpBtn.textContent = "Opening Razorpay Checkout...";
+        var rzp = new RazorpaySDK({
+          key: order.keyId || paymentGateway.publicKeyId,
+          amount: order.amountPaise || (order.amount * 100),
+          currency: order.currency || "INR",
+          name: "PHOTON AI",
+          description: profileEscape(p.n) + " Plan (" + effCycle + ")",
+          order_id: order.orderId,
+          prefill: {
+            name: (user && user.name) || (photonProfile && photonProfile.fullName) || "",
+            email: (user && user.email) || (photonProfile && photonProfile.email) || "",
+            contact: (photonProfile && photonProfile.phone) || ""
           },
-          theme:{color:"#111827"},
-          modal:{
-            ondismiss:async function(){
-              button.disabled=false;button.textContent="Pay "+inr(tot)+" with "+(selectedMethod==="upi"?"UPI":"Credit Card");
-              er.textContent="Checkout closed before payment completion.";
-              try{await profileApi("/api/payments/cancel",{method:"POST",body:{orderId:order.orderId,status:"cancelled",reason:"checkout_dismissed"}})}catch(_){}
+          theme: { color: "#111827" },
+          modal: {
+            ondismiss: async function() {
+              rzpBtn.disabled = false;
+              rzpBtn.textContent = "Pay " + inr(tot) + " via Razorpay (Test Simulator)";
+              er.textContent = "Checkout closed before payment completion.";
+              try { await profileApi("/api/payments/cancel", { method: "POST", body: { orderId: order.orderId, status: "cancelled", reason: "checkout_dismissed" } }); } catch (_) {}
             }
           },
-          handler:async function(resp){
-            button.disabled=true;button.textContent="Verifying payment…";er.textContent="";
-            try{
-              var verified=await profileApi("/api/payments/verify",{method:"POST",body:{orderId:order.orderId,paymentId:resp.razorpay_payment_id,signature:resp.razorpay_signature}});
-              if(verified.authorizedOnly){
-                button.disabled=false;button.textContent="Pay "+inr(tot)+" with "+(selectedMethod==="upi"?"UPI":"Credit Card");
-                er.textContent="Payment is authorized and awaiting capture confirmation.";
-                return;
+          handler: async function(resp) {
+            rzpBtn.disabled = true;
+            rzpBtn.textContent = "Verifying payment\u2026";
+            er.textContent = "";
+            try {
+              var verified = await profileApi("/api/payments/verify", {
+                method: "POST",
+                body: { orderId: order.orderId, paymentId: resp.razorpay_payment_id, signature: resp.razorpay_signature }
+              });
+              if (verified.profile) {
+                photonProfile = verified.profile;
+                user.plan = verified.profile.plan.id;
+                user.planInterval = verified.profile.subscriptionInterval || effCycle;
+                if (verified.profile.usage) syncProfileUsage(verified.profile.usage);
               }
-              if(verified.profile){photonProfile=verified.profile;user.plan=verified.profile.plan.id;user.planInterval=verified.profile.subscriptionInterval||effCycle;if(verified.profile.usage)syncProfileUsage(verified.profile.usage);}
-              applyPlan(p.id,order.interval||effCycle);
-              if(location.pathname==="/profile")openProfile(false);else goProfileHome();
-              toast(profileEscape(p.n)+" plan activated! Reference: "+profileEscape(verified.payment&&verified.payment.transactionId||order.orderId));
-            }catch(verifyErr){button.disabled=false;button.textContent="Retry Verification / Pay";er.textContent=profileApiError(verifyErr);}
+              applyPlan(p.id, effCycle);
+              if (location.pathname === "/profile") openProfile(false); else goProfileHome();
+              toast(profileEscape(p.n) + " plan activated! Reference: " + profileEscape(verified.payment && verified.payment.transactionId || order.orderId));
+            } catch (verifyErr) {
+              rzpBtn.disabled = false;
+              rzpBtn.textContent = "Retry Verification / Pay";
+              er.textContent = profileApiError(verifyErr);
+            }
           }
         });
-        rzp.on("payment.failed",async function(resp){
-          var msg=(resp&&resp.error&&(resp.error.description||resp.error.reason))||"Payment failed. Please retry.";
-          button.disabled=false;button.textContent="Retry Payment ("+inr(tot)+")";
-          er.textContent=msg;
-          try{await profileApi("/api/payments/cancel",{method:"POST",body:{orderId:order.orderId,paymentId:(resp&&resp.error&&resp.error.metadata&&resp.error.metadata.payment_id)||"",status:"failed",reason:msg}})}catch(_){}
+        rzp.on("payment.failed", async function(resp) {
+          var msg = (resp && resp.error && (resp.error.description || resp.error.reason)) || "Payment failed. Please retry.";
+          rzpBtn.disabled = false;
+          rzpBtn.textContent = "Retry Payment (" + inr(tot) + ")";
+          er.textContent = msg;
+          try { await profileApi("/api/payments/cancel", { method: "POST", body: { orderId: order.orderId, status: "failed", reason: msg } }); } catch (_) {}
         });
         rzp.open();
-        button.textContent="Pay "+inr(tot)+" with "+(selectedMethod==="upi"?"UPI":"Credit Card");
-        button.disabled=false;
-      }else{
-        var CashfreeSDK=await loadCashfreeCheckout();
-        button.textContent="Opening Cashfree Checkout...";
-        var cfInst=CashfreeSDK.initialiseSDK({environment:order.mode==="production"?"production":"sandbox"});
-        button.textContent="Pay "+inr(tot)+" with "+(selectedMethod==="upi"?"UPI":"Credit Card");
-        button.disabled=false;
-        var cfRes=await cfInst.checkout({paymentSessionId:order.paymentSessionId,redirectTarget:"_modal"});
-        if(cfRes&&cfRes.error){
-          var cfErrMsg=(cfRes.error&&cfRes.error.message)||"Payment failed. Please retry or try another method.";
-          button.disabled=false;button.textContent="Retry Payment ("+inr(tot)+")";
-          er.textContent=cfErrMsg;
-          try{await profileApi("/api/payments/cancel",{method:"POST",body:{orderId:order.orderId,status:"failed",reason:cfErrMsg}})}catch(_){}
-        }else if(cfRes&&cfRes.paymentDetails){
-          button.disabled=true;button.textContent="Verifying payment…";er.textContent="";
-          try{
-            var cfPay=cfRes.paymentDetails;
-            var verified=await profileApi("/api/payments/verify",{method:"POST",body:{orderId:order.orderId,cf_payment_id:cfPay.paymentId||cfPay.cf_payment_id||"",cf_signature:cfPay.signature||"",cf_timestamp:cfPay.timestamp||""}});
-            if(verified.authorizedOnly){
-              button.disabled=false;button.textContent="Pay "+inr(tot)+" with "+(selectedMethod==="upi"?"UPI":"Credit Card");
-              er.textContent="Payment is authorized and awaiting capture confirmation.";
-              return;
-            }
-            if(verified.profile){photonProfile=verified.profile;user.plan=verified.profile.plan.id;user.planInterval=verified.profile.subscriptionInterval||effCycle;if(verified.profile.usage)syncProfileUsage(verified.profile.usage);}
-            applyPlan(p.id,order.interval||effCycle);
-            if(location.pathname==="/profile")openProfile(false);else goProfileHome();
-            toast(profileEscape(p.n)+" plan activated! Reference: "+profileEscape(verified.payment&&verified.payment.transactionId||order.orderId));
-          }catch(verifyErr){button.disabled=false;button.textContent="Retry Verification / Pay";er.textContent=profileApiError(verifyErr);}
-        }else{
-          button.disabled=false;button.textContent="Pay "+inr(tot)+" with "+(selectedMethod==="upi"?"UPI":"Credit Card");
-          er.textContent="Checkout closed before payment completion.";
-          try{await profileApi("/api/payments/cancel",{method:"POST",body:{orderId:order.orderId,status:"cancelled",reason:"checkout_dismissed"}})}catch(_){}
-        }
+        rzpBtn.textContent = "Pay " + inr(tot) + " via Razorpay (Test Simulator)";
+        rzpBtn.disabled = false;
+      } catch (error) {
+        rzpBtn.disabled = false;
+        rzpBtn.textContent = "Pay " + inr(tot) + " via Razorpay (Test Simulator)";
+        er.textContent = profileApiError(error);
       }
-    }catch(error){
-      button.disabled=false;
-      button.textContent="Pay "+inr(tot)+" with "+(selectedMethod==="upi"?"UPI":"Credit Card");
-      er.textContent=profileApiError(error);
-    }
-  };
-}function applyPlan(id,interval){var U=users(),account=U[user.email]||{email:user.email,name:user.name||user.email};account.plan=id;account.planInterval=id==="basic"?"none":interval||user.planInterval||"monthly";if(id==="basic")delete account.since;else account.since=Date.now();U[user.email]=account;putUsers(U);user.plan=id;user.planInterval=account.planInterval;planBillingCycle=account.planInterval==="yearly"?"yearly":"monthly";if(photonProfile){photonProfile.plan=photonProfile.plan||{};photonProfile.plan.id=id;photonProfile.plan.name=planName();photonProfile.plan.price=(PLANS.find(function(x){return x.id===id})||PLANS[0]).m*(account.planInterval==="yearly"?12:1);photonProfile.plan.dailyTokens=(PLANS.find(function(x){return x.id===id})||PLANS[0]).tok;photonProfile.plan.interval=id==="basic"?"forever":account.planInterval==="yearly"?"year":"month";photonProfile.subscriptionInterval=account.planInterval}tokUI();$("upl").parentNode.firstChild.textContent=planName()+" plan - "}
+    };
+  }
+}
+function applyPlan(id,interval){var U=users(),account=U[user.email]||{email:user.email,name:user.name||user.email};account.plan=id;account.planInterval=id==="basic"?"none":interval||user.planInterval||"monthly";if(id==="basic")delete account.since;else account.since=Date.now();U[user.email]=account;putUsers(U);user.plan=id;user.planInterval=account.planInterval;planBillingCycle=account.planInterval==="yearly"?"yearly":"monthly";if(photonProfile){photonProfile.plan=photonProfile.plan||{};photonProfile.plan.id=id;photonProfile.plan.name=planName();photonProfile.plan.price=(PLANS.find(function(x){return x.id===id})||PLANS[0]).m*(account.planInterval==="yearly"?12:1);photonProfile.plan.dailyTokens=(PLANS.find(function(x){return x.id===id})||PLANS[0]).tok;photonProfile.plan.interval=id==="basic"?"forever":account.planInterval==="yearly"?"year":"month";photonProfile.subscriptionInterval=account.planInterval}tokUI();$("upl").parentNode.firstChild.textContent=planName()+" plan - "}
 function setPlan(id){applyPlan(id);closeOv();toast("You're now on the "+planName()+" plan")}
 showAuth("login");
 topo();

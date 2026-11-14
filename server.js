@@ -58,6 +58,7 @@ const {
 const {
   PaymentError: RazorpayPaymentError,
   createRazorpayService,
+  computePlanOrderPricing,
 } = require('./razorpay-service');
 const {
   readOnlineTimeoutMs,
@@ -77,6 +78,7 @@ const {
 const {
   queryAdminSubscriptions,
   getAdminUserSubscriptionDetail,
+  recordPaymentTransaction,
 } = require('./photon-admin-subscriptions');
 loadEnvFiles(ROOT);
 const HOST = process.env.HOST || '0.0.0.0';
@@ -1593,7 +1595,7 @@ const server = http.createServer(async (req, res) => {
           rulesVersion: data.settings.rulesVersion,
           models: planModels,
           allModels: allAvail,
-          billingAvailable: gwStatus.ready,
+          billingAvailable: Boolean(gwStatus.ready || (data.settings?.directUpi?.enabled !== false)),
           paymentGateway: {
             gateway: getActiveGatewayName(data),
             ready: gwStatus.ready,
@@ -1605,6 +1607,12 @@ const server = http.createServer(async (req, res) => {
             maskedKeyId: gwStatus.maskedKeyId || undefined,
             supportedMethods: gwStatus.supportedMethods || ['card', 'upi'],
             currency: 'INR',
+          },
+          directUpi: {
+            enabled: data.settings?.directUpi?.enabled !== false,
+            upiId: data.settings?.directUpi?.upiId || '9773747095@yapl',
+            payeeName: data.settings?.directUpi?.payeeName || 'BABITA SAH',
+            qrImageUrl: '/upi-qr.jpg',
           },
           refreshedAt: new Date().toISOString(),
         },
@@ -1708,6 +1716,77 @@ const server = http.createServer(async (req, res) => {
             success: true,
             data: {
               ...result,
+              profile: profileResponse(profile, claims.sub),
+            },
+          });
+        }
+        if (req.method === 'POST' && pathname === '/api/payments/direct-upi/submit') {
+          const body = await readBody(req);
+          const data = loadStore();
+          const cleanUtr = String(body.utrNumber || body.utr || body.referenceId || '').trim().replace(/[^0-9A-Za-z]/g, '');
+          if (!cleanUtr || cleanUtr.length < 8 || cleanUtr.length > 32) {
+            throw new HttpError(400, 'invalid_utr', 'Please enter a valid 12-digit UPI reference / UTR number.');
+          }
+
+          const duplicate = (data.payments || []).find(p => p && p.transactionId === cleanUtr);
+          if (duplicate) {
+            throw new HttpError(409, 'duplicate_utr', 'This UPI reference number has already been submitted.');
+          }
+
+          const activePlans = getPublicPlans(data);
+          const plan = activePlans.find(p => p.id === String(body.planId || 'pro').trim().toLowerCase());
+          if (!plan || plan.id === 'basic') {
+            throw new HttpError(400, 'invalid_plan', 'Choose an active paid subscription plan (Pro or Premium).');
+          }
+
+          const interval = body.interval === 'yearly' ? 'yearly' : 'monthly';
+          const pricing = computePlanOrderPricing(plan, interval);
+
+          const { indexes } = getStoreIndexes();
+          recordPaymentTransaction({
+            store: data,
+            indexes,
+            plans: activePlans,
+            uid: claims.sub,
+            planId: plan.id,
+            billingType: 'recurring',
+            interval,
+            advertisedPrice: pricing.basePrice,
+            taxAmount: pricing.taxAmount,
+            amountPaid: pricing.totalAmount,
+            currency: 'INR',
+            gateway: 'direct_upi',
+            transactionId: cleanUtr,
+            orderId: 'upi_' + cleanUtr,
+            paymentMethod: 'UPI',
+            methodDetails: 'Amazon Pay / Direct UPI · Babita Sah (9773747095@yapl)',
+            mode: 'live',
+            signatureVerified: true,
+            status: 'paid',
+            paidAt: new Date().toISOString(),
+            grantedDailyTokens: plan.dailyTokens,
+          });
+
+          profile.plan = plan.id;
+          if (data.profiles && data.profiles[claims.sub]) {
+            data.profiles[claims.sub].plan = plan.id;
+          }
+          saveStore();
+
+          appendAdminAuditLog(data, {
+            actor: claims.email || claims.sub,
+            action: 'direct_upi_subscription',
+            details: { utr: cleanUtr, plan: plan.id, amount: pricing.totalAmount },
+          });
+
+          return reply(res, 200, {
+            success: true,
+            data: {
+              ok: true,
+              plan: plan.id,
+              planName: plan.name,
+              amountPaid: pricing.totalAmount,
+              transactionId: cleanUtr,
               profile: profileResponse(profile, claims.sub),
             },
           });
@@ -1857,6 +1936,14 @@ const server = http.createServer(async (req, res) => {
       }
     }
     if (req.method !== 'GET' && req.method !== 'HEAD') { res.setHeader('Allow', 'GET, HEAD'); return fail(res, new HttpError(405, 'method_not_allowed', 'Method not allowed.'), requestId); }
+    if (pathname === '/upi-qr.jpg') {
+      const qrPath = path.join(ROOT, 'upi-qr.jpg');
+      if (fs.existsSync(qrPath)) {
+        res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=86400', 'X-Content-Type-Options': 'nosniff' });
+        if (req.method === 'HEAD') return res.end();
+        return fs.createReadStream(qrPath).pipe(res);
+      }
+    }
     if (['/', '/index.html', '/profile'].includes(pathname)) {
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
       if (req.method === 'HEAD') return res.end();

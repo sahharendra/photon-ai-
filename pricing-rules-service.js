@@ -297,6 +297,14 @@ function normalizeSettings(raw) {
 
   const activeGateway = input.activeGateway === 'cashfree' ? 'cashfree' : 'razorpay';
 
+  const directUpiRaw = (input.directUpi && typeof input.directUpi === 'object') ? input.directUpi : {};
+  const directUpi = {
+    enabled: directUpiRaw.enabled !== false,
+    upiId: String(directUpiRaw.upiId || '9773747095@yapl').trim(),
+    payeeName: String(directUpiRaw.payeeName || 'BABITA SAH').trim(),
+    qrImageUrl: '/upi-qr.jpg',
+  };
+
   return {
     plans: mergedPlans,
     tokenCosts,
@@ -305,6 +313,7 @@ function normalizeSettings(raw) {
     razorpay,
     cashfree,
     activeGateway,
+    directUpi,
     settingsVersion: SETTINGS_VERSION,
     rulesVersion: RULES_VERSION,
   };
