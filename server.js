@@ -75,7 +75,7 @@ const {
   getAdminUserSubscriptionDetail,
 } = require('./photon-admin-subscriptions');
 loadEnvFiles(ROOT);
-const HOST = '127.0.0.1';
+const HOST = process.env.HOST || '0.0.0.0';
 const PORT = Math.max(1, Math.min(65535, Number(process.env.PORT) || 3000));
 const ONLINE_TIMEOUT_MS = readOnlineTimeoutMs(process.env);
 const SESSION_TTL_MS = readSessionTtlMs(process.env);
