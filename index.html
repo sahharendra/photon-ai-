@@ -1819,7 +1819,6 @@ function checkout(p,cy){
       er.textContent=profileApiError(error);
     }
   };
-}
 }function applyPlan(id,interval){var U=users(),account=U[user.email]||{email:user.email,name:user.name||user.email};account.plan=id;account.planInterval=id==="basic"?"none":interval||user.planInterval||"monthly";if(id==="basic")delete account.since;else account.since=Date.now();U[user.email]=account;putUsers(U);user.plan=id;user.planInterval=account.planInterval;planBillingCycle=account.planInterval==="yearly"?"yearly":"monthly";if(photonProfile){photonProfile.plan=photonProfile.plan||{};photonProfile.plan.id=id;photonProfile.plan.name=planName();photonProfile.plan.price=(PLANS.find(function(x){return x.id===id})||PLANS[0]).m*(account.planInterval==="yearly"?12:1);photonProfile.plan.dailyTokens=(PLANS.find(function(x){return x.id===id})||PLANS[0]).tok;photonProfile.plan.interval=id==="basic"?"forever":account.planInterval==="yearly"?"year":"month";photonProfile.subscriptionInterval=account.planInterval}tokUI();$("upl").parentNode.firstChild.textContent=planName()+" plan - "}
 function setPlan(id){applyPlan(id);closeOv();toast("You're now on the "+planName()+" plan")}
 showAuth("login");
