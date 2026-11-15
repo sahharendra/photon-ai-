@@ -262,6 +262,12 @@
       </div>
     </div>
     <div class="field">
+      <label for="ollama-base-url-input">Endpoint URL (Optional - defaults to https://ollama.com or tunnel URL)</label>
+      <input id="ollama-base-url-input" type="text" placeholder="https://ollama.com or your ngrok/tunnel URL">
+    </div>
+  </div>
+  <div class="settings-grid" style="margin-top:10px">
+    <div class="field">
       <label>Configured Status</label>
       <div style="display:flex;align-items:center;gap:8px;height:40px;padding:0 4px">
         <span id="ollama-key-badge" class="pill">Checking...</span>
@@ -1151,17 +1157,18 @@
     e.preventDefault();
     const btn = $('ollama-save-key');
     const val = $('ollama-key-input').value.trim();
-    if (!val) { alert('Please enter an Ollama API key.'); return; }
+    const url = $('ollama-base-url-input')?.value.trim() || '';
+    if (!val && !url) { alert('Please enter an Ollama API key or an Endpoint URL.'); return; }
     btn.disabled = true; btn.textContent = 'Saving...';
     try {
-      const data = await request('/api/admin/ollama/key', 'POST', { key: val });
+      const data = await request('/api/admin/ollama/key', 'POST', { key: val, baseUrl: url });
       $('ollama-key-input').value = '';
       renderOllama(data);
-      status('Ollama API Key saved successfully.');
-      alert('Ollama API Key saved successfully.');
+      status('Ollama settings saved successfully.');
+      alert('Ollama settings saved successfully.');
     } catch (err) {
-      status(err.message || 'Could not save Ollama API key.', true);
-      alert(err.message || 'Could not save Ollama API key.');
+      status(err.message || 'Could not save Ollama settings.', true);
+      alert(err.message || 'Could not save Ollama settings.');
     } finally {
       btn.disabled = false;
     }
@@ -1699,7 +1706,10 @@ async function load(forceSettings=false){if(refreshing)return;refreshing=true;st
     const diag=$('ollama-diag');diag.replaceChildren();
     rowItem(diag,'Ollama Cloud / Local',(st.configured?(st.isCloud?'Cloud (key '+(st.maskedKey||'configured')+')':'Local ('+(st.endpoint||'')+')'):'OLLAMA_API_KEY is not set')+'; '+(st.modelCount||0)+' models configured',orBadge(st.configured?'Ready':'Not configured',Boolean(st.configured)));
     rowItem(diag,'Spending policy',st.spendingPolicy==='block'?'Block all requests':(st.spendingPolicy==='allow_all'?'Allow all models':'Allow free models only (zero-billing safe)'),orBadge(st.spendingPolicy==='block'?'Blocked':'Allowed',st.spendingPolicy!=='block'));
-    if(st.endpoint)rowItem(diag,'API Endpoint',st.endpoint,'');
+    if(st.endpoint){
+      rowItem(diag,'API Endpoint',st.endpoint,'');
+      if ($('ollama-base-url-input') && !$('ollama-base-url-input').value) $('ollama-base-url-input').placeholder = st.endpoint;
+    }
     $('ollama-usage').textContent=olmUsageText(st.usage);
     $('ollama-enabled').value=st.enabled===false?'false':'true';
     $('ollama-spending-policy').value=st.spendingPolicy||'allow_free_only';

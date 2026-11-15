@@ -13,7 +13,7 @@ const { parseRetryAfter, backoffDelay } = require('./gemini-provider');
 
 const MODEL_TTL_MS = 10 * 60 * 1000;
 const MODEL_RETRY_MS = 60 * 1000;
-const TAGS_TIMEOUT_MS = 5000;
+const TAGS_TIMEOUT_MS = 15000;
 const REQUEST_TIMEOUT_MS = 120 * 1000;
 const MAX_RETRIES = 2;
 const MAX_OUTPUT_TOKENS = 4096;
@@ -78,7 +78,12 @@ function createOllamaProvider({
   function enabled() { return config.isEnabled(); }
 
   function getHeaders() {
-    const headers = { 'Content-Type': 'application/json' };
+    const headers = {
+      'Content-Type': 'application/json',
+      'User-Agent': 'PhotonAI/1.0',
+      'bypass-tunnel-reminder': 'true',
+      'ngrok-skip-browser-warning': 'true',
+    };
     const key = apiKey();
     if (key) {
       headers['Authorization'] = `Bearer ${key}`;

@@ -1060,9 +1060,10 @@ const server = http.createServer(async (req, res) => {
       if (pathname === '/api/admin/ollama/key' && req.method === 'POST') {
         const body = await readBody(req);
         const key = String(body.key || '').trim();
-        if (!key) throw new HttpError(400, 'invalid_key', 'Ollama API key cannot be empty.');
-        setEnvKey('OLLAMA_API_KEY', key);
-        if (body.baseUrl) setEnvKey('OLLAMA_BASE_URL', String(body.baseUrl).trim());
+        const baseUrl = String(body.baseUrl || '').trim();
+        if (!key && !baseUrl) throw new HttpError(400, 'invalid_key', 'Please enter an API key or an Endpoint URL.');
+        if (key) setEnvKey('OLLAMA_API_KEY', key);
+        if (baseUrl) setEnvKey('OLLAMA_BASE_URL', baseUrl);
         ollamaConfig.setEnabled(true);
         ollamaConfig.setSpendingPolicy('allow_free_only');
         ollama.resetCache();
