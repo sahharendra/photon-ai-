@@ -255,6 +255,7 @@ function createOllamaProvider({
     if (!enabled()) throw new HttpError(403, 'provider_disabled', validationMessage('provider_disabled'));
     const policy = config.getSpendingPolicy();
     if (policy === 'block') throw new HttpError(403, 'billing_blocked', validationMessage('billing_blocked'));
+    if (!apiKey() && modelsOk === false) throw new HttpError(503, 'network_error', 'No local Ollama server is running on this host, and no OLLAMA_API_KEY is configured.');
   }
 
   function userContent(text, attachments = []) {
@@ -472,19 +473,29 @@ function createOllamaProvider({
   function catalogEntries() {
     const isConfig = configured();
     const isEn = enabled();
+    const hasCloud = Boolean(apiKey());
+    const isReachable = hasCloud || modelsOk === true;
     const allModels = config.getModels();
-    return Object.values(allModels).map(m => ({
-      id: m.id,
-      name: m.name || m.id,
-      provider: 'Ollama',
-      configured: isConfig,
-      supported: true,
-      available: isConfig && isEn && m.enabled,
-      free: Boolean(m.free),
-      contextLength: m.contextWindow || 131072,
-      capabilities: { text: true, vision: false, pdf: false },
-      reason: !isConfig ? 'Ollama API key or server not configured' : (!isEn ? 'Ollama is disabled' : (!m.enabled ? 'Model is disabled' : '')),
-    }));
+    return Object.values(allModels).map(m => {
+      const isModelAvailable = isConfig && isEn && isReachable && m.enabled;
+      let reason = '';
+      if (!isConfig) reason = 'Ollama API key or server not configured';
+      else if (!isEn) reason = 'Ollama is disabled';
+      else if (!isReachable) reason = 'Local Ollama server is not running on this host and no OLLAMA_API_KEY is configured for cloud inference';
+      else if (!m.enabled) reason = 'Model is disabled';
+      return {
+        id: m.id,
+        name: m.name || m.id,
+        provider: 'Ollama',
+        configured: isConfig && isReachable,
+        supported: true,
+        available: isModelAvailable,
+        free: Boolean(m.free),
+        contextLength: m.contextWindow || 131072,
+        capabilities: { text: true, vision: false, pdf: false },
+        reason,
+      };
+    });
   }
 
   function status() {
