@@ -226,7 +226,32 @@
     <button id="nvidia-save-key" type="submit">Save API Key</button>
   </div>
 </form>
-<div class="settings-grid" style="margin-top:18px"><div class="field"><label>Request &amp; token usage</label><div id="nvidia-usage" class="muted">Not loaded.</div></div></div><form id="nvidia-settings-form" style="margin-top:14px"><div class="settings-grid"><div class="field"><label for="nvidia-enabled">Provider state</label><select id="nvidia-enabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div><div class="field"><label for="nvidia-spending-policy">Spending policy</label><select id="nvidia-spending-policy"><option value="allow_free_only">Allow free credits only (zero-billing safe)</option><option value="block">Block all requests</option></select></div></div><div class="save-row"><small class="muted">NVIDIA NIM free trial credits only. API key is never stored or shown.</small><button id="nvidia-save-settings" type="submit">Save NVIDIA settings</button></div></form><div class="head" style="margin-top:28px"><div><h2>NVIDIA NIM models</h2><small>Discovered from GET /v1/models. High-speed open models.</small></div></div><div class="scroll"><table class="subscriptions-table"><thead><tr><th>Model</th><th>Status</th><th>Context window</th><th>Actions</th></tr></thead><tbody id="nvidia-models"></tbody></table></div><div class="head" style="margin-top:28px"><div><h2>Recent NVIDIA errors</h2><small>Key-free error codes only.</small></div></div><div id="nvidia-errors" class="list"></div><div class="head" style="margin-top:34px"><div><h2>Local Ollama / Gemma</h2><small>Optional free local fallback. No API key; models are read live from OLLAMA_BASE_URL.</small></div><button id="ollama-test" type="button">Test local server</button></div><div id="ollama-status" class="list"></div></section><section id="subscriptions" class="card section page-view"><div class="head"><div><h2>Subscriptions &amp; Purchases</h2><small>Verified payments, actual collected revenue, recurring MRR, refunds, and Cashfree gateway settings.</small></div><div class="actions"><button id="refresh-subs" type="button">Refresh</button></div></div><div class="gw-card" id="cashfree-gateway-card">
+<div class="settings-grid" style="margin-top:18px"><div class="field"><label>Request &amp; token usage</label><div id="nvidia-usage" class="muted">Not loaded.</div></div></div><form id="nvidia-settings-form" style="margin-top:14px"><div class="settings-grid"><div class="field"><label for="nvidia-enabled">Provider state</label><select id="nvidia-enabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div><div class="field"><label for="nvidia-spending-policy">Spending policy</label><select id="nvidia-spending-policy"><option value="allow_free_only">Allow free credits only (zero-billing safe)</option><option value="block">Block all requests</option></select></div></div><div class="save-row"><small class="muted">NVIDIA NIM free trial credits only. API key is never stored or shown.</small><button id="nvidia-save-settings" type="submit">Save NVIDIA settings</button></div></form><div class="head" style="margin-top:28px"><div><h2>NVIDIA NIM models</h2><small>Discovered from GET /v1/models. High-speed open models.</small></div></div><div class="scroll"><table class="subscriptions-table"><thead><tr><th>Model</th><th>Status</th><th>Context window</th><th>Actions</th></tr></thead><tbody id="nvidia-models"></tbody></table></div><div class="head" style="margin-top:28px"><div><h2>Recent NVIDIA errors</h2><small>Key-free error codes only.</small></div></div><div id="nvidia-errors" class="list"></div><div class="head" style="margin-top:34px"><div><h2>LLMTR / FreeLLMAPI Router</h2><small>LLMTR_API_KEY is read from environment. Unified OpenAI-compatible gateway with Turkish &amp; Creekside free models (Qwen 3.8, Gemma 4, Muse).</small></div><div class="actions"><button id="llmtr-test-connection" type="button">Test connection</button><button id="llmtr-refresh" type="button">Refresh models</button></div></div><div id="llmtr-diag" class="list"></div>
+<form id="llmtr-key-form" class="inline-add-box" style="margin-top:14px">
+  <div class="settings-grid">
+    <div class="field">
+      <label for="llmtr-key-input">API Key</label>
+      <div style="display:flex;gap:6px">
+        <input id="llmtr-key-input" type="password" autocomplete="new-password" placeholder="Enter LLMTR key (llmt....)">
+        <button type="button" id="llmtr-key-eye" style="padding:0 12px;background:#17213a;border:1px solid #2e4063;border-radius:7px;color:#c4ccdc;cursor:pointer" title="Show/Hide key">👁</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Configured Status</label>
+      <div style="display:flex;align-items:center;gap:8px;height:40px;padding:0 4px">
+        <span id="llmtr-key-badge" class="pill">Checking...</span>
+        <code id="llmtr-masked-key" style="color:#b4c0d4">••••</code>
+      </div>
+    </div>
+  </div>
+  <div class="save-row" style="margin-top:10px">
+    <button id="llmtr-remove-key" type="button" style="border-color:#593434;color:#ffdede;display:none">Remove Key</button>
+    <button id="llmtr-save-key" type="submit">Save API Key</button>
+  </div>
+  <small class="muted" style="display:block;margin-top:6px;font-size:11px">Tip: For permanent persistence across Render sleep cycles, add <code>LLMTR_API_KEY</code> in Render Dashboard &rarr; Environment.</small>
+</form>
+<div class="settings-grid" style="margin-top:18px"><div class="field"><label>Request &amp; token usage</label><div id="llmtr-usage" class="muted">Not loaded.</div></div></div><form id="llmtr-settings-form" style="margin-top:14px"><div class="settings-grid"><div class="field"><label for="llmtr-enabled">Provider state</label><select id="llmtr-enabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div><div class="field"><label for="llmtr-spending-policy">Spending policy</label><select id="llmtr-spending-policy"><option value="allow_free_only">Allow free models only (zero-billing safe)</option><option value="allow_all">Allow all models</option><option value="block">Block all requests</option></select></div></div><div class="save-row"><small class="muted">LLMTR free tier models have generous quotas. API key is never stored in browser.</small><button id="llmtr-save-settings" type="submit">Save LLMTR settings</button></div></form><div class="head" style="margin-top:28px"><div><h2>LLMTR models</h2><small>Discovered from GET /v1/models.</small></div></div><div class="scroll"><table class="subscriptions-table"><thead><tr><th>Model</th><th>Status</th><th>Context window</th><th>Actions</th></tr></thead><tbody id="llmtr-models"></tbody></table></div><div class="head" style="margin-top:28px"><div><h2>Recent LLMTR errors</h2><small>Key-free error codes only.</small></div></div><div id="llmtr-errors" class="list"></div>
+<div class="head" style="margin-top:34px"><div><h2>Local Ollama / Gemma</h2><small>Optional free local fallback. No API key; models are read live from OLLAMA_BASE_URL.</small></div><button id="ollama-test" type="button">Test local server</button></div><div id="ollama-status" class="list"></div></section><section id="subscriptions" class="card section page-view"><div class="head"><div><h2>Subscriptions &amp; Purchases</h2><small>Verified payments, actual collected revenue, recurring MRR, refunds, and Cashfree gateway settings.</small></div><div class="actions"><button id="refresh-subs" type="button">Refresh</button></div></div><div class="gw-card" id="cashfree-gateway-card">
 <div class="gw-head">
 <div><h3 style="margin:0;font-size:15px" id="gw-card-title">Razorpay Payments</h3><small class="muted">Credit Card &amp; UPI Checkout · Test Mode requires 0 PAN/KYC · Secrets stay backend-only</small></div>
 <div class="actions"><span id="gw-status-pill" class="pill no">Checking...</span><button id="gw-test-conn" type="button">Test connection</button></div>
@@ -958,6 +983,7 @@
   setupProviderKeyEye('groq-key-eye', 'groq-key-input');
   setupProviderKeyEye('codecraft-key-eye', 'codecraft-key-input');
   setupProviderKeyEye('openai-key-eye', 'openai-key-input');
+  setupProviderKeyEye('llmtr-key-eye', 'llmtr-key-input');
 
   function updateKeyFormUi(prefix, configured, maskedKey, placeholderName) {
     const badge = $(prefix + '-key-badge');
@@ -1053,6 +1079,43 @@
     } catch (err) {
       status(err.message || 'Could not remove Groq API key.', true);
       alert(err.message || 'Could not remove Groq API key.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $('llmtr-key-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = $('llmtr-save-key');
+    const val = $('llmtr-key-input').value.trim();
+    if (!val) { alert('Please enter an LLMTR API key.'); return; }
+    btn.disabled = true; btn.textContent = 'Saving...';
+    try {
+      const data = await request('/api/admin/llmtr/key', 'POST', { key: val });
+      $('llmtr-key-input').value = '';
+      renderLlmtr(data);
+      status('LLMTR API Key saved successfully.');
+      alert('LLMTR API Key saved successfully.');
+    } catch (err) {
+      status(err.message || 'Could not save LLMTR API key.', true);
+      alert(err.message || 'Could not save LLMTR API key.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $('llmtr-remove-key').addEventListener('click', async () => {
+    if (!confirm('Are you sure you want to remove the saved LLMTR API key?')) return;
+    const btn = $('llmtr-remove-key');
+    btn.disabled = true;
+    try {
+      const data = await request('/api/admin/llmtr/key', 'DELETE', {});
+      renderLlmtr(data);
+      status('LLMTR API Key removed.');
+      alert('LLMTR API Key removed.');
+    } catch (err) {
+      status(err.message || 'Could not remove LLMTR API key.', true);
+      alert(err.message || 'Could not remove LLMTR API key.');
     } finally {
       btn.disabled = false;
     }
@@ -1313,10 +1376,10 @@ function setupDashboardAnalyticsFilter(){
   }
 }
 
-async function load(forceSettings=false){if(refreshing)return;refreshing=true;status('Loading admin data...');try{const data=await request('/api/admin/overview');showApp();const m=data.metrics||{};$('logout').hidden=!!data.localAccess;if($('total'))$('total').textContent=fmt(m.totalUsers);if($('login-today'))$('login-today').textContent=fmt(Math.max(Number(m.signInsToday)||0,(data.users||[]).reduce((total,u)=>total+loginsToday(u),0)));if($('tokens'))$('tokens').textContent=fmt(m.tokensToday);renderDashboard(data);setupDashboardAnalyticsFilter();loadUsersAdmin();loadSubscriptionsAdmin();if(data.paymentGateway)renderGatewayConfig(data.paymentGateway);else loadGatewayConfig();renderProviders(data.models);loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();if(forceSettings||!settingsDirty){renderPlanFields(data.settings||{});renderTokenRulesTable(data.settings||{});settingsDirty=false}renderPricingAudit(data.pricingAuditLogs||[]);runConfigVerification(true);status('Admin data loaded.')}catch(error){if(error.status===401){showLogin();return}if(error.status===503&&error.code==='admin_not_configured'){showLogin('Admin sign-in is not configured. Set PHOTON_ADMIN_PASSWORD and restart the server.');return}status(error.message||'Could not load admin data.',true)}finally{refreshing=false}}
+async function load(forceSettings=false){if(refreshing)return;refreshing=true;status('Loading admin data...');try{const data=await request('/api/admin/overview');showApp();const m=data.metrics||{};$('logout').hidden=!!data.localAccess;if($('total'))$('total').textContent=fmt(m.totalUsers);if($('login-today'))$('login-today').textContent=fmt(Math.max(Number(m.signInsToday)||0,(data.users||[]).reduce((total,u)=>total+loginsToday(u),0)));if($('tokens'))$('tokens').textContent=fmt(m.tokensToday);renderDashboard(data);setupDashboardAnalyticsFilter();loadUsersAdmin();loadSubscriptionsAdmin();if(data.paymentGateway)renderGatewayConfig(data.paymentGateway);else loadGatewayConfig();renderProviders(data.models);loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();if(forceSettings||!settingsDirty){renderPlanFields(data.settings||{});renderTokenRulesTable(data.settings||{});settingsDirty=false}renderPricingAudit(data.pricingAuditLogs||[]);runConfigVerification(true);status('Admin data loaded.')}catch(error){if(error.status===401){showLogin();return}if(error.status===503&&error.code==='admin_not_configured'){showLogin('Admin sign-in is not configured. Set PHOTON_ADMIN_PASSWORD and restart the server.');return}status(error.message||'Could not load admin data.',true)}finally{refreshing=false}}
  $('login-form').addEventListener('submit',async event=>{event.preventDefault();const button=$('login-button');button.disabled=true;button.textContent='Signing in...';$('login-error').hidden=true;try{await request('/api/admin/login','POST',{email:$('admin-email').value.trim(),password:$('admin-password').value});$('admin-password').value='';await load(true)}catch(error){showLogin(error.message||'Sign-in failed. Check the username and password.')}finally{button.disabled=false;button.textContent='Sign in'}});
  $('logout').addEventListener('click',async()=>{try{await request('/api/admin/logout','POST',{})}finally{showLogin('You have signed out.')}});
- const pageMeta={overview:['Dashboard','Live overview of Photon accounts and usage.'],'users-section':['Users & Sign-ins','Account access, sign-in methods, activity, and plan status.'],subscriptions:['Subscriptions & Purchases','Verified payments, revenue, MRR, and Cashfree gateway configuration.'],settings:['Pricing & Token Rules','Manage plan pricing, daily limits, and AI activity token costs.'],providers:['AI Provider Settings','Check and manage server-side AI provider keys. Secrets are never shown.']};function showPage(){let id=location.hash.slice(1)||'overview';if(!pageMeta[id])id='overview';document.querySelectorAll('.page-view').forEach(page=>page.classList.toggle('active',page.id===id));document.querySelectorAll('.sidebar nav a[href^="#"]').forEach(link=>link.classList.toggle('active',link.getAttribute('href')==='#'+id));$('page-title').textContent=pageMeta[id][0];$('page-description').textContent=pageMeta[id][1];if(id==='overview'){load()}else if(id==='users-section'){loadUsersAdmin()}else if(id==='subscriptions'){loadGatewayConfig();loadSubscriptionsAdmin()}else if(id==='settings'){load(true)}else if(id==='providers'){loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia()}}window.addEventListener('hashchange',showPage);showPage();
+ const pageMeta={overview:['Dashboard','Live overview of Photon accounts and usage.'],'users-section':['Users & Sign-ins','Account access, sign-in methods, activity, and plan status.'],subscriptions:['Subscriptions & Purchases','Verified payments, revenue, MRR, and Cashfree gateway configuration.'],settings:['Pricing & Token Rules','Manage plan pricing, daily limits, and AI activity token costs.'],providers:['AI Provider Settings','Check and manage server-side AI provider keys. Secrets are never shown.']};function showPage(){let id=location.hash.slice(1)||'overview';if(!pageMeta[id])id='overview';document.querySelectorAll('.page-view').forEach(page=>page.classList.toggle('active',page.id===id));document.querySelectorAll('.sidebar nav a[href^="#"]').forEach(link=>link.classList.toggle('active',link.getAttribute('href')==='#'+id));$('page-title').textContent=pageMeta[id][0];$('page-description').textContent=pageMeta[id][1];if(id==='overview'){load()}else if(id==='users-section'){loadUsersAdmin()}else if(id==='subscriptions'){loadGatewayConfig();loadSubscriptionsAdmin()}else if(id==='settings'){load(true)}else if(id==='providers'){loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr()}}window.addEventListener('hashchange',showPage);showPage();
  $('settings-form').addEventListener('input',()=>{settingsDirty=true});
  $('settings-form').addEventListener('change',()=>{settingsDirty=true});
  $('verify-token-calc-btn').addEventListener('click',()=>runConfigVerification(false));
@@ -1620,6 +1683,13 @@ async function load(forceSettings=false){if(refreshing)return;refreshing=true;st
   $('nvidia-settings-form').addEventListener('submit',async event=>{event.preventDefault();const button=$('nvidia-save-settings');button.disabled=true;try{renderNvidia(await request('/api/admin/nvidia','PUT',{enabled:$('nvidia-enabled').value==='true',spendingPolicy:$('nvidia-spending-policy').value}))}catch(error){alert(error.message||'Could not save NVIDIA settings.')}finally{button.disabled=false}});
   $('nvidia-test-connection').addEventListener('click',async()=>{const button=$('nvidia-test-connection');button.disabled=true;button.textContent='Testing...';try{const data=await request('/api/admin/nvidia/connection','POST',{});renderNvidia(data);const r=data.result||{};showTestResultModal({title:'NVIDIA Connection Test',provider:'NVIDIA NIM',ok:r.ok,status:r.status,code:r.code,message:r.message,responseTimeMs:r.responseTimeMs,testedAt:r.testedAt,modelCount:r.modelCount});}catch(error){showTestResultModal({title:'NVIDIA Connection Test',provider:'NVIDIA NIM',ok:false,status:'connection_failed',message:error.message||'Could not test NVIDIA connection.'});}finally{button.disabled=false;button.textContent='Test connection'}});
   $('nvidia-refresh').addEventListener('click',async()=>{const button=$('nvidia-refresh');button.disabled=true;try{renderNvidia(await request('/api/admin/nvidia/refresh','POST',{}))}catch(error){alert(error.message||'Could not refresh NVIDIA models.')}finally{button.disabled=false}});
+
+  function ltrUsageText(u){u=u||{};return fmt(u.totalRequests||0)+' requests, '+fmt(u.failedRequests||0)+' failed, '+fmt(u.inputTokens||0)+' in / '+fmt(u.outputTokens||0)+' out tokens'}
+  function renderLlmtr(view){const st=(view&&view.status)||view||{};updateKeyFormUi('llmtr',st.configured,st.maskedKey,'LLMTR');const diag=$('llmtr-diag');diag.replaceChildren();rowItem(diag,'LLMTR / FreeLLMAPI Router',(st.configured?'key '+(st.maskedKey||'configured'):'LLMTR_API_KEY is not set')+'; '+(st.modelCount||0)+' models configured',orBadge(st.configured?'Ready':'Not configured',Boolean(st.configured)));rowItem(diag,'Spending policy',st.spendingPolicy==='block'?'Block all requests':(st.spendingPolicy==='allow_all'?'Allow all models':'Allow free models only (zero-billing safe)'),orBadge(st.spendingPolicy==='block'?'Blocked':'Allowed',st.spendingPolicy!=='block'));if(st.endpoint)rowItem(diag,'API Endpoint',st.endpoint,'');$('llmtr-usage').textContent=ltrUsageText(st.usage);$('llmtr-enabled').value=st.enabled===false?'false':'true';$('llmtr-spending-policy').value=st.spendingPolicy||'allow_free_only';const root=$('llmtr-models');root.replaceChildren();(Object.values(st.models||{})).forEach(m=>{const row=document.createElement('tr');td(row,(m.name||m.id)+(st.defaultModelId===m.id?' ★ Default':''));const statusCell=td(row,'');statusCell.appendChild(orBadge(m.enabled?'Enabled':'Disabled',Boolean(m.enabled)));const ctxCell=td(row,'');ctxCell.textContent=m.contextWindow?(m.contextWindow.toLocaleString()+' tokens'):'131,072 tokens';const actions=td(row,'');actions.style.whiteSpace='nowrap';const btn=(label,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.addEventListener('click',fn);return b};actions.append(btn(m.enabled?'Disable':'Enable',async()=>{try{await request('/api/admin/llmtr/models/'+encodeURIComponent(m.id),'PUT',{enabled:!m.enabled});await loadLlmtr()}catch(err){alert(err.message||'Could not toggle model.')}}));root.appendChild(row)});if(!Object.keys(st.models||{}).length){const row=document.createElement('tr'),empty=td(row,st.configured?'No models discovered yet. Test connection or refresh models.':'Set LLMTR_API_KEY to discover models.');empty.colSpan=4;empty.className='empty';root.appendChild(row)}const errors=$('llmtr-errors');errors.replaceChildren();(st.recentErrors||[]).slice(0,10).forEach(e=>rowItem(errors,(e.code||'error'),(e.message||'')+' '+(e.at||''),orBadge('Failed',false)));if(!(st.recentErrors||[]).length)rowItem(errors,'No recent LLMTR errors','Successful requests and failures are tracked here.',orBadge('Clear',true))}
+  async function loadLlmtr(){try{renderLlmtr(await request('/api/admin/llmtr'))}catch(error){status(error.message||'Could not load LLMTR status.',true)}}
+  $('llmtr-settings-form').addEventListener('submit',async event=>{event.preventDefault();const button=$('llmtr-save-settings');button.disabled=true;try{renderLlmtr(await request('/api/admin/llmtr','PUT',{enabled:$('llmtr-enabled').value==='true',spendingPolicy:$('llmtr-spending-policy').value}))}catch(error){alert(error.message||'Could not save LLMTR settings.')}finally{button.disabled=false}});
+  $('llmtr-test-connection').addEventListener('click',async()=>{const button=$('llmtr-test-connection');button.disabled=true;button.textContent='Testing...';try{const data=await request('/api/admin/llmtr/connection','POST',{});renderLlmtr(data);const r=data.result||{};showTestResultModal({title:'LLMTR Connection Test',provider:'LLMTR',ok:r.ok,status:r.ok?'ok':'failed',code:r.code,message:r.error||'Connection successful',responseTimeMs:r.responseTimeMs,testedAt:new Date().toISOString(),modelCount:r.modelCount});}catch(error){showTestResultModal({title:'LLMTR Connection Test',provider:'LLMTR',ok:false,status:'connection_failed',message:error.message||'Could not test LLMTR connection.'});}finally{button.disabled=false;button.textContent='Test connection'}});
+  $('llmtr-refresh').addEventListener('click',async()=>{const button=$('llmtr-refresh');button.disabled=true;try{renderLlmtr(await request('/api/admin/llmtr/refresh','POST',{}))}catch(error){alert(error.message||'Could not refresh LLMTR models.')}finally{button.disabled=false}});
   load();setInterval(function(){if(document.visibilityState==="visible")load()},30000);
 })();</script>
 </body></html>

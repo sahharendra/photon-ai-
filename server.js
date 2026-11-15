@@ -19,6 +19,8 @@ const { createNvidiaConfig } = require('./nvidia-config');
 const { createNvidiaProvider } = require('./nvidia-provider');
 const { createOpenAIConfig } = require('./openai-config');
 const { createOpenAIProvider } = require('./openai-provider');
+const { createLlmtrConfig } = require('./llmtr-config');
+const { createLlmtrProvider } = require('./llmtr-provider');
 // Anthropic provider is disabled (no key configured).
 // File is kept on disk for future re-enablement. To re-enable, restore the imports
 // and provider instance below, and add ANTHROPIC_API_KEY to API.env.
@@ -119,6 +121,8 @@ const nvidiaConfig = createNvidiaConfig({ dir: ROOT, env: process.env });
 const nvidia = createNvidiaProvider({ HttpError, env: process.env, config: nvidiaConfig });
 const openaiConfig = createOpenAIConfig({ dir: ROOT, env: process.env });
 const openai = createOpenAIProvider({ HttpError, env: process.env, config: openaiConfig });
+const llmtrConfig = createLlmtrConfig({ dir: ROOT, env: process.env, logger: console });
+const llmtr = createLlmtrProvider({ HttpError, env: process.env, cfg: llmtrConfig, dir: ROOT, logger: console });
 const cashfree = createCashfreeService({ env: process.env });
 const razorpay = createRazorpayService({ env: process.env });
 
@@ -491,7 +495,8 @@ function availableModels() {
   const cc = codecraft.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: m.free !== undefined ? Boolean(m.free) : true, pricingVerified: Boolean(m.available && m.pricing != null), capabilities: { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
   const gq = groq.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: true, pricingVerified: Boolean(m.available), contextLength: m.contextLength, capabilities: m.capabilities || { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
   const nv = nvidia.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: true, pricingVerified: Boolean(m.available), contextLength: m.contextLength, capabilities: m.capabilities || { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
-  const merged = [...base, ...google, ...claude, ...free, ...gpt, ...cc, ...gq, ...nv];
+  const ltr = llmtr.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: Boolean(m.free), pricingVerified: Boolean(m.available), contextLength: m.contextLength, capabilities: m.capabilities || { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
+  const merged = [...base, ...google, ...claude, ...free, ...gpt, ...cc, ...gq, ...nv, ...ltr];
   const seen = new Set();
   const out = [];
   for (const item of merged) {
@@ -649,7 +654,7 @@ async function callGemini(model, contents, systemInstruction) {
   return gemini.generate({ model, contents, systemInstruction });
 }
 async function resolveModel(id) {
-  await Promise.allSettled([gemini.refreshModels(), openrouter.refreshModels(), codecraft.refreshModels(), groq.refreshModels(), nvidia.refreshModels(), openai.refreshModels()]);
+  await Promise.allSettled([gemini.refreshModels(), openrouter.refreshModels(), codecraft.refreshModels(), groq.refreshModels(), nvidia.refreshModels(), openai.refreshModels(), llmtr.refreshModels()]);
   const option = availableModels().find(m => m.id === id);
   if (!option || !option.available) throw new HttpError(503, 'model_unavailable', option && option.configured === false ? `${option.provider} is not configured on this server. Choose another model.` : 'The selected AI model is not available. Choose another model in your profile settings.');
   return option;
@@ -660,6 +665,7 @@ function providerKey(option) {
   if (option.provider === 'Groq') return 'groq';
   if (option.provider === 'NVIDIA') return 'nvidia';
   if (option.provider === 'OpenAI') return 'openai';
+  if (option.provider === 'LLMTR') return 'llmtr';
   return 'gemini';
 }
 async function generateProvider({ providerName, modelId, system, history, text, attachments, contents, maxTokens }) {
@@ -668,6 +674,7 @@ async function generateProvider({ providerName, modelId, system, history, text, 
   if (providerName === 'groq') return groq.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
   if (providerName === 'nvidia') return nvidia.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
   if (providerName === 'openai') return openai.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
+  if (providerName === 'llmtr') return llmtr.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
   return callGemini(modelId, contents || [{ role: 'user', parts: [{ text }] }], system);
 }
 async function* streamProvider({ providerName, modelId, system, history, text, attachments, contents, maxTokens, signal }) {
@@ -689,6 +696,10 @@ async function* streamProvider({ providerName, modelId, system, history, text, a
   }
   if (providerName === 'openai') {
     yield* openai.streamGenerate({ model: modelId, system, history, text, attachments, maxTokens, signal });
+    return;
+  }
+  if (providerName === 'llmtr') {
+    yield* llmtr.streamGenerate({ model: modelId, system, history, text, attachments, maxTokens, signal });
     return;
   }
   if (providerName === 'gemini') {
@@ -1155,8 +1166,51 @@ const server = http.createServer(async (req, res) => {
         return reply(res, 200, { success: true, data: nvidia.status() });
       }
       if (pathname.startsWith('/api/admin/nvidia')) return fail(res, new HttpError(404, 'not_found', 'NVIDIA admin route not found.'), requestId);
+      if (pathname === '/api/admin/llmtr' && req.method === 'GET') { await llmtr.refreshModels(); return reply(res, 200, { success: true, data: llmtr.status() }); }
+      if (pathname === '/api/admin/llmtr' && req.method === 'PUT') {
+        const body = await readBody(req);
+        try {
+          if (typeof body.enabled === 'boolean') llmtrConfig.setEnabled(body.enabled);
+          if (typeof body.spendingPolicy === 'string') llmtrConfig.setSpendingPolicy(body.spendingPolicy);
+          if (body.defaultModelId !== undefined) llmtrConfig.setDefaultModelId(body.defaultModelId || null);
+        } catch (error) {
+          if (error instanceof HttpError) throw error;
+          throw new HttpError(400, error?.code || 'invalid_settings', error?.message || 'Invalid LLMTR settings.');
+        }
+        await llmtr.refreshModels();
+        return reply(res, 200, { success: true, data: llmtr.status() });
+      }
+      if (pathname === '/api/admin/llmtr/connection' && req.method === 'POST') { const result = await llmtr.testConnection(); return reply(res, 200, { success: true, data: { result, status: llmtr.status() } }); }
+      if (pathname === '/api/admin/llmtr/refresh' && req.method === 'POST') { await llmtr.refreshModels(true); return reply(res, 200, { success: true, data: llmtr.status() }); }
+      const llmtrModelRoute = /^\/api\/admin\/llmtr\/models\/([A-Za-z0-9][A-Za-z0-9._:/-]{0,160})$/.exec(pathname);
+      if (llmtrModelRoute) {
+        if (req.method !== 'PUT') return fail(res, new HttpError(405, 'method_not_allowed', 'Method not allowed.'), requestId);
+        const modelId = llmtrModelRoute[1];
+        const body = await readBody(req);
+        try { if (typeof body.enabled === 'boolean') llmtrConfig.setModelEnabled(modelId, body.enabled); } catch (error) { throw new HttpError(400, error?.code || 'invalid_model', error?.message || 'Invalid model ID.'); }
+        return reply(res, 200, { success: true, data: llmtr.status() });
+      }
+      if (pathname === '/api/admin/llmtr/key' && req.method === 'POST') {
+        const body = await readBody(req);
+        const key = String(body.key || '').trim();
+        if (!key) throw new HttpError(400, 'invalid_key', 'LLMTR API key cannot be empty.');
+        setEnvKey('LLMTR_API_KEY', key);
+        if (body.baseUrl) setEnvKey('LLMTR_API_BASE', String(body.baseUrl).trim());
+        llmtrConfig.setEnabled(true);
+        llmtrConfig.setSpendingPolicy('allow_free_only');
+        llmtr.resetCache();
+        await llmtr.refreshModels(true);
+        return reply(res, 200, { success: true, data: llmtr.status() });
+      }
+      if (pathname === '/api/admin/llmtr/key' && req.method === 'DELETE') {
+        clearEnvKey('LLMTR_API_KEY');
+        llmtr.resetCache();
+        await llmtr.refreshModels(true);
+        return reply(res, 200, { success: true, data: llmtr.status() });
+      }
+      if (pathname.startsWith('/api/admin/llmtr')) return fail(res, new HttpError(404, 'not_found', 'LLMTR admin route not found.'), requestId);
       if (pathname === '/api/admin/provider-status' && req.method === 'GET') {
-        await Promise.all([gemini.refreshModels(true), openrouter.refreshModels(true), codecraft.refreshModels(true), groq.refreshModels(true), nvidia.refreshModels(true), openai.refreshModels(true)]);
+        await Promise.allSettled([gemini.refreshModels(true), openrouter.refreshModels(true), codecraft.refreshModels(true), groq.refreshModels(true), nvidia.refreshModels(true), openai.refreshModels(true), llmtr.refreshModels(true)]);
         return reply(res, 200, {
           success: true,
           data: {
@@ -1167,6 +1221,7 @@ const server = http.createServer(async (req, res) => {
             codecraft: codecraft.status(),
             groq: groq.status(),
             nvidia: nvidia.status(),
+            llmtr: llmtr.status(),
           },
         });
       }
@@ -1573,7 +1628,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === 'GET' && pathname === '/api/profile/config') {
       const forceRefresh = parsedUrl.searchParams.get('refresh') === '1';
-      await Promise.allSettled([gemini.refreshModels(forceRefresh), openrouter.refreshModels(forceRefresh), codecraft.refreshModels(forceRefresh), groq.refreshModels(forceRefresh), nvidia.refreshModels(forceRefresh)]);
+      await Promise.allSettled([gemini.refreshModels(forceRefresh), openrouter.refreshModels(forceRefresh), codecraft.refreshModels(forceRefresh), groq.refreshModels(forceRefresh), nvidia.refreshModels(forceRefresh), llmtr.refreshModels(forceRefresh)]);
       const data = loadStore();
       const gwStatus = getActiveGatewayService(data).getGatewayStatus(data);
 
@@ -2074,6 +2129,16 @@ async function logProviderDiagnostics() {
     console.log(`NVIDIA configured: ${status.validation === 'ok'} (${status.validation}; ${status.modelCount} model(s) discovered, ${status.enabledModelCount} enabled; spending policy: ${status.spendingPolicy}${status.keyFormatWarning ? '; ' + status.keyFormatWarning : ''})`);
   } else {
     console.log('NVIDIA configured: false (set NVIDIA_API_KEY in API.env or .env to enable NVIDIA NIM models)');
+  }
+  if (llmtr.configured()) {
+    llmtrConfig.setEnabled(true);
+    llmtrConfig.setSpendingPolicy('allow_free_only');
+    console.log('Validating LLMTR key with a live API request...');
+    await llmtr.refreshModels(true);
+    const status = llmtr.status();
+    console.log(`LLMTR configured: ${Boolean(status.maskedKey)} (${status.modelCount} model(s) discovered; spending policy: ${status.spendingPolicy})`);
+  } else {
+    console.log('LLMTR configured: false (set LLMTR_API_KEY in API.env or .env to enable LLMTR models)');
   }
   const ignoredOpenRouter = openrouterKeys.ignoredEnvNames();
   if (ignoredOpenRouter.length) console.log(`OpenRouter: ignoring unsupported variable(s) ${ignoredOpenRouter.join(', ')}. Slots are OPENROUTER_API_KEY and OPENROUTER_API_KEY_2 ... _10.`);

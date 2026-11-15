@@ -12,4 +12,5 @@ photon-profile-data.json.lock
 .photon-codecraft-config.json
 .photon-groq-config.json
 .photon-nvidia-config.json
+.photon-llmtr-config.json
 *.log

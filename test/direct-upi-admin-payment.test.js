@@ -35,6 +35,8 @@ const FILES = [
   'groq-provider.js',
   'nvidia-config.js',
   'nvidia-provider.js',
+  'llmtr-config.js',
+  'llmtr-provider.js',
   'provider-fallback.js',
   'provider-access-service.js',
   'dashboard-analytics.js',

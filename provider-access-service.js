@@ -35,6 +35,8 @@ const PROVIDER_ALIASES = Object.freeze({
   'google gemini': 'google',
   'meta': 'meta',
   'anthropic': 'anthropic',
+  'llmtr': 'llmtr',
+  'freellmapi': 'llmtr',
 });
 
 function normalizePlanId(planId) {
