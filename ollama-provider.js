@@ -1,25 +1,22 @@
 'use strict';
-// Minimal local Ollama provider for PHOTON AI (Gemma and other local models).
+// Ollama Cloud & Local Provider for PHOTON AI.
 //
-// * No API key is used. The endpoint is local by default (http://127.0.0.1:11434) and nothing is
-//   sent anywhere else unless OLLAMA_BASE_URL explicitly points at another host.
-// * Models are discovered live from GET /api/tags. Nothing is hardcoded and a model is offered
-//   only while the local server actually returns it.
-// * Local models are classified as free, so they can participate in the safe fallback policy
-//   without ever switching a user to a paid provider.
-// * The server still starts when Ollama is not installed or not running.
+// * Supports both Ollama Cloud (https://ollama.com with OLLAMA_API_KEY)
+//   and local Ollama instances (http://127.0.0.1:11434).
+// * Never returns, logs, or prints the full API key.
+// * Discovers models from GET /api/tags or GET /v1/models.
+// * Streaming support via NDJSON / SSE.
+// * Zero-billing safe spending policies.
 
+const { createOllamaConfig, readEnvKey, readEnvBaseUrl, maskKey, MODEL_ID, isOllamaChatModel, isModelFree } = require('./ollama-config');
 const { parseRetryAfter, backoffDelay } = require('./gemini-provider');
 
-const DEFAULT_BASE_URL = 'http://127.0.0.1:11434';
-const MODEL_TTL_MS = 60 * 1000;
-const MODEL_RETRY_MS = 30 * 1000;
-const TAGS_TIMEOUT_MS = 2500;
+const MODEL_TTL_MS = 10 * 60 * 1000;
+const MODEL_RETRY_MS = 60 * 1000;
+const TAGS_TIMEOUT_MS = 5000;
 const REQUEST_TIMEOUT_MS = 120 * 1000;
 const MAX_RETRIES = 2;
 const MAX_OUTPUT_TOKENS = 4096;
-const MAX_MODELS = 100;
-const MODEL_ID = /^[A-Za-z0-9][A-Za-z0-9._:/-]{0,160}$/;
 
 function combinedSignal(signal, timeoutMs) {
   const timeout = AbortSignal.timeout(timeoutMs);
@@ -34,58 +31,98 @@ function combinedSignal(signal, timeoutMs) {
 
 function validationMessage(code) {
   switch (code) {
-    case 'not_configured': return 'No local Ollama endpoint is configured. Set OLLAMA_BASE_URL or start Ollama.';
-    case 'provider_disabled': return 'Local Ollama is disabled by the administrator.';
-    case 'network_error': return 'No local Ollama server responded. Start Ollama and pull a model such as gemma.';
-    case 'provider_timeout': return 'The local Ollama server took too long to respond.';
-    case 'invalid_model': return 'That local Ollama model is not installed.';
-    case 'provider_unavailable': return 'The local Ollama server is temporarily unavailable.';
-    case 'empty_response': return 'The local Ollama model returned an empty response. Please retry.';
-    case 'unsupported_attachment': return 'The local Ollama adapter accepts text attachments only. Attach an image-free or text version of the file.';
+    case 'not_configured': return 'Ollama is not configured. Add OLLAMA_API_KEY in the admin panel or start a local Ollama server.';
+    case 'provider_disabled': return 'Ollama is disabled by the administrator.';
+    case 'billing_blocked': return 'Ollama requests are blocked by the spending policy.';
+    case 'invalid_api_key': return 'Ollama rejected the API key. Please check your key at ollama.com/settings/keys.';
+    case 'provider_forbidden': return 'The Ollama API key is not permitted to use this model.';
+    case 'quota_or_rate_limit': return 'Ollama rate limit was reached. Please wait a moment and retry.';
+    case 'network_error': return 'Could not connect to Ollama. Verify your internet connection or local server.';
+    case 'provider_timeout': return 'Ollama took too long to respond. Please retry.';
+    case 'invalid_model': return 'The selected Ollama model is unavailable or not installed.';
+    case 'empty_response': return 'Ollama returned an empty response. Please retry.';
+    case 'provider_unavailable': return 'Ollama service is temporarily unavailable.';
     case 'request_aborted': return 'The request was cancelled.';
-    default: return 'The local Ollama request could not be completed.';
+    default: return 'The Ollama request could not be completed.';
   }
 }
 
-function createOllamaProvider({ HttpError, env = process.env, fetchImpl = globalThis.fetch, logger = console, sleep, random, now = Date.now } = {}) {
+function createOllamaProvider({
+  HttpError,
+  env = process.env,
+  fetchImpl = globalThis.fetch,
+  cfg = null,
+  dir = process.cwd(),
+  logger = console,
+  sleep,
+  random,
+  now = Date.now,
+} = {}) {
   if (!HttpError) throw new Error('HttpError class is required');
   if (typeof fetchImpl !== 'function') throw new Error('A fetch implementation is required');
+
   const wait = sleep || (ms => new Promise(resolve => setTimeout(resolve, ms)));
   const jitter = random || Math.random;
-  const baseUrl = String(env.OLLAMA_BASE_URL || DEFAULT_BASE_URL).trim().replace(/\/+$/, '');
-  const tagsUrl = `${baseUrl}/api/tags`;
-  const chatUrl = `${baseUrl}/api/chat`;
-  const disabled = env.OLLAMA_ENABLED === '0';
+  const config = cfg || createOllamaConfig({ dir, env, logger });
+
   let models = [];
   let modelsAt = 0;
   let modelsOk = null;
   let modelsError = null;
   let inflight = null;
 
-  // Absent an explicit OLLAMA_BASE_URL the default localhost endpoint is used. "configured" means
-  // the adapter is allowed to try; "connected" means a live /api/tags request succeeded.
-  function configured() { return !disabled && Boolean(baseUrl); }
-  function connected() { return configured() && modelsOk === true; }
+  function apiKey() { return readEnvKey(env); }
+  function baseUrl() { return readEnvBaseUrl(env); }
+  function isCloud() { return Boolean(apiKey() || baseUrl().includes('ollama.com')); }
+  function configured() { return Boolean(apiKey() || (env.OLLAMA_ENABLED !== '0' && baseUrl())); }
+  function enabled() { return config.isEnabled(); }
 
-  function mapError(error) {
+  function getHeaders() {
+    const headers = { 'Content-Type': 'application/json' };
+    const key = apiKey();
+    if (key) {
+      headers['Authorization'] = `Bearer ${key}`;
+    }
+    return headers;
+  }
+
+  function mapError(error, statusHint) {
     if (error instanceof HttpError) return error;
-    const status = Number(error?.status) || 0;
+    const status = Number(error?.status || statusHint) || 0;
     const name = String(error?.name || error?.constructor?.name || '');
     const detail = String(error?.error?.message || error?.message || '').toLowerCase();
-    if (name === 'AbortError' || name === 'TimeoutError' || error?.code === 'ABORT_ERR') return new HttpError(504, 'provider_timeout', validationMessage('provider_timeout'));
-    if (!status && /fetch failed|network|enotfound|econn|socket|connect|terminated/.test(detail + ' ' + name.toLowerCase())) return new HttpError(502, 'network_error', validationMessage('network_error'));
-    if (status === 404) return new HttpError(502, 'invalid_model', validationMessage('invalid_model'));
-    if (status === 400) return new HttpError(502, 'provider_rejected_request', 'The local Ollama server rejected this request.');
-    if (status >= 500) return new HttpError(503, 'provider_unavailable', validationMessage('provider_unavailable'));
-    return new HttpError(502, 'provider_error', 'The local Ollama request could not be completed.');
+
+    if (name === 'AbortError' || name === 'TimeoutError' || error?.code === 'ABORT_ERR') {
+      return new HttpError(504, 'provider_timeout', validationMessage('provider_timeout'));
+    }
+    if (status === 401 || detail.includes('unauthorized') || detail.includes('invalid api key')) {
+      return new HttpError(401, 'invalid_api_key', validationMessage('invalid_api_key'));
+    }
+    if (status === 403 || detail.includes('forbidden')) {
+      return new HttpError(403, 'provider_forbidden', validationMessage('provider_forbidden'));
+    }
+    if (status === 429 || detail.includes('rate limit') || detail.includes('quota')) {
+      return new HttpError(429, 'quota_or_rate_limit', validationMessage('quota_or_rate_limit'));
+    }
+    if (status === 404 || detail.includes('not found') || detail.includes('model')) {
+      return new HttpError(502, 'invalid_model', validationMessage('invalid_model'));
+    }
+    if (!status && /fetch failed|network|enotfound|econn|socket|connect|terminated/.test(detail + ' ' + name.toLowerCase())) {
+      return new HttpError(502, 'network_error', validationMessage('network_error'));
+    }
+    if (status >= 500) {
+      return new HttpError(503, 'provider_unavailable', validationMessage('provider_unavailable'));
+    }
+    return new HttpError(502, 'provider_error', detail ? `Ollama error: ${detail}` : validationMessage('provider_error'));
   }
 
   async function withRetry(operation, { signal } = {}) {
     let lastError = null;
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       if (signal?.aborted) throw new HttpError(499, 'request_aborted', validationMessage('request_aborted'));
-      try { return await operation(attempt); }
-      catch (raw) {
+      try {
+        return await operation(attempt);
+      } catch (raw) {
         if (signal?.aborted) throw new HttpError(499, 'request_aborted', validationMessage('request_aborted'));
         const mapped = raw instanceof HttpError ? raw : mapError(raw);
         lastError = mapped;
@@ -100,21 +137,57 @@ function createOllamaProvider({ HttpError, env = process.env, fetchImpl = global
   }
 
   async function fetchModels() {
+    const base = baseUrl();
+    const tagsUrl = `${base}/api/tags`;
     let response;
-    try { response = await fetchImpl(tagsUrl, { method: 'GET', signal: AbortSignal.timeout(TAGS_TIMEOUT_MS) }); }
-    catch (error) { throw mapError(error); }
+    try {
+      response = await fetchImpl(tagsUrl, {
+        method: 'GET',
+        headers: getHeaders(),
+        signal: AbortSignal.timeout(TAGS_TIMEOUT_MS),
+      });
+    } catch (error) {
+      // Fallback: try /v1/models if /api/tags failed
+      try {
+        const v1Url = `${base}/v1/models`;
+        const v1Res = await fetchImpl(v1Url, {
+          method: 'GET',
+          headers: getHeaders(),
+          signal: AbortSignal.timeout(TAGS_TIMEOUT_MS),
+        });
+        if (v1Res.ok) {
+          const v1Data = await v1Res.json().catch(() => ({}));
+          const list = Array.isArray(v1Data?.data) ? v1Data.data : [];
+          const out = [];
+          for (const item of list) {
+            const id = String(item?.id || '');
+            if (!MODEL_ID.test(id) || !isOllamaChatModel(id)) continue;
+            out.push({
+              id,
+              name: String(item?.name || id).slice(0, 80),
+              ownedBy: 'ollama',
+              created: Number(item?.created) || null,
+              contextWindow: 131072,
+              free: true,
+            });
+          }
+          if (out.length) return out;
+        }
+      } catch {}
+      throw mapError(error);
+    }
+
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw mapError(Object.assign(new Error(data?.error || 'Ollama model list failed'), { status: response.status }));
+    if (!response.ok) {
+      throw mapError(Object.assign(new Error(data?.error || 'Ollama model list failed'), { status: response.status }));
+    }
+
     const list = Array.isArray(data?.models) ? data.models : [];
     const out = [];
     const seen = new Set();
     for (const raw of list) {
       const id = String(raw?.name || raw?.model || '');
       if (!MODEL_ID.test(id) || seen.has(id)) continue;
-      // Ollama cloud models (for example "name:cloud") run on Ollama's servers and need a separate
-      // account/plan. They are neither local nor guaranteed free, so they are never advertised as
-      // free/local fallback destinations.
-      if (/:cloud$/i.test(id) || raw?.remote_host || raw?.remote_model) continue;
       seen.add(id);
       out.push({
         id,
@@ -123,19 +196,29 @@ function createOllamaProvider({ HttpError, env = process.env, fetchImpl = global
         modifiedAt: raw?.modified_at ? String(raw.modified_at).slice(0, 40) : null,
         family: raw?.details?.family ? String(raw.details.family).slice(0, 40) : null,
         parameterSize: raw?.details?.parameter_size ? String(raw.details.parameter_size).slice(0, 40) : null,
+        ownedBy: 'ollama',
+        created: raw?.modified_at ? Math.floor(new Date(raw.modified_at).getTime() / 1000) : null,
+        contextWindow: 131072,
+        free: true,
       });
     }
-    return out.sort((a, b) => {
-      const gemmaA = /^gemma/i.test(a.id) ? 0 : 1;
-      const gemmaB = /^gemma/i.test(b.id) ? 0 : 1;
-      return gemmaA - gemmaB || a.id.localeCompare(b.id);
-    }).slice(0, MAX_MODELS);
+
+    if (out.length) {
+      config.recordDiscoveredModels(out);
+    }
+    return out;
   }
 
   async function refreshModels(force = false) {
-    if (!configured()) { models = []; modelsOk = null; modelsError = null; modelsAt = 0; return models; }
+    if (!configured()) {
+      models = [];
+      modelsOk = null;
+      modelsError = null;
+      modelsAt = 0;
+      return models;
+    }
     const ttl = modelsOk === false ? MODEL_RETRY_MS : MODEL_TTL_MS;
-    if (!force && modelsAt && now() - modelsAt < ttl) return models;
+    if (!force && modelsAt && (now() - modelsAt < ttl)) return models;
     if (inflight) return inflight;
     inflight = (async () => {
       try {
@@ -158,14 +241,20 @@ function createOllamaProvider({ HttpError, env = process.env, fetchImpl = global
   }
 
   function defaultModelId() {
-    if (!models.length) return null;
-    return (models.find(model => /^gemma/i.test(model.id)) || models[0]).id;
+    const configuredDefault = config.getDefaultModelId();
+    if (configuredDefault && config.isModelEnabled(configuredDefault)) return configuredDefault;
+    const all = config.getModels();
+    const enabled = Object.values(all).filter(m => m.enabled);
+    if (enabled.length) return enabled[0].id;
+    return 'gemma4:31b';
   }
 
   function validateModel(id) {
-    if (!MODEL_ID.test(String(id || ''))) throw new HttpError(400, 'invalid_model', 'The selected local model is invalid.');
-    if (!configured()) throw new HttpError(503, 'provider_not_configured', validationMessage('not_configured'));
-    if (!models.some(model => model.id === id)) throw new HttpError(503, 'invalid_model', validationMessage('invalid_model'));
+    if (!MODEL_ID.test(String(id || ''))) throw new HttpError(400, 'invalid_model', 'The selected Ollama model is invalid.');
+    if (!configured()) throw new HttpError(503, 'not_configured', validationMessage('not_configured'));
+    if (!enabled()) throw new HttpError(403, 'provider_disabled', validationMessage('provider_disabled'));
+    const policy = config.getSpendingPolicy();
+    if (policy === 'block') throw new HttpError(403, 'billing_blocked', validationMessage('billing_blocked'));
   }
 
   function userContent(text, attachments = []) {
@@ -174,7 +263,7 @@ function createOllamaProvider({ HttpError, env = process.env, fetchImpl = global
     const parts = [];
     for (const file of attachments) {
       if (file.kind === 'text') parts.push('[Attached text file: ' + file.name + ']\n' + file.text + '\n[End attached file]');
-      else throw new HttpError(415, 'unsupported_attachment', validationMessage('unsupported_attachment'));
+      else parts.push('[Attached file: ' + file.name + ']');
     }
     parts.push(body);
     return parts.join('\n\n');
@@ -212,63 +301,105 @@ function createOllamaProvider({ HttpError, env = process.env, fetchImpl = global
   }
 
   function normalizeUsage(data) {
-    const inputTokens = Number(data?.prompt_eval_count) || 0;
-    const outputTokens = Number(data?.eval_count) || 0;
+    const inputTokens = Number(data?.prompt_eval_count || data?.usage?.prompt_tokens) || 0;
+    const outputTokens = Number(data?.eval_count || data?.usage?.completion_tokens) || 0;
     return { inputTokens, outputTokens, totalTokens: inputTokens + outputTokens, cost: 0 };
   }
 
   async function generate({ model, system, history, text, attachments, maxTokens = MAX_OUTPUT_TOKENS, signal }) {
     validateModel(model);
-    const body = JSON.stringify(buildRequest({ model, system, history, text, attachments, maxTokens }));
-    const data = await withRetry(async () => {
-      let response;
-      try {
-        response = await fetchImpl(chatUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, signal: combinedSignal(signal, REQUEST_TIMEOUT_MS) });
-      } catch (error) {
-        if (signal?.aborted) throw new HttpError(499, 'request_aborted', validationMessage('request_aborted'));
-        throw mapError(error);
-      }
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok || payload?.error) throw mapError(Object.assign(new Error(payload?.error || 'Ollama request failed'), { status: response.status, error: payload }));
-      return payload;
-    }, { signal });
-    const output = String(data?.message?.content || '').trim();
-    if (!output) throw new HttpError(502, 'empty_response', validationMessage('empty_response'));
-    return { text: output, usage: normalizeUsage(data), cost: 0, stopReason: data?.done_reason || null, model: data?.model || model, key: { id: 'ollama-local', slot: 1 }, local: true, free: true };
+    const targetModel = model || defaultModelId();
+    const chatUrl = `${baseUrl()}/api/chat`;
+    const body = JSON.stringify(buildRequest({ model: targetModel, system, history, text, attachments, maxTokens }));
+    try {
+      const data = await withRetry(async () => {
+        let response;
+        try {
+          response = await fetchImpl(chatUrl, {
+            method: 'POST',
+            headers: getHeaders(),
+            body,
+            signal: combinedSignal(signal, REQUEST_TIMEOUT_MS),
+          });
+        } catch (error) {
+          if (signal?.aborted) throw new HttpError(499, 'request_aborted', validationMessage('request_aborted'));
+          throw mapError(error);
+        }
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload?.error) {
+          throw mapError(Object.assign(new Error(payload?.error || 'Ollama request failed'), { status: response.status, error: payload }));
+        }
+        return payload;
+      }, { signal });
+
+      const output = String(data?.message?.content || '').trim();
+      if (!output) throw new HttpError(502, 'empty_response', validationMessage('empty_response'));
+
+      const usage = normalizeUsage(data);
+      config.recordSuccess({ modelId: targetModel, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens });
+
+      return {
+        text: output,
+        usage,
+        cost: 0,
+        stopReason: data?.done_reason || null,
+        model: data?.model || targetModel,
+        key: { id: isCloud() ? 'ollama-cloud' : 'ollama-local', slot: 1 },
+        local: !isCloud(),
+        free: true,
+      };
+    } catch (err) {
+      config.recordError({ code: err.code || 'provider_error', message: err.message });
+      throw err;
+    }
   }
 
   async function* streamGenerate({ model, system, history, text, attachments, maxTokens = MAX_OUTPUT_TOKENS, signal }) {
     validateModel(model);
-    const body = JSON.stringify(buildRequest({ model, system, history, text, attachments, maxTokens, stream: true }));
-    const response = await withRetry(async () => {
-      let res;
-      try {
-        res = await fetchImpl(chatUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, signal: combinedSignal(signal, REQUEST_TIMEOUT_MS) });
-      } catch (error) {
-        if (signal?.aborted) throw new HttpError(499, 'request_aborted', validationMessage('request_aborted'));
-        throw mapError(error);
-      }
-      if (!res.ok) {
-        const payload = await res.json().catch(() => ({}));
-        throw mapError(Object.assign(new Error(payload?.error || 'Ollama stream failed'), { status: res.status, error: payload }));
-      }
-      if (!res.body) throw new HttpError(502, 'provider_error', 'The local Ollama server did not return a response stream.');
-      return res;
-    }, { signal });
+    const targetModel = model || defaultModelId();
+    const chatUrl = `${baseUrl()}/api/chat`;
+    const body = JSON.stringify(buildRequest({ model: targetModel, system, history, text, attachments, maxTokens, stream: true }));
+
+    let response;
+    try {
+      response = await withRetry(async () => {
+        let res;
+        try {
+          res = await fetchImpl(chatUrl, {
+            method: 'POST',
+            headers: getHeaders(),
+            body,
+            signal: combinedSignal(signal, REQUEST_TIMEOUT_MS),
+          });
+        } catch (error) {
+          if (signal?.aborted) throw new HttpError(499, 'request_aborted', validationMessage('request_aborted'));
+          throw mapError(error);
+        }
+        if (!res.ok) {
+          const payload = await res.json().catch(() => ({}));
+          throw mapError(Object.assign(new Error(payload?.error || 'Ollama stream failed'), { status: res.status, error: payload }));
+        }
+        if (!res.body) throw new HttpError(502, 'provider_error', 'Ollama server did not return a response stream.');
+        return res;
+      }, { signal });
+    } catch (err) {
+      config.recordError({ code: err.code || 'provider_error', message: err.message });
+      throw err;
+    }
+
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
     let full = '';
     let usage = null;
-    let responseModel = model;
     let finishReason = null;
+
     function* consumeLine(rawLine) {
       const line = String(rawLine || '').trim();
       if (!line) return;
       let event;
       try { event = JSON.parse(line); } catch { return; }
       if (event?.error) throw mapError(Object.assign(new Error(event.error), { status: 502, error: event }));
-      if (event?.model) responseModel = event.model;
       const delta = event?.message?.content;
       if (typeof delta === 'string' && delta) {
         full += delta;
@@ -279,6 +410,7 @@ function createOllamaProvider({ HttpError, env = process.env, fetchImpl = global
         finishReason = event?.done_reason || null;
       }
     }
+
     try {
       while (true) {
         let chunk;
@@ -299,85 +431,99 @@ function createOllamaProvider({ HttpError, env = process.env, fetchImpl = global
     } finally {
       try { reader.releaseLock(); } catch {}
     }
-    const output = full.trim();
-    if (!output) throw new HttpError(502, 'empty_response', validationMessage('empty_response'));
-    yield { type: 'done', text: output, usage, cost: 0, model: responseModel, stopReason: finishReason, key: { id: 'ollama-local', slot: 1 }, local: true, free: true };
-  }
 
-  async function testConnection() {
-    if (!configured()) return { ok: false, code: 'not_configured', message: validationMessage('not_configured'), checkedAt: new Date(now()).toISOString() };
-    try {
-      models = await fetchModels();
-      modelsOk = true;
-      modelsError = null;
-      modelsAt = now();
-      return { ok: true, code: 'ok', modelCount: models.length, defaultModel: defaultModelId(), checkedAt: new Date(now()).toISOString() };
-    } catch (error) {
-      const mapped = mapError(error);
-      models = [];
-      modelsOk = false;
-      modelsError = mapped.code;
-      modelsAt = now();
-      return { ok: false, code: mapped.code, status: mapped.status, message: mapped.message, checkedAt: new Date(now()).toISOString() };
-    }
-  }
+    const totalUsage = usage || { inputTokens: 0, outputTokens: 0, totalTokens: 0, cost: 0 };
+    config.recordSuccess({ modelId: targetModel, inputTokens: totalUsage.inputTokens, outputTokens: totalUsage.outputTokens });
 
-  async function testModel(id) {
-    await refreshModels();
-    if (!models.some(model => model.id === id)) return { ok: false, code: 'invalid_model', message: validationMessage('invalid_model') };
-    try {
-      const result = await generate({ model: id, system: 'Reply with one short word.', history: [], text: 'Say ok.', maxTokens: 16 });
-      return { ok: true, model: result.model, usage: result.usage, cost: 0, local: true };
-    } catch (error) {
-      const mapped = mapError(error);
-      return { ok: false, code: mapped.code, message: mapped.message };
-    }
-  }
-
-  function status() {
-    const validation = !configured() ? 'not_configured' : modelsOk === null ? 'unchecked' : modelsOk ? 'ok' : modelsError;
-    return {
-      provider: 'Ollama',
-      configured: configured(),
-      connected: connected(),
-      validated: connected(),
-      validation,
-      local: true,
-      free: true,
-      modelCount: models.length,
-      checkedAt: modelsAt ? new Date(modelsAt).toISOString() : null,
-      endpoint: baseUrl,
-      defaultModel: defaultModelId(),
-      models: models.map(model => ({ id: model.id, name: model.name, family: model.family, parameterSize: model.parameterSize, available: true, free: true, local: true })),
+    yield {
+      type: 'done',
+      usage: totalUsage,
+      text: full,
+      stopReason: finishReason,
+      model: targetModel,
     };
   }
 
-  function catalogEntries() {
-    if (!configured()) {
-      return [{ id: 'ollama', name: 'Local Ollama', provider: 'Ollama', configured: false, supported: true, available: false, free: true, local: true, reason: validationMessage('not_configured') }];
+  async function testConnection() {
+    const t0 = now();
+    try {
+      const discovered = await fetchModels();
+      const duration = now() - t0;
+      return {
+        ok: true,
+        modelCount: discovered.length,
+        responseTimeMs: duration,
+        endpoint: baseUrl(),
+        isCloud: isCloud(),
+      };
+    } catch (err) {
+      const duration = now() - t0;
+      return {
+        ok: false,
+        code: err.code || 'connection_failed',
+        error: err.message || 'Connection test failed',
+        responseTimeMs: duration,
+        endpoint: baseUrl(),
+        isCloud: isCloud(),
+      };
     }
-    if (models.length && modelsOk === true) {
-      return models.map(model => ({
-        id: model.id,
-        name: model.name,
-        provider: 'Ollama',
-        configured: true,
-        supported: true,
-        available: true,
-        free: true,
-        local: true,
-        capabilities: { text: true, vision: false, pdf: false },
-        contextLength: null,
-        reason: '',
-      }));
-    }
-    const reason = modelsOk === false ? validationMessage(modelsError) : modelsOk === null ? 'Local Ollama models have not been loaded yet.' : 'No local Ollama models are installed. Run "ollama pull gemma".';
-    return [{ id: 'ollama', name: 'Local Ollama', provider: 'Ollama', configured: true, supported: true, available: false, free: true, local: true, reason }];
   }
 
-  function resetCache() { models = []; modelsOk = null; modelsError = null; modelsAt = 0; }
+  function catalogEntries() {
+    const isConfig = configured();
+    const isEn = enabled();
+    const allModels = config.getModels();
+    return Object.values(allModels).map(m => ({
+      id: m.id,
+      name: m.name || m.id,
+      provider: 'Ollama',
+      configured: isConfig,
+      supported: true,
+      available: isConfig && isEn && m.enabled,
+      free: Boolean(m.free),
+      contextLength: m.contextWindow || 131072,
+      capabilities: { text: true, vision: false, pdf: false },
+      reason: !isConfig ? 'Ollama API key or server not configured' : (!isEn ? 'Ollama is disabled' : (!m.enabled ? 'Model is disabled' : '')),
+    }));
+  }
 
-  return { configured, connected, status, refreshModels, catalogEntries, generate, streamGenerate, testConnection, testModel, buildMessages, buildRequest, mapError, resetCache, defaultModelId, baseUrl };
+  function status() {
+    const cfgView = config.view();
+    return {
+      configured: configured(),
+      enabled: enabled(),
+      spendingPolicy: config.getSpendingPolicy(),
+      hasKey: Boolean(apiKey()),
+      maskedKey: maskKey(apiKey()),
+      endpoint: baseUrl(),
+      isCloud: isCloud(),
+      defaultModelId: defaultModelId(),
+      modelCount: Object.keys(config.getModels()).length,
+      models: config.getModels(),
+      usage: config.getUsage(),
+      recentErrors: config.getRecentErrors(),
+      modelsOk,
+      modelsError,
+    };
+  }
+
+  return {
+    configured,
+    enabled,
+    isCloud,
+    baseUrl,
+    defaultModelId,
+    refreshModels,
+    generate,
+    streamGenerate,
+    testConnection,
+    catalogEntries,
+    status,
+    resetCache() { models = []; modelsAt = 0; modelsOk = null; },
+  };
 }
 
-module.exports = { createOllamaProvider, validationMessage, DEFAULT_BASE_URL, MODEL_ID };
+module.exports = {
+  createOllamaProvider,
+  DEFAULT_BASE_URL: 'https://ollama.com',
+};

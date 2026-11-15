@@ -21,6 +21,8 @@ const { createOpenAIConfig } = require('./openai-config');
 const { createOpenAIProvider } = require('./openai-provider');
 const { createLlmtrConfig } = require('./llmtr-config');
 const { createLlmtrProvider } = require('./llmtr-provider');
+const { createOllamaConfig } = require('./ollama-config');
+const { createOllamaProvider } = require('./ollama-provider');
 // Anthropic provider is disabled (no key configured).
 // File is kept on disk for future re-enablement. To re-enable, restore the imports
 // and provider instance below, and add ANTHROPIC_API_KEY to API.env.
@@ -112,7 +114,8 @@ const openrouterKeys = createOpenRouterKeyStore({ dir: ROOT });
 const openrouter = createOpenRouterProvider({ HttpError, keys: openrouterKeys });
 const geminiKeys = createGeminiKeyStore({ dir: ROOT });
 const gemini = createGeminiProvider({ HttpError, keys: geminiKeys, env: process.env });
-const ollama = null; // Ollama disabled — set OLLAMA_ENABLED=1 and restore createOllamaProvider to re-enable.
+const ollamaConfig = createOllamaConfig({ dir: ROOT, env: process.env, logger: console });
+const ollama = createOllamaProvider({ HttpError, env: process.env, cfg: ollamaConfig, dir: ROOT, logger: console });
 const codecraftConfig = createCodeCraftConfig({ dir: ROOT, env: process.env });
 const codecraft = createCodeCraftProvider({ HttpError, env: process.env, config: codecraftConfig });
 const groqConfig = createGroqConfig({ dir: ROOT, env: process.env });
@@ -496,7 +499,8 @@ function availableModels() {
   const gq = groq.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: true, pricingVerified: Boolean(m.available), contextLength: m.contextLength, capabilities: m.capabilities || { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
   const nv = nvidia.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: true, pricingVerified: Boolean(m.available), contextLength: m.contextLength, capabilities: m.capabilities || { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
   const ltr = llmtr.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: Boolean(m.free), pricingVerified: Boolean(m.available), contextLength: m.contextLength, capabilities: m.capabilities || { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
-  const merged = [...base, ...google, ...claude, ...free, ...gpt, ...cc, ...gq, ...nv, ...ltr];
+  const olm = ollama.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: Boolean(m.free), pricingVerified: Boolean(m.available), contextLength: m.contextLength, capabilities: m.capabilities || { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
+  const merged = [...base, ...google, ...claude, ...free, ...gpt, ...cc, ...gq, ...nv, ...ltr, ...olm];
   const seen = new Set();
   const out = [];
   for (const item of merged) {
@@ -654,7 +658,7 @@ async function callGemini(model, contents, systemInstruction) {
   return gemini.generate({ model, contents, systemInstruction });
 }
 async function resolveModel(id) {
-  await Promise.allSettled([gemini.refreshModels(), openrouter.refreshModels(), codecraft.refreshModels(), groq.refreshModels(), nvidia.refreshModels(), openai.refreshModels(), llmtr.refreshModels()]);
+  await Promise.allSettled([gemini.refreshModels(), openrouter.refreshModels(), codecraft.refreshModels(), groq.refreshModels(), nvidia.refreshModels(), openai.refreshModels(), llmtr.refreshModels(), ollama.refreshModels()]);
   const option = availableModels().find(m => m.id === id);
   if (!option || !option.available) throw new HttpError(503, 'model_unavailable', option && option.configured === false ? `${option.provider} is not configured on this server. Choose another model.` : 'The selected AI model is not available. Choose another model in your profile settings.');
   return option;
@@ -666,6 +670,7 @@ function providerKey(option) {
   if (option.provider === 'NVIDIA') return 'nvidia';
   if (option.provider === 'OpenAI') return 'openai';
   if (option.provider === 'LLMTR') return 'llmtr';
+  if (option.provider === 'Ollama') return 'ollama';
   return 'gemini';
 }
 async function generateProvider({ providerName, modelId, system, history, text, attachments, contents, maxTokens }) {
@@ -675,6 +680,7 @@ async function generateProvider({ providerName, modelId, system, history, text, 
   if (providerName === 'nvidia') return nvidia.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
   if (providerName === 'openai') return openai.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
   if (providerName === 'llmtr') return llmtr.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
+  if (providerName === 'ollama') return ollama.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
   return callGemini(modelId, contents || [{ role: 'user', parts: [{ text }] }], system);
 }
 async function* streamProvider({ providerName, modelId, system, history, text, attachments, contents, maxTokens, signal }) {
@@ -700,6 +706,10 @@ async function* streamProvider({ providerName, modelId, system, history, text, a
   }
   if (providerName === 'llmtr') {
     yield* llmtr.streamGenerate({ model: modelId, system, history, text, attachments, maxTokens, signal });
+    return;
+  }
+  if (providerName === 'ollama') {
+    yield* ollama.streamGenerate({ model: modelId, system, history, text, attachments, maxTokens, signal });
     return;
   }
   if (providerName === 'gemini') {
@@ -1022,11 +1032,50 @@ const server = http.createServer(async (req, res) => {
         return reply(res, 200, { success: true, data: openai.status() });
       }
       if (pathname.startsWith('/api/admin/openai')) return fail(res, new HttpError(404, 'not_found', 'OpenAI admin route not found.'), requestId);
-      // Ollama admin routes — disabled (Ollama removed). Files kept on disk for future re-enablement.
-      if (pathname === '/api/admin/ollama' && req.method === 'GET') {
-        return reply(res, 200, { success: true, data: { configured: false, connected: false, validation: 'provider_disabled', reason: 'Ollama is disabled on this server. To re-enable, restore createOllamaProvider in server.js.' } });
+      // Ollama admin routes (supports both Ollama Cloud and local Ollama)
+      if (pathname === '/api/admin/ollama' && req.method === 'GET') { await ollama.refreshModels(); return reply(res, 200, { success: true, data: ollama.status() }); }
+      if (pathname === '/api/admin/ollama' && req.method === 'PUT') {
+        const body = await readBody(req);
+        try {
+          if (typeof body.enabled === 'boolean') ollamaConfig.setEnabled(body.enabled);
+          if (typeof body.spendingPolicy === 'string') ollamaConfig.setSpendingPolicy(body.spendingPolicy);
+          if (body.defaultModelId !== undefined) ollamaConfig.setDefaultModelId(body.defaultModelId || null);
+        } catch (error) {
+          if (error instanceof HttpError) throw error;
+          throw new HttpError(400, error?.code || 'invalid_settings', error?.message || 'Invalid Ollama settings.');
+        }
+        await ollama.refreshModels();
+        return reply(res, 200, { success: true, data: ollama.status() });
       }
-      if (pathname.startsWith('/api/admin/ollama')) return reply(res, 503, { success: false, error: { code: 'provider_disabled', message: 'Ollama is disabled on this server.' } });
+      if (pathname === '/api/admin/ollama/connection' && req.method === 'POST') { const result = await ollama.testConnection(); return reply(res, 200, { success: true, data: { result, status: ollama.status() } }); }
+      if (pathname === '/api/admin/ollama/refresh' && req.method === 'POST') { await ollama.refreshModels(true); return reply(res, 200, { success: true, data: ollama.status() }); }
+      const ollamaModelRoute = /^\/api\/admin\/ollama\/models\/([A-Za-z0-9][A-Za-z0-9._:/-]{0,160})$/.exec(pathname);
+      if (ollamaModelRoute) {
+        if (req.method !== 'PUT') return fail(res, new HttpError(405, 'method_not_allowed', 'Method not allowed.'), requestId);
+        const modelId = ollamaModelRoute[1];
+        const body = await readBody(req);
+        try { if (typeof body.enabled === 'boolean') ollamaConfig.setModelEnabled(modelId, body.enabled); } catch (error) { throw new HttpError(400, error?.code || 'invalid_model', error?.message || 'Invalid model ID.'); }
+        return reply(res, 200, { success: true, data: ollama.status() });
+      }
+      if (pathname === '/api/admin/ollama/key' && req.method === 'POST') {
+        const body = await readBody(req);
+        const key = String(body.key || '').trim();
+        if (!key) throw new HttpError(400, 'invalid_key', 'Ollama API key cannot be empty.');
+        setEnvKey('OLLAMA_API_KEY', key);
+        if (body.baseUrl) setEnvKey('OLLAMA_BASE_URL', String(body.baseUrl).trim());
+        ollamaConfig.setEnabled(true);
+        ollamaConfig.setSpendingPolicy('allow_free_only');
+        ollama.resetCache();
+        await ollama.refreshModels(true);
+        return reply(res, 200, { success: true, data: ollama.status() });
+      }
+      if (pathname === '/api/admin/ollama/key' && req.method === 'DELETE') {
+        clearEnvKey('OLLAMA_API_KEY');
+        ollama.resetCache();
+        await ollama.refreshModels(true);
+        return reply(res, 200, { success: true, data: ollama.status() });
+      }
+      if (pathname.startsWith('/api/admin/ollama')) return fail(res, new HttpError(404, 'not_found', 'Ollama admin route not found.'), requestId);
       if (pathname === '/api/admin/codecraft' && req.method === 'GET') { await codecraft.refreshModels(); return reply(res, 200, { success: true, data: codecraft.status() }); }
       if (pathname === '/api/admin/codecraft' && req.method === 'PUT') {
         const body = await readBody(req);
@@ -1210,7 +1259,7 @@ const server = http.createServer(async (req, res) => {
       }
       if (pathname.startsWith('/api/admin/llmtr')) return fail(res, new HttpError(404, 'not_found', 'LLMTR admin route not found.'), requestId);
       if (pathname === '/api/admin/provider-status' && req.method === 'GET') {
-        await Promise.allSettled([gemini.refreshModels(true), openrouter.refreshModels(true), codecraft.refreshModels(true), groq.refreshModels(true), nvidia.refreshModels(true), openai.refreshModels(true), llmtr.refreshModels(true)]);
+        await Promise.allSettled([gemini.refreshModels(true), openrouter.refreshModels(true), codecraft.refreshModels(true), groq.refreshModels(true), nvidia.refreshModels(true), openai.refreshModels(true), llmtr.refreshModels(true), ollama.refreshModels(true)]);
         return reply(res, 200, {
           success: true,
           data: {
@@ -1222,6 +1271,7 @@ const server = http.createServer(async (req, res) => {
             groq: groq.status(),
             nvidia: nvidia.status(),
             llmtr: llmtr.status(),
+            ollama: ollama.status(),
           },
         });
       }
@@ -1628,7 +1678,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === 'GET' && pathname === '/api/profile/config') {
       const forceRefresh = parsedUrl.searchParams.get('refresh') === '1';
-      await Promise.allSettled([gemini.refreshModels(forceRefresh), openrouter.refreshModels(forceRefresh), codecraft.refreshModels(forceRefresh), groq.refreshModels(forceRefresh), nvidia.refreshModels(forceRefresh), llmtr.refreshModels(forceRefresh)]);
+      await Promise.allSettled([gemini.refreshModels(forceRefresh), openrouter.refreshModels(forceRefresh), codecraft.refreshModels(forceRefresh), groq.refreshModels(forceRefresh), nvidia.refreshModels(forceRefresh), llmtr.refreshModels(forceRefresh), ollama.refreshModels(forceRefresh)]);
       const data = loadStore();
       const gwStatus = getActiveGatewayService(data).getGatewayStatus(data);
 
@@ -2139,6 +2189,16 @@ async function logProviderDiagnostics() {
     console.log(`LLMTR configured: ${Boolean(status.maskedKey)} (${status.modelCount} model(s) discovered; spending policy: ${status.spendingPolicy})`);
   } else {
     console.log('LLMTR configured: false (set LLMTR_API_KEY in API.env or .env to enable LLMTR models)');
+  }
+  if (ollama.configured()) {
+    ollamaConfig.setEnabled(true);
+    ollamaConfig.setSpendingPolicy('allow_free_only');
+    console.log('Validating Ollama with a live API request...');
+    await ollama.refreshModels(true);
+    const status = ollama.status();
+    console.log(`Ollama configured: ${Boolean(status.maskedKey || status.configured)} (${status.isCloud ? 'Cloud' : 'Local'}, ${status.modelCount} model(s) discovered; spending policy: ${status.spendingPolicy})`);
+  } else {
+    console.log('Ollama configured: false (set OLLAMA_API_KEY in admin or API.env to enable Ollama Cloud)');
   }
   const ignoredOpenRouter = openrouterKeys.ignoredEnvNames();
   if (ignoredOpenRouter.length) console.log(`OpenRouter: ignoring unsupported variable(s) ${ignoredOpenRouter.join(', ')}. Slots are OPENROUTER_API_KEY and OPENROUTER_API_KEY_2 ... _10.`);

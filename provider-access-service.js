@@ -12,10 +12,10 @@
  */
 
 const PLAN_ALLOWED_PROVIDERS = Object.freeze({
-  basic: Object.freeze(['openrouter', 'codecraft']),
-  free: Object.freeze(['openrouter', 'codecraft']),
-  pro: Object.freeze(['openrouter', 'codecraft', 'groq']),
-  premium: Object.freeze(['openrouter', 'codecraft', 'groq', 'nvidia', 'openai', 'google', '*']),
+  basic: Object.freeze(['openrouter', 'codecraft', 'ollama', 'llmtr']),
+  free: Object.freeze(['openrouter', 'codecraft', 'ollama', 'llmtr']),
+  pro: Object.freeze(['openrouter', 'codecraft', 'groq', 'ollama', 'llmtr']),
+  premium: Object.freeze(['openrouter', 'codecraft', 'groq', 'nvidia', 'openai', 'google', 'ollama', 'llmtr', '*']),
 });
 
 const PROVIDER_ALIASES = Object.freeze({
@@ -37,6 +37,9 @@ const PROVIDER_ALIASES = Object.freeze({
   'anthropic': 'anthropic',
   'llmtr': 'llmtr',
   'freellmapi': 'llmtr',
+  'ollama': 'ollama',
+  'ollama cloud': 'ollama',
+  'ollamacloud': 'ollama',
 });
 
 function normalizePlanId(planId) {

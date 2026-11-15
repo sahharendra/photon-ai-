@@ -28,6 +28,7 @@ const FILES = [
   'gemini-provider.js',
   'openai-config.js',
   'openai-provider.js',
+  'ollama-config.js',
   'ollama-provider.js',
   'codecraft-config.js',
   'codecraft-provider.js',
