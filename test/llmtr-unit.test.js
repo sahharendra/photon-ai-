@@ -42,13 +42,13 @@ describe('llmtr-config', () => {
   });
 
   it('isModelFree identifies free models', () => {
-    assert.equal(isModelFree('creekside/qwen3.8-27b-creekside-free'), true);
+    assert.equal(isModelFree('openai/gpt-5.4-mini'), true);
     assert.equal(isModelFree({ id: 'any-model', pricing: { prompt: 0, completion: 0 } }), true);
     assert.equal(isModelFree({ id: 'paid-model', pricing: { prompt: 0.001, completion: 0.002 } }), false);
   });
 
   it('isLlmtrChatModel filters non-chat models', () => {
-    assert.equal(isLlmtrChatModel('creekside/qwen3.8-27b-creekside-free'), true);
+    assert.equal(isLlmtrChatModel('openai/gpt-5.4-mini'), true);
     assert.equal(isLlmtrChatModel('whisper-large-v3'), false);
     assert.equal(isLlmtrChatModel('text-embedding-004'), false);
   });
@@ -97,7 +97,7 @@ describe('llmtr-provider', () => {
     const p = createLlmtrProvider({ HttpError, env: { LLMTR_API_KEY: 'llmt.1234' } });
     const entries = p.catalogEntries();
     assert.ok(entries.length >= 4);
-    assert.ok(entries.some(m => m.id === 'creekside/qwen3.8-27b-creekside-free'));
+    assert.ok(entries.some(m => m.id === 'openai/gpt-5.4-mini'));
     assert.ok(entries.every(m => m.provider === 'LLMTR'));
   });
 
@@ -121,14 +121,15 @@ describe('llmtr-provider', () => {
       cfg.setEnabled(true);
       cfg.setSpendingPolicy('block');
       await assert.rejects(
-        () => p.generate({ model: 'creekside/qwen3.8-27b-creekside-free', text: 'hi' }),
+        () => p.generate({ model: 'openai/gpt-5.4-mini', text: 'hi' }),
         { code: 'billing_blocked' }
       );
 
       // allow_free_only blocks paid model
+      cfg.state.models['paid-test-model'] = { id: 'paid-test-model', free: false };
       cfg.setSpendingPolicy('allow_free_only');
       await assert.rejects(
-        () => p.generate({ model: 'llmtr/qwen3-8-27b', text: 'hi' }),
+        () => p.generate({ model: 'paid-test-model', text: 'hi' }),
         { code: 'billing_required' }
       );
     } finally {
@@ -163,7 +164,7 @@ describe('llmtr-provider', () => {
       });
 
       const res = await p.generate({
-        model: 'creekside/qwen3.8-27b-creekside-free',
+        model: 'openai/gpt-5.4-mini',
         text: 'hello',
       });
 
@@ -179,8 +180,8 @@ describe('llmtr-provider', () => {
       ok: true,
       json: async () => ({
         data: [
-          { id: 'creekside/qwen3.8-27b-creekside-free', name: 'Qwen 3.8 27B Free' },
-          { id: 'llmtr/gemma-4', name: 'Gemma 4' },
+          { id: 'openai/gpt-5.4-mini', name: 'GPT-5.4 Mini' },
+          { id: 'anthropic/claude-sonnet-5.5', name: 'Claude Sonnet 5.5' },
         ],
       }),
     });

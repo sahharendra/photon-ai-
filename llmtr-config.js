@@ -23,61 +23,163 @@ const MODEL_ID = /^[A-Za-z0-9][A-Za-z0-9._:/-]{0,160}$/;
 const NON_CHAT_ID = /(whisper|tts|embed|moderation|audio|transcribe)/i;
 
 const DEFAULT_LLMTR_MODELS = Object.freeze({
-  'creekside/qwen3.8-27b-creekside-free': {
-    id: 'creekside/qwen3.8-27b-creekside-free',
-    name: 'Qwen 3.8 27B (Free)',
-    ownedBy: 'llmtr',
+  'openai/gpt-5.4-mini': {
+    id: 'openai/gpt-5.4-mini',
+    name: 'GPT-5.4 Mini (LLMTR)',
+    ownedBy: 'openai',
+    created: 1794652020,
+    enabled: true,
+    contextWindow: 128000,
+    free: true,
+  },
+  'OpenAI/GPT-5.5-Pro': {
+    id: 'OpenAI/GPT-5.5-Pro',
+    name: 'GPT-5.5 Pro (LLMTR)',
+    ownedBy: 'openai',
+    created: 1794652020,
+    enabled: true,
+    contextWindow: 128000,
+    free: true,
+  },
+  'openai/gpt-5.6-terra-pro': {
+    id: 'openai/gpt-5.6-terra-pro',
+    name: 'GPT-5.6 Terra Pro (LLMTR)',
+    ownedBy: 'openai',
+    created: 1794652020,
+    enabled: true,
+    contextWindow: 128000,
+    free: true,
+  },
+  'openai/gpt-5.6-luna-pro': {
+    id: 'openai/gpt-5.6-luna-pro',
+    name: 'GPT-5.6 Luna Pro (LLMTR)',
+    ownedBy: 'openai',
+    created: 1794652020,
+    enabled: true,
+    contextWindow: 128000,
+    free: true,
+  },
+  'anthropic/claude-sonnet-5.5': {
+    id: 'anthropic/claude-sonnet-5.5',
+    name: 'Claude Sonnet 5.5 (LLMTR)',
+    ownedBy: 'anthropic',
+    created: 1794652020,
+    enabled: true,
+    contextWindow: 200000,
+    free: true,
+  },
+  'anthropic/claude-haiku-5.5': {
+    id: 'anthropic/claude-haiku-5.5',
+    name: 'Claude Haiku 5.5 (LLMTR)',
+    ownedBy: 'anthropic',
+    created: 1794652020,
+    enabled: true,
+    contextWindow: 200000,
+    free: true,
+  },
+  'anthropic/claude-opus-5': {
+    id: 'anthropic/claude-opus-5',
+    name: 'Claude Opus 5 (LLMTR)',
+    ownedBy: 'anthropic',
+    created: 1794652020,
+    enabled: true,
+    contextWindow: 200000,
+    free: true,
+  },
+  'anthropic/claude-opus-5.5': {
+    id: 'anthropic/claude-opus-5.5',
+    name: 'Claude Opus 5.5 (LLMTR)',
+    ownedBy: 'anthropic',
+    created: 1794652020,
+    enabled: true,
+    contextWindow: 200000,
+    free: true,
+  },
+  'google/gemini-3.1-flash-lite': {
+    id: 'google/gemini-3.1-flash-lite',
+    name: 'Gemini 3.1 Flash Lite (LLMTR)',
+    ownedBy: 'google',
     created: 1794652020,
     enabled: true,
     contextWindow: 1048576,
     free: true,
   },
-  'creekside/qwen3.6-35b-a3b-creekside-free': {
-    id: 'creekside/qwen3.6-35b-a3b-creekside-free',
-    name: 'Qwen 3.6 35B A3B (Free)',
-    ownedBy: 'llmtr',
+  'google/gemini-3.1-pro-preview': {
+    id: 'google/gemini-3.1-pro-preview',
+    name: 'Gemini 3.1 Pro Preview (LLMTR)',
+    ownedBy: 'google',
     created: 1794652020,
     enabled: true,
     contextWindow: 1048576,
     free: true,
   },
-  'creekside/gemma-4-31b-it-creekside-free': {
-    id: 'creekside/gemma-4-31b-it-creekside-free',
-    name: 'Gemma 4 31B (Free)',
-    ownedBy: 'llmtr',
-    created: 1794652020,
-    enabled: true,
-    contextWindow: 262144,
-    free: true,
-  },
-  'creekside/muse-glimmer-30b-creekside-free': {
-    id: 'creekside/muse-glimmer-30b-creekside-free',
-    name: 'Muse Glimmer 30B (Free)',
-    ownedBy: 'llmtr',
+  'xai/grok-4.6': {
+    id: 'xai/grok-4.6',
+    name: 'Grok 4.6 (LLMTR)',
+    ownedBy: 'xai',
     created: 1794652020,
     enabled: true,
     contextWindow: 131072,
     free: true,
   },
-  'llmtr/gemma-4': {
-    id: 'llmtr/gemma-4',
-    name: 'Gemma 4 (LLMTR)',
-    ownedBy: 'llmtr',
-    created: 1776880304,
+  'meta/llama-3.1-8b-instruct-16k': {
+    id: 'meta/llama-3.1-8b-instruct-16k',
+    name: 'Llama 3.1 8B Instruct 16k (LLMTR)',
+    ownedBy: 'meta',
+    created: 1794652020,
+    enabled: true,
+    contextWindow: 16384,
+    free: true,
+  },
+  'greenpt/llama-3.3-70b-instruct-eu': {
+    id: 'greenpt/llama-3.3-70b-instruct-eu',
+    name: 'Llama 3.3 70B Instruct EU (LLMTR)',
+    ownedBy: 'greenpt',
+    created: 1794652020,
     enabled: true,
     contextWindow: 131072,
-    free: false,
+    free: true,
   },
-  'llmtr/qwen3-8-27b': {
-    id: 'llmtr/qwen3-8-27b',
-    name: 'Qwen 3.8 27B (LLMTR)',
-    ownedBy: 'llmtr',
-    created: 1791267994,
+  'openai/gpt-image-2.6-flare': {
+    id: 'openai/gpt-image-2.6-flare',
+    name: 'GPT Image 2.6 Flare (LLMTR)',
+    ownedBy: 'openai',
+    created: 1794652020,
     enabled: true,
-    contextWindow: 262144,
-    free: false,
+    contextWindow: 128000,
+    free: true,
+  },
+  'google/gemini-2.5-flash-image': {
+    id: 'google/gemini-2.5-flash-image',
+    name: 'Gemini 2.5 Flash Image (LLMTR)',
+    ownedBy: 'google',
+    created: 1794652020,
+    enabled: true,
+    contextWindow: 1048576,
+    free: true,
+  },
+  'google/gemini-2.5-flash-native-audio-preview-12-2025': {
+    id: 'google/gemini-2.5-flash-native-audio-preview-12-2025',
+    name: 'Gemini 2.5 Flash Native Audio Preview (LLMTR)',
+    ownedBy: 'google',
+    created: 1794652020,
+    enabled: true,
+    contextWindow: 1048576,
+    free: true,
+  },
+  'xai/grok-imagine-video-1.5-lite': {
+    id: 'xai/grok-imagine-video-1.5-lite',
+    name: 'Grok Imagine Video 1.5 Lite (LLMTR)',
+    ownedBy: 'xai',
+    created: 1794652020,
+    enabled: true,
+    contextWindow: 131072,
+    free: true,
   },
 });
+
+const ALLOWED_LLMTR_MODEL_IDS = new Set(Object.keys(DEFAULT_LLMTR_MODELS));
+ALLOWED_LLMTR_MODEL_IDS.add('openai/gpt-5.5-pro');
 
 function readEnvKey(env) {
   const source = env || process.env;
@@ -100,7 +202,7 @@ function isLlmtrChatModel(model) {
   if (!model) return false;
   const id = typeof model === 'string' ? model : model.id;
   if (!id || typeof id !== 'string') return false;
-  return !NON_CHAT_ID.test(id);
+  return ALLOWED_LLMTR_MODEL_IDS.has(id) || ALLOWED_LLMTR_MODEL_IDS.has(id.toLowerCase());
 }
 
 function isModelFree(model) {
@@ -121,7 +223,7 @@ function defaultConfig() {
     version: CONFIG_VERSION,
     enabled: false,
     spendingPolicy: 'block',
-    defaultModelId: 'creekside/qwen3.8-27b-creekside-free',
+    defaultModelId: 'openai/gpt-5.4-mini',
     models: { ...DEFAULT_LLMTR_MODELS },
     usage: {
       totalRequests: 0,
@@ -148,18 +250,19 @@ function normalizeConfig(loaded) {
 
   const enabled = typeof loaded.enabled === 'boolean' ? loaded.enabled : base.enabled;
   const spendingPolicy = SPENDING_POLICIES.includes(loaded.spendingPolicy) ? loaded.spendingPolicy : base.spendingPolicy;
-  const defaultModelId = typeof loaded.defaultModelId === 'string' && MODEL_ID.test(loaded.defaultModelId)
+  const defaultModelId = typeof loaded.defaultModelId === 'string' && ALLOWED_LLMTR_MODEL_IDS.has(loaded.defaultModelId)
     ? loaded.defaultModelId : base.defaultModelId;
 
   const rawModels = (loaded.models && typeof loaded.models === 'object') ? loaded.models : {};
-  const mergedModels = { ...DEFAULT_LLMTR_MODELS, ...rawModels };
-  const models = {};
-  for (const [key, val] of Object.entries(mergedModels).slice(0, MAX_MODELS)) {
+  const models = { ...DEFAULT_LLMTR_MODELS };
+  for (const [key, val] of Object.entries(rawModels)) {
     if (!val || typeof val !== 'object' || !val.id) continue;
-    models[key] = {
+    if (!ALLOWED_LLMTR_MODEL_IDS.has(val.id)) continue;
+    models[val.id] = {
+      ...(DEFAULT_LLMTR_MODELS[val.id] || {}),
       id: String(val.id),
-      name: String(val.name || val.id),
-      ownedBy: String(val.ownedBy || 'llmtr'),
+      name: String(val.name || (DEFAULT_LLMTR_MODELS[val.id] && DEFAULT_LLMTR_MODELS[val.id].name) || val.id),
+      ownedBy: String(val.ownedBy || (DEFAULT_LLMTR_MODELS[val.id] && DEFAULT_LLMTR_MODELS[val.id].ownedBy) || 'llmtr'),
       created: typeof val.created === 'number' ? val.created : 0,
       enabled: val.enabled !== false,
       contextWindow: typeof val.contextWindow === 'number' ? val.contextWindow : 131072,
@@ -240,17 +343,18 @@ function createLlmtrConfig({ dir = process.cwd(), env = process.env, logger = co
 
   function setModels(list) {
     if (!Array.isArray(list)) return;
-    const next = {};
+    const next = { ...DEFAULT_LLMTR_MODELS };
     for (const m of list) {
-      if (!isLlmtrChatModel(m)) continue;
-      const prev = config.models[m.id];
-      next[m.id] = {
-        id: m.id,
-        name: m.name || m.id,
-        ownedBy: m.owned_by || m.ownedBy || 'llmtr',
-        created: m.created || 0,
-        enabled: prev ? prev.enabled : true,
-        contextWindow: m.context_length || m.contextWindow || 131072,
+      const id = m.id || m.name;
+      if (!id || !ALLOWED_LLMTR_MODEL_IDS.has(id)) continue;
+      const prev = config.models[id] || DEFAULT_LLMTR_MODELS[id];
+      next[id] = {
+        id,
+        name: m.name || (prev && prev.name) || id,
+        ownedBy: m.owned_by || m.ownedBy || (prev && prev.ownedBy) || 'llmtr',
+        created: m.created || (prev && prev.created) || 0,
+        enabled: prev ? prev.enabled !== false : true,
+        contextWindow: m.context_length || m.contextWindow || (prev && prev.contextWindow) || 131072,
         free: isModelFree(m),
       };
     }
