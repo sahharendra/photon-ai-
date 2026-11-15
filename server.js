@@ -635,12 +635,15 @@ function validateChatAttachments(input) {
   });
 }
 function validateHistory(history) {
-  if (history === undefined) return [];
-  if (!Array.isArray(history) || history.length > 20) throw new HttpError(400, 'invalid_history', 'Conversation history is invalid.');
-  return history.map(m => {
-    if (!m || !['user', 'assistant', 'model'].includes(m.role) || typeof m.content !== 'string' || !m.content.trim() || m.content.length > 12000) throw new HttpError(400, 'invalid_history', 'Conversation history is invalid.');
-    return { role: m.role === 'assistant' ? 'model' : m.role, parts: [{ text: m.content.trim() }] };
-  });
+  if (history === undefined || !Array.isArray(history)) return [];
+  const valid = [];
+  for (const m of history.slice(-20)) {
+    if (!m || !['user', 'assistant', 'model'].includes(m.role)) continue;
+    const text = typeof m.content === 'string' ? m.content.trim() : '';
+    if (!text || text.length > 12000) continue;
+    valid.push({ role: m.role === 'assistant' ? 'model' : m.role, parts: [{ text }] });
+  }
+  return valid;
 }
 async function callGemini(model, contents, systemInstruction) {
   return gemini.generate({ model, contents, systemInstruction });

@@ -313,8 +313,12 @@ function createOpenRouterProvider({ HttpError, env = process.env, fetchImpl = gl
 
   function extractText(message) {
     const content = message?.content;
-    if (typeof content === 'string') return content.trim();
-    if (Array.isArray(content)) return content.filter(part => part && (part.type === 'text' || part.type === 'output_text')).map(part => String(part.text || '')).join('').trim();
+    if (typeof content === 'string' && content.trim()) return content.trim();
+    if (Array.isArray(content)) {
+      const txt = content.filter(part => part && (part.type === 'text' || part.type === 'output_text')).map(part => String(part.text || '')).join('').trim();
+      if (txt) return txt;
+    }
+    if (typeof message?.reasoning === 'string' && message.reasoning.trim()) return message.reasoning.trim();
     return '';
   }
 
@@ -502,7 +506,9 @@ function createOpenRouterProvider({ HttpError, env = process.env, fetchImpl = gl
       if (event?.error) throw mapError(Object.assign(new Error(event.error.message || 'OpenRouter stream error'), { status: 502, error: event }));
       if (event?.model) responseModel = event.model;
       const choice = event?.choices?.[0];
-      const delta = choice?.delta?.content;
+      const delta = (typeof choice?.delta?.content === 'string' && choice.delta.content)
+        ? choice.delta.content
+        : (typeof choice?.delta?.reasoning === 'string' && choice.delta.reasoning ? choice.delta.reasoning : null);
       if (typeof delta === 'string' && delta) {
         full += delta;
         yield { type: 'delta', text: delta };
