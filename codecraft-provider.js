@@ -256,20 +256,21 @@ function createCodeCraftProvider({ HttpError, env = process.env, fetchImpl = glo
     if (!cfg.isEnabled()) {
       return [{ id: 'codecraft', name: 'CodeCraft AI', provider: 'CodeCraft', configured: true, supported: true, available: false, reason: validationMessage('provider_disabled') }];
     }
-    if (models.length && modelsOk === true) {
-      return models
-        .filter(m => m.enabled)
-        .map(m => ({
-          id: m.id,
-          name: m.name,
-          provider: 'CodeCraft',
-          configured: true,
-          supported: true,
-          available: true,
-          free: Boolean(m.free),
-          pricing: m.pricing,
-          reason: '',
-        }));
+    const snap = cfg.snapshot();
+    const modelList = (models.length && modelsOk === true) ? models : Object.values(snap.models || {});
+    const active = modelList.filter(m => m.enabled);
+    if (active.length > 0) {
+      return active.map(m => ({
+        id: m.id,
+        name: m.name || m.id,
+        provider: 'CodeCraft',
+        configured: true,
+        supported: true,
+        available: true,
+        free: m.free !== undefined ? Boolean(m.free) : true,
+        pricing: m.pricing || null,
+        reason: '',
+      }));
     }
     const reason = modelsOk === null ? 'CodeCraft models have not been loaded yet.' : validationMessage(modelsError);
     return [{ id: 'codecraft', name: 'CodeCraft AI', provider: 'CodeCraft', configured: true, supported: true, available: false, unavailable: true, reason }];

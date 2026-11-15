@@ -22,6 +22,41 @@ const MODEL_ID = /^[A-Za-z0-9][A-Za-z0-9._:/-]{0,160}$/;
 // Known chat/completion models on Groq
 const NON_CHAT_ID = /(whisper|tts|embed|moderation|audio|transcribe)/i;
 
+const DEFAULT_GROQ_MODELS = Object.freeze({
+  'llama-3.3-70b-versatile': {
+    id: 'llama-3.3-70b-versatile',
+    name: 'Llama 3.3 70B Versatile (Groq)',
+    ownedBy: 'Groq',
+    created: 1730000000,
+    enabled: true,
+    contextWindow: 131072,
+  },
+  'llama-3.1-8b-instant': {
+    id: 'llama-3.1-8b-instant',
+    name: 'Llama 3.1 8B Instant (Groq)',
+    ownedBy: 'Groq',
+    created: 1730000000,
+    enabled: true,
+    contextWindow: 131072,
+  },
+  'mixtral-8x7b-32768': {
+    id: 'mixtral-8x7b-32768',
+    name: 'Mixtral 8x7B (Groq)',
+    ownedBy: 'Groq',
+    created: 1730000000,
+    enabled: true,
+    contextWindow: 32768,
+  },
+  'gemma2-9b-it': {
+    id: 'gemma2-9b-it',
+    name: 'Gemma 2 9B (Groq)',
+    ownedBy: 'Groq',
+    created: 1730000000,
+    enabled: true,
+    contextWindow: 8192,
+  },
+});
+
 function readEnvKey(env) {
   const key = String(env.GROQ_API_KEY || '').trim();
   return key || null;
@@ -76,8 +111,8 @@ function defaultConfig() {
     enabled: true,
     spendingPolicy: 'allow_free_only',
     monthlySpendLimitUsd: 0,
-    defaultModelId: null,
-    models: {},
+    defaultModelId: 'llama-3.3-70b-versatile',
+    models: { ...DEFAULT_GROQ_MODELS },
     usage: {
       requests: 0,
       failures: 0,
@@ -107,7 +142,7 @@ function normalizeConfig(raw) {
   cfg.enabled = src.enabled !== false;
   cfg.spendingPolicy = SPENDING_POLICIES.includes(src.spendingPolicy) ? src.spendingPolicy : 'allow_free_only';
   cfg.monthlySpendLimitUsd = safeNumber(src.monthlySpendLimitUsd, 0);
-  cfg.defaultModelId = typeof src.defaultModelId === 'string' && MODEL_ID.test(src.defaultModelId) ? src.defaultModelId : null;
+  cfg.defaultModelId = typeof src.defaultModelId === 'string' && MODEL_ID.test(src.defaultModelId) ? src.defaultModelId : 'llama-3.3-70b-versatile';
 
   if (src.models && typeof src.models === 'object' && !Array.isArray(src.models)) {
     for (const [id, m] of Object.entries(src.models)) {
@@ -123,6 +158,10 @@ function normalizeConfig(raw) {
         contextWindow: Number.isInteger(Number(m.contextWindow)) ? Number(m.contextWindow) : 131072,
       };
     }
+  }
+
+  if (!Object.keys(cfg.models).length) {
+    cfg.models = { ...DEFAULT_GROQ_MODELS };
   }
 
   const u = src.usage && typeof src.usage === 'object' ? src.usage : {};

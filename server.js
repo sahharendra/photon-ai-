@@ -1437,7 +1437,7 @@ const server = http.createServer(async (req, res) => {
         return reply(res, 200, { success: true, data: detail });
       }
       if (pathname !== '/api/admin/overview' || req.method !== 'GET') return fail(res, new HttpError(404, 'not_found', 'Admin API route not found.'), requestId);
-      await Promise.all([gemini.refreshModels(), nvidia.refreshModels()]);
+      await Promise.all([gemini.refreshModels(), openrouter.refreshModels(), codecraft.refreshModels(), groq.refreshModels(), nvidia.refreshModels()]);
       const { data, indexes } = getStoreIndexes();
       const queried = queryAdminUsers({ store: data, indexes, plans: getPlans(), params: { page: 1, pageSize: 10000 }, onlineTimeoutMs: ONLINE_TIMEOUT_MS });
       const users = queried.filteredAll.map(u => {

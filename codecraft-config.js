@@ -24,6 +24,41 @@ const SPENDING_POLICIES = Object.freeze(['block', 'allow_free_only']);
 // Valid model ID pattern (same as OpenRouter / OpenAI providers).
 const MODEL_ID = /^[A-Za-z0-9][A-Za-z0-9._:/-]{0,160}$/;
 
+const DEFAULT_CODECRAFT_MODELS = Object.freeze({
+  'deepseek-v4-flash-0731': {
+    id: 'deepseek-v4-flash-0731',
+    name: 'DeepSeek V4 Flash',
+    ownedBy: 'cleanapis',
+    created: 1730000000,
+    enabled: true,
+    pricing: null,
+  },
+  'qwen3.8-max': {
+    id: 'qwen3.8-max',
+    name: 'Qwen 3.8 Max',
+    ownedBy: 'cleanapis',
+    created: 1730000000,
+    enabled: true,
+    pricing: null,
+  },
+  'kimi-k2.6': {
+    id: 'kimi-k2.6',
+    name: 'Kimi K2.6',
+    ownedBy: 'cleanapis',
+    created: 1730000000,
+    enabled: true,
+    pricing: null,
+  },
+  'glm-5.3': {
+    id: 'glm-5.3',
+    name: 'GLM 5.3',
+    ownedBy: 'cleanapis',
+    created: 1730000000,
+    enabled: true,
+    pricing: null,
+  },
+});
+
 function readEnvKey(env) {
   const key = String(env.CODECRAFT_API_KEY || '').trim();
   return key || null;
@@ -58,7 +93,7 @@ function defaultConfig() {
     spendingPolicy: 'block',
     monthlySpendLimitUsd: 0,
     defaultModelId: null,
-    models: {},
+    models: { ...DEFAULT_CODECRAFT_MODELS },
     usage: {
       requests: 0,
       failures: 0,
@@ -95,7 +130,7 @@ function normalizeConfig(raw) {
         name: String(m.name || id).slice(0, 120),
         ownedBy: String(m.ownedBy || '').slice(0, 60),
         created: Number.isInteger(Number(m.created)) ? Number(m.created) : null,
-        enabled: Boolean(m.enabled),
+        enabled: m.enabled !== false,
         verifiedAt: typeof m.verifiedAt === 'string' ? m.verifiedAt : null,
         discoveredAt: typeof m.discoveredAt === 'string' ? m.discoveredAt : null,
         pricing:
@@ -108,6 +143,10 @@ function normalizeConfig(raw) {
             : null,
       };
     }
+  }
+
+  if (!Object.keys(cfg.models).length) {
+    cfg.models = { ...DEFAULT_CODECRAFT_MODELS };
   }
 
   // Normalize usage.
