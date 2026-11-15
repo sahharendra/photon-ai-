@@ -1295,7 +1295,7 @@
     }
   }
 
- function renderProviders(models){const root=$('models');root.replaceChildren();(models||[]).forEach(model=>{const badge=document.createElement('span');badge.className='pill '+(model.available?'ok':'no');badge.textContent=model.available?'Ready':'Setup needed';rowItem(root,model.name,model.provider+(model.reason?' · '+model.reason:''),badge)})}
+ function renderProviders(models){const root=$('models');root.replaceChildren();(models||[]).forEach(model=>{const badge=document.createElement('span');const isEx=Boolean(model.creditsExhausted);badge.className='pill '+(model.available?'ok':(isEx?'warn':'no'));badge.textContent=model.available?'Ready':(isEx?'Credits Exhausted':'Setup needed');rowItem(root,model.name,model.provider+(model.reason?' · '+model.reason:''),badge)})}
  let geminiKeysCache=[];
  function geminiBadge(text,ok){const badge=document.createElement('span');badge.className='pill '+(ok?'ok':'no');badge.textContent=text;return badge}
  function renderGeminiKeys(data){

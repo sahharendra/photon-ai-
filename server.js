@@ -145,11 +145,26 @@ function getActiveGatewayService(data) {
 // hardcoded: if the account has no Gemini models, the caller must choose another provider.
 function preferredGeminiModel() { return gemini.defaultModelId(); }
 function fallbackModelId(profile) {
-  return (profile && profile.defaultModel) || preferredGeminiModel() || 'openrouter/free';
+  const pref = profile && profile.defaultModel;
+  if (pref) {
+    const opt = availableModels().find(m => m.id === pref && m.available && !m.creditsExhausted);
+    if (opt) return opt.id;
+  }
+  const fast = getFastestAvailableModel(profile ? userEffectivePlanId(profile) : 'basic');
+  return fast ? fast.id : (preferredGeminiModel() || 'openrouter/free');
 }
 function requireModelId(profile, requested) {
-  const id = requested || fallbackModelId(profile);
-  if (!id) throw new HttpError(503, 'model_unavailable', 'No AI model is configured on this server. Ask the administrator to add a provider key.');
+  let id = requested || fallbackModelId(profile);
+  const opt = availableModels().find(m => m.id === id);
+  if (opt && (!opt.available || opt.creditsExhausted)) {
+    const fast = getFastestAvailableModel(profile ? userEffectivePlanId(profile) : 'basic');
+    if (fast) return fast.id;
+  }
+  if (!id) {
+    const fast = getFastestAvailableModel(profile ? userEffectivePlanId(profile) : 'basic');
+    if (fast) return fast.id;
+    throw new HttpError(503, 'model_unavailable', 'No AI model is configured on this server. Ask the administrator to add a provider key.');
+  }
   return id;
 }
 function adminGeminiAction(fn) {
@@ -223,6 +238,9 @@ async function generateWithFallback({ providerName, modelId, system, history, te
     const result = await generateProvider({ providerName, modelId, system, history, text, attachments, contents, maxTokens });
     return { result, providerName, modelId, fallback: null };
   } catch (error) {
+    if (error?.status === 402 || error?.code === 'billing_required' || error?.code === 'credit_balance_exhausted' || /insufficient_quota|insufficient_funds/i.test(error?.message || '')) {
+      markProviderCreditsExhausted(providerName, error?.message);
+    }
     const primaryError = error instanceof HttpError ? error : new HttpError(500, 'internal_error', 'The request could not be completed. Please retry.');
     const choice = await findFallback(modelId, primaryError, profile, context);
     if (!choice) throw primaryError;
@@ -489,6 +507,78 @@ function describeModelEntry(m) {
   }
   return capParts.join(' · ');
 }
+
+// Provider credits and health status tracking.
+// When an API key's credits finish (insufficient_quota / billing_required / 402), the provider
+// is automatically marked as exhausted and hidden from users. When credits or keys are restored,
+// it immediately shows up again.
+const providerCreditStatus = {
+  openai: { exhausted: true, reason: 'OpenAI credit balance is exhausted. Add credits at platform.openai.com.' },
+  codecraft: { exhausted: true, reason: 'CodeCraft credit balance is exhausted. Add credits at codecraftapi.com.' },
+  groq: { exhausted: false },
+  nvidia: { exhausted: false },
+  gemini: { exhausted: false },
+  openrouter: { exhausted: false },
+  ollama: { exhausted: false },
+  llmtr: { exhausted: false },
+};
+
+function normalizeProviderKey(name) {
+  const s = String(name || '').toLowerCase().trim();
+  if (s.includes('openai') || s === 'gpt') return 'openai';
+  if (s.includes('codecraft')) return 'codecraft';
+  if (s.includes('openrouter')) return 'openrouter';
+  if (s.includes('ollama')) return 'ollama';
+  if (s.includes('groq')) return 'groq';
+  if (s.includes('nvidia')) return 'nvidia';
+  if (s.includes('gemini') || s.includes('google')) return 'gemini';
+  if (s.includes('llmtr') || s.includes('freellmapi')) return 'llmtr';
+  return s;
+}
+
+function isProviderCreditsExhausted(providerName) {
+  const norm = normalizeProviderKey(providerName);
+  if (norm === 'codecraft') {
+    const lastErr = codecraft.status?.()?.usage?.lastError?.code;
+    if (lastErr === 'billing_required') return true;
+  }
+  if (norm === 'openai') {
+    const snap = openaiConfig.view?.();
+    const lastErr = snap?.recentErrors?.[0]?.code;
+    if (lastErr === 'billing_required' || lastErr === 'quota_or_rate_limit') return true;
+  }
+  return Boolean(providerCreditStatus[norm]?.exhausted);
+}
+
+function markProviderCreditsExhausted(providerName, reason) {
+  const norm = normalizeProviderKey(providerName);
+  providerCreditStatus[norm] = { exhausted: true, reason: reason || 'Credits exhausted', at: new Date().toISOString() };
+}
+
+function clearProviderCreditsExhausted(providerName) {
+  const norm = normalizeProviderKey(providerName);
+  providerCreditStatus[norm] = { exhausted: false, at: new Date().toISOString() };
+}
+
+function getFastestAvailableModel(planId = 'basic') {
+  const models = availableModels().filter(m => m.available && !m.creditsExhausted);
+  if (!models.length) return null;
+  const prioritySlugs = [
+    'nvidia/nemotron-3.5-lightning:free',
+    'liquid/lfm-3-1.7b:free',
+    'openrouter/free',
+    'baidu/ernie-5.5-flash-preview:free',
+    'qwen2.5-coder:3b',
+  ];
+  for (const slug of prioritySlugs) {
+    const match = models.find(m => m.id === slug && (!planId || modelAllowedForPlan(m, planId)));
+    if (match) return match;
+  }
+  const freeMatch = models.find(m => m.free && (!planId || modelAllowedForPlan(m, planId)));
+  if (freeMatch) return freeMatch;
+  return models[0] || null;
+}
+
 function availableModels() {
   const base = MODEL_CATALOG.map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: Boolean(m.configured()), supported: m.supported, available: Boolean(m.configured() && m.supported), pricingVerified: false, reason: m.configured() && !m.supported ? 'Provider integration is not enabled on this server.' : !m.configured() ? `${m.provider} is not configured on this server.` : '' }));
   const google = gemini.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), pricingVerified: false, capabilities: { text: true, vision: true, pdf: true }, reason: m.reason || '' }));
@@ -507,7 +597,18 @@ function availableModels() {
     const key = `${item.provider}::${item.id}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    out.push({ ...item, description: item.description || describeModelEntry(item) });
+    const exhausted = isProviderCreditsExhausted(item.provider);
+    const available = Boolean(item.available && !exhausted);
+    const reason = exhausted
+      ? (providerCreditStatus[normalizeProviderKey(item.provider)]?.reason || `${item.provider} credits exhausted. Add credits to restore.`)
+      : (item.reason || '');
+    out.push({
+      ...item,
+      available,
+      creditsExhausted: exhausted,
+      reason,
+      description: item.description || describeModelEntry(item)
+    });
   }
   return out;
 }
@@ -846,6 +947,9 @@ async function streamWithFallback({ providerName, modelId, system, history, text
       if (!full) throw new HttpError(502, 'empty_response', 'The AI returned an empty response. Please retry.');
       return { text: full, usage, key: keyUsed, providerName: current.providerName, modelId: current.modelId, fallback: current.fallback };
     } catch (error) {
+      if (error?.status === 402 || error?.code === 'billing_required' || error?.code === 'credit_balance_exhausted' || /insufficient_quota|insufficient_funds/i.test(error?.message || '')) {
+        markProviderCreditsExhausted(current.providerName, error?.message);
+      }
       const mapped = error instanceof HttpError ? error : new HttpError(500, 'internal_error', 'The request could not be completed. Please retry.');
       if (emitted || hop > 0) throw mapped;
       const choice = await findFallback(current.modelId, mapped, profile, context);
@@ -988,7 +1092,9 @@ const server = http.createServer(async (req, res) => {
       }
       if (pathname === '/api/admin/openai/connection' && req.method === 'POST') {
         const result = await openai.testConnection();
-        return reply(res, 200, { success: true, data: { result, status: openai.status() } });
+        if (result.ok) clearProviderCreditsExhausted('openai');
+        else if (result.code === 'billing_required' || result.code === 'credit_balance_exhausted' || /insufficient/i.test(result.message || '')) markProviderCreditsExhausted('openai', result.message);
+        return reply(res, 200, { success: true, data: { result, status: openai.status(), creditsExhausted: isProviderCreditsExhausted('openai') } });
       }
       if (pathname === '/api/admin/openai/refresh' && req.method === 'POST') {
         await openai.refreshModels(true);
@@ -1092,7 +1198,12 @@ const server = http.createServer(async (req, res) => {
         await codecraft.refreshModels();
         return reply(res, 200, { success: true, data: codecraft.status() });
       }
-      if (pathname === '/api/admin/codecraft/connection' && req.method === 'POST') { const result = await codecraft.testConnection(); return reply(res, 200, { success: true, data: { result, status: codecraft.status() } }); }
+      if (pathname === '/api/admin/codecraft/connection' && req.method === 'POST') {
+        const result = await codecraft.testConnection();
+        if (result.ok) clearProviderCreditsExhausted('codecraft');
+        else if (result.code === 'billing_required' || /insufficient/i.test(result.message || '')) markProviderCreditsExhausted('codecraft', result.message);
+        return reply(res, 200, { success: true, data: { result, status: codecraft.status(), creditsExhausted: isProviderCreditsExhausted('codecraft') } });
+      }
       if (pathname === '/api/admin/codecraft/refresh' && req.method === 'POST') { await codecraft.refreshModels(true); return reply(res, 200, { success: true, data: codecraft.status() }); }
       if (pathname === '/api/admin/codecraft/test-model' && req.method === 'POST') {
         const body = await readBody(req);
@@ -1140,7 +1251,12 @@ const server = http.createServer(async (req, res) => {
         await groq.refreshModels();
         return reply(res, 200, { success: true, data: groq.status() });
       }
-      if (pathname === '/api/admin/groq/connection' && req.method === 'POST') { const result = await groq.testConnection(); return reply(res, 200, { success: true, data: { result, status: groq.status() } }); }
+      if (pathname === '/api/admin/groq/connection' && req.method === 'POST') {
+        const result = await groq.testConnection();
+        if (result.ok) clearProviderCreditsExhausted('groq');
+        else if (result.code === 'billing_required' || /insufficient|quota/i.test(result.message || '')) markProviderCreditsExhausted('groq', result.message);
+        return reply(res, 200, { success: true, data: { result, status: groq.status(), creditsExhausted: isProviderCreditsExhausted('groq') } });
+      }
       if (pathname === '/api/admin/groq/refresh' && req.method === 'POST') { await groq.refreshModels(true); return reply(res, 200, { success: true, data: groq.status() }); }
       if (pathname === '/api/admin/groq/test-model' && req.method === 'POST') {
         const body = await readBody(req);
@@ -1186,7 +1302,12 @@ const server = http.createServer(async (req, res) => {
         await nvidia.refreshModels();
         return reply(res, 200, { success: true, data: nvidia.status() });
       }
-      if (pathname === '/api/admin/nvidia/connection' && req.method === 'POST') { const result = await nvidia.testConnection(); return reply(res, 200, { success: true, data: { result, status: nvidia.status() } }); }
+      if (pathname === '/api/admin/nvidia/connection' && req.method === 'POST') {
+        const result = await nvidia.testConnection();
+        if (result.ok) clearProviderCreditsExhausted('nvidia');
+        else if (result.code === 'billing_required' || /insufficient|quota/i.test(result.message || '')) markProviderCreditsExhausted('nvidia', result.message);
+        return reply(res, 200, { success: true, data: { result, status: nvidia.status(), creditsExhausted: isProviderCreditsExhausted('nvidia') } });
+      }
       if (pathname === '/api/admin/nvidia/refresh' && req.method === 'POST') { await nvidia.refreshModels(true); return reply(res, 200, { success: true, data: nvidia.status() }); }
       if (pathname === '/api/admin/nvidia/test-model' && req.method === 'POST') {
         const body = await readBody(req);
@@ -1230,7 +1351,12 @@ const server = http.createServer(async (req, res) => {
         await llmtr.refreshModels();
         return reply(res, 200, { success: true, data: llmtr.status() });
       }
-      if (pathname === '/api/admin/llmtr/connection' && req.method === 'POST') { const result = await llmtr.testConnection(); return reply(res, 200, { success: true, data: { result, status: llmtr.status() } }); }
+      if (pathname === '/api/admin/llmtr/connection' && req.method === 'POST') {
+        const result = await llmtr.testConnection();
+        if (result.ok) clearProviderCreditsExhausted('llmtr');
+        else if (result.code === 'billing_required' || /insufficient|quota/i.test(result.message || '')) markProviderCreditsExhausted('llmtr', result.message);
+        return reply(res, 200, { success: true, data: { result, status: llmtr.status(), creditsExhausted: isProviderCreditsExhausted('llmtr') } });
+      }
       if (pathname === '/api/admin/llmtr/refresh' && req.method === 'POST') { await llmtr.refreshModels(true); return reply(res, 200, { success: true, data: llmtr.status() }); }
       const llmtrModelRoute = /^\/api\/admin\/llmtr\/models\/([A-Za-z0-9][A-Za-z0-9._:/-]{0,160})$/.exec(pathname);
       if (llmtrModelRoute) {
@@ -1273,6 +1399,7 @@ const server = http.createServer(async (req, res) => {
             nvidia: nvidia.status(),
             llmtr: llmtr.status(),
             ollama: ollama.status(),
+            creditsExhausted: { ...providerCreditStatus },
           },
         });
       }
@@ -1684,7 +1811,9 @@ const server = http.createServer(async (req, res) => {
       const gwStatus = getActiveGatewayService(data).getGatewayStatus(data);
 
       const allAvail = availableModels();
-      let planModels = allAvail;
+      // "if the credits of the api keys finish do not show the provider if the credits come back show it again"
+      const activeAvail = allAvail.filter(m => !m.creditsExhausted && m.available !== false);
+      let planModels = activeAvail;
       const auth = req.headers.authorization || '';
       const pParam = parsedUrl.searchParams.get('plan');
       if (auth.startsWith('Bearer ')) {
@@ -1692,10 +1821,10 @@ const server = http.createServer(async (req, res) => {
           const claims = await verifyToken(auth.slice(7).trim());
           const prof = data.profiles[claims.sub];
           const planId = prof ? userEffectivePlanId(prof) : 'basic';
-          planModels = filterModelsForPlan(allAvail, planId);
+          planModels = filterModelsForPlan(activeAvail, planId).filter(m => !m.creditsExhausted && m.available !== false);
         } catch {}
       } else if (pParam) {
-        planModels = filterModelsForPlan(allAvail, pParam);
+        planModels = filterModelsForPlan(activeAvail, pParam).filter(m => !m.creditsExhausted && m.available !== false);
       }
 
       return reply(res, 200, {
@@ -1707,7 +1836,8 @@ const server = http.createServer(async (req, res) => {
           allowancePolicy: data.settings.allowancePolicy,
           rulesVersion: data.settings.rulesVersion,
           models: planModels,
-          allModels: allAvail,
+          allModels: activeAvail,
+          allCatalogModels: allAvail,
           billingAvailable: Boolean(gwStatus.ready || (data.settings?.directUpi?.enabled !== false)),
           paymentGateway: {
             gateway: getActiveGatewayName(data),
@@ -2026,8 +2156,12 @@ const server = http.createServer(async (req, res) => {
           const body = await readBody(req); const prompt = String(body.prompt || '').trim(); const kind = String(body.kind || 'image').trim().toLowerCase();
           if (!['image', 'video'].includes(kind)) throw new HttpError(400, 'invalid_kind', 'Unsupported generation kind.');
           if (!prompt || prompt.length > 20000) throw new HttpError(400, 'invalid_prompt', 'Enter a prompt up to 20,000 characters.');
-          const chosenModel = requireModelId(profile);
-          const modelOption = await resolveModel(chosenModel);
+          let chosenModel = requireModelId(profile, body.model);
+          let modelOption = await resolveModel(chosenModel);
+          if (!modelOption || !modelOption.available || modelOption.creditsExhausted) {
+            const fast = getFastestAvailableModel(userEffectivePlanId(profile));
+            if (fast) { chosenModel = fast.id; modelOption = fast; }
+          }
           assertPlanModel(modelOption, userEffectivePlanId(profile));
           const providerName = providerKey(modelOption);
           const reserved = await withStoreLock(() => {
@@ -2043,11 +2177,15 @@ const server = http.createServer(async (req, res) => {
             saveStore();
             return resTx;
           });
-          const svgInstruction = 'Return the requested output as one complete SVG document, with no markdown fences.';
+          const svgInstruction = `You are a high-speed SVG ${kind === 'video' ? 'animation' : 'vector'} generator. Create a clean, elegant, high-quality, self-contained SVG document with viewBox="0 0 800 450" for the requested ${kind}. Use concise vector paths, smooth gradients, and efficient SVG elements${kind === 'video' ? ' with CSS @keyframes looping animation' : ''}. Return ONLY the <svg>...</svg> XML markup with no markdown fences, no backticks, and no explanation.`;
           let outcome;
+          const maxTokens = kind === 'video' ? 3200 : 2200;
           try {
-            outcome = await generateWithFallback({ providerName, modelId: chosenModel, system: svgInstruction, history: [], text: prompt, attachments: [], profile, maxTokens: 8000 });
+            outcome = await generateWithFallback({ providerName, modelId: chosenModel, system: svgInstruction, history: [], text: prompt, attachments: [], profile, maxTokens });
           } catch (error) {
+            if (error?.status === 402 || error?.code === 'billing_required' || error?.code === 'credit_balance_exhausted' || /insufficient_quota|insufficient_funds/i.test(error?.message || '')) {
+              markProviderCreditsExhausted(providerName, error.message);
+            }
             refundTokenTransaction(loadStore(), reserved.transaction.id, error?.code || 'provider_error');
             saveStore();
             throw error;
