@@ -32,15 +32,6 @@ const DEFAULT_LLMTR_MODELS = Object.freeze({
     contextWindow: 128000,
     free: true,
   },
-  'OpenAI/GPT-5.5-Pro': {
-    id: 'OpenAI/GPT-5.5-Pro',
-    name: 'GPT-5.5 Pro (LLMTR)',
-    ownedBy: 'openai',
-    created: 1794652020,
-    enabled: true,
-    contextWindow: 128000,
-    free: true,
-  },
   'openai/gpt-5.6-terra-pro': {
     id: 'openai/gpt-5.6-terra-pro',
     name: 'GPT-5.6 Terra Pro (LLMTR)',
@@ -179,7 +170,6 @@ const DEFAULT_LLMTR_MODELS = Object.freeze({
 });
 
 const ALLOWED_LLMTR_MODEL_IDS = new Set(Object.keys(DEFAULT_LLMTR_MODELS));
-ALLOWED_LLMTR_MODEL_IDS.add('openai/gpt-5.5-pro');
 
 function readEnvKey(env) {
   const source = env || process.env;
