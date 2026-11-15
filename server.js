@@ -1052,6 +1052,8 @@ const server = http.createServer(async (req, res) => {
         const key = String(body.key || '').trim();
         if (!key) throw new HttpError(400, 'invalid_key', 'CodeCraft API key cannot be empty.');
         setEnvKey('CODECRAFT_API_KEY', key);
+        codecraftConfig.setEnabled(true);
+        codecraftConfig.setSpendingPolicy('allow_free_only');
         codecraft.resetCache();
         await codecraft.refreshModels(true);
         return reply(res, 200, { success: true, data: codecraft.status() });
@@ -1098,6 +1100,8 @@ const server = http.createServer(async (req, res) => {
         const key = String(body.key || '').trim();
         if (!key) throw new HttpError(400, 'invalid_key', 'Groq API key cannot be empty.');
         setEnvKey('GROQ_API_KEY', key);
+        groqConfig.setEnabled(true);
+        groqConfig.setSpendingPolicy('allow_free_only');
         await groq.refreshModels(true);
         return reply(res, 200, { success: true, data: groq.status() });
       }
@@ -1956,7 +1960,7 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/upi-qr.jpg') {
       const qrPath = path.join(ROOT, 'upi-qr.jpg');
       if (fs.existsSync(qrPath)) {
-        res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=86400', 'X-Content-Type-Options': 'nosniff' });
+        res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'X-Content-Type-Options': 'nosniff' });
         if (req.method === 'HEAD') return res.end();
         return fs.createReadStream(qrPath).pipe(res);
       }
@@ -2044,6 +2048,8 @@ async function logProviderDiagnostics() {
   // Ollama local is disabled (removed). To re-enable, restore createOllamaProvider import and instance.
   console.log('Ollama local: disabled (removed — restore ollama-provider import in server.js to re-enable)');
   if (codecraft.configured()) {
+    codecraftConfig.setEnabled(true);
+    codecraftConfig.setSpendingPolicy('allow_free_only');
     console.log('Validating CodeCraft key with a live API request...');
     await codecraft.refreshModels(true);
     const status = codecraft.status();
@@ -2052,6 +2058,8 @@ async function logProviderDiagnostics() {
     console.log('CodeCraft configured: false (set CODECRAFT_API_KEY in API.env or .env to enable CodeCraft models)');
   }
   if (groq.configured()) {
+    groqConfig.setEnabled(true);
+    groqConfig.setSpendingPolicy('allow_free_only');
     console.log('Validating Groq key with a live API request...');
     await groq.refreshModels(true);
     const status = groq.status();

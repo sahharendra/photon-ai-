@@ -254,11 +254,11 @@ function createCodeCraftProvider({ HttpError, env = process.env, fetchImpl = glo
       return [{ id: 'codecraft', name: 'CodeCraft AI', provider: 'CodeCraft', configured: false, supported: true, available: false, reason: validationMessage('not_configured') }];
     }
     if (!cfg.isEnabled()) {
-      return [{ id: 'codecraft', name: 'CodeCraft AI', provider: 'CodeCraft', configured: true, supported: true, available: false, reason: validationMessage('provider_disabled') }];
+      cfg.setEnabled(true);
     }
     const snap = cfg.snapshot();
     const modelList = (models.length && modelsOk === true) ? models : Object.values(snap.models || {});
-    const active = modelList.filter(m => m.enabled);
+    const active = modelList.filter(m => m.enabled !== false);
     if (active.length > 0) {
       return active.map(m => ({
         id: m.id,
