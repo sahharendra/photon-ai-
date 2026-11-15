@@ -23,81 +23,9 @@ const MODEL_ID = /^[A-Za-z0-9][A-Za-z0-9._:/-]{0,160}$/;
 const NON_CHAT_ID = /(whisper|tts|embed|moderation|audio|transcribe)/i;
 
 const DEFAULT_OLLAMA_MODELS = Object.freeze({
-  'gemma4:31b': {
-    id: 'gemma4:31b',
-    name: 'Gemma 4 31B (Ollama)',
-    ownedBy: 'ollama',
-    created: 1794652000,
-    enabled: true,
-    contextWindow: 131072,
-    free: true,
-  },
-  'deepseek-v4.1-flash': {
-    id: 'deepseek-v4.1-flash',
-    name: 'DeepSeek V4.1 Flash (Ollama)',
-    ownedBy: 'ollama',
-    created: 1794652000,
-    enabled: true,
-    contextWindow: 131072,
-    free: true,
-  },
-  'mistral-large-4': {
-    id: 'mistral-large-4',
-    name: 'Mistral Large 4 (Ollama)',
-    ownedBy: 'ollama',
-    created: 1794652000,
-    enabled: true,
-    contextWindow: 131072,
-    free: true,
-  },
-  'kimi-k3': {
-    id: 'kimi-k3',
-    name: 'Kimi K3 (Ollama)',
-    ownedBy: 'ollama',
-    created: 1794652000,
-    enabled: true,
-    contextWindow: 131072,
-    free: true,
-  },
-  'glm-5.3': {
-    id: 'glm-5.3',
-    name: 'GLM 5.3 (Ollama)',
-    ownedBy: 'ollama',
-    created: 1794652000,
-    enabled: true,
-    contextWindow: 131072,
-    free: true,
-  },
-  'nemotron-3-super': {
-    id: 'nemotron-3-super',
-    name: 'Nemotron 3 Super (Ollama)',
-    ownedBy: 'ollama',
-    created: 1794652000,
-    enabled: true,
-    contextWindow: 131072,
-    free: true,
-  },
-  'beam': {
-    id: 'beam',
-    name: 'Beam (Ollama)',
-    ownedBy: 'ollama',
-    created: 1794652000,
-    enabled: true,
-    contextWindow: 131072,
-    free: true,
-  },
-  'minimax-m3.1-flash': {
-    id: 'minimax-m3.1-flash',
-    name: 'MiniMax M3.1 Flash (Ollama)',
-    ownedBy: 'ollama',
-    created: 1794652000,
-    enabled: true,
-    contextWindow: 131072,
-    free: true,
-  },
-  'gpt-oss:20b': {
-    id: 'gpt-oss:20b',
-    name: 'GPT-OSS 20B (Ollama)',
+  'qwen2.5-coder:3b': {
+    id: 'qwen2.5-coder:3b',
+    name: 'Qwen 2.5 Coder 3B (Ollama)',
     ownedBy: 'ollama',
     created: 1794652000,
     enabled: true,
@@ -158,7 +86,7 @@ function defaultConfig() {
     version: CONFIG_VERSION,
     enabled: true,
     spendingPolicy: 'allow_free_only',
-    defaultModelId: 'gemma4:31b',
+    defaultModelId: 'qwen2.5-coder:3b',
     models: { ...DEFAULT_OLLAMA_MODELS },
     usage: {
       requests: 0,
@@ -180,21 +108,16 @@ function normalizeConfig(raw) {
   const cfg = defaultConfig();
   cfg.enabled = src.enabled !== false;
   cfg.spendingPolicy = SPENDING_POLICIES.includes(src.spendingPolicy) ? src.spendingPolicy : 'allow_free_only';
-  cfg.defaultModelId = typeof src.defaultModelId === 'string' && MODEL_ID.test(src.defaultModelId) ? src.defaultModelId : 'gemma4:31b';
+  cfg.defaultModelId = 'qwen2.5-coder:3b';
+  cfg.models = { ...DEFAULT_OLLAMA_MODELS };
 
-  if (src.models && typeof src.models === 'object' && !Array.isArray(src.models)) {
-    for (const [id, m] of Object.entries(src.models)) {
-      if (!MODEL_ID.test(id) || !m || typeof m !== 'object') continue;
-      cfg.models[id] = {
-        id,
-        name: String(m.name || id).slice(0, 80),
-        ownedBy: String(m.ownedBy || 'ollama').slice(0, 40),
-        created: Number(m.created) || null,
-        enabled: m.enabled !== false,
-        contextWindow: Number(m.contextWindow) || 131072,
-        free: m.free !== undefined ? Boolean(m.free) : true,
-      };
-    }
+  // Only keep qwen2.5-coder:3b model in Ollama
+  if (src.models && src.models['qwen2.5-coder:3b']) {
+    cfg.models['qwen2.5-coder:3b'] = {
+      ...DEFAULT_OLLAMA_MODELS['qwen2.5-coder:3b'],
+      ...src.models['qwen2.5-coder:3b'],
+      enabled: src.models['qwen2.5-coder:3b'].enabled !== false,
+    };
   }
 
   if (src.usage && typeof src.usage === 'object') {
@@ -297,6 +220,7 @@ function createOllamaConfig({ dir = process.cwd(), env = process.env, logger = c
     },
     setModelEnabled(id, enabled) {
       if (!MODEL_ID.test(id)) throw new Error('Invalid model ID: ' + id);
+      if (id !== 'qwen2.5-coder:3b') throw new Error('Only qwen2.5-coder:3b model is allowed');
       if (!state.models[id]) {
         state.models[id] = {
           id,
@@ -319,10 +243,11 @@ function createOllamaConfig({ dir = process.cwd(), env = process.env, logger = c
       for (const m of models) {
         const id = m.id || m.name;
         if (!id || !MODEL_ID.test(id) || !isOllamaChatModel(id)) continue;
+        if (id !== 'qwen2.5-coder:3b') continue;
         const existing = state.models[id];
         const updated = {
           id,
-          name: m.name || (existing && existing.name) || id,
+          name: m.name || (existing && existing.name) || 'Qwen 2.5 Coder 3B (Ollama)',
           ownedBy: m.ownedBy || (existing && existing.ownedBy) || 'ollama',
           created: m.created || (existing && existing.created) || Math.floor(Date.now() / 1000),
           enabled: existing ? existing.enabled : true,

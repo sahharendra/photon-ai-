@@ -48,13 +48,12 @@ describe('ollama-config', () => {
   });
 
   it('isModelFree identifies free models', () => {
-    assert.equal(isModelFree('gemma4:31b'), true);
-    assert.equal(isModelFree('deepseek-v4.1-flash'), true);
+    assert.equal(isModelFree('qwen2.5-coder:3b'), true);
     assert.equal(isModelFree({ id: 'any-model', free: true }), true);
   });
 
   it('isOllamaChatModel filters non-chat models', () => {
-    assert.equal(isOllamaChatModel('gemma4:31b'), true);
+    assert.equal(isOllamaChatModel('qwen2.5-coder:3b'), true);
     assert.equal(isOllamaChatModel('whisper-large-v3'), false);
     assert.equal(isOllamaChatModel('text-embedding-004'), false);
   });
@@ -74,7 +73,8 @@ describe('ollama-config', () => {
       assert.equal(snap.spendingPolicy, 'allow_all');
       assert.equal(snap.hasKey, true);
       assert.match(snap.maskedKey, /8087c••••/);
-      assert.ok(snap.modelCount >= 5);
+      assert.equal(snap.modelCount, 1);
+      assert.equal(snap.defaultModelId, 'qwen2.5-coder:3b');
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true });
     }
@@ -105,9 +105,8 @@ describe('ollama-provider', () => {
   it('catalogEntries() returns seeded models', () => {
     const p = createOllamaProvider({ HttpError, env: { OLLAMA_API_KEY: '8087c294' } });
     const entries = p.catalogEntries();
-    assert.ok(entries.length >= 5);
-    assert.ok(entries.some(m => m.id === 'gemma4:31b'));
-    assert.ok(entries.some(m => m.id === 'deepseek-v4.1-flash'));
+    assert.equal(entries.length, 1);
+    assert.equal(entries[0].id, 'qwen2.5-coder:3b');
   });
 
   it('generate() calls fetch with Bearer token', async () => {
@@ -119,7 +118,7 @@ describe('ollama-provider', () => {
       return {
         ok: true,
         json: async () => ({
-          model: 'gemma4:31b',
+          model: 'qwen2.5-coder:3b',
           message: { role: 'assistant', content: 'Hello from Ollama Cloud!' },
           prompt_eval_count: 5,
           eval_count: 10,
@@ -134,7 +133,7 @@ describe('ollama-provider', () => {
     });
 
     const res = await p.generate({
-      model: 'gemma4:31b',
+      model: 'qwen2.5-coder:3b',
       text: 'Hello!',
     });
 

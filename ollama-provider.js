@@ -251,7 +251,7 @@ function createOllamaProvider({
     const all = config.getModels();
     const enabled = Object.values(all).filter(m => m.enabled);
     if (enabled.length) return enabled[0].id;
-    return 'gemma4:31b';
+    return 'qwen2.5-coder:3b';
   }
 
   function validateModel(id) {
