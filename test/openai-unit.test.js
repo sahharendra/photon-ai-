@@ -345,26 +345,26 @@ test('fallback policy chooses free/local destinations first and never silently s
 test('Ollama discovery, generation and failures are handled without any key', async () => {
   const requests = [];
   const models = [
-    { name: 'gemma3:4b', details: { family: 'gemma', parameter_size: '4B' } },
+    { name: 'qwen2.5-coder:3b', details: { family: 'qwen2.5', parameter_size: '3B' } },
     { name: 'glm-5.3-flash:cloud', details: { family: 'glm' } },
     { name: 'remote-model', remote_host: 'https://ollama.example' },
   ];
   const fetchImpl = async (url, options) => {
     requests.push({ url, options });
     if (url.endsWith('/api/tags')) return { ok: true, status: 200, json: async () => ({ models }) };
-    if (url.endsWith('/api/chat')) return { ok: true, status: 200, json: async () => ({ model: 'gemma3:4b', message: { role: 'assistant', content: 'local answer' }, prompt_eval_count: 5, eval_count: 2, done: true }) };
+    if (url.endsWith('/api/chat')) return { ok: true, status: 200, json: async () => ({ model: 'qwen2.5-coder:3b', message: { role: 'assistant', content: 'local answer' }, prompt_eval_count: 5, eval_count: 2, done: true }) };
     throw new Error('unexpected URL ' + url);
   };
   const ollama = createOllamaProvider({ HttpError, env: {}, fetchImpl, logger: { error() {} } });
   await ollama.refreshModels();
   // Ollama cloud models need a separate account and are neither local nor free, so they are hidden.
-  assert.deepStrictEqual(ollama.catalogEntries().map(item => item.id), ['gemma3:4b']);
+  assert.deepStrictEqual(ollama.catalogEntries().map(item => item.id), ['qwen2.5-coder:3b']);
   const entry = ollama.catalogEntries()[0];
-  assert.strictEqual(entry.id, 'gemma3:4b');
+  assert.strictEqual(entry.id, 'qwen2.5-coder:3b');
   assert.strictEqual(entry.free, true);
   assert.strictEqual(entry.local, true);
   assert.strictEqual(entry.available, true);
-  const result = await ollama.generate({ model: 'gemma3:4b', text: 'hello' });
+  const result = await ollama.generate({ model: 'qwen2.5-coder:3b', text: 'hello' });
   assert.strictEqual(result.text, 'local answer');
   assert.deepStrictEqual(result.usage, { inputTokens: 5, outputTokens: 2, totalTokens: 7, cost: 0 });
   assert.strictEqual(result.cost, 0);

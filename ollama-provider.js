@@ -34,8 +34,8 @@ function validationMessage(code) {
     case 'not_configured': return 'Ollama is not configured. Add OLLAMA_API_KEY in the admin panel or start a local Ollama server.';
     case 'provider_disabled': return 'Ollama is disabled by the administrator.';
     case 'billing_blocked': return 'Ollama requests are blocked by the spending policy.';
-    case 'invalid_api_key': return 'Ollama rejected the API key. Please check your key at ollama.com/settings/keys.';
-    case 'provider_forbidden': return 'The Ollama API key is not permitted to use this model.';
+    case 'invalid_api_key': return 'Ollama rejected the API key or authorization. Please check your credentials.';
+    case 'provider_forbidden': return 'Ollama connection denied (403 Forbidden). If using a tunnel (like Localtunnel), the tunnel blocked access. Please use Cloudflare Tunnel or local connection (http://127.0.0.1:11434).';
     case 'quota_or_rate_limit': return 'Ollama rate limit was reached. Please wait a moment and retry.';
     case 'network_error': return 'Could not connect to Ollama. Verify your internet connection or local server.';
     case 'provider_timeout': return 'Ollama took too long to respond. Please retry.';
@@ -486,7 +486,7 @@ function createOllamaProvider({
       let reason = '';
       if (!isConfig) reason = 'Ollama API key or server not configured';
       else if (!isEn) reason = 'Ollama is disabled';
-      else if (!isReachable) reason = 'Local Ollama server is not running on this host and no OLLAMA_API_KEY is configured for cloud inference';
+      else if (!isReachable) reason = 'No local Ollama server responded on this host and no OLLAMA_API_KEY is configured for cloud inference';
       else if (!m.enabled) reason = 'Model is disabled';
       return {
         id: m.id,
@@ -496,6 +496,7 @@ function createOllamaProvider({
         supported: true,
         available: isModelAvailable,
         free: Boolean(m.free),
+        local: !hasCloud,
         contextLength: m.contextWindow || 131072,
         capabilities: { text: true, vision: false, pdf: false },
         reason,
@@ -513,6 +514,7 @@ function createOllamaProvider({
       maskedKey: maskKey(apiKey()),
       endpoint: baseUrl(),
       isCloud: isCloud(),
+      connected: modelsOk === true,
       defaultModelId: defaultModelId(),
       modelCount: Object.keys(config.getModels()).length,
       models: config.getModels(),
