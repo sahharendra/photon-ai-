@@ -123,7 +123,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 textarea{display:block;width:100%;border:0;outline:0;background:none;resize:none;color:var(--ink);font:inherit;font-size:12.5px;max-height:160px;min-height:34px;padding:0}
 textarea::placeholder{color:var(--mute)}
 .tools{display:flex;align-items:center;margin-top:8px;gap:12px}
-.chat-file-list{display:flex;flex-wrap:wrap;gap:6px;padding:0 0 8px}.chat-file-chip{display:inline-flex;align-items:center;gap:7px;max-width:min(290px,100%);padding:5px 8px;border:1px solid rgba(227,219,204,.2);border-radius:4px;background:#242321;color:var(--ivory);font-size:10px}.chat-file-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.chat-file-chip small{color:var(--mute);white-space:nowrap}.chat-file-chip button{border:0;background:none;color:var(--mute);font-size:14px;line-height:1;cursor:pointer;padding:0 1px}.chat-file-chip button:hover{color:#ff9e9e}.row.u .file-attachments{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}.row.u .file-attachments span{display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(227,219,204,.18);border-radius:4px;padding:4px 7px;color:var(--mute);font-size:10px}
+.chat-file-list{display:flex;flex-wrap:wrap;gap:6px;padding:0 0 8px}.chat-file-chip{display:inline-flex;align-items:center;gap:7px;max-width:min(290px,100%);padding:5px 8px;border:1px solid rgba(227,219,204,.2);border-radius:4px;background:#242321;color:var(--ivory);font-size:10px}.chat-file-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.chat-file-chip small{color:var(--mute);white-space:nowrap}.chat-file-chip button{border:0;background:none;color:var(--mute);font-size:14px;line-height:1;cursor:pointer;padding:0 1px}.chat-file-chip button:hover{color:#ff9e9e}.row.u .file-attachments{display:flex;flex-direction:column;gap:8px;margin-top:8px}.row.u .file-attachments span{display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(227,219,204,.18);border-radius:4px;padding:4px 7px;color:var(--mute);font-size:10px}.chat-att-img-card{max-width:340px;border-radius:6px;overflow:hidden;border:1px solid rgba(227,219,204,.2);background:#1a1918;box-shadow:0 4px 16px rgba(0,0,0,.45)}.chat-att-img-card img{display:block;width:100%;max-height:220px;object-fit:cover;cursor:pointer;transition:opacity .15s}.chat-att-img-card img:hover{opacity:.9}.chat-att-img-info{display:flex;align-items:center;justify-content:space-between;padding:6px 9px;background:#242321;gap:8px;font-size:11px}.chat-att-img-info span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ivory);flex:1}.chat-att-img-info button,.chat-att-chip button{border:0;background:rgba(227,219,204,.14);color:var(--ivory);border-radius:3px;padding:3px 8px;font-size:10.5px;cursor:pointer;transition:background .2s;white-space:nowrap}.chat-att-img-info button:hover,.chat-att-chip button:hover{background:rgba(227,219,204,.28);color:var(--ink)}.chat-att-chip{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(227,219,204,.18);border-radius:4px;padding:5px 9px;color:var(--ivory);font-size:11px;background:#242321;max-width:fit-content}
 .tools .sp{flex:1}
 .ib{border:0;background:none;padding:0;display:grid;place-items:center;width:20px;height:20px;color:var(--ivory);transition:color .2s}
 .ib:hover{color:var(--ink)}
@@ -540,7 +540,15 @@ function toast(t){var e=$("toast");e.textContent=t;e.classList.add("on");clearTi
 function CK(){return"photon-chats-"+(user?user.email:"")}
 function AK(){return"photon-active-chat-"+(user?user.email:"")}
 function load(){try{chats=JSON.parse(localStorage.getItem(CK())||"[]")}catch(e){chats=[]}}
-function save(){try{localStorage.setItem(CK(),JSON.stringify(chats.filter(function(c){return c.pin}).concat(chats.filter(function(c){return!c.pin})).slice(0,40)));if(cur)localStorage.setItem(AK(),cur.id)}catch(e){}}
+var attDB=null;
+function getAttDB(){if(attDB)return Promise.resolve(attDB);return new Promise(function(resolve){if(!window.indexedDB)return resolve(null);try{var req=indexedDB.open("photon_chat_attachments",1);req.onupgradeneeded=function(e){var db=e.target.result;if(!db.objectStoreNames.contains("attachments"))db.createObjectStore("attachments",{keyPath:"id"})};req.onsuccess=function(e){attDB=e.target.result;resolve(attDB)};req.onerror=function(){resolve(null)}}catch(_){resolve(null)}})}
+var attMemCache=new Map();
+async function saveAttachmentData(att){if(!att||!att.id)return;attMemCache.set(att.id,att);var db=await getAttDB();if(db){try{var tx=db.transaction("attachments","readwrite");tx.objectStore("attachments").put(att)}catch(_){}}}
+async function getAttachmentData(id){if(!id)return null;if(attMemCache.has(id))return attMemCache.get(id);var db=await getAttDB();if(!db)return null;return new Promise(function(resolve){try{var tx=db.transaction("attachments","readonly");var req=tx.objectStore("attachments").get(id);req.onsuccess=function(){var res=req.result;if(res)attMemCache.set(id,res);resolve(res||null)};req.onerror=function(){resolve(null)}}catch(_){resolve(null)}})}
+function makeImageThumbnail(dataUrl,maxDim,quality){maxDim=maxDim||400;quality=quality||0.7;return new Promise(function(resolve){var img=new Image();img.onload=function(){var w=img.width,h=img.height;if(w>maxDim||h>maxDim){if(w>h){h=Math.round(h*(maxDim/w));w=maxDim}else{w=Math.round(w*(maxDim/h));h=maxDim}}try{var canvas=document.createElement("canvas");canvas.width=w;canvas.height=h;var ctx=canvas.getContext("2d");ctx.drawImage(img,0,0,w,h);resolve(canvas.toDataURL("image/jpeg",quality))}catch(_){resolve(dataUrl)}};img.onerror=function(){resolve(dataUrl)};img.src=dataUrl})}
+async function downloadChatAttachment(att){var name=att.name||"download";var data=null;if(att.id){var stored=await getAttachmentData(att.id);if(stored){data=stored.dataUrl||(stored.data?("data:"+(stored.mimeType||"application/octet-stream")+";base64,"+stored.data):null)||(stored.text?("data:text/plain;charset=utf-8,"+encodeURIComponent(stored.text)):null)}}if(!data){data=att.dataUrl||att.preview||(att.data?("data:"+(att.mimeType||"application/octet-stream")+";base64,"+att.data):null)||(att.text?("data:text/plain;charset=utf-8,"+encodeURIComponent(att.text)):null)}if(!data){toast("Attachment content is unavailable for download.");return}var a=document.createElement("a");a.href=data;a.download=name;document.body.appendChild(a);a.click();a.remove()}
+async function previewChatImage(att){var data=null;if(att.id){var stored=await getAttachmentData(att.id);if(stored&&stored.dataUrl)data=stored.dataUrl}if(!data)data=att.dataUrl||att.preview;if(!data)return;modal('<div style="text-align:center"><img src="'+esc(data)+'" style="max-width:100%;max-height:78vh;border-radius:6px;box-shadow:0 12px 48px rgba(0,0,0,0.85);display:block;margin:0 auto 14px"/><div style="display:flex;justify-content:center;gap:10px"><button class="pv-btn" id="att-dl-modal">⬇ Download '+esc(att.name||"image")+'</button><button class="pv-btn ghost" id="att-close-modal">Close</button></div></div>',function(close){$("att-close-modal").onclick=close;$("att-dl-modal").onclick=function(){downloadChatAttachment(att)}})}
+function save(){try{var list=chats.filter(function(c){return c.pin}).concat(chats.filter(function(c){return!c.pin})).slice(0,40);var toStore=list.map(function(c){return Object.assign({},c,{msgs:(c.msgs||[]).map(function(m){if(!m.attachments||!m.attachments.length)return m;return Object.assign({},m,{attachments:m.attachments.map(function(a){return{id:a.id,name:a.name,mimeType:a.mimeType,size:a.size,kind:a.kind,preview:a.preview||null}})})})})});localStorage.setItem(CK(),JSON.stringify(toStore));if(cur)localStorage.setItem(AK(),cur.id)}catch(e){console.warn("Storage save error:",e)}}
 function users(){try{return JSON.parse(localStorage.getItem("photon-users")||localStorage.getItem("orca-users")||"{}")}catch(e){return{}}}
 function putUsers(u){try{localStorage.setItem("photon-users",JSON.stringify(u))}catch(e){}}
 async function hash(t){try{var b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,"0")}).join("")}catch(e){var h=5381;for(var i=0;i<t.length;i++)h=(h*33)^t.charCodeAt(i);return"x"+(h>>>0)}}
@@ -621,7 +629,7 @@ function md(t){
   }
   return out;
 }
-function newChat(){if(cur&&!cur.msgs.length){cur.model=user&&user.defaultModel||null;render();return}cur={id:"c"+Date.now(),title:"New chat",msgs:[],model:user&&user.defaultModel||null};chats.unshift(cur);save();render()}
+function newChat(){pendingChatFiles=[];renderChatFileList();if(cur&&!cur.msgs.length){cur.model=user&&user.defaultModel||null;render();return}cur={id:"c"+Date.now(),title:"New chat",msgs:[],model:user&&user.defaultModel||null};chats.unshift(cur);save();render()}
 function svgToPng(svg){return new Promise(function(res,rej){
   var W=1600,H=900,doc=new DOMParser().parseFromString(svg,"image/svg+xml"),el=doc.documentElement;
   if(!el||el.nodeName.toLowerCase()!=="svg"||doc.querySelector("parsererror"))return rej(new Error("bad svg"));
@@ -654,7 +662,7 @@ function svgToMp4(svg,onProg){return new Promise(function(res,rej){
   im.src=dataUri(new XMLSerializer().serializeToString(el))})}
 function dataUri(svg){return"data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg)}
 function addRow(role,text,m,i){var r=document.createElement("div");r.className="row "+(role==="user"?"u":"a");if(i!=null)r.dataset.i=i;var b=document.createElement("div");b.className="b";
-  if(role==="user"){b.textContent=text;if(m&&m.attachments&&m.attachments.length){var files=document.createElement("div");files.className="file-attachments";m.attachments.forEach(function(f){var chip=document.createElement("span");chip.textContent="📎 "+f.name;chip.title=f.name;files.appendChild(chip)});b.appendChild(files)}}
+  if(role==="user"){b.textContent=text;if(m&&m.attachments&&m.attachments.length){var files=document.createElement("div");files.className="file-attachments";m.attachments.forEach(function(f){var isImg=(f.mimeType&&f.mimeType.startsWith("image/"))||(/\.(png|jpe?g|webp|gif|svg)$/i.test(f.name)),imgSrc=f.preview||f.dataUrl||(f.kind==="inline"&&f.data?("data:"+(f.mimeType||"image/png")+";base64,"+f.data):"");if(isImg&&imgSrc){var card=document.createElement("div");card.className="chat-att-img-card";var img=document.createElement("img");img.src=imgSrc;img.alt=f.name;img.title="Click to view "+f.name;img.onclick=function(){previewChatImage(f)};var info=document.createElement("div");info.className="chat-att-img-info";var n=document.createElement("span");n.textContent=f.name;n.title=f.name;var dl=document.createElement("button");dl.type="button";dl.textContent="⬇ Download";dl.onclick=function(e){e.stopPropagation();downloadChatAttachment(f)};info.append(n,dl);card.append(img,info);files.appendChild(card)}else{var chip=document.createElement("div");chip.className="chat-att-chip";var n=document.createElement("span");n.textContent="📎 "+f.name+(f.size?" ("+(f.size<1024?f.size+" B":(f.size/1024).toFixed(0)+" KB")+")":"");n.title=f.name;var dl=document.createElement("button");dl.type="button";dl.textContent="⬇ Download";dl.onclick=function(e){e.stopPropagation();downloadChatAttachment(f)};chip.append(n,dl);files.appendChild(chip)}});b.appendChild(files)}}
   else if(m&&m.svg){b.innerHTML='<figure class="media"><img alt="" src="'+dataUri(m.svg)+'"><div class="act"><button data-dl>Download</button>'+(m.kind==="video"?'<button data-replay>Replay</button>':'')+'</div><figcaption>'+esc(m.kind==="video"?"Video · ":"Image · ")+esc(m.prompt||"")+'</figcaption></figure>'}
   else{b.innerHTML=md(text);if(m&&text)b.insertAdjacentHTML("beforeend",'<div class="act"><button data-speak>🔊 Listen</button>'+((text.match(/```/g)||[]).length>=4?'<button data-zipall>Download all (.zip)</button>':'')+'</div>')}
   r.append(b);$("msgs").append(r);return b}
@@ -819,23 +827,51 @@ function addFiles(p){
   inp.click()}
 function renderChatFileList(){
   var list=$("chat-file-list");if(!list)return;list.innerHTML="";list.hidden=!pendingChatFiles.length;
-  pendingChatFiles.forEach(function(f,i){var chip=document.createElement("div");chip.className="chat-file-chip";var name=document.createElement("span");name.textContent=f.name;name.title=f.name;var size=document.createElement("small");size.textContent=f.size<1024?f.size+" B":(f.size/1024).toFixed(0)+" KB";var remove=document.createElement("button");remove.type="button";remove.textContent="×";remove.setAttribute("aria-label","Remove "+f.name);remove.onclick=function(){pendingChatFiles.splice(i,1);renderChatFileList()};chip.append(name,size,remove);list.appendChild(chip)})
+  pendingChatFiles.forEach(function(f,i){
+    var chip=document.createElement("div");chip.className="chat-file-chip";
+    if(f.preview||f.dataUrl){
+      var th=document.createElement("img");th.src=f.preview||f.dataUrl;th.alt="";
+      th.style.cssText="width:20px;height:20px;object-fit:cover;border-radius:2px;flex-shrink:0";
+      chip.appendChild(th);
+    }
+    var name=document.createElement("span");name.textContent=f.name;name.title=f.name;
+    var size=document.createElement("small");size.textContent=f.size<1024?f.size+" B":(f.size/1024).toFixed(0)+" KB";
+    var remove=document.createElement("button");remove.type="button";remove.textContent="×";remove.setAttribute("aria-label","Remove "+f.name);
+    remove.onclick=function(){pendingChatFiles.splice(i,1);renderChatFileList()};
+    chip.append(name,size,remove);
+    list.appendChild(chip);
+  })
 }
 async function handleChatFiles(event){
-  var files=Array.from(event.target.files||[]);event.target.value="";if(!files.length)return;
+  var files=Array.from(event.target.files||[]);if(event.target)event.target.value="";if(!files.length)return;
   var allowedText=/\.(txt|md|markdown|csv|tsv|json|js|jsx|ts|tsx|py|html|css|java|go|rs|php|sql|yml|yaml|xml|log|c|cpp|h|cs|rb|sh|ini|toml)$/i;
   var accepted=[],errors=[],total=pendingChatFiles.reduce(function(n,f){return n+(f.size||0)},0);
   for(var file of files){
     if(pendingChatFiles.length+accepted.length>=5){errors.push("You can attach up to 5 files.");break}
     if(file.size>5*1024*1024){errors.push(file.name+" is larger than 5 MB.");continue}
-    var type=file.type||"",isImage=["image/png","image/jpeg","image/webp"].includes(type),isPdf=type==="application/pdf"||/\.pdf$/i.test(file.name),isText=type.startsWith("text/")||allowedText.test(file.name)||type==="application/json";
+    var type=file.type||"",isImage=["image/png","image/jpeg","image/webp","image/gif"].includes(type)||/\.(png|jpe?g|webp|gif)$/i.test(file.name),isPdf=type==="application/pdf"||/\.pdf$/i.test(file.name),isText=type.startsWith("text/")||allowedText.test(file.name)||type==="application/json";
     if(!isImage&&!isPdf&&!isText){errors.push(file.name+" is not a supported file type.");continue}
     if(isText&&file.size>100*1024){errors.push(file.name+" is larger than 100 KB.");continue}
     if(total+file.size>9*1024*1024){errors.push("Attachments must total 9 MB or less.");break}
     try{
-      if(isText){var content=await file.text();if(content.includes("\u0000")){errors.push(file.name+" is not a readable text file.");continue}accepted.push({name:file.name,mimeType:"text/plain",size:file.size,kind:"text",text:content})}
-      else{var dataUrl=await new Promise(function(resolve,reject){var reader=new FileReader();reader.onload=function(){resolve(reader.result)};reader.onerror=function(){reject(new Error("read failed"))};reader.readAsDataURL(file)});accepted.push({name:file.name,mimeType:isPdf?"application/pdf":type,size:file.size,kind:"inline",data:String(dataUrl).split(",")[1]||""})}
-      total+=file.size
+      var attId="att-"+Date.now()+"-"+Math.random().toString(36).slice(2,8);
+      if(isText){
+        var content=await file.text();
+        if(content.includes("\u0000")){errors.push(file.name+" is not a readable text file.");continue}
+        var entry={id:attId,name:file.name,mimeType:"text/plain",size:file.size,kind:"text",text:content};
+        accepted.push(entry);
+        saveAttachmentData(entry);
+      }
+      else{
+        var dataUrl=await new Promise(function(resolve,reject){var reader=new FileReader();reader.onload=function(){resolve(reader.result)};reader.onerror=function(){reject(new Error("read failed"))};reader.readAsDataURL(file)});
+        var preview=isImage?await makeImageThumbnail(dataUrl):null;
+        var mime=isPdf?"application/pdf":(type||(isImage?"image/png":"application/octet-stream"));
+        var rawData=String(dataUrl).split(",")[1]||"";
+        var entry={id:attId,name:file.name,mimeType:mime,size:file.size,kind:"inline",data:rawData,dataUrl:dataUrl,preview:preview};
+        accepted.push(entry);
+        saveAttachmentData(entry);
+      }
+      total+=file.size;
     }catch(_){errors.push(file.name+" couldn't be read.")}
   }
   pendingChatFiles=pendingChatFiles.concat(accepted);renderChatFileList();if(errors.length)toast(errors.join(" "));else if(accepted.length)toast("Attached "+accepted.length+" file"+(accepted.length===1?"":"s"))
@@ -969,22 +1005,46 @@ async function send(retry){
   var inp=$("in"),text=retry&&cur.msgs.length?cur.msgs[cur.msgs.length-1].content:inp.value.trim();
   if(!text&&pendingChatFiles.length)text="Please review the attached file(s).";
   if(!text)return;
-  var requestFiles=pendingChatFiles.slice(),k0=kindOf(text),billKind=vm&&k0==="text"?"voice":k0;
+  var requestFiles=(retry&&cur.msgs.length&&cur.msgs[cur.msgs.length-1].attachments)?cur.msgs[cur.msgs.length-1].attachments:pendingChatFiles.slice(),k0=kindOf(text),billKind=vm&&k0==="text"?"voice":k0;
   if(!activityEnabled(billKind)||left()<COST[billKind])await syncAuthenticatedAccount();
   var need=COST[billKind],rem=left();
   if(!activityEnabled(billKind)){tkNotice((KLAB[billKind]||billKind)+" is currently disabled by the administrator.");if(vm)endVoice();return}
   if(rem<=0){lockUI();if(vm)endVoice();return}
   if(need>limit()){tkNotice(KLAB[billKind]+" needs "+need+" tokens, which is more than the "+limit()+" daily tokens on your plan. <a data-up>Upgrade your plan</a> to use it.");if(vm)endVoice();return}
   if(rem<need){tkNotice(KLAB[billKind]+" needs "+need+" tokens but you only have "+rem+" left today. Try a cheaper action (text chat costs "+COST.text+" token"+(COST.text>1?"s":"")+"), wait for the 12:00 AM reset, or <a data-up>upgrade your plan</a>.");if(vm)endVoice();return}
-  tkNotice("");if(!retry){inp.value="";inp.style.height="auto";updFlow();if(!cur.msgs.length&&cur.title==="New chat")cur.title=text.slice(0,30)+(text.length>30?"...":"");cur.msgs.push({role:"user",content:text,request_id:crypto.randomUUID(),attachments:requestFiles.map(function(f){return{name:f.name,mimeType:f.mimeType,size:f.size}})});touchProj()}
+  tkNotice("");
+  if(!retry){
+    inp.value="";inp.style.height="auto";updFlow();
+    pendingChatFiles=[];renderChatFileList();
+    if(!cur.msgs.length&&cur.title==="New chat")cur.title=text.slice(0,30)+(text.length>30?"...":"");
+    cur.msgs.push({
+      role:"user",
+      content:text,
+      request_id:crypto.randomUUID(),
+      attachments:requestFiles.map(function(f){
+        return{
+          id:f.id,
+          name:f.name,
+          mimeType:f.mimeType,
+          size:f.size,
+          kind:f.kind,
+          preview:f.preview||(f.mimeType&&f.mimeType.startsWith("image/")?(f.dataUrl||(f.data?"data:"+f.mimeType+";base64,"+f.data:null)):null),
+          dataUrl:f.dataUrl||f.preview,
+          data:f.data,
+          text:f.text
+        };
+      })
+    });
+    touchProj();
+  }
   var userMsg=cur.msgs.filter(function(m){return m.role==="user"}).slice(-1)[0],kind=!requestFiles.length&&(k0==="image"||k0==="video")?k0:"";
   cur.updatedAt=Date.now();render();var out=addRow("assistant","");out.innerHTML=kind?'<div class="gen"><div class="gv"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="sh"></i></div><div class="gt">Creating '+kind+'<span class="dots"><u></u><u></u><u></u></span></div></div>':'<span class="think">Thinking...</span>';
   ctl=new AbortController();busy=true;upd();var got="",failure="",failureCode="",serverSynced=false;
   try{
     if(kind){var q="Create "+(kind==="video"?"a short looping animated scene using SVG animation":"a beautiful detailed illustration")+" for this request: "+text+"\n\nReturn only one complete, self-contained SVG document with viewBox=\"0 0 800 450\". No scripts, external links, markdown fences, or explanation.";var r=await photonSample(q,{signal:ctl.signal,kind:kind}),mt=(r.text||"").match(/<svg[\s\S]*<\/svg>/i);if(!mt||/<script|onload\s*=|<foreignObject|href\s*=\s*["']\s*https?:/i.test(mt[0]))throw{code:"bad_output"};if(r.profileUsage)serverSynced=true;cur.msgs.push({role:"assistant",content:"["+kind+" created: "+text+"]",svg:mt[0],kind:kind,prompt:text});got="created"}
-    else{var history=cur.msgs.slice(0,-1).slice(-20).filter(function(m){return (m.role==="user"||m.role==="assistant")&&typeof m.content==="string"&&m.content.trim().length>0}).map(function(m){return{role:m.role,content:m.content.trim()}});var answer=await photonStream({conversation_id:cur.id,message:text,history:history,system_instruction:SYS+projCtx()+"\nMode: "+MODES[mode][1],request_id:userMsg.request_id,attachments:requestFiles.map(function(f){return f.kind==="text"?{name:f.name,mimeType:f.mimeType,kind:"text",text:f.text}:{name:f.name,mimeType:f.mimeType,kind:"inline",data:f.data}}),model:cur.model||user.defaultModel||null,activity_type:vm?"voice":k0==="code"?"code":"chat",token_cost_type:billKind},{signal:ctl.signal},function(delta,full){if(out.isConnected){out.innerHTML=md(full);$("msgs").scrollTop=$("msgs").scrollHeight}});got=answer.text;if(answer.profileUsage)serverSynced=true;cur.msgs.push({role:"assistant",content:got});if(answer.fallback){var fb=answer.fallback;toast("Your selected model was temporarily unavailable, so this reply used "+fb.provider+" ("+fb.to+")"+(fb.paid?". Estimated provider cost applies.":"."))}}
+    else{var history=cur.msgs.slice(0,-1).slice(-20).filter(function(m){return (m.role==="user"||m.role==="assistant")&&typeof m.content==="string"&&m.content.trim().length>0}).map(function(m){return{role:m.role,content:m.content.trim()}});var answer=await photonStream({conversation_id:cur.id,message:text,history:history,system_instruction:SYS+projCtx()+"\nMode: "+MODES[mode][1],request_id:userMsg.request_id,attachments:requestFiles.map(function(f){return f.kind==="text"?{name:f.name,mimeType:f.mimeType,kind:"text",text:f.text}:{name:f.name,mimeType:f.mimeType,kind:"inline",data:f.data||(f.dataUrl?String(f.dataUrl).split(",")[1]:"")}}),model:cur.model||user.defaultModel||null,activity_type:vm?"voice":k0==="code"?"code":"chat",token_cost_type:billKind},{signal:ctl.signal},function(delta,full){if(out.isConnected){out.innerHTML=md(full);$("msgs").scrollTop=$("msgs").scrollHeight}});got=answer.text;if(answer.profileUsage)serverSynced=true;cur.msgs.push({role:"assistant",content:got});if(answer.fallback){var fb=answer.fallback;toast("Your selected model was temporarily unavailable, so this reply used "+fb.provider+" ("+fb.to+")"+(fb.paid?". Estimated provider cost applies.":"."))}}
   }catch(er){failureCode=er&&er.code||"";failure=er&&er.message||"The AI request failed. Please try again.";if(er&&er.code==="auth_required"){failure="Your sign-in session expired. Sign in again, then retry this message."}}
-  finally{busy=false;ctl=null;if(got){if(!serverSynced)spend(billKind);pendingChatFiles=[];renderChatFileList()}save();render();if(failure){var row=addRow("assistant","");var canSwitchFree=["billing_required","billing_blocked","quota_or_rate_limit","model_unavailable"].indexOf(failureCode)!==-1;row.innerHTML='<span class="err">'+esc(failure)+'</span> <button class="retry" data-retry="1">Retry</button>'+(canSwitchFree?' <button class="retry" data-switch-free="1">Switch to Free Model &amp; Retry</button>':'')}if(vm){if(got)speak(got,listen);else listen()}}
+  finally{busy=false;ctl=null;if(got&&!serverSynced)spend(billKind);pendingChatFiles=[];renderChatFileList();save();render();if(failure){var row=addRow("assistant","");var canSwitchFree=["billing_required","billing_blocked","quota_or_rate_limit","model_unavailable"].indexOf(failureCode)!==-1;row.innerHTML='<span class="err">'+esc(failure)+'</span> <button class="retry" data-retry="1">Retry</button>'+(canSwitchFree?' <button class="retry" data-switch-free="1">Switch to Free Model &amp; Retry</button>':'')}if(vm){if(got)speak(got,listen);else listen()}}
 }
 function plain(t){return t.replace(/```[\s\S]*?```/g," code block omitted. ").replace(/`([^`]+)`/g,"$1").replace(/[*#>_]/g,"").replace(/\s+/g," ").trim().slice(0,1800)}
 function stopSpeak(){try{speechSynthesis.cancel()}catch(e){}speaking=false}
@@ -1004,6 +1064,24 @@ setInterval(function(){if(!user)return;var d=dayKey();if(tokDay&&tokDay!==d)toas
 $("go").onclick=function(){if(!$("in").value.trim()&&!busy){startVoice();return}send()};
 $("in").addEventListener("keydown",function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();if(!busy)send()}});
 $("in").addEventListener("input",function(){this.style.height="auto";this.style.height=Math.min(this.scrollHeight,160)+"px";upd()});
+$("in").addEventListener("paste",async function(e){
+  var items=(e.clipboardData||window.clipboardData||{}).items||[];
+  var imageFiles=[];
+  for(var i=0;i<items.length;i++){
+    if(items[i].type&&items[i].type.indexOf("image")!==-1){
+      var f=items[i].getAsFile();
+      if(f){
+        var ts=new Date().toISOString().replace(/[:.]/g,"-").slice(0,19);
+        var file=new File([f],"Screenshot_"+ts+".png",{type:f.type||"image/png"});
+        imageFiles.push(file);
+      }
+    }
+  }
+  if(imageFiles.length){
+    e.preventDefault();
+    await handleChatFiles({target:{files:imageFiles,value:""}});
+  }
+});
 $("new").onclick=function(){closePv();$("side").classList.remove("show");newChat()};
 $("upg").onclick=$("upl").onclick=function(){showPlans()};
 $("proj").onclick=showProjects;
