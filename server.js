@@ -649,7 +649,7 @@ async function callGemini(model, contents, systemInstruction) {
   return gemini.generate({ model, contents, systemInstruction });
 }
 async function resolveModel(id) {
-  await Promise.all([gemini.refreshModels(), openrouter.refreshModels(), codecraft.refreshModels(), groq.refreshModels(), nvidia.refreshModels(), openai.refreshModels()]);
+  await Promise.allSettled([gemini.refreshModels(), openrouter.refreshModels(), codecraft.refreshModels(), groq.refreshModels(), nvidia.refreshModels(), openai.refreshModels()]);
   const option = availableModels().find(m => m.id === id);
   if (!option || !option.available) throw new HttpError(503, 'model_unavailable', option && option.configured === false ? `${option.provider} is not configured on this server. Choose another model.` : 'The selected AI model is not available. Choose another model in your profile settings.');
   return option;
@@ -1573,7 +1573,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === 'GET' && pathname === '/api/profile/config') {
       const forceRefresh = parsedUrl.searchParams.get('refresh') === '1';
-      await Promise.all([gemini.refreshModels(forceRefresh), openrouter.refreshModels(forceRefresh), codecraft.refreshModels(forceRefresh), groq.refreshModels(forceRefresh), nvidia.refreshModels(forceRefresh)]);
+      await Promise.allSettled([gemini.refreshModels(forceRefresh), openrouter.refreshModels(forceRefresh), codecraft.refreshModels(forceRefresh), groq.refreshModels(forceRefresh), nvidia.refreshModels(forceRefresh)]);
       const data = loadStore();
       const gwStatus = getActiveGatewayService(data).getGatewayStatus(data);
 

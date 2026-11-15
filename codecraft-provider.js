@@ -256,8 +256,9 @@ function createCodeCraftProvider({ HttpError, env = process.env, fetchImpl = glo
     if (!cfg.isEnabled()) {
       cfg.setEnabled(true);
     }
-    const snap = cfg.snapshot();
-    const modelList = (models.length && modelsOk === true) ? models : Object.values(snap.models || {});
+    const snap = (typeof cfg.snapshot === 'function' ? cfg.snapshot() : (typeof cfg.view === 'function' ? cfg.view() : cfg.state || {}));
+    const rawModels = (models.length && modelsOk === true) ? models : (snap.models || {});
+    const modelList = Array.isArray(rawModels) ? rawModels : Object.values(rawModels);
     const active = modelList.filter(m => m.enabled !== false);
     if (active.length > 0) {
       return active.map(m => ({

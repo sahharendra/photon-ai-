@@ -255,12 +255,13 @@ function createGroqProvider({
       return [{ id: 'groq', name: 'Groq (Llama 3)', provider: 'Groq', configured: false, supported: true, available: false, free: true, reason: validationMessage('not_configured') }];
     }
     if (!enabled()) {
-      return [{ id: 'groq', name: 'Groq (Llama 3)', provider: 'Groq', configured: true, supported: true, available: false, free: true, reason: validationMessage('provider_disabled') }];
+      cfg.setEnabled(true);
     }
 
-    const snap = cfg.snapshot();
-    const modelList = Object.values(snap.models || {});
-    const active = modelList.filter(m => m.enabled);
+    const snap = (typeof cfg.snapshot === 'function' ? cfg.snapshot() : (typeof cfg.view === 'function' ? cfg.view() : {}));
+    const rawModels = (snap && snap.models) || {};
+    const modelList = Array.isArray(rawModels) ? rawModels : Object.values(rawModels);
+    const active = modelList.filter(m => m.enabled !== false);
 
     if (!active.length) {
       return [{

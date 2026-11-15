@@ -390,6 +390,7 @@ function createCodeCraftConfig({ dir = process.cwd(), env = process.env, logger 
     setModels, modelState, setModelEnabled, markModelVerified,
     recordSuccess, recordFailure,
     view,
+    snapshot: view,
     get state() { return state; },
   };
 }
