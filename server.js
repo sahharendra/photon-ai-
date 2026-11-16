@@ -975,7 +975,12 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/admin/login' && req.method === 'POST') {
       if (!ADMIN_PASSWORD) return denyAdmin(res, true);
       const origin = req.headers.origin;
-      if (origin && new URL(origin).host !== req.headers.host) throw new HttpError(403, 'admin_origin', 'Admin sign-in must come from this site.');
+      if (origin) {
+        const originHost = new URL(origin).host;
+        const host = req.headers['x-forwarded-host'] || req.headers.host;
+        const allowed = new Set([host, req.headers.host, 'photon.app', 'www.photon.app', 'photon-ai-2wk7.onrender.com']);
+        if (!allowed.has(originHost)) throw new HttpError(403, 'admin_origin', 'Admin sign-in must come from this site.');
+      }
       const body = await readBody(req);
       if (!adminPasswordMatches(body.email, body.password)) throw new HttpError(401, 'admin_login_failed', 'The admin email or password is incorrect.');
       for (const [key, session] of adminSessions) if (session.expiresAt <= Date.now()) adminSessions.delete(key);
