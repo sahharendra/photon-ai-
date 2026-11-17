@@ -4,26 +4,32 @@
 <meta property="og:title" content="Photon">
 <meta property="og:description" content="Photon AI - Next-generation reasoning, code and software architecture.">
 <meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <style>
 :root{
-  --bg:#101010;
-  --side:#141414;
-  --btn:#1c1c1c;
-  --btn2:#262626;
-  --card:#181818;
-  --ink:#fffaf0; /* Floral white */
-  --off-white:#fdfcf8;
-  --ivory:#f3f0e9;
-  --nude:#e3dbcc;
-  --mute:#8e897e;
-  --line:rgba(227,219,204,.12);
-  --p-pink:#e3dbcc;
-  --p-violet:#c8bea9;
-  --p-blue:#f3f0e9;
-  --p-cyan:#fffaf0;
-  --p-deep:#141414;
+  --bg:#080A11;
+  --side:#0B0E18;
+  --btn:#10162E;
+  --btn2:#17203F;
+  --card:#0D1326;
+  --ink:#F1F5F9;
+  --off-white:#FFFFFF;
+  --ivory:#E2E8F0;
+  --nude:#8298FF;
+  --mute:#7E8BA4;
+  --line:rgba(255,255,255,.08);
+  --accent:#8298FF;
+  --accent-glow:rgba(130,152,255,.25);
+  --primary:#8298FF;
+  --p-pink:#C084FC;
+  --p-violet:#818CF8;
+  --p-blue:#60A5FA;
+  --p-cyan:#38BDF8;
+  --p-deep:#080A11;
   color-scheme:dark;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
@@ -56,17 +62,38 @@ button{font:inherit;color:inherit;cursor:pointer}
 .ci span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ci button{border:0;background:none;color:var(--mute);opacity:0;padding:0 3px}
 .ci:hover button{opacity:1}
-#main{flex:1;position:relative;display:flex;flex-direction:column;min-width:0;height:100%;background:radial-gradient(circle at 50% 15%,rgba(227,219,204,.04) 0%,transparent 65%),var(--bg)}
+#main{flex:1;position:relative;display:flex;flex-direction:column;min-width:0;height:100%;background:radial-gradient(circle at 50% 15%,rgba(130,152,255,.07) 0%,transparent 65%),var(--bg)}
 #topo{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-#top{position:absolute;top:12px;right:14px;display:flex;gap:8px;align-items:center;z-index:5}
-#plan{background:rgba(20,20,20,.85);border:1px solid rgba(227,219,204,.2);backdrop-filter:blur(8px);padding:4px 10px;font-size:11.5px;border-radius:2px;box-shadow:0 2px 12px rgba(0,0,0,.4);color:var(--ivory)}
+#top{position:absolute;top:12px;left:14px;right:14px;display:flex;justify-content:space-between;align-items:center;z-index:5;pointer-events:none}
+#top > *{pointer-events:auto}
+.irx-top-left{display:flex;align-items:center;gap:10px}
+.irx-studio-nav{display:flex;align-items:center;background:rgba(16,22,46,.75);border:1px solid var(--line);border-radius:8px;padding:3px;backdrop-filter:blur(8px)}
+.irx-tab{border:0;background:none;color:var(--mute);font-size:12px;padding:5px 12px;border-radius:6px;transition:all .15s;font-weight:500;white-space:nowrap}
+.irx-tab:hover{color:var(--ink);background:rgba(255,255,255,.05)}
+.irx-tab.on{color:#fff;background:rgba(130,152,255,.2);font-weight:600;box-shadow:0 0 12px rgba(130,152,255,.2)}
+.irx-top-right{display:flex;align-items:center;gap:8px}
+#plan{background:rgba(16,22,46,.75);border:1px solid var(--line);backdrop-filter:blur(8px);padding:4px 10px;font-size:11.5px;border-radius:6px;box-shadow:0 2px 12px rgba(0,0,0,.4);color:var(--ivory);display:flex;align-items:center;gap:6px}
+.irx-plan-pill{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.12em;background:rgba(130,152,255,.15);color:var(--accent);padding:2px 6px;border-radius:4px;border:1px solid rgba(130,152,255,.3)}
 #plan a,.up{color:var(--nude);text-decoration:none;font-weight:600;cursor:pointer;transition:color .2s}
-#plan a:hover,.up:hover{color:var(--ink);text-shadow:0 0 8px rgba(227,219,204,.5)}
-#tog{width:30px;height:28px;border:1px solid rgba(227,219,204,.2);background:rgba(20,20,20,.85);backdrop-filter:blur(8px);border-radius:2px;display:grid;place-items:center;padding:0;transition:all .2s}
-#tog:hover{background:rgba(35,35,35,.95);border-color:rgba(227,219,204,.35)}
+#plan a:hover,.up:hover{color:var(--ink);text-shadow:0 0 8px rgba(130,152,255,.5)}
+#tog{width:32px;height:30px;border:1px solid var(--line);background:rgba(16,22,46,.75);backdrop-filter:blur(8px);border-radius:6px;display:grid;place-items:center;padding:0;transition:all .2s}
+#tog:hover{background:rgba(23,32,63,.95);border-color:rgba(130,152,255,.35)}
 #tog svg{width:16px;height:16px;stroke:var(--ivory)}
 #hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;position:relative;z-index:1}
-#hero h1{font:400 clamp(24px,4vw,34px)/1.2 Georgia,"Times New Roman",serif;margin:0 0 22px;text-align:center;color:var(--ink);text-shadow:0 2px 14px rgba(0,0,0,.7)}
+.irx-hero-badge{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);background:rgba(130,152,255,.1);border:1px solid rgba(130,152,255,.25);padding:4px 12px;border-radius:99px;margin-bottom:12px;box-shadow:0 0 16px rgba(130,152,255,.15)}
+#hero h1{font:600 clamp(26px,4vw,38px)/1.2 system-ui,-apple-system,sans-serif;letter-spacing:-.02em;margin:0 0 8px;text-align:center;color:#FFFFFF;text-shadow:0 2px 20px rgba(0,0,0,.8)}
+.irx-hero-sub{font-size:13.5px;color:var(--mute);margin:0 0 24px;text-align:center;max-width:560px;line-height:1.5}
+.irx-cards-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;width:min(720px,100%);margin-top:24px}
+@media(max-width:640px){.irx-cards-grid{grid-template-columns:1fr}.irx-studio-nav{display:none}}
+.irx-card{display:flex;align-items:center;gap:14px;padding:14px 16px;background:rgba(13,19,38,.7);border:1px solid rgba(255,255,255,.08);border-radius:12px;text-align:left;cursor:pointer;transition:all .2s ease;backdrop-filter:blur(8px)}
+.irx-card:hover{background:rgba(16,22,46,.95);border-color:rgba(130,152,255,.35);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.45),0 0 16px rgba(130,152,255,.15)}
+.irx-card-icon{width:38px;height:38px;border-radius:10px;background:rgba(130,152,255,.12);border:1px solid rgba(130,152,255,.25);display:flex;align-items:center;justify-content:center;color:var(--accent);flex-shrink:0}
+.irx-card-icon svg{width:20px;height:20px}
+.irx-card-text{flex:1;min-width:0}
+.irx-card-title{font-size:13px;font-weight:600;color:#F8FAFC;margin-bottom:2px}
+.irx-card-desc{font-size:11px;color:var(--mute);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.irx-card-arrow{font-size:14px;color:var(--mute);transition:transform .2s,color .2s}
+.irx-card:hover .irx-card-arrow{color:var(--accent);transform:translateX(3px)}
 
 @keyframes prismSpin{0%{transform:scale(.95) rotate(-3deg)}50%{transform:scale(1.05) rotate(3deg)}100%{transform:scale(.95) rotate(-3deg)}}
 
@@ -504,10 +531,25 @@ textarea::placeholder{color:var(--mute)}
   <canvas id="topo"></canvas>
   <div id="pbar" hidden></div>
   <div id="pv" hidden></div>
-  <div id="top"><div id="plan">Free plan - <a id="upl">Upgrade</a></div>
-    <button id="tog" aria-label="Toggle sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button></div>
+  <div id="top">
+    <div class="irx-top-left">
+      <button id="tog" aria-label="Toggle sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button>
+      <div class="irx-studio-nav" id="studioNav">
+        <button class="irx-tab on" data-mode="general">Chat</button>
+        <button class="irx-tab" data-mode="code">Web &amp; Code</button>
+        <button class="irx-tab" data-mode="image">Image Studio</button>
+        <button class="irx-tab" data-mode="video">Video Studio</button>
+        <button class="irx-tab" data-mode="srs">Docs &amp; Files</button>
+      </div>
+    </div>
+    <div class="irx-top-right">
+      <div id="plan"><span class="irx-plan-pill" id="planPill">Free</span> <a id="upl">Upgrade</a></div>
+    </div>
+  </div>
   <div id="hero">
+    <div class="irx-hero-badge">AI WORKSPACE · NEXT GENERATION</div>
     <h1 id="greet">Good Morning, User</h1>
+    <p class="irx-hero-sub">A multi-model AI workspace for conversation, creation, code and research.</p>
     <div id="comp">
     <div id="pop"></div>
     <div id="tkn" hidden></div>
@@ -529,6 +571,48 @@ textarea::placeholder{color:var(--mute)}
       </div>
     </div>
   </div>
+    <div class="irx-cards-grid" id="irxCards">
+      <button class="irx-card" type="button" data-action="build">
+        <div class="irx-card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        </div>
+        <div class="irx-card-text">
+          <div class="irx-card-title">Build a website</div>
+          <div class="irx-card-desc">Describe it once — Photon writes the files and previews live.</div>
+        </div>
+        <span class="irx-card-arrow">→</span>
+      </button>
+      <button class="irx-card" type="button" data-action="image">
+        <div class="irx-card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+        </div>
+        <div class="irx-card-text">
+          <div class="irx-card-title">Create an image</div>
+          <div class="irx-card-desc">Text to vector art, illustrations, references and styles.</div>
+        </div>
+        <span class="irx-card-arrow">→</span>
+      </button>
+      <button class="irx-card" type="button" data-action="video">
+        <div class="irx-card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 8-6 4 6 4V8Z"/><rect x="2" y="6" width="14" height="12" rx="3"/></svg>
+        </div>
+        <div class="irx-card-text">
+          <div class="irx-card-title">Generate a video</div>
+          <div class="irx-card-desc">A shot brief rendered to high-speed looping motion.</div>
+        </div>
+        <span class="irx-card-arrow">→</span>
+      </button>
+      <button class="irx-card" type="button" data-action="file">
+        <div class="irx-card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <div class="irx-card-text">
+          <div class="irx-card-title">Generate a file</div>
+          <div class="irx-card-desc">Markdown docs, reports, data tables, or production code.</div>
+        </div>
+        <span class="irx-card-arrow">→</span>
+      </button>
+    </div>
   </div>
   <div id="msgs" hidden></div>
 </div>
@@ -903,7 +987,12 @@ function render(){
   var pr=curProj(),pb=$("pbar");pb.hidden=!pr;
   if(pr){pb.innerHTML='<button id="pbn">'+FOLD+esc(pr.name)+'</button><button id="pbc">+ New chat</button>';$("pbn").onclick=function(){showProject(pr.id)};$("pbc").onclick=function(){projChat(pr,"")}}
   if(has){$("msgs").innerHTML="";cur.msgs.forEach(function(m,i){addRow(m.role,m.content,m,i)});main.append($("comp"));$("msgs").scrollTop=$("msgs").scrollHeight}
-  else $("hero").append($("comp"));
+  else {
+    var cards=$("irxCards");
+    if(cards)$("hero").insertBefore($("comp"),cards);
+    else $("hero").append($("comp"));
+  }
+  syncStudioTabs();
   var tag=$("modeTag");tag.style.display=mode==="general"?"none":"inline";tag.textContent=MODES[mode][0];
   var p=$("pop");p.innerHTML="";Object.keys(MODES).forEach(function(k){var b=document.createElement("button");b.textContent=MODES[k][0];b.className=k===mode?"on":"";b.onclick=function(){mode=k;p.classList.remove("on");render()};p.append(b)});
   upd();
@@ -1107,7 +1196,7 @@ $("mic").onclick=function(){
 };
 function topo(){
   var c=$("topo"),w=c.clientWidth,h=c.clientHeight,d=window.devicePixelRatio||1;if(!w||!h)return;
-  c.width=w*d;c.height=h*d;var x=c.getContext("2d");x.scale(d,d);x.clearRect(0,0,w,h);x.lineWidth=1;x.strokeStyle="rgba(227,219,204,.045)";
+  c.width=w*d;c.height=h*d;var x=c.getContext("2d");x.scale(d,d);x.clearRect(0,0,w,h);x.lineWidth=1;x.strokeStyle="rgba(130,152,255,.05)";
   var N=Math.ceil(h/9)+8;
   for(var k=0;k<N;k++){x.beginPath();var y0=k*9-30;
     for(var px=0;px<=w;px+=6){var y=y0+Math.sin(px*.011+k*.21)*16+Math.sin(px*.027-k*.13+1.7)*8+Math.sin(px*.004+k*.05)*24;px?x.lineTo(px,y):x.moveTo(px,y)}
@@ -1903,6 +1992,57 @@ function checkout(p,cy){
 }
 function applyPlan(id,interval){var U=users(),account=U[user.email]||{email:user.email,name:user.name||user.email};account.plan=id;account.planInterval=id==="basic"?"none":interval||user.planInterval||"monthly";if(id==="basic")delete account.since;else account.since=Date.now();U[user.email]=account;putUsers(U);user.plan=id;user.planInterval=account.planInterval;planBillingCycle=account.planInterval==="yearly"?"yearly":"monthly";if(photonProfile){photonProfile.plan=photonProfile.plan||{};photonProfile.plan.id=id;photonProfile.plan.name=planName();photonProfile.plan.price=(PLANS.find(function(x){return x.id===id})||PLANS[0]).m*(account.planInterval==="yearly"?12:1);photonProfile.plan.dailyTokens=(PLANS.find(function(x){return x.id===id})||PLANS[0]).tok;photonProfile.plan.interval=id==="basic"?"forever":account.planInterval==="yearly"?"year":"month";photonProfile.subscriptionInterval=account.planInterval}tokUI();$("upl").parentNode.firstChild.textContent=planName()+" plan - "}
 function setPlan(id){applyPlan(id);closeOv();toast("You're now on the "+planName()+" plan")}
+function syncStudioTabs(){
+  document.querySelectorAll(".irx-tab").forEach(function(b){
+    b.classList.toggle("on",b.dataset.mode===mode);
+  });
+}
+function setupIrxEvents(){
+  var sNav=$("studioNav");
+  if(sNav){
+    sNav.onclick=function(e){
+      var tab=e.target.closest("[data-mode]");
+      if(!tab)return;
+      mode=tab.dataset.mode;
+      syncStudioTabs();
+      var inp=$("in");
+      if(mode==="image")inp.placeholder="Describe the image or vector art you want to create...";
+      else if(mode==="video")inp.placeholder="Describe the animation or video you want to generate...";
+      else if(mode==="code")inp.placeholder="Describe the web app, UI or code you want to build...";
+      else if(mode==="srs")inp.placeholder="Describe the document, report or specification you need...";
+      else inp.placeholder=cur&&cur.msgs.length?"Message Photon...":"How can I help you today?";
+      render();
+    };
+  }
+  var wrap=$("irxCards");
+  if(wrap){
+    wrap.onclick=function(e){
+      var card=e.target.closest("[data-action]");
+      if(!card)return;
+      var act=card.dataset.action;
+      var inp=$("in");
+      if(act==="build"){
+        mode="code";
+        inp.value="Build a modern responsive web application with HTML, CSS and interactive JavaScript: ";
+      }else if(act==="image"){
+        mode="image";
+        inp.value="A futuristic glowing vector illustration of ";
+      }else if(act==="video"){
+        mode="video";
+        inp.value="A smooth looping cinematic animation of ";
+      }else if(act==="file"){
+        mode="srs";
+        inp.value="Generate a comprehensive structured documentation file for ";
+      }
+      syncStudioTabs();
+      inp.focus();
+      render();
+      upd();
+    };
+  }
+}
+setupIrxEvents();
+syncStudioTabs();
 showAuth("login");
 topo();
 loadPublicConfig();window.addEventListener("focus",function(){if(user)syncAuthenticatedAccount();else loadPublicConfig()});document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible"){if(user)syncAuthenticatedAccount();else loadPublicConfig()}});
