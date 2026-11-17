@@ -1002,14 +1002,227 @@ textarea::placeholder{color:var(--mute)}
 }
 
 
+
+/* ==================== CRITICAL PHOTON BRAND & SIDEBAR CSS ==================== */
+.irx-brand-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 4px 4px 14px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+.irx-brand-logo {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+.irx-brand-emblem {
+  width: 26px !important;
+  height: 26px !important;
+  min-width: 26px !important;
+  max-width: 26px !important;
+  min-height: 26px !important;
+  max-height: 26px !important;
+  border-radius: 7px !important;
+  overflow: hidden !important;
+  display: grid !important;
+  place-items: center !important;
+  background: #10162E !important;
+  border: 1px solid rgba(130, 152, 255, 0.25) !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
+}
+.irx-brand-emblem svg {
+  width: 26px !important;
+  height: 26px !important;
+  display: block !important;
+}
+.irx-brand-name {
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.18em !important;
+  color: #FFFFFF !important;
+}
+.irx-collapse-btn {
+  background: transparent !important;
+  border: 0 !important;
+  color: #7E8BA4 !important;
+  cursor: pointer !important;
+  padding: 4px !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 4px !important;
+  transition: all .15s ease !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+}
+.irx-collapse-btn:hover {
+  color: #FFFFFF !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+.irx-collapse-btn svg {
+  width: 16px !important;
+  height: 16px !important;
+  stroke: currentColor !important;
+  display: block !important;
+}
+
+.irx-hero-emblem-wrap {
+  margin-bottom: 16px !important;
+  display: flex !important;
+  justify-content: center !important;
+}
+.irx-hero-emblem {
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  max-width: 44px !important;
+  border-radius: 12px !important;
+  background: #10162E !important;
+  border: 1px solid rgba(130, 152, 255, 0.35) !important;
+  display: grid !important;
+  place-items: center !important;
+  box-shadow: 0 0 24px rgba(130, 152, 255, 0.25) !important;
+}
+.irx-hero-emblem svg {
+  width: 24px !important;
+  height: 24px !important;
+  display: block !important;
+}
+
+/* Ensure #side layout is pristine */
+#side {
+  width: 240px !important;
+  background: #080A11 !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 14px 10px 14px !important;
+  gap: 2px !important;
+  box-sizing: border-box !important;
+}
+.irx-nav-stack {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  width: 100% !important;
+}
+.irx-new-chat-btn {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  width: 100% !important;
+  height: 40px !important;
+  padding: 0 12px !important;
+  background: #10162E !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 8px !important;
+  color: #FFFFFF !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  margin-bottom: 10px !important;
+}
+.irx-new-chat-btn:hover {
+  background: #17203F !important;
+  border-color: rgba(130, 152, 255, 0.35) !important;
+}
+.irx-new-chat-btn svg {
+  width: 14px !important;
+  height: 14px !important;
+  stroke: #8298FF !important;
+  stroke-width: 2.2 !important;
+}
+.irx-nav-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  width: 100% !important;
+  padding: 8px 12px !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  border-radius: 8px !important;
+  color: #7E8BA4 !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all .15s ease !important;
+  text-align: left !important;
+}
+.irx-nav-item svg {
+  width: 16px !important;
+  height: 16px !important;
+  stroke: currentColor !important;
+  stroke-width: 1.8 !important;
+}
+.irx-nav-item:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: #F1F5F9 !important;
+}
+.irx-nav-item.active {
+  background: #11172E !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
+  color: #FFFFFF !important;
+}
+.irx-credits-card {
+  background: #0D1326 !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 10px !important;
+  padding: 12px 14px !important;
+  margin-top: auto !important;
+  margin-bottom: 6px !important;
+  cursor: pointer !important;
+  font-family: 'JetBrains Mono', monospace !important;
+}
+.irx-credits-card:hover {
+  background: #10162E !important;
+  border-color: rgba(130, 152, 255, 0.3) !important;
+}
+.irx-credits-top {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 6px !important;
+}
+.irx-credits-lbl {
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.16em !important;
+  color: #7E8BA4 !important;
+  text-transform: uppercase !important;
+}
+.irx-credits-plan {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: #8298FF !important;
+}
+.irx-credits-num {
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 6px !important;
+}
+.irx-credits-val {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: #FFFFFF !important;
+}
+.irx-credits-avail {
+  font-size: 12px !important;
+  color: #7E8BA4 !important;
+}
+
 </style>
 </head>
 <body>
 <aside id="side">
   <div class="irx-brand-row">
     <div class="irx-brand-logo">
-      <div class="irx-brand-emblem"><svg viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#10162E"/><path d="M16 7v18M11 7h10M11 25h10" stroke="#8298FF" stroke-width="2.2" stroke-linecap="round"/></svg></div>
-      <span class="irx-brand-name">IRIVEX</span>
+      <div class="irx-brand-emblem"><svg width="26" height="26" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="8" fill="#10162E"/><path d="M10 25V7h7a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-7" stroke="#8298FF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="irx-brand-name">PHOTON</span>
     </div>
     <button class="irx-collapse-btn" id="tog-side" aria-label="Collapse sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 3v18M14 9l-3 3 3 3"/></svg></button>
   </div>
@@ -3183,7 +3396,7 @@ function showPlansAndCredits() {
         '<div class="irx-plan-badge">CURRENT</div>' +
         '<div class="irx-eyebrow" style="margin-bottom:12px">FREE</div>' +
         '<div class="irx-plan-name">Free</div>' +
-        '<div class="irx-plan-desc">Explore IRIVEX with the everyday models.</div>' +
+        '<div class="irx-plan-desc">Explore Photon with the everyday models.</div>' +
         '<ul class="irx-plan-features">' +
           '<li>500 credits every month</li>' +
           '<li>Everyday chat and reasoning models</li>' +
