@@ -515,27 +515,284 @@ textarea::placeholder{color:var(--mute)}
 .tk{border-radius:8px!important;background:rgba(16,22,46,0.6)!important;border:1px solid rgba(255,255,255,0.08)!important}
 .tkbar i{background:linear-gradient(90deg,#8298FF,#C084FC)!important}
 
+
+/* ==================== IRIVEX EXACT SIDEBAR ==================== */
+#side{
+  width: 240px!important;
+  background: #080A11!important;
+  border-right: 1px solid rgba(255, 255, 255, 0.06)!important;
+  display: flex!important;
+  flex-direction: column!important;
+  padding: 16px 12px 14px!important;
+  gap: 0!important;
+  flex-shrink: 0!important;
+  transition: margin .2s ease!important;
+  z-index: 6!important;
+  font-family: 'JetBrains Mono', monospace!important;
+  user-select: none!important;
+}
+#side.hide{ margin-left: -240px!important; }
+@media(max-width: 720px){
+  #side{ position: fixed!important; inset: 0 auto 0 0!important; margin-left: -240px!important; }
+  #side.show{ margin-left: 0!important; box-shadow: 0 0 60px rgba(0,0,0,0.9)!important; }
+  #side.hide{ margin-left: -240px!important; }
+}
+
+.irx-new-chat-btn{
+  display: flex!important;
+  align-items: center!important;
+  gap: 10px!important;
+  width: 100%!important;
+  height: 42px!important;
+  padding: 0 14px!important;
+  background: #10162E!important;
+  border: 1px solid rgba(255, 255, 255, 0.08)!important;
+  border-radius: 8px!important;
+  color: #FFFFFF!important;
+  font-family: 'JetBrains Mono', monospace!important;
+  font-size: 13px!important;
+  font-weight: 500!important;
+  cursor: pointer!important;
+  transition: all .15s ease!important;
+  margin-bottom: 12px!important;
+  text-align: left!important;
+}
+.irx-new-chat-btn:hover{
+  background: #17203F!important;
+  border-color: rgba(130, 152, 255, 0.35)!important;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.4), 0 0 14px rgba(130, 152, 255, 0.15)!important;
+}
+.irx-new-chat-btn svg{
+  width: 14px!important;
+  height: 14px!important;
+  stroke: #8298FF!important;
+  stroke-width: 2.4!important;
+  flex-shrink: 0!important;
+}
+
+.irx-nav-stack{
+  display: flex!important;
+  flex-direction: column!important;
+  gap: 2px!important;
+  flex: 1!important;
+  min-height: 0!important;
+  overflow: hidden!important;
+}
+.irx-nav-item{
+  display: flex!important;
+  align-items: center!important;
+  gap: 12px!important;
+  width: 100%!important;
+  padding: 9px 12px!important;
+  background: transparent!important;
+  border: 1px solid transparent!important;
+  border-radius: 8px!important;
+  color: #7E8BA4!important;
+  font-family: 'JetBrains Mono', monospace!important;
+  font-size: 13.5px!important;
+  font-weight: 500!important;
+  cursor: pointer!important;
+  transition: all .15s ease!important;
+  text-align: left!important;
+}
+.irx-nav-item svg{
+  width: 17px!important;
+  height: 17px!important;
+  stroke: currentColor!important;
+  stroke-width: 1.8!important;
+  flex-shrink: 0!important;
+}
+.irx-nav-item:hover{
+  background: rgba(255, 255, 255, 0.04)!important;
+  color: #F1F5F9!important;
+}
+.irx-nav-item.active{
+  background: #11172E!important;
+  border-color: rgba(255, 255, 255, 0.06)!important;
+  color: #FFFFFF!important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3)!important;
+}
+
+.irx-search-box{
+  padding: 4px 4px 6px!important;
+}
+.irx-search-box input{
+  width: 100%!important;
+  padding: 8px 10px!important;
+  border: 1px solid rgba(255, 255, 255, 0.08)!important;
+  border-radius: 6px!important;
+  background: #0D1326!important;
+  color: #F1F5F9!important;
+  font-family: 'JetBrains Mono', monospace!important;
+  font-size: 12px!important;
+  outline: 0!important;
+}
+.irx-search-box input:focus{
+  border-color: #8298FF!important;
+  box-shadow: 0 0 10px rgba(130, 152, 255, 0.2)!important;
+}
+
+#list{
+  flex: 1!important;
+  overflow-y: auto!important;
+  display: flex!important;
+  flex-direction: column!important;
+  gap: 2px!important;
+  margin: 4px 0!important;
+  padding: 0 2px 0 0!important;
+  min-height: 40px!important;
+}
+.ci{
+  display: flex!important;
+  align-items: center!important;
+  gap: 6px!important;
+  padding: 6px 10px!important;
+  border-radius: 6px!important;
+  cursor: pointer!important;
+  font-family: 'JetBrains Mono', monospace!important;
+  font-size: 12px!important;
+  color: #9298AA!important;
+  transition: all .15s ease!important;
+  border-left: 2px solid transparent!important;
+}
+.ci:hover, .ci.on{
+  background: rgba(130, 152, 255, 0.08)!important;
+  color: #FFFFFF!important;
+  border-left-color: #8298FF!important;
+}
+.ci span{
+  flex: 1!important;
+  overflow: hidden!important;
+  text-overflow: ellipsis!important;
+  white-space: nowrap!important;
+}
+
+.irx-side-bottom{
+  margin-top: auto!important;
+  display: flex!important;
+  flex-direction: column!important;
+  gap: 8px!important;
+  padding-top: 10px!important;
+}
+.irx-credits-card{
+  background: #0D1326!important;
+  border: 1px solid rgba(255, 255, 255, 0.06)!important;
+  border-radius: 10px!important;
+  padding: 12px 14px!important;
+  cursor: pointer!important;
+  transition: all .2s ease!important;
+  font-family: 'JetBrains Mono', monospace!important;
+}
+.irx-credits-card:hover{
+  background: #10162E!important;
+  border-color: rgba(130, 152, 255, 0.3)!important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4)!important;
+}
+.irx-credits-top{
+  display: flex!important;
+  justify-content: space-between!important;
+  align-items: center!important;
+  margin-bottom: 6px!important;
+}
+.irx-credits-lbl{
+  font-size: 10.5px!important;
+  font-weight: 600!important;
+  letter-spacing: 0.16em!important;
+  color: #7E8BA4!important;
+  text-transform: uppercase!important;
+}
+.irx-credits-plan{
+  font-size: 11px!important;
+  font-weight: 600!important;
+  color: #8298FF!important;
+}
+.irx-credits-num{
+  display: flex!important;
+  align-items: baseline!important;
+  gap: 6px!important;
+}
+.irx-credits-val{
+  font-size: 16px!important;
+  font-weight: 700!important;
+  color: #FFFFFF!important;
+}
+.irx-credits-avail{
+  font-size: 12px!important;
+  color: #7E8BA4!important;
+}
+
 </style>
 </head>
 <body>
 <aside id="side">
-  <div class="logo">
-    <svg class="brand-logo-img" viewBox="0 0 32 32" role="img" aria-label="Photon logo" xmlns="http://www.w3.org/2000/svg">
-      <rect width="32" height="32" rx="8" fill="#10162E"/>
-      <path d="M16 7v18M11 7h10M11 25h10" stroke="#8298FF" stroke-width="2.2" stroke-linecap="round"/>
-    </svg>
-    <span style="font-family:'JetBrains Mono',monospace;letter-spacing:0.2em;font-size:13px;font-weight:700;color:#F8FAFC">PHOTON</span>
+  <button class="irx-new-chat-btn" id="new" type="button" aria-label="New chat">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
+    <span>New chat</span>
+  </button>
+
+  <div class="irx-nav-stack">
+    <button class="irx-nav-item" id="nav-search" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <span>Search</span>
+    </button>
+    <div class="irx-search-box" id="search-box" hidden>
+      <input class="chat-search-input" id="chat-search-input" type="search" placeholder="Search chats..." aria-label="Search conversations">
+    </div>
+
+    <button class="irx-nav-item active" id="nav-history" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+      <span>History</span>
+    </button>
+
+    <div class="lbl" id="rl" style="display:none">Recent Conversation</div>
+    <div id="list"></div>
+
+    <button class="irx-nav-item" id="proj" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/><path d="M8 11v3M12 11v3M16 11v3"/></svg>
+      <span>Projects</span>
+    </button>
+
+    <button class="irx-nav-item" id="nav-library" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m16 6 4 14M12 6v14M8 8v12M4 4v16"/></svg>
+      <span>Library</span>
+    </button>
+
+    <button class="irx-nav-item" id="art" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m21 16-9 5-9-5V8l9-5 9 5v8Z"/><path d="m12 12.5 9-4.5M12 12.5v9M12 12.5 3 8"/></svg>
+      <span>Artifacts</span>
+    </button>
+
+    <button class="irx-nav-item" id="nav-studio" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3Z"/><path d="M5 3v4M3 5h4"/></svg>
+      <span>Studio</span>
+    </button>
+
+    <button class="irx-nav-item" id="nav-plugins" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2v6M9 2v4M15 2v4M18 9a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8h12v1ZM12 13v7M9 22h6"/></svg>
+      <span>Plugins</span>
+    </button>
   </div>
-  <button class="sb" id="new">+ New Conversation</button>
-  <button class="sb search-chat-btn" id="search-chats" type="button" aria-expanded="false" aria-controls="chat-search-input">⌘ &nbsp; Search chats</button>
-  <input class="chat-search-input" id="chat-search-input" type="search" placeholder="Search conversations..." aria-label="Search conversations" hidden>
-  <button class="sb" id="upg">Upgrade</button>
-  <button class="sb" id="proj">Projects</button>
-  <button class="sb" id="art">Artifacts</button>
-  <div class="lbl" id="rl">Recent Conversation</div>
-  <div id="list"></div>
-  <button class="tk" id="tk" title="View usage" aria-label="View token usage"><div class="tkr"><span>Tokens today</span><b id="tkt">0 / 0 tokens</b></div><div class="tkbar"><i id="tkb"></i></div></button>
-  <div class="usr"><button class="profile-nav" id="profile-nav" type="button" aria-label="Open your profile" title="Profile"><b id="av">U</b><span id="un">User</span></button><button id="out">Log out</button></div>
+
+  <div class="irx-side-bottom">
+    <div class="irx-credits-card" id="tk" role="button" tabindex="0" title="View credits & usage" aria-label="View credits & usage">
+      <div class="irx-credits-top">
+        <span class="irx-credits-lbl">CREDITS</span>
+        <span class="irx-credits-plan" id="irxCreditsPlan">free</span>
+      </div>
+      <div class="irx-credits-num">
+        <b class="irx-credits-val" id="irxCreditsVal">500</b>
+        <span class="irx-credits-avail">available</span>
+      </div>
+      <div id="tkt" hidden></div>
+      <div class="tkbar" style="display:none"><i id="tkb"></i></div>
+    </div>
+
+    <button class="irx-nav-item" id="profile-nav" type="button" aria-label="Open Settings" title="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>Settings</span>
+    </button>
+  </div>
+  <div id="usr-hidden" style="display:none"><b id="av">U</b><span id="un">User</span><button id="out">Log out</button><button id="upg">Upgrade</button><button id="search-chats"></button></div>
 </aside>
 <div id="main">
   <canvas id="topo"></canvas>
@@ -802,7 +1059,12 @@ function limit(){var p=PLANS.filter(function(x){return x.id===user.plan})[0];ret
 function left(){return Math.max(0,limit()-tokState().u)}
 function spend(k){var o=tokState();o.u+=COST[k];o.by[k]=(o.by[k]||0)+1;tokSave(o);tokUI()}
 function untilReset(){var n=new Date(),m=new Date(n.getFullYear(),n.getMonth(),n.getDate()+1),ms=m-n;return Math.floor(ms/36e5)+"h "+Math.floor(ms%36e5/6e4)+"m"}
-function tokUI(){if(!user)return;var L=limit(),u=tokState().u;$("tkt").textContent=Math.max(0,L-u).toLocaleString("en-IN")+" / "+L.toLocaleString("en-IN")+" tokens";$("tkb").style.width=Math.min(100,u/L*100)+"%";lockUI()}
+function tokUI(){
+    var L=limit(),u=tokState().u;
+    var rem = Math.max(0, L - u);
+    if($("irxCreditsVal")) $("irxCreditsVal").textContent = rem > 0 ? rem.toLocaleString("en-IN") : "500";
+    if($("irxCreditsPlan")) $("irxCreditsPlan").textContent = (user && user.plan ? user.plan : "free").toLowerCase();
+    if(!user)return;$("tkt").textContent=Math.max(0,L-u).toLocaleString("en-IN")+" / "+L.toLocaleString("en-IN")+" tokens";$("tkb").style.width=Math.min(100,u/L*100)+"%";lockUI()}
 function lockUI(){var out=!!user&&left()<=0,i=$("in"),b=$("tkn");i.disabled=out;$("go").disabled=out;$("mic").disabled=out;i.placeholder=out?"Out of tokens for today":basePH;
   if(out){b.hidden=false;b.dataset.m="out";b.innerHTML="You've used all your tokens for today, so chat is paused until 12:00 AM (in "+untilReset()+"). <a data-up>Upgrade your plan</a> for more daily tokens."}
   else if(b.dataset.m==="out"){b.hidden=true;b.dataset.m=""}}
@@ -2008,7 +2270,63 @@ function syncStudioTabs(){
     b.classList.toggle("on",b.dataset.mode===mode);
   });
 }
+
+function setupIrxSidebarEvents(){
+  var navSearch = $("nav-search");
+  var searchBox = $("search-box");
+  var searchInput = $("chat-search-input");
+  if(navSearch && searchBox){
+    navSearch.onclick = function(){
+      var hidden = searchBox.hidden;
+      searchBox.hidden = !hidden;
+      if(!searchBox.hidden && searchInput){
+        searchInput.focus();
+      }
+    };
+  }
+
+  var navHistory = $("nav-history");
+  if(navHistory){
+    navHistory.onclick = function(){
+      document.querySelectorAll(".irx-nav-item").forEach(function(el){ el.classList.remove("active"); });
+      navHistory.classList.add("active");
+      var list = $("list");
+      if(list) list.style.display = list.style.display === "none" ? "flex" : "flex";
+    };
+  }
+
+  var navStudio = $("nav-studio");
+  if(navStudio){
+    navStudio.onclick = function(){
+      document.querySelectorAll(".irx-nav-item").forEach(function(el){ el.classList.remove("active"); });
+      navStudio.classList.add("active");
+      mode = mode === "general" ? "image" : mode;
+      syncStudioTabs();
+      render();
+    };
+  }
+
+  var navLibrary = $("nav-library");
+  if(navLibrary){
+    navLibrary.onclick = function(){
+      document.querySelectorAll(".irx-nav-item").forEach(function(el){ el.classList.remove("active"); });
+      navLibrary.classList.add("active");
+      modal('<div class="card wide"><h2>Library &amp; Templates</h2><p class="s">Pre-configured prompts, architecture blueprints, and development templates.</p><div class="pv-grid" style="margin-top:14px"><div class="pv-card" onclick="closeOv();document.getElementById(\'in\').value=\'Build a full-stack SaaS with Next.js, Tailwind CSS, and Stripe checkout\';document.getElementById(\'in\').focus();"><b>Full-Stack SaaS Blueprint</b><p>Production architectural spec with auth, billing and database schemas.</p></div><div class="pv-card" onclick="closeOv();document.getElementById(\'in\').value=\'Create a high-converting landing page with 3D canvas effects and responsive grid\';document.getElementById(\'in\').focus();"><b>Modern Landing Page</b><p>Interactive vector layouts, micro-animations, and responsive hero sections.</p></div><div class="pv-card" onclick="closeOv();document.getElementById(\'in\').value=\'Write a complete IEEE 830 Software Requirements Specification for an AI platform\';document.getElementById(\'in\').focus();"><b>IEEE 830 SRS Document</b><p>Functional requirements, use cases, performance metrics, and compliance.</p></div></div><div style="text-align:right;margin-top:18px"><button class="pri" style="width:auto;padding:8px 20px" onclick="closeOv()">Close</button></div></div>');
+    };
+  }
+
+  var navPlugins = $("nav-plugins");
+  if(navPlugins){
+    navPlugins.onclick = function(){
+      document.querySelectorAll(".irx-nav-item").forEach(function(el){ el.classList.remove("active"); });
+      navPlugins.classList.add("active");
+      modal('<div class="card wide"><h2>Studio Plugins &amp; Integrations</h2><p class="s">Enabled tools and real-time execution environments.</p><div class="pv-grid" style="margin-top:14px"><div class="pv-card"><b>Web Search Plugin</b><p>Live search queries with grounded domain sources and real-time results.</p><small style="color:#8298FF">Active · Built-in</small></div><div class="pv-card"><b>Code Sandbox &amp; Artifacts</b><p>Live HTML/JS/CSS interactive preview with download capabilities.</p><small style="color:#8298FF">Active · Built-in</small></div><div class="pv-card"><b>Multi-Model Router</b><p>Intelligent fallback and ultra-low latency inference engine.</p><small style="color:#8298FF">Active · Built-in</small></div></div><div style="text-align:right;margin-top:18px"><button class="pri" style="width:auto;padding:8px 20px" onclick="closeOv()">Close</button></div></div>');
+    };
+  }
+}
+
 function setupIrxEvents(){
+  setupIrxSidebarEvents();
   var sNav=$("studioNav");
   if(sNav){
     sNav.onclick=function(e){
