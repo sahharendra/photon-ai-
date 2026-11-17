@@ -564,6 +564,8 @@ function getFastestAvailableModel(planId = 'basic') {
   const models = availableModels().filter(m => m.available && !m.creditsExhausted);
   if (!models.length) return null;
   const prioritySlugs = [
+    'google/gemma-4-26b-a4b-it:free',
+    'google/gemma-4-31b-it:free',
     'nvidia/nemotron-3.5-lightning:free',
     'liquid/lfm-3-1.7b:free',
     'openrouter/free',
