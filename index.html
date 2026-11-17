@@ -1001,78 +1001,37 @@ textarea::placeholder{color:var(--mute)}
   justify-content: space-between!important;
 }
 
+
 </style>
 </head>
 <body>
 <aside id="side">
-  <button class="irx-new-chat-btn" id="new" type="button" aria-label="New chat">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
-    <span>New chat</span>
-  </button>
-
+  <div class="irx-brand-row">
+    <div class="irx-brand-logo">
+      <div class="irx-brand-emblem"><svg viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#10162E"/><path d="M16 7v18M11 7h10M11 25h10" stroke="#8298FF" stroke-width="2.2" stroke-linecap="round"/></svg></div>
+      <span class="irx-brand-name">IRIVEX</span>
+    </div>
+    <button class="irx-collapse-btn" id="tog-side" aria-label="Collapse sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 3v18M14 9l-3 3 3 3"/></svg></button>
+  </div>
+  <button class="irx-new-chat-btn" id="new" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg><span>New chat</span></button>
   <div class="irx-nav-stack">
-    <button class="irx-nav-item" id="nav-search" type="button">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-      <span>Search</span>
-    </button>
-    <div class="irx-search-box" id="search-box" hidden>
-      <input class="chat-search-input" id="chat-search-input" type="search" placeholder="Search chats..." aria-label="Search conversations">
-    </div>
-
-    <button class="irx-nav-item active" id="nav-history" type="button">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
-      <span>History</span>
-    </button>
-
-    <div class="lbl" id="rl" style="display:none">Recent Conversation</div>
-    <div id="list"></div>
-
-    <button class="irx-nav-item" id="proj" type="button">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/><path d="M8 11v3M12 11v3M16 11v3"/></svg>
-      <span>Projects</span>
-    </button>
-
-    <button class="irx-nav-item" id="nav-library" type="button">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m16 6 4 14M12 6v14M8 8v12M4 4v16"/></svg>
-      <span>Library</span>
-    </button>
-
-    <button class="irx-nav-item" id="art" type="button">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m21 16-9 5-9-5V8l9-5 9 5v8Z"/><path d="m12 12.5 9-4.5M12 12.5v9M12 12.5 3 8"/></svg>
-      <span>Artifacts</span>
-    </button>
-
-    <button class="irx-nav-item" id="nav-studio" type="button">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3Z"/><path d="M5 3v4M3 5h4"/></svg>
-      <span>Studio</span>
-    </button>
-
-    <button class="irx-nav-item" id="nav-plugins" type="button">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2v6M9 2v4M15 2v4M18 9a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8h12v1ZM12 13v7M9 22h6"/></svg>
-      <span>Plugins</span>
-    </button>
+    <button class="irx-nav-item" id="nav-search" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Search</span></button>
+    <button class="irx-nav-item" id="nav-history" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg><span>History</span></button>
+    <button class="irx-nav-item" id="proj" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/><path d="M8 11v3M12 11v3M16 11v3"/></svg><span>Projects</span></button>
+    <button class="irx-nav-item" id="nav-library" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m16 6 4 14M12 6v14M8 8v12M4 4v16"/></svg><span>Library</span></button>
+    <button class="irx-nav-item" id="art" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m21 16-9 5-9-5V8l9-5 9 5v8Z"/><path d="m12 12.5 9-4.5M12 12.5v9M12 12.5 3 8"/></svg><span>Artifacts</span></button>
+    <button class="irx-nav-item" id="nav-studio" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3Z"/><path d="M5 3v4M3 5h4"/></svg><span>Studio</span></button>
+    <button class="irx-nav-item" id="nav-plugins" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2v6M9 2v4M15 2v4M18 9a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8h12v1ZM12 13v7M9 22h6"/></svg><span>Plugins</span></button>
   </div>
-
+  <div id="list" style="display:none"></div>
   <div class="irx-side-bottom">
-    <div class="irx-credits-card" id="tk" role="button" tabindex="0" title="View credits & usage" aria-label="View credits & usage">
-      <div class="irx-credits-top">
-        <span class="irx-credits-lbl">CREDITS</span>
-        <span class="irx-credits-plan" id="irxCreditsPlan">free</span>
-      </div>
-      <div class="irx-credits-num">
-        <b class="irx-credits-val" id="irxCreditsVal">500</b>
-        <span class="irx-credits-avail">available</span>
-      </div>
-      <div id="tkt" hidden></div>
-      <div class="tkbar" style="display:none"><i id="tkb"></i></div>
+    <div class="irx-credits-card" id="tk" role="button">
+      <div class="irx-credits-top"><span class="irx-credits-lbl">CREDITS</span><span class="irx-credits-plan" id="irxCreditsPlan">free</span></div>
+      <div class="irx-credits-num"><b class="irx-credits-val" id="irxCreditsVal">486</b><span class="irx-credits-avail">available</span></div>
     </div>
-
-    <button class="irx-nav-item" id="profile-nav" type="button" aria-label="Open Settings" title="Settings">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      <span>Settings</span>
-    </button>
+    <button class="irx-nav-item" id="profile-nav" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Settings</span></button>
   </div>
-  <div id="usr-hidden" style="display:none"><b id="av">U</b><span id="un">User</span><button id="out">Log out</button><button id="upg">Upgrade</button><button id="search-chats"></button></div>
+  <div id="usr-hidden" style="display:none"><b id="av">U</b><span id="un">User</span><button id="out">Log out</button><button id="upg">Upgrade</button><input id="chat-search-input"><div id="rl"></div><div id="tkt"></div><div class="tkbar"><i id="tkb"></i></div></div>
 </aside>
 <div id="main">
   <canvas id="topo"></canvas>
@@ -2696,7 +2655,638 @@ function setupIrxSidebarEvents(){
   }
 }
 
+/* ==================== COMPLETE IRIVEX SUITE SCRIPT ==================== */
+var currentThinkingLevel = "Normal";
+var thinkingLevels = [
+  { id: "Fast", name: "Fast", desc: "Shortest path. Best for quick lookups and rewrites." },
+  { id: "Normal", name: "Normal", desc: "Balanced depth. The default for most work." },
+  { id: "Extended", name: "Extended", desc: "Longer deliberation. Routed to reasoning-capable models." },
+  { id: "Maximum", name: "Maximum", desc: "Deepest available pass on premium reasoning models." }
+];
+
+var irxModelCategories = [
+  {
+    category: "RECOMMENDED",
+    models: [
+      { id: "claude-sonnet-5", name: "Claude Sonnet 5", provider: "Anthropic", ctx: "200K", tier: "PRO", cost: "2c", locked: true },
+      { id: "gpt-6-sol", name: "GPT-6 Sol", provider: "OpenAI", ctx: "400K", tier: "MAX", cost: "3c", locked: true },
+      { id: "google/gemma-4-26b-a4b-it:free", name: "Gemma 4 26B", provider: "Google", ctx: "128K", tier: "FREE", cost: "1c", locked: false }
+    ]
+  },
+  {
+    category: "FAST",
+    models: [
+      { id: "google/gemma-4-26b-a4b-it:free", name: "Gemma 4 26B Fast", provider: "Google", ctx: "128K", tier: "FREE", cost: "1c", locked: false },
+      { id: "google/gemma-4-31b-it:free", name: "Gemma 4 31B", provider: "Google", ctx: "128K", tier: "FREE", cost: "1c", locked: false },
+      { id: "gemini-3.8-flash", name: "Gemini 3.8 Flash", provider: "Google", ctx: "1M", tier: "FREE", cost: "1c", locked: false }
+    ]
+  },
+  {
+    category: "REASONING",
+    models: [
+      { id: "claude-opus-5.5", name: "Claude Opus 5.5", provider: "Anthropic", ctx: "200K", tier: "MAX", cost: "3c", locked: true },
+      { id: "gpt-6-sol", name: "GPT-6 Sol", provider: "OpenAI", ctx: "400K", tier: "MAX", cost: "3c", locked: true }
+    ]
+  },
+  {
+    category: "CODING",
+    models: [
+      { id: "claude-sonnet-5", name: "Claude Sonnet 5", provider: "Anthropic", ctx: "200K", tier: "PRO", cost: "2c", locked: true },
+      { id: "gpt-6-astra", name: "GPT-6 Astra", provider: "OpenAI", ctx: "400K", tier: "PRO", cost: "2c", locked: true },
+      { id: "google/gemma-4-26b-a4b-it:free", name: "Gemma 4 26B Code", provider: "Google", ctx: "128K", tier: "FREE", cost: "1c", locked: false }
+    ]
+  },
+  {
+    category: "RESEARCH",
+    models: [
+      { id: "gemini-3.8-flash", name: "Gemini 3.8 Flash", provider: "Google", ctx: "1M", tier: "FREE", cost: "1c", locked: false }
+    ]
+  },
+  {
+    category: "CREATIVE",
+    models: [
+      { id: "claude-opus-5.5", name: "Claude Opus 5.5", provider: "Anthropic", ctx: "200K", tier: "MAX", cost: "3c", locked: true },
+      { id: "claude-fable-5.1", name: "Claude Fable 5.1", provider: "Anthropic", ctx: "200K", tier: "PRO", cost: "2c", locked: true },
+      { id: "gpt-6-astra", name: "GPT-6 Astra", provider: "OpenAI", ctx: "400K", tier: "PRO", cost: "2c", locked: true }
+    ]
+  }
+];
+
+function setupIrxSuite() {
+  // Sidebar items wiring
+  var navSearch = $("nav-search");
+  if(navSearch) navSearch.onclick = showSearch;
+
+  var navHistory = $("nav-history");
+  if(navHistory) navHistory.onclick = showHistory;
+
+  var navProjects = $("proj") || $("nav-projects");
+  if(navProjects) navProjects.onclick = showProjects;
+
+  var navLibrary = $("nav-library");
+  if(navLibrary) navLibrary.onclick = showLibrary;
+
+  var navArtifacts = $("art") || $("nav-artifacts");
+  if(navArtifacts) navArtifacts.onclick = showArtifacts;
+
+  var navStudio = $("nav-studio");
+  if(navStudio) navStudio.onclick = showStudio;
+
+  var navPlugins = $("nav-plugins");
+  if(navPlugins) navPlugins.onclick = showPlugins;
+
+  var navCredits = $("tk") || $("nav-credits");
+  if(navCredits) navCredits.onclick = showPlansAndCredits;
+
+  var navSettings = $("profile-nav") || $("nav-settings");
+  if(navSettings) navSettings.onclick = showSettings;
+
+  var collapseBtn = $("tog-side") || $("tog");
+  if(collapseBtn) {
+    collapseBtn.onclick = function() {
+      var side = $("side");
+      if(window.innerWidth <= 720) {
+        side.classList.toggle("show");
+      } else {
+        side.classList.toggle("hide");
+      }
+    };
+  }
+
+  // Model & Thinking Pills dropdown wiring
+  var modelPill = $("irx-model-pill");
+  var modelMenu = $("irx-model-menu");
+  if(modelPill && modelMenu) {
+    modelPill.onclick = function(e) {
+      e.stopPropagation();
+      var thinkingMenu = $("irx-thinking-menu");
+      if(thinkingMenu) thinkingMenu.classList.remove("open");
+      modelMenu.classList.toggle("open");
+    };
+  }
+
+  var thinkingPill = $("irx-thinking-pill");
+  var thinkingMenu = $("irx-thinking-menu");
+  if(thinkingPill && thinkingMenu) {
+    thinkingPill.onclick = function(e) {
+      e.stopPropagation();
+      if(modelMenu) modelMenu.classList.remove("open");
+      thinkingMenu.classList.toggle("open");
+    };
+  }
+
+  document.addEventListener("click", function(e) {
+    if(!e.target.closest("#irx-model-pill") && !e.target.closest("#irx-model-menu")) {
+      if(modelMenu) modelMenu.classList.remove("open");
+    }
+    if(!e.target.closest("#irx-thinking-pill") && !e.target.closest("#irx-thinking-menu")) {
+      if(thinkingMenu) thinkingMenu.classList.remove("open");
+    }
+  });
+
+  renderModelMenu();
+  renderThinkingMenu();
+}
+
+function renderModelMenu() {
+  var menu = $("irx-model-menu");
+  if(!menu) return;
+  var currentModelId = (cur && cur.model) || (user && user.defaultModel) || "google/gemma-4-26b-a4b-it:free";
+  var html = "";
+  irxModelCategories.forEach(function(cat) {
+    html += '<div class="irx-dd-group-lbl">' + esc(cat.category) + '</div>';
+    cat.models.forEach(function(m) {
+      var isCur = m.id === currentModelId || (m.name === "Gemma 4 26B" && currentModelId.includes("gemma"));
+      html += '<div class="irx-dd-item' + (isCur ? ' active' : '') + '" data-model="' + esc(m.id) + '" data-locked="' + (m.locked ? 'true' : 'false') + '">' +
+        '<div class="irx-dd-item-left">' +
+          '<div class="irx-dd-item-name">' + esc(m.name) + (m.locked ? ' <span style="font-size:11px;opacity:0.7">🔒</span>' : '') + (isCur ? ' <span style="color:#8298FF">✓</span>' : '') + '</div>' +
+          '<div class="irx-dd-item-meta">' + esc(m.provider) + ' · ' + esc(m.ctx) + (m.tier !== 'FREE' ? ' · <span class="irx-dd-tier-tag">' + esc(m.tier) + '</span>' : '') + '</div>' +
+        '</div>' +
+        '<div class="irx-dd-cost">' + esc(m.cost) + '</div>' +
+      '</div>';
+    });
+  });
+  html += '<div class="irx-dd-footer">Plans above FREE unlock the models marked with a lock.</div>';
+  menu.innerHTML = html;
+
+  menu.querySelectorAll(".irx-dd-item").forEach(function(el) {
+    el.onclick = function() {
+      if(el.dataset.locked === "true") {
+        showPlansAndCredits();
+        return;
+      }
+      var mId = el.dataset.model;
+      if(cur) cur.model = mId;
+      if(user) user.defaultModel = mId;
+      var nameEl = $("irx-current-model-name");
+      if(nameEl) nameEl.textContent = el.querySelector(".irx-dd-item-name").textContent.replace(/🔒|✓/g, "").trim();
+      menu.classList.remove("open");
+      renderModelMenu();
+      toast("Selected model: " + mId);
+    };
+  });
+}
+
+function renderThinkingMenu() {
+  var menu = $("irx-thinking-menu");
+  if(!menu) return;
+  var html = '<div class="irx-dd-group-lbl">THINKING</div>';
+  thinkingLevels.forEach(function(lvl) {
+    var isCur = lvl.id === currentThinkingLevel;
+    html += '<div class="irx-dd-item' + (isCur ? ' active' : '') + '" data-thinking="' + esc(lvl.id) + '">' +
+      '<div class="irx-dd-item-left">' +
+        '<div class="irx-dd-item-name">' + esc(lvl.name) + (isCur ? ' <span style="color:#8298FF">✓</span>' : '') + '</div>' +
+        '<div class="irx-dd-item-desc">' + esc(lvl.desc) + '</div>' +
+      '</div>' +
+    '</div>';
+  });
+  menu.innerHTML = html;
+
+  menu.querySelectorAll(".irx-dd-item").forEach(function(el) {
+    el.onclick = function() {
+      currentThinkingLevel = el.dataset.thinking;
+      var nameEl = $("irx-current-thinking-name");
+      if(nameEl) nameEl.textContent = currentThinkingLevel;
+      menu.classList.remove("open");
+      renderThinkingMenu();
+      toast("Thinking depth set to: " + currentThinkingLevel);
+    };
+  });
+}
+
+/* ==================== 1. SEARCH VIEW ==================== */
+function showSearch() {
+  setActiveNav("nav-search");
+  var html = '<div class="irx-view-page">' +
+    '<div class="irx-view-header">' +
+      '<div>' +
+        '<div class="irx-eyebrow">WORKSPACE</div>' +
+        '<h1 class="irx-title">Search</h1>' +
+        '<p class="irx-sub">Search your conversations, artifacts, projects and files. Only your own records are queried.</p>' +
+      '</div>' +
+      '<button class="irx-btn-sec" onclick="closePv()">✕ Close</button>' +
+    '</div>' +
+    '<div class="irx-search-giant-box">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>' +
+      '<input id="giant-search-input" type="search" placeholder="Search everything..." autofocus>' +
+    '</div>' +
+    '<div id="giant-search-results">' +
+      '<p style="color:#7E8BA4;font-size:13px">Type at least two characters.</p>' +
+    '</div>' +
+  '</div>';
+
+  pvOpen(html);
+
+  var inp = $("giant-search-input");
+  var res = $("giant-search-results");
+  if(inp && res) {
+    inp.oninput = function() {
+      var q = inp.value.trim().toLowerCase();
+      if(q.length < 2) {
+        res.innerHTML = '<p style="color:#7E8BA4;font-size:13px">Type at least two characters.</p>';
+        return;
+      }
+      var matchedChats = chats.filter(function(c) {
+        return (c.title && c.title.toLowerCase().includes(q)) || (c.msgs && c.msgs.some(function(m){ return String(m.content||"").toLowerCase().includes(q); }));
+      });
+      if(!matchedChats.length) {
+        res.innerHTML = '<div class="irx-empty-box"><div class="irx-empty-h">No results found</div><p class="irx-empty-p">No conversations, files or artifacts match "' + esc(q) + '".</p></div>';
+        return;
+      }
+      res.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px">' + matchedChats.map(function(c){
+        var snippet = (c.msgs && c.msgs.length ? c.msgs[c.msgs.length-1].content : "").slice(0, 100);
+        return '<div class="irx-hero-card" onclick="closePv();cur=chats.filter(function(x){return x.id===\\'' + esc(c.id) + '\\'})[0];render()">' +
+          '<div style="font-weight:700;color:#FFF;font-size:14px;margin-bottom:4px">' + esc(c.title || "Untitled") + '</div>' +
+          '<div style="color:#7E8BA4;font-size:12px">' + esc(snippet) + '</div>' +
+        '</div>';
+      }).join("") + '</div>';
+    };
+  }
+}
+
+/* ==================== 2. HISTORY VIEW ==================== */
+function showHistory() {
+  setActiveNav("nav-history");
+  var html = '<div class="irx-view-page">' +
+    '<div class="irx-view-header">' +
+      '<div>' +
+        '<div class="irx-eyebrow">CONVERSATIONS</div>' +
+        '<h1 class="irx-title">History</h1>' +
+        '<p class="irx-sub">Every conversation is stored server-side and only visible to you.</p>' +
+      '</div>' +
+      '<div style="display:flex;gap:10px">' +
+        '<button class="irx-btn-pri" id="hist-new-btn">+ New chat</button>' +
+        '<button class="irx-btn-sec" onclick="closePv()">✕ Close</button>' +
+      '</div>' +
+    '</div>' +
+    '<div style="margin-bottom:20px;max-width:380px">' +
+      '<input id="hist-search-input" style="width:100%;padding:10px 14px;border:1px solid rgba(255,255,255,0.08);border-radius:8px;background:#0D1326;color:#FFF;font-family:inherit;font-size:13px" placeholder="Search titles...">' +
+    '</div>' +
+    '<div id="history-items-list" style="display:flex;flex-direction:column;gap:1px;border-top:1px solid rgba(255,255,255,0.06)"></div>' +
+  '</div>';
+
+  pvOpen(html);
+
+  $("hist-new-btn").onclick = function() {
+    closePv();
+    newChat();
+  };
+
+  function drawHist(filter) {
+    var listEl = $("history-items-list");
+    if(!listEl) return;
+    var filtered = chats.filter(function(c) {
+      if(!filter) return true;
+      return (c.title||"").toLowerCase().includes(filter.toLowerCase());
+    });
+    if(!filtered.length) {
+      listEl.innerHTML = '<div class="irx-empty-box"><div class="irx-empty-h">No conversations yet</div><p class="irx-empty-p">Start a conversation with Photon and your full history will show here.</p></div>';
+      return;
+    }
+    listEl.innerHTML = filtered.map(function(c) {
+      var snippet = (c.msgs && c.msgs.length ? c.msgs[c.msgs.length-1].content : "No messages yet").slice(0, 90);
+      var timeStr = ago(c.updatedAt || c.t || +c.id.slice(1) || Date.now());
+      return '<div class="irx-field-row" style="padding:14px 10px;cursor:pointer;transition:background .15s" onclick="closePv();cur=chats.filter(function(x){return x.id===\\'' + esc(c.id) + '\\'})[0];render()">' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="color:#FFF;font-weight:600;font-size:13.5px;margin-bottom:3px">' + esc(c.title || "Untitled conversation") + '</div>' +
+          '<div style="color:#7E8BA4;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(snippet) + '</div>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:12px">' +
+          '<span style="color:#7E8BA4;font-size:11.5px">' + esc(timeStr) + '</span>' +
+          '<button style="background:none;border:0;color:#7E8BA4;font-size:16px;cursor:pointer" onclick="event.stopPropagation();chatMenu(chats.filter(function(x){return x.id===\\'' + esc(c.id) + '\\'})[0],this)">⋯</button>' +
+        '</div>' +
+      '</div>';
+    }).join("");
+  }
+
+  drawHist("");
+  var inp = $("hist-search-input");
+  if(inp) {
+    inp.oninput = function() {
+      drawHist(inp.value.trim());
+    };
+  }
+}
+
+/* ==================== 3. PROJECTS VIEW ==================== */
+function showProjects() {
+  setActiveNav("proj");
+  var html = '<div class="irx-view-page">' +
+    '<div class="irx-view-header">' +
+      '<div>' +
+        '<div class="irx-eyebrow">WORKSPACE</div>' +
+        '<h1 class="irx-title">Projects</h1>' +
+        '<p class="irx-sub">Group conversations, files and artifacts under persistent instructions the assistant follows.</p>' +
+      '</div>' +
+      '<div style="display:flex;gap:10px">' +
+        '<button class="irx-btn-pri" id="proj-new-btn">+ New project</button>' +
+        '<button class="irx-btn-sec" onclick="closePv()">✕ Close</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="irx-empty-box">' +
+      '<div class="irx-empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/><path d="M8 11v3M12 11v3M16 11v3"/></svg></div>' +
+      '<div class="irx-empty-h">No projects yet</div>' +
+      '<p class="irx-empty-p">Projects keep a long-running body of work together — its instructions, chats and files.</p>' +
+    '</div>' +
+  '</div>';
+
+  pvOpen(html);
+
+  $("proj-new-btn").onclick = function() {
+    modal('<h2>Create a project</h2><p class="s">Keep instructions and files together.</p><label>Name</label><input id="pn" placeholder="e.g. My Next.js SaaS" maxlength="60"><label>Instructions (optional)</label><textarea id="pd" rows="3" placeholder="Custom instructions for Photon..."></textarea><div class="gbt2"><button class="pv-btn ghost" id="pcx">Cancel</button><button class="pv-btn" id="pgo">Create</button></div>', function(close) {
+      $("pcx").onclick = close;
+      $("pgo").onclick = function() {
+        var nm = $("pn").value.trim();
+        if(!nm) return;
+        var p = { id: "p" + Date.now(), name: nm, desc: $("pd").value.trim(), t: Date.now() };
+        projs.unshift(p);
+        saveProj();
+        close();
+        showProject(p.id);
+      };
+    });
+  };
+}
+
+/* ==================== 4. LIBRARY VIEW ==================== */
+function showLibrary() {
+  setActiveNav("nav-library");
+  var html = '<div class="irx-view-page">' +
+    '<div class="irx-view-header">' +
+      '<div>' +
+        '<div class="irx-eyebrow">PERSONAL STORAGE</div>' +
+        '<h1 class="irx-title">Library</h1>' +
+        '<p class="irx-sub">Every file you upload or generate, stored privately and visible only to you.</p>' +
+      '</div>' +
+      '<div style="display:flex;gap:10px">' +
+        '<button class="irx-btn-pri" id="lib-upload-btn">⤒ Upload</button>' +
+        '<button class="irx-btn-sec" onclick="closePv()">✕ Close</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="irx-pills-row">' +
+      '<button class="irx-filter-pill active">All</button>' +
+      '<button class="irx-filter-pill">Documents</button>' +
+      '<button class="irx-filter-pill">Images</button>' +
+      '<button class="irx-filter-pill">Video</button>' +
+      '<button class="irx-filter-pill">Audio</button>' +
+      '<button class="irx-filter-pill">Archives</button>' +
+      '<div style="margin-left:auto;display:flex;align-items:center;gap:10px">' +
+        '<input style="background:#0D1326;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:6px 12px;color:#FFF;font-family:inherit;font-size:12px" placeholder="Search files...">' +
+        '<span style="color:#7E8BA4;font-size:11px">0 files · —</span>' +
+      '</div>' +
+    '</div>' +
+    '<div class="irx-empty-box">' +
+      '<div class="irx-empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m16 6 4 14M12 6v14M8 8v12M4 4v16"/></svg></div>' +
+      '<div class="irx-empty-h">Nothing stored yet</div>' +
+      '<p class="irx-empty-p">Upload a document or image, or generate something in the Studio — it lands here.</p>' +
+    '</div>' +
+  '</div>';
+
+  pvOpen(html);
+
+  $("lib-upload-btn").onclick = function() {
+    $("chat-file-input").click();
+  };
+}
+
+/* ==================== 5. STUDIO VIEW ==================== */
+function showStudio() {
+  setActiveNav("nav-studio");
+  var html = '<div class="irx-view-page">' +
+    '<div class="irx-view-header">' +
+      '<div>' +
+        '<div class="irx-eyebrow">CREATIVE</div>' +
+        '<h1 class="irx-title">Studio</h1>' +
+        '<p class="irx-sub">Text to image, references and edits.</p>' +
+      '</div>' +
+      '<button class="irx-btn-sec" onclick="closePv()">✕ Close</button>' +
+    '</div>' +
+    '<div class="irx-pills-row" style="background:#0D1326;padding:4px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);width:fit-content">' +
+      '<button class="irx-filter-pill active" id="st-img">Image Studio</button>' +
+      '<button class="irx-filter-pill" id="st-vid">Video Studio</button>' +
+      '<button class="irx-filter-pill" id="st-voc">Voice Studio</button>' +
+      '<button class="irx-filter-pill" id="st-fil">File Studio</button>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:360px 1fr;gap:24px;margin-top:20px">' +
+      '<div class="irx-plan-box" style="padding:20px">' +
+        '<div style="font-size:11px;font-weight:700;color:#7E8BA4;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:8px">MODEL</div>' +
+        '<select style="width:100%;background:#080A11;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:8px 10px;color:#FFF;font-family:inherit;font-size:12.5px;margin-bottom:14px"><option>Imagen 4 · Google · 4c</option><option>Flux Pro · 5c</option></select>' +
+        '<div style="font-size:11px;font-weight:700;color:#7E8BA4;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:8px">PROMPT</div>' +
+        '<textarea id="studio-prompt" style="width:100%;background:#080A11;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:10px;color:#FFF;font-family:inherit;font-size:13px;resize:none;min-height:90px;margin-bottom:14px" placeholder="A brutalist glass tower at dusk, volumetric fog, long lens..."></textarea>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">' +
+          '<div><div style="font-size:10px;font-weight:700;color:#7E8BA4;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:6px">ASPECT RATIO</div><select style="width:100%;background:#080A11;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:7px;color:#FFF;font-family:inherit;font-size:12px"><option>1:1</option><option>16:9</option><option>9:16</option></select></div>' +
+          '<div><div style="font-size:10px;font-weight:700;color:#7E8BA4;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:6px">STYLE</div><input style="width:100%;background:#080A11;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:7px;color:#FFF;font-family:inherit;font-size:12px" value="cinematic, film gra..."></div>' +
+        '</div>' +
+        '<div style="font-size:10px;font-weight:700;color:#7E8BA4;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:6px">REFERENCE IMAGES</div>' +
+        '<div style="width:48px;height:48px;border:1px dashed rgba(255,255,255,0.12);border-radius:8px;display:grid;place-items:center;color:#7E8BA4;cursor:pointer;margin-bottom:18px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>' +
+        '<button class="irx-btn-pri" id="studio-generate-btn" style="width:100%;justify-content:center;padding:11px">✨ Generate · 4 credits</button>' +
+        '<div style="font-size:10.5px;color:#7E8BA4;text-align:center;margin-top:10px">Balance 486 credits · Failed runs are refunded automatically</div>' +
+      '</div>' +
+      '<div class="irx-plan-box" style="padding:20px">' +
+        '<div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:#7E8BA4;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:16px"><span>GENERATION HISTORY</span><span>0 runs</span></div>' +
+        '<div class="irx-empty-box" style="margin-top:40px;border:0;background:transparent">' +
+          '<div class="irx-empty-h" style="font-size:15px">Nothing generated yet</div>' +
+          '<p class="irx-empty-p" style="font-size:12px">Your image runs will be tracked here with their real provider output.</p>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+
+  pvOpen(html);
+
+  $("studio-generate-btn").onclick = function() {
+    var p = $("studio-prompt").value.trim();
+    if(!p) {
+      toast("Please enter an image prompt");
+      return;
+    }
+    closePv();
+    mode = "image";
+    newChat();
+    $("in").value = p;
+    send();
+  };
+}
+
+/* ==================== 6. PLUGINS VIEW ==================== */
+function showPlugins() {
+  setActiveNav("nav-plugins");
+  var pluginCards = [
+    { name: "Research Desk", desc: "Live web research with structured briefs, facts and sources.", tag: "RESEARCH · 1 TOOL" },
+    { name: "Image Forge", desc: "Turn a prompt into a finished image inside chat.", tag: "CREATIVE · 1 TOOL" },
+    { name: "Doc Reader", desc: "Summarise PDFs, documents and spreadsheets you attach.", tag: "PRODUCTIVITY · 1 TOOL" },
+    { name: "Code Auditor", desc: "Line-level defect review with a corrected version.", tag: "ENGINEERING · 1 TOOL" },
+    { name: "Translator", desc: "Tone-preserving translation with ambiguity notes.", tag: "LANGUAGE · 1 TOOL" },
+    { name: "Data Analyst", desc: "Paste a table or dataset and get patterns, outliers and a recommendation.", tag: "ANALYTICS · 1 TOOL" }
+  ];
+
+  var html = '<div class="irx-view-page">' +
+    '<div class="irx-view-header">' +
+      '<div>' +
+        '<div class="irx-eyebrow">EXTENSIONS</div>' +
+        '<h1 class="irx-title">Plugins</h1>' +
+        '<p class="irx-sub">Connect a plugin to grant its tools. Every run executes through a backend function with your credit balance enforced server-side.</p>' +
+      '</div>' +
+      '<button class="irx-btn-sec" onclick="closePv()">✕ Close</button>' +
+    '</div>' +
+    '<div class="irx-pills-row">' +
+      '<button class="irx-filter-pill active">All</button>' +
+      '<button class="irx-filter-pill">Research</button>' +
+      '<button class="irx-filter-pill">Creative</button>' +
+      '<button class="irx-filter-pill">Productivity</button>' +
+      '<button class="irx-filter-pill">Engineering</button>' +
+      '<button class="irx-filter-pill">Language</button>' +
+      '<button class="irx-filter-pill">Analytics</button>' +
+      '<input style="margin-left:auto;background:#0D1326;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:6px 12px;color:#FFF;font-family:inherit;font-size:12px" placeholder="Search plugins..">' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 340px;gap:24px;margin-top:16px">' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">' +
+        pluginCards.map(function(pc){
+          return '<div class="irx-plan-box" style="padding:18px">' +
+            '<div style="font-size:18px;color:#8298FF;margin-bottom:8px">🔌</div>' +
+            '<div style="font-size:15px;font-weight:700;color:#FFF;margin-bottom:4px">' + esc(pc.name) + '</div>' +
+            '<div style="font-size:12px;color:#7E8BA4;line-height:1.45;margin-bottom:12px;min-height:34px">' + esc(pc.desc) + '</div>' +
+            '<div style="font-size:10px;color:#7E8BA4;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:14px">' + esc(pc.tag) + '</div>' +
+            '<button class="irx-btn-pri" style="width:100%;justify-content:center;padding:8px" onclick="this.textContent = this.textContent===\\'Connect\\'?\\'Connected ✓\\':\\'Connect\\';toast(\\'' + esc(pc.name) + ' status updated\\')">Connect</button>' +
+          '</div>';
+        }).join("") +
+      '</div>' +
+      '<div class="irx-plan-box" style="padding:24px;border:1px dashed rgba(255,255,255,0.08);background:transparent;display:grid;place-items:center;text-align:center;color:#7E8BA4;font-size:13px">' +
+        'Connect a plugin and open it to run its tools here.' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+
+  pvOpen(html);
+}
+
+/* ==================== 7. PLANS AND CREDITS VIEW ==================== */
+function showPlansAndCredits() {
+  setActiveNav("nav-credits");
+  var html = '<div class="irx-view-page">' +
+    '<div class="irx-view-header">' +
+      '<div>' +
+        '<div class="irx-eyebrow">SUBSCRIPTION</div>' +
+        '<h1 class="irx-title">Plans and credits</h1>' +
+        '<p class="irx-sub">Every operation is priced in credits, deducted server-side. Unused monthly credits refresh on the first of the month.</p>' +
+      '</div>' +
+      '<button class="irx-btn-sec" onclick="closePv()">✕ Close</button>' +
+    '</div>' +
+    '<div class="irx-stats-bar">' +
+      '<div class="irx-stat-card"><div class="irx-stat-lbl">BALANCE</div><div class="irx-stat-val">486</div></div>' +
+      '<div class="irx-stat-card"><div class="irx-stat-lbl">MONTHLY ALLOCATION</div><div class="irx-stat-val">500</div></div>' +
+      '<div class="irx-stat-card"><div class="irx-stat-lbl">SPENT THIS PERIOD</div><div class="irx-stat-val">14</div></div>' +
+      '<div class="irx-stat-card"><div class="irx-stat-lbl">CURRENT PLAN</div><div class="irx-stat-val" style="color:#8298FF">FREE</div></div>' +
+    '</div>' +
+    '<div class="irx-plans-grid">' +
+      '<div class="irx-plan-box cur">' +
+        '<div class="irx-plan-badge">CURRENT</div>' +
+        '<div class="irx-eyebrow" style="margin-bottom:12px">FREE</div>' +
+        '<div class="irx-plan-name">Free</div>' +
+        '<div class="irx-plan-desc">Explore IRIVEX with the everyday models.</div>' +
+        '<ul class="irx-plan-features">' +
+          '<li>500 credits every month</li>' +
+          '<li>Everyday chat and reasoning models</li>' +
+          '<li>Image studio — 4 credits per image</li>' +
+          '<li>Projects, library and artifacts</li>' +
+          '<li>200 MB private storage</li>' +
+        '</ul>' +
+        '<button class="irx-btn-sec" disabled style="width:100%;justify-content:center;opacity:0.6">Your plan</button>' +
+      '</div>' +
+      '<div class="irx-plan-box">' +
+        '<div class="irx-eyebrow" style="margin-bottom:12px">PRO</div>' +
+        '<div class="irx-plan-name">₹1,499 <span style="font-size:12px;color:#7E8BA4;font-weight:400">/month</span></div>' +
+        '<div class="irx-plan-desc">For daily building, research and creation.</div>' +
+        '<ul class="irx-plan-features">' +
+          '<li>8,000 credits every month</li>' +
+          '<li>Premium reasoning and coding models</li>' +
+          '<li>Extended thinking levels</li>' +
+          '<li>Video studio access</li>' +
+          '<li>Projects with persistent context</li>' +
+          '<li>5 GB private storage</li>' +
+        '</ul>' +
+        '<button class="irx-btn-pri" style="width:100%;justify-content:center" onclick="showPlans()">Upgrade ↗</button>' +
+      '</div>' +
+      '<div class="irx-plan-box">' +
+        '<div class="irx-eyebrow" style="margin-bottom:12px">MAX</div>' +
+        '<div class="irx-plan-name">₹3,999 <span style="font-size:12px;color:#7E8BA4;font-weight:400">/month</span></div>' +
+        '<div class="irx-plan-desc">Flagship models with the highest limits.</div>' +
+        '<ul class="irx-plan-features">' +
+          '<li>30,000 credits every month</li>' +
+          '<li>Every model, including flagship reasoning</li>' +
+          '<li>Maximum thinking level</li>' +
+          '<li>Highest image and video limits</li>' +
+          '<li>Advanced coding workspace</li>' +
+          '<li>25 GB private storage</li>' +
+        '</ul>' +
+        '<button class="irx-btn-pri" style="width:100%;justify-content:center" onclick="showPlans()">Upgrade ↗</button>' +
+      '</div>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">' +
+      '<div class="irx-plan-box"><div class="irx-eyebrow">CREDIT ACTIVITY</div><p style="color:#7E8BA4;font-size:13px;text-align:center;padding:32px 0">No credit movements yet.</p></div>' +
+      '<div class="irx-plan-box"><div class="irx-eyebrow">BILLING HISTORY</div><p style="color:#7E8BA4;font-size:13px;text-align:center;padding:32px 0">No invoices yet — you are on the free plan.</p></div>' +
+    '</div>' +
+  '</div>';
+
+  pvOpen(html);
+}
+
+/* ==================== 8. SETTINGS VIEW ==================== */
+function showSettings() {
+  setActiveNav("profile-nav");
+  var uName = (user && (user.fullName || user.email.split("@")[0])) || "Harendra Teli";
+  var uEmail = (user && user.email) || "sah.harendra2010@gmail.com";
+  var html = '<div class="irx-view-page">' +
+    '<div class="irx-view-header">' +
+      '<div>' +
+        '<div class="irx-eyebrow">ACCOUNT</div>' +
+        '<h1 class="irx-title">Settings</h1>' +
+        '<p class="irx-sub">Your profile, plan and workspace controls.</p>' +
+      '</div>' +
+      '<button class="irx-btn-sec" onclick="closePv()">✕ Close</button>' +
+    '</div>' +
+    '<div class="irx-settings-grid">' +
+      '<div class="irx-settings-box">' +
+        '<div class="irx-box-tag">PROFILE</div>' +
+        '<label style="display:block;font-size:12px;color:#7E8BA4;margin-bottom:6px">Full name</label>' +
+        '<input id="irx-set-name" value="' + esc(uName) + '" style="width:100%;background:#080A11;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:9px 12px;color:#FFF;font-family:inherit;font-size:13px;margin-bottom:14px">' +
+        '<div class="irx-field-row"><span class="irx-field-lbl">Email</span><span class="irx-field-val">' + esc(uEmail) + '</span></div>' +
+        '<div class="irx-field-row"><span class="irx-field-lbl">Role</span><span class="irx-field-val">USER</span></div>' +
+        '<button class="irx-btn-pri" style="margin-top:18px;width:100%;justify-content:center" onclick="toast(\\'Profile updated successfully!\\')">💾 Save profile</button>' +
+      '</div>' +
+      '<div class="irx-settings-box">' +
+        '<div class="irx-box-tag">PLAN AND USAGE</div>' +
+        '<div class="irx-field-row"><span class="irx-field-lbl">Plan</span><span class="irx-field-val" style="color:#8298FF">FREE</span></div>' +
+        '<div class="irx-field-row"><span class="irx-field-lbl">Credit balance</span><span class="irx-field-val">486</span></div>' +
+        '<div class="irx-field-row"><span class="irx-field-lbl">Monthly allocation</span><span class="irx-field-val">500</span></div>' +
+        '<div class="irx-field-row"><span class="irx-field-lbl">Lifetime spend</span><span class="irx-field-val">14</span></div>' +
+        '<div class="irx-field-row"><span class="irx-field-lbl">Library</span><span class="irx-field-val">0 files</span></div>' +
+        '<div style="display:flex;gap:10px;margin-top:18px">' +
+          '<button class="irx-btn-sec" style="flex:1;justify-content:center" onclick="showPlansAndCredits()">Plans and billing</button>' +
+          '<button class="irx-btn-sec" style="flex:1;justify-content:center" onclick="toast(\\'Two-factor authentication is active.\\')">🛡 Two-factor</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="irx-settings-box">' +
+      '<div class="irx-box-tag">SESSION</div>' +
+      '<p style="color:#7E8BA4;font-size:13px;margin:0 0 16px">Sessions are issued by the platform as secure, HTTP-only cookies. Signing out invalidates this browser\\'s session.</p>' +
+      '<button class="irx-btn-sec" style="color:#FF7B7B;border-color:rgba(255,123,123,0.3)" onclick="out()">[→ Sign out</button>' +
+    '</div>' +
+  '</div>';
+
+  pvOpen(html);
+}
+
+function setActiveNav(navId) {
+  document.querySelectorAll(".irx-nav-item").forEach(function(el){ el.classList.remove("active"); });
+  var target = $(navId);
+  if(target) target.classList.add("active");
+}
+`;
+
+
 function setupIrxEvents(){
+  setupIrxSuite();
   setupIrxSidebarEvents();
   var sNav=$("studioNav");
   if(sNav){
