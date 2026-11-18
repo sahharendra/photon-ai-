@@ -2391,9 +2391,9 @@ textarea::placeholder{color:var(--mute)}
 }
 
 #photon-loader.loaded {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 .photon-loader-pulse {
@@ -2411,6 +2411,301 @@ textarea::placeholder{color:var(--mute)}
   font-weight: 700;
   letter-spacing: 0.22em;
   color: #FFFFFF;
+}
+
+
+/* ===== PHOTON SEARCH & HISTORY VIEWS (Screenshots 1 & 2) ===== */
+.photon-view-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 24px 60px;
+  color: #FFFFFF;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.photon-view-header {
+  margin-bottom: 24px;
+}
+
+.photon-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #6C7A96;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.photon-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin: 0 0 8px;
+  letter-spacing: -0.02em;
+}
+
+.photon-sub {
+  font-size: 13px;
+  color: #7E8BA4;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Search Box (Screenshot 1) */
+.photon-search-box-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #0B0E18;
+  border: 1px solid rgba(130, 152, 255, 0.28);
+  border-radius: 8px;
+  padding: 0 14px;
+  height: 46px;
+  max-width: 580px;
+  margin-bottom: 20px;
+  box-shadow: 0 0 0 1px rgba(130, 152, 255, 0.1);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.photon-search-box-wrap:focus-within {
+  border-color: #8298FF;
+  box-shadow: 0 0 0 2px rgba(130, 152, 255, 0.25);
+}
+
+.photon-search-ico {
+  width: 17px;
+  height: 17px;
+  color: #7E8BA4;
+  flex-shrink: 0;
+}
+
+.photon-search-box-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #FFFFFF;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13.5px;
+}
+
+.photon-search-box-input::placeholder {
+  color: #55627A;
+}
+
+.photon-search-prompt {
+  font-size: 13px;
+  color: #7E8BA4;
+  margin: 0;
+}
+
+.photon-search-results {
+  margin-top: 10px;
+}
+
+.photon-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 720px;
+}
+
+.photon-cat-label {
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  color: #6C7A96;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.photon-search-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: #0D111E;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.photon-search-row:hover {
+  background: #13182B;
+  border-color: rgba(130, 152, 255, 0.3);
+}
+
+.photon-search-row-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.photon-search-row-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.photon-search-row-sub {
+  font-size: 12px;
+  color: #7E8BA4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.photon-search-row-badge {
+  font-size: 11px;
+  color: #7E8BA4;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.photon-search-empty, .photon-history-empty {
+  padding: 32px 20px;
+  background: #0B0E18;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  text-align: center;
+  max-width: 580px;
+}
+
+/* History Page (Screenshot 2) */
+.photon-history-head-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.photon-history-head-left {
+  flex: 1;
+}
+
+.photon-btn-new-chat {
+  background: #8298FF;
+  color: #080A11;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: opacity 0.15s, transform 0.1s;
+  flex-shrink: 0;
+}
+
+.photon-btn-new-chat:hover {
+  opacity: 0.92;
+}
+
+.photon-history-search-wrap {
+  margin-bottom: 24px;
+}
+
+.photon-history-search-input {
+  width: 100%;
+  max-width: 280px;
+  background: #0B0E18;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: #FFFFFF;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.photon-history-search-input:focus {
+  border-color: rgba(130, 152, 255, 0.5);
+}
+
+.photon-history-search-input::placeholder {
+  color: #55627A;
+}
+
+.photon-history-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.photon-hist-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.photon-hist-row:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.photon-hist-row-info {
+  flex: 1;
+  min-width: 0;
+  padding-right: 20px;
+}
+
+.photon-hist-row-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.photon-hist-row-sub {
+  font-size: 12.5px;
+  color: #7E8BA4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.photon-hist-row-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.photon-hist-row-time {
+  font-size: 12px;
+  color: #7E8BA4;
+}
+
+.photon-hist-dots-btn {
+  background: transparent;
+  border: none;
+  color: #7E8BA4;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+  line-height: 1;
+}
+
+.photon-hist-dots-btn:hover {
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 </style>
@@ -2441,6 +2736,25 @@ textarea::placeholder{color:var(--mute)}
   </div>
   <div class="photon-loader-text">PHOTON</div>
 </div>
+<script>
+(function() {
+  function dismissPhotonLoader() {
+    var l = document.getElementById("photon-loader");
+    if(l && !l.classList.contains("loaded")) {
+      l.classList.add("loaded");
+      setTimeout(function(){ try { if(l && l.parentNode) l.parentNode.removeChild(l); } catch(e){} }, 400);
+    }
+  }
+  window.hidePhotonLoader = dismissPhotonLoader;
+  if (document.readyState === "complete" || document.readyState === "interactive") {
+    setTimeout(dismissPhotonLoader, 300);
+  } else {
+    window.addEventListener("DOMContentLoaded", function(){ setTimeout(dismissPhotonLoader, 200); });
+    window.addEventListener("load", function(){ setTimeout(dismissPhotonLoader, 100); });
+  }
+  setTimeout(dismissPhotonLoader, 800);
+})();
+</script>
 
 <aside id="side">
   <div class="irx-brand-row">
@@ -4654,24 +4968,39 @@ function renderThinkingMenu() {
   });
 }
 
+
+function formatPhotonRelativeTime(timestamp) {
+  if(!timestamp) return "1d ago";
+  var time = typeof timestamp === "number" ? timestamp : new Date(timestamp).getTime();
+  if(isNaN(time)) return "1d ago";
+  var diff = Math.floor((Date.now() - time) / 1000);
+  if(diff < 60) return "just now";
+  var m = Math.floor(diff / 60);
+  if(m < 60) return m + "m ago";
+  var h = Math.floor(m / 60);
+  if(h < 24) return h + "h ago";
+  var d = Math.floor(h / 24);
+  if(d < 30) return d + "d ago";
+  var mo = Math.floor(d / 30);
+  if(mo < 12) return mo + "mo ago";
+  return Math.floor(mo / 12) + "y ago";
+}
+
 /* ==================== 1. SEARCH VIEW ==================== */
 function showSearch() {
   setActiveNav("nav-search");
-  var html = '<div class="irx-view-page">' +
-    '<div class="irx-view-header">' +
-      '<div>' +
-        '<div class="irx-eyebrow">WORKSPACE</div>' +
-        '<h1 class="irx-title">Search</h1>' +
-        '<p class="irx-sub">Search your conversations, artifacts, projects and files. Only your own records are queried.</p>' +
-      '</div>' +
-      '<button class="irx-btn-sec" onclick="closePv()">✕ Close</button>' +
+  var html = '<div class="photon-view-page">' +
+    '<div class="photon-view-header">' +
+      '<div class="photon-eyebrow">WORKSPACE</div>' +
+      '<h1 class="photon-title">Search</h1>' +
+      '<p class="photon-sub">Search your conversations, artifacts, projects and files. Only your own records are queried.</p>' +
     '</div>' +
-    '<div class="irx-search-giant-box">' +
-      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>' +
-      '<input id="giant-search-input" type="search" placeholder="Search everything..." autofocus>' +
+    '<div class="photon-search-box-wrap">' +
+      '<svg class="photon-search-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>' +
+      '<input id="giant-search-input" class="photon-search-box-input" type="search" placeholder="Search everything..." autocomplete="off" autofocus>' +
     '</div>' +
-    '<div id="giant-search-results">' +
-      '<p style="color:#7E8BA4;font-size:13px">Type at least two characters.</p>' +
+    '<div id="giant-search-results" class="photon-search-results">' +
+      '<p class="photon-search-prompt">Type at least two characters.</p>' +
     '</div>' +
   '</div>';
 
@@ -4680,29 +5009,101 @@ function showSearch() {
   var inp = $("giant-search-input");
   var res = $("giant-search-results");
   if(inp && res) {
+    var searchTimer = null;
     inp.oninput = function() {
-      var q = inp.value.trim().toLowerCase();
-      if(q.length < 2) {
-        res.innerHTML = '<p style="color:#7E8BA4;font-size:13px">Type at least two characters.</p>';
-        return;
-      }
-      var matchedChats = (typeof chats !== "undefined" && Array.isArray(chats)) ? chats.filter(function(c) {
-        return (c.title && c.title.toLowerCase().indexOf(q) !== -1) || (c.msgs && c.msgs.some(function(m){ return String(m.content||"").toLowerCase().indexOf(q) !== -1; }));
-      }) : [];
-      if(!matchedChats.length) {
-        res.innerHTML = '<div class="irx-empty-box"><div class="irx-empty-h">No results found</div><p class="irx-empty-p">No conversations, files or artifacts match "' + esc(q) + '".</p></div>';
-        return;
-      }
-      var itemsHtml = '<div style="display:flex;flex-direction:column;gap:8px">';
-      matchedChats.forEach(function(c){
-        var snippet = (c.msgs && c.msgs.length ? c.msgs[c.msgs.length-1].content : "").slice(0, 100);
-        itemsHtml += '<div class="irx-hero-card" onclick="openSearchChat(&quot;' + esc(c.id) + '&quot;)">' +
-          '<div style="font-weight:700;color:#FFF;font-size:14px;margin-bottom:4px">' + esc(c.title || "Untitled") + '</div>' +
-          '<div style="color:#7E8BA4;font-size:12px">' + esc(snippet) + '</div>' +
-        '</div>';
-      });
-      itemsHtml += '</div>';
-      res.innerHTML = itemsHtml;
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(function() {
+        var q = inp.value.trim().toLowerCase();
+        if(q.length < 2) {
+          res.innerHTML = '<p class="photon-search-prompt">Type at least two characters.</p>';
+          return;
+        }
+
+        // Search chats
+        var matchedChats = (typeof chats !== "undefined" && Array.isArray(chats)) ? chats.filter(function(c) {
+          if(!c) return false;
+          var inTitle = c.title && c.title.toLowerCase().indexOf(q) !== -1;
+          var inMsgs = c.msgs && c.msgs.some(function(m){ return String(m.content||"").toLowerCase().indexOf(q) !== -1; });
+          return inTitle || inMsgs;
+        }) : [];
+
+        // Search artifacts
+        var allArts = (typeof artifactItems !== "undefined" && Array.isArray(artifactItems) && artifactItems.length) ?
+          artifactItems : (typeof collectArtifacts === "function" ? collectArtifacts() : []);
+        var matchedArts = allArts.filter(function(a) {
+          if(!a) return false;
+          var inName = a.name && a.name.toLowerCase().indexOf(q) !== -1;
+          var inTitle = a.title && a.title.toLowerCase().indexOf(q) !== -1;
+          var inCode = a.code && String(a.code).toLowerCase().indexOf(q) !== -1;
+          return inName || inTitle || inCode;
+        });
+
+        // Search projects
+        var allProjs = (typeof projs !== "undefined" && Array.isArray(projs)) ? projs : [];
+        var matchedProjs = allProjs.filter(function(p) {
+          if(!p) return false;
+          var inName = p.name && p.name.toLowerCase().indexOf(q) !== -1;
+          var inDesc = p.desc && p.desc.toLowerCase().indexOf(q) !== -1;
+          return inName || inDesc;
+        });
+
+        var total = matchedChats.length + matchedArts.length + matchedProjs.length;
+        if(total === 0) {
+          res.innerHTML = '<div class="photon-search-empty">' +
+            '<div style="font-weight:700;color:#FFFFFF;margin-bottom:6px">No results found</div>' +
+            '<p style="color:#7E8BA4;font-size:13px;margin:0">No conversations, artifacts, or projects match "' + esc(q) + '".</p>' +
+          '</div>';
+          return;
+        }
+
+        var out = '<div class="photon-results-list">';
+
+        if(matchedChats.length) {
+          out += '<div class="photon-cat-label">CONVERSATIONS (' + matchedChats.length + ')</div>';
+          matchedChats.forEach(function(c) {
+            var snippet = (c.msgs && c.msgs.length ? c.msgs[c.msgs.length-1].content : "").slice(0, 110);
+            var timeStr = formatPhotonRelativeTime(c.updatedAt || c.id);
+            out += '<div class="photon-search-row" onclick="openSearchChat(&quot;' + esc(c.id) + '&quot;)">' +
+              '<div class="photon-search-row-main">' +
+                '<div class="photon-search-row-title">' + esc(c.title || "Untitled") + '</div>' +
+                '<div class="photon-search-row-sub">' + esc(snippet || "No messages yet") + '</div>' +
+              '</div>' +
+              '<div class="photon-search-row-badge">Chat · ' + timeStr + '</div>' +
+            '</div>';
+          });
+        }
+
+        if(matchedArts.length) {
+          out += '<div class="photon-cat-label" style="margin-top:14px">ARTIFACTS (' + matchedArts.length + ')</div>';
+          matchedArts.forEach(function(a) {
+            var aTitle = a.title || a.name || "Artifact";
+            var ext = (a.name ? a.name.split(".").pop() : "HTML").toUpperCase();
+            out += '<div class="photon-search-row" onclick="openArtifactViewer(&quot;' + esc(a.id) + '&quot;)">' +
+              '<div class="photon-search-row-main">' +
+                '<div class="photon-search-row-title">' + esc(aTitle) + '</div>' +
+                '<div class="photon-search-row-sub">' + esc(a.name || "artifact.html") + ' · ' + ext + '</div>' +
+              '</div>' +
+              '<div class="photon-search-row-badge" style="color:#8298FF">Artifact</div>' +
+            '</div>';
+          });
+        }
+
+        if(matchedProjs.length) {
+          out += '<div class="photon-cat-label" style="margin-top:14px">PROJECTS (' + matchedProjs.length + ')</div>';
+          matchedProjs.forEach(function(p) {
+            out += '<div class="photon-search-row" onclick="showProject(&quot;' + esc(p.id) + '&quot;)">' +
+              '<div class="photon-search-row-main">' +
+                '<div class="photon-search-row-title">' + esc(p.name || "Untitled Project") + '</div>' +
+                '<div class="photon-search-row-sub">' + esc(p.desc || "No description") + '</div>' +
+              '</div>' +
+              '<div class="photon-search-row-badge" style="color:#A5B4FC">Project</div>' +
+            '</div>';
+          });
+        }
+
+        out += '</div>';
+        res.innerHTML = out;
+      }, 150);
     };
   }
 }
@@ -4710,38 +5111,87 @@ function showSearch() {
 /* ==================== 2. HISTORY VIEW ==================== */
 function showHistory() {
   setActiveNav("nav-history");
-  var html = '<div class="irx-view-page">' +
-    '<div class="irx-view-header">' +
-      '<div>' +
-        '<div class="irx-eyebrow">CONVERSATIONS</div>' +
-        '<h1 class="irx-title">History</h1>' +
-        '<p class="irx-sub">Review, search and resume your past chats across all AI models.</p>' +
+  var html = '<div class="photon-view-page">' +
+    '<div class="photon-history-head-row">' +
+      '<div class="photon-history-head-left">' +
+        '<div class="photon-eyebrow">CONVERSATIONS</div>' +
+        '<h1 class="photon-title">History</h1>' +
+        '<p class="photon-sub">Every conversation is stored server-side and only visible to you.</p>' +
       '</div>' +
-      '<button class="irx-btn-sec" onclick="closePv()">✕ Close</button>' +
+      '<button class="photon-btn-new-chat" id="hist-new-chat-btn" type="button">New chat</button>' +
     '</div>' +
-    '<div id="history-list" style="display:flex;flex-direction:column;gap:8px;margin-top:10px">';
+    '<div class="photon-history-search-wrap">' +
+      '<input id="hist-filter-input" class="photon-history-search-input" type="search" placeholder="Search titles..." autocomplete="off">' +
+    '</div>' +
+    '<div id="photon-history-list" class="photon-history-list"></div>' +
+  '</div>';
 
-  var allChats = (typeof chats !== "undefined" && Array.isArray(chats)) ? chats.filter(function(c){ return c.msgs && c.msgs.length; }) : [];
-  if(!allChats.length) {
-    html += '<div class="irx-empty-box"><div class="irx-empty-h">No conversation history</div><p class="irx-empty-p">Start a chat with Photon to build history.</p></div>';
-  } else {
+  pvOpen(html);
+
+  var newBtn = $("hist-new-chat-btn");
+  if(newBtn) {
+    newBtn.onclick = function() {
+      closePv();
+      if(typeof cur !== "undefined") {
+        cur = { id: "c" + Date.now(), title: "New chat", msgs: [] };
+        if(typeof chats !== "undefined") chats.unshift(cur);
+        if(typeof save === "function") save();
+        if(typeof render === "function") render();
+      }
+      var inp = $("in");
+      if(inp) { inp.value = ""; inp.focus(); }
+    };
+  }
+
+  function renderHistoryList(filterQuery) {
+    var listEl = $("photon-history-list");
+    if(!listEl) return;
+    var allChats = (typeof chats !== "undefined" && Array.isArray(chats)) ? chats.filter(function(c){
+      return c && c.msgs && c.msgs.length;
+    }) : [];
+
+    if(filterQuery) {
+      var fq = filterQuery.toLowerCase();
+      allChats = allChats.filter(function(c){
+        return (c.title && c.title.toLowerCase().indexOf(fq) !== -1) ||
+               (c.msgs && c.msgs.some(function(m){ return String(m.content||"").toLowerCase().indexOf(fq) !== -1; }));
+      });
+    }
+
+    if(!allChats.length) {
+      listEl.innerHTML = '<div class="photon-history-empty">' +
+        '<div style="font-weight:700;color:#FFFFFF;margin-bottom:6px">' + (filterQuery ? 'No matching conversations' : 'No conversation history') + '</div>' +
+        '<p style="color:#7E8BA4;font-size:13px;margin:0">' + (filterQuery ? 'Try a different search term.' : 'Start a chat with Photon to build history.') + '</p>' +
+      '</div>';
+      return;
+    }
+
+    var listHtml = '';
     allChats.forEach(function(c){
-      var snippet = (c.msgs && c.msgs.length ? c.msgs[c.msgs.length-1].content : "").slice(0, 120);
-      var count = c.msgs.length;
-      html += '<div class="irx-field-row" style="padding:14px 10px;cursor:pointer;transition:background .15s" onclick="openHistoryChat(&quot;' + esc(c.id) + '&quot;)">' +
-        '<div style="flex:1;min-width:0">' +
-          '<div style="font-size:14.5px;font-weight:700;color:#FFFFFF;margin-bottom:4px">' + esc(c.title || "Untitled") + '</div>' +
-          '<div style="font-size:12px;color:#7E8BA4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(snippet) + '</div>' +
+      var snippet = (c.msgs && c.msgs.length ? c.msgs[c.msgs.length-1].content : "").slice(0, 110);
+      var timeStr = formatPhotonRelativeTime(c.updatedAt || c.id);
+      listHtml += '<div class="photon-hist-row" onclick="openHistoryChat(&quot;' + esc(c.id) + '&quot;)">' +
+        '<div class="photon-hist-row-info">' +
+          '<div class="photon-hist-row-title">' + esc(c.title || "Untitled") + '</div>' +
+          '<div class="photon-hist-row-sub">' + esc(snippet || "No messages") + '</div>' +
         '</div>' +
-        '<div style="display:flex;align-items:center;gap:10px">' +
-          '<span style="font-family:monospace;font-size:11px;color:#8298FF">' + count + ' msg' + (count > 1 ? 's' : '') + '</span>' +
-          '<button style="background:none;border:0;color:#7E8BA4;font-size:16px;cursor:pointer" onclick="openChatMenuFromHistory(event, &quot;' + esc(c.id) + '&quot;, this)">⋯</button>' +
+        '<div class="photon-hist-row-meta">' +
+          '<span class="photon-hist-row-time">' + timeStr + '</span>' +
+          '<button class="photon-hist-dots-btn" type="button" aria-label="Conversation actions" onclick="openChatMenuFromHistory(event, &quot;' + esc(c.id) + '&quot;, this)">⋯</button>' +
         '</div>' +
       '</div>';
     });
+    listEl.innerHTML = listHtml;
   }
-  html += '</div></div>';
-  pvOpen(html);
+
+  renderHistoryList("");
+
+  var filterInp = $("hist-filter-input");
+  if(filterInp) {
+    filterInp.oninput = function() {
+      renderHistoryList(filterInp.value.trim());
+    };
+  }
 }
 
 /* ==================== 3. PROJECTS VIEW ==================== */
@@ -4828,39 +5278,10 @@ function showLibrary() {
 }
 
 /* ==================== 5. ARTIFACTS VIEW ==================== */
-function showArtifacts() {
+function showArtifactsViewWrapper() {
   setActiveNav("art");
-  if(typeof window.renderArtifactsWorkspace === "function") {
-    window.renderArtifactsWorkspace();
-    return;
-  }
-  var html = '<div class="irx-view-page">' +
-    '<div class="irx-view-header">' +
-      '<div>' +
-        '<div class="irx-eyebrow">WORKSPACE</div>' +
-        '<h1 class="irx-title">Artifacts</h1>' +
-        '<p class="irx-sub">Websites built from a prompt. Generate, edit the files, preview, then publish to a shareable link.</p>' +
-      '</div>' +
-      '<div style="display:flex;gap:8px">' +
-        '<button class="irx-btn-pri" id="art-build-btn">✨ Build a website</button>' +
-        '<button class="irx-btn-sec" onclick="closePv()">✕ Close</button>' +
-      '</div>' +
-    '</div>' +
-    '<div class="irx-artifacts-grid">' +
-      '<div class="irx-artifact-card" onclick="closePv();var inp=$(&quot;in&quot;);if(inp){inp.value=&quot;Build a website for &quot;;inp.focus();}">' +
-        '<div class="irx-artifact-top"><div class="irx-artifact-ico">🌐</div><span class="irx-live-badge">HTML · 1 FILES</span></div>' +
-        '<div><div class="irx-artifact-name">Sample Artifact</div><div class="irx-artifact-meta">Interactive web preview generated by Photon.</div></div>' +
-      '</div>' +
-    '</div></div>';
-  pvOpen(html);
-
-  var bb = $("art-build-btn");
-  if(bb) {
-    bb.onclick = function() {
-      closePv();
-      var inp = $("in");
-      if(inp) { inp.value = "Build a modern website with HTML, Tailwind CSS and JS"; inp.focus(); }
-    };
+  if(typeof showArtifacts === "function" && showArtifacts !== showArtifactsViewWrapper) {
+    showArtifacts();
   }
 }
 
