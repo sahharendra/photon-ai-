@@ -2708,6 +2708,246 @@ textarea::placeholder{color:var(--mute)}
   background: rgba(255, 255, 255, 0.08);
 }
 
+
+/* ===== PHOTON PROJECTS & LIBRARY (Screenshots 4 & 5) ===== */
+.photon-empty-box-large {
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 56px 20px;
+  text-align: center;
+  background: rgba(11, 14, 24, 0.4);
+}
+
+.photon-empty-icon-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #111422;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #7E8BA4;
+  margin-bottom: 16px;
+}
+
+.photon-empty-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 8px;
+}
+
+.photon-empty-desc {
+  font-size: 13px;
+  color: #7E8BA4;
+  margin: 0 auto;
+  max-width: 480px;
+  line-height: 1.5;
+}
+
+/* Projects Grid */
+.photon-projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.photon-proj-card {
+  background: #0D111E;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 16px 18px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  display: flex;
+  flex-direction: column;
+}
+
+.photon-proj-card:hover {
+  background: #13182B;
+  border-color: rgba(130, 152, 255, 0.3);
+}
+
+.photon-proj-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.photon-proj-card-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: #141A2D;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8298FF;
+}
+
+.photon-proj-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 6px;
+}
+
+.photon-proj-card-desc {
+  font-size: 12.5px;
+  color: #7E8BA4;
+  margin-bottom: 14px;
+  flex: 1;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.photon-proj-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: #6C7A96;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  padding-top: 10px;
+}
+
+/* Library Toolbar */
+.photon-lib-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.photon-lib-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #0B0E18;
+  padding: 3px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.photon-lib-tab {
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+  color: #7E8BA4;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.photon-lib-tab:hover {
+  color: #FFFFFF;
+}
+
+.photon-lib-tab.on {
+  background: #181D30;
+  color: #FFFFFF;
+  border: 1px solid rgba(130, 152, 255, 0.35);
+  font-weight: 600;
+}
+
+.photon-lib-select {
+  background: #0B0E18;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+  color: #FFFFFF;
+  outline: none;
+  cursor: pointer;
+}
+
+.photon-lib-count {
+  margin-left: auto;
+  font-size: 12px;
+  color: #7E8BA4;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Library Grid */
+.photon-lib-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.photon-lib-card {
+  background: #0D111E;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.photon-lib-card:hover {
+  background: #13182B;
+  border-color: rgba(130, 152, 255, 0.3);
+}
+
+.photon-lib-card-preview {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  background: #141A2D;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.photon-file-ext-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #8298FF;
+  letter-spacing: 0.05em;
+}
+
+.photon-lib-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.photon-lib-card-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.photon-lib-card-meta {
+  font-size: 11px;
+  color: #7E8BA4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.photon-lib-card-actions {
+  flex-shrink: 0;
+}
+
 </style>
 </head>
 <body>
@@ -5194,87 +5434,288 @@ function showHistory() {
   }
 }
 
-/* ==================== 3. PROJECTS VIEW ==================== */
+/* ==================== 3. PROJECTS VIEW (Screenshot 4) ==================== */
 function showProjects() {
   setActiveNav("proj");
-  var html = '<div class="irx-view-page">' +
-    '<div class="irx-view-header">' +
-      '<div>' +
-        '<div class="irx-eyebrow">WORKSPACE</div>' +
-        '<h1 class="irx-title">Projects</h1>' +
-        '<p class="irx-sub">Organize your conversations, files, codebases and specialized custom instructions into focused workspaces.</p>' +
+  var html = '<div class="photon-view-page">' +
+    '<div class="photon-history-head-row">' +
+      '<div class="photon-history-head-left">' +
+        '<div class="photon-eyebrow">WORKSPACE</div>' +
+        '<h1 class="photon-title">Projects</h1>' +
+        '<p class="photon-sub">Group conversations, files and artifacts under persistent instructions the assistant follows.</p>' +
       '</div>' +
-      '<div style="display:flex;gap:8px">' +
-        '<button class="irx-btn-pri" id="new-proj-btn">+ New project</button>' +
-        '<button class="irx-btn-sec" onclick="closePv()">✕ Close</button>' +
-      '</div>' +
+      '<button class="photon-btn-new-chat" id="proj-new-btn" type="button">+ New project</button>' +
     '</div>' +
-    '<div class="irx-artifacts-grid" id="project-grid">';
+    '<div id="photon-projects-container" style="margin-top:20px"></div>' +
+  '</div>';
 
-  var allProjs = (typeof projs !== "undefined" && Array.isArray(projs)) ? projs : [];
-  if(!allProjs.length) {
-    html += '<div class="irx-empty-box" style="grid-column:1/-1">' +
-      '<div class="irx-empty-h">No projects yet</div>' +
-      '<p class="irx-empty-p">Create your first project to bundle files, documents and custom context together.</p>' +
-    '</div>';
-  } else {
-    allProjs.forEach(function(pr){
-      html += '<div class="irx-artifact-card" onclick="showProject(&quot;' + esc(pr.id) + '&quot;)">' +
-        '<div class="irx-artifact-top">' +
-          '<div class="irx-artifact-ico">📁</div>' +
-          '<span class="irx-live-badge">PROJECT</span>' +
+  pvOpen(html);
+
+  var npBtn = $("proj-new-btn");
+  if(npBtn) {
+    npBtn.onclick = function() {
+      if(typeof newProjForm === "function") newProjForm();
+    };
+  }
+
+  function renderProjectsView() {
+    var cont = $("photon-projects-container");
+    if(!cont) return;
+    var allProjs = (typeof projs !== "undefined" && Array.isArray(projs)) ? projs : [];
+    if(!allProjs.length) {
+      cont.innerHTML = '<div class="photon-empty-box-large">' +
+        '<div class="photon-empty-icon-badge">' +
+          '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>' +
         '</div>' +
-        '<div>' +
-          '<div class="irx-artifact-name">' + esc(pr.name) + '</div>' +
-          '<div class="irx-artifact-meta">' + esc(pr.desc || "No description provided.") + '</div>' +
+        '<div class="photon-empty-title">No projects yet</div>' +
+        '<p class="photon-empty-desc">Projects keep a long-running body of work together — its instructions, chats and files.</p>' +
+      '</div>';
+      return;
+    }
+
+    var gridHtml = '<div class="photon-projects-grid">';
+    allProjs.forEach(function(pr) {
+      var cs = typeof projChats === "function" ? projChats(pr.id) : [];
+      var files = pr.files || [];
+      var updatedStr = formatPhotonRelativeTime(pr.last);
+      gridHtml += '<div class="photon-proj-card" onclick="showProject(&quot;' + esc(pr.id) + '&quot;)">' +
+        '<div class="photon-proj-card-head">' +
+          '<div class="photon-proj-card-icon">' +
+            '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>' +
+          '</div>' +
+          '<button class="photon-hist-dots-btn" type="button" onclick="event.stopPropagation();if(typeof editProjForm===&quot;function&quot;)editProjForm(' + JSON.stringify(pr).replace(/"/g, '&quot;') + ');">⋯</button>' +
+        '</div>' +
+        '<div class="photon-proj-card-title">' + esc(pr.name) + '</div>' +
+        '<div class="photon-proj-card-desc">' + esc(pr.desc || "No description provided.") + '</div>' +
+        '<div class="photon-proj-card-meta">' +
+          '<span>Updated ' + updatedStr + '</span>' +
+          '<span>' + cs.length + ' chat' + (cs.length === 1 ? '' : 's') + ' · ' + files.length + ' file' + (files.length === 1 ? '' : 's') + '</span>' +
         '</div>' +
       '</div>';
     });
+    gridHtml += '</div>';
+    cont.innerHTML = gridHtml;
   }
-  html += '</div></div>';
-  pvOpen(html);
 
-  var npb = $("new-proj-btn");
-  if(npb && typeof newProjModal === "function") {
-    npb.onclick = newProjModal;
-  }
+  renderProjectsView();
 }
 
-/* ==================== 4. LIBRARY VIEW ==================== */
+/* ==================== 4. LIBRARY VIEW (Screenshot 5) ==================== */
+var photonLibraryFiles = [];
+try {
+  var stored = localStorage.getItem("photon-library-files");
+  if(stored) photonLibraryFiles = JSON.parse(stored);
+} catch(e) {}
+
+function savePhotonLibrary() {
+  try {
+    localStorage.setItem("photon-library-files", JSON.stringify(photonLibraryFiles));
+  } catch(e) {}
+}
+
 function showLibrary() {
   setActiveNav("nav-library");
-  var samplePrompts = [
-    { title: "Full-Stack SaaS Blueprint", desc: "Production architectural spec with auth, billing and schemas.", prompt: "Build a full-stack SaaS with Next.js, Tailwind CSS and Stripe checkout" },
-    { title: "Modern Landing Page", desc: "Interactive vector layouts, micro-animations and responsive hero sections.", prompt: "Create a modern landing page with dark mode, glowing accents and high conversion CTA" },
-    { title: "IEEE 830 SRS Document", desc: "Software Requirements Specification with functional and system requirements.", prompt: "Write a complete IEEE 830 Software Requirements Specification for an AI platform" },
-    { title: "Database Schema & Architecture", desc: "PostgreSQL relational schemas, indexing strategies and data flows.", prompt: "Design an optimized PostgreSQL schema for high-throughput multi-tenant SaaS" }
-  ];
-
-  var html = '<div class="irx-view-page">' +
-    '<div class="irx-view-header">' +
-      '<div>' +
-        '<div class="irx-eyebrow">WORKSPACE</div>' +
-        '<h1 class="irx-title">Library</h1>' +
-        '<p class="irx-sub">Pre-configured prompts, architecture blueprints and reusable engineering templates.</p>' +
+  var html = '<div class="photon-view-page">' +
+    '<div class="photon-history-head-row">' +
+      '<div class="photon-history-head-left">' +
+        '<div class="photon-eyebrow">PERSONAL STORAGE</div>' +
+        '<h1 class="photon-title">Library</h1>' +
+        '<p class="photon-sub">Every file you upload or generate, stored privately and visible only to you.</p>' +
       '</div>' +
-      '<button class="irx-btn-sec" onclick="closePv()">✕ Close</button>' +
+      '<div style="display:flex;align-items:center;gap:10px">' +
+        '<input id="lib-file-input" type="file" multiple hidden>' +
+        '<button class="photon-btn-new-chat" id="lib-upload-btn" type="button">' +
+          '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" style="margin-right:6px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>' +
+          'Upload' +
+        '</button>' +
+      '</div>' +
     '</div>' +
-    '<div class="irx-artifacts-grid">';
+    '<div class="photon-lib-toolbar">' +
+      '<div class="photon-lib-tabs" id="lib-cat-tabs">' +
+        '<button class="photon-lib-tab on" data-cat="all">All</button>' +
+        '<button class="photon-lib-tab" data-cat="documents">Documents</button>' +
+        '<button class="photon-lib-tab" data-cat="images">Images</button>' +
+        '<button class="photon-lib-tab" data-cat="video">Video</button>' +
+        '<button class="photon-lib-tab" data-cat="audio">Audio</button>' +
+        '<button class="photon-lib-tab" data-cat="archives">Archives</button>' +
+      '</div>' +
+      '<div class="photon-lib-search-box">' +
+        '<input id="lib-search-input" class="photon-history-search-input" style="max-width:240px" type="search" placeholder="Search files..." autocomplete="off">' +
+      '</div>' +
+      '<div class="photon-lib-sort-wrap">' +
+        '<select id="lib-sort-select" class="photon-lib-select">' +
+          '<option value="newest">Newest ⌄</option>' +
+          '<option value="oldest">Oldest</option>' +
+          '<option value="name_asc">Name A–Z</option>' +
+          '<option value="name_desc">Name Z–A</option>' +
+          '<option value="size_desc">Largest</option>' +
+          '<option value="size_asc">Smallest</option>' +
+        '</select>' +
+      '</div>' +
+      '<div class="photon-lib-count" id="lib-count-lbl">0 files · —</div>' +
+    '</div>' +
+    '<div id="photon-library-container" style="margin-top:20px"></div>' +
+  '</div>';
 
-  samplePrompts.forEach(function(p){
-    html += '<div class="irx-artifact-card" onclick="closePv();var inp=$(&quot;in&quot;);if(inp){inp.value=&quot;' + esc(p.prompt) + '&quot;;inp.focus();}">' +
-      '<div class="irx-artifact-top">' +
-        '<div class="irx-artifact-ico">📚</div>' +
-        '<span class="irx-live-badge">TEMPLATE</span>' +
-      '</div>' +
-      '<div>' +
-        '<div class="irx-artifact-name">' + esc(p.title) + '</div>' +
-        '<div class="irx-artifact-meta">' + esc(p.desc) + '</div>' +
-      '</div>' +
-    '</div>';
-  });
-  html += '</div></div>';
   pvOpen(html);
+
+  // Wire Upload
+  var upBtn = $("lib-upload-btn");
+  var upInp = $("lib-file-input");
+  if(upBtn && upInp) {
+    upBtn.onclick = function() { upInp.click(); };
+    upInp.onchange = function(e) {
+      var files = Array.from(e.target.files || []);
+      if(!files.length) return;
+      var remaining = files.length;
+      files.forEach(function(f) {
+        var reader = new FileReader();
+        var isImg = f.type.startsWith("image/");
+        reader.onload = function(evt) {
+          var ext = (f.name.split(".").pop() || "").toLowerCase();
+          var cat = "documents";
+          if(["png","jpg","jpeg","webp","gif","svg","bmp","ico"].includes(ext) || isImg) cat = "images";
+          else if(["mp4","webm","mov","mkv","avi"].includes(ext) || f.type.startsWith("video/")) cat = "video";
+          else if(["mp3","wav","ogg","m4a","flac"].includes(ext) || f.type.startsWith("audio/")) cat = "audio";
+          else if(["zip","tar","gz","7z","rar"].includes(ext)) cat = "archives";
+
+          photonLibraryFiles.unshift({
+            id: "lib-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6),
+            name: f.name,
+            size: f.size,
+            type: f.type || "application/octet-stream",
+            category: cat,
+            dataUrl: isImg ? evt.target.result : null,
+            at: Date.now()
+          });
+          remaining--;
+          if(remaining === 0) {
+            savePhotonLibrary();
+            upInp.value = "";
+            renderLibraryList();
+          }
+        };
+        if(isImg) reader.readAsDataURL(f);
+        else reader.readAsText(f.slice(0, 500)); // light read
+      });
+    };
+  }
+
+  var currentCat = "all";
+  var currentQuery = "";
+  var currentSort = "newest";
+
+  // Tab clicks
+  var tabs = document.querySelectorAll("#lib-cat-tabs .photon-lib-tab");
+  tabs.forEach(function(t) {
+    t.onclick = function() {
+      tabs.forEach(function(x){ x.classList.remove("on"); });
+      t.classList.add("on");
+      currentCat = t.dataset.cat;
+      renderLibraryList();
+    };
+  });
+
+  // Search input
+  var sinp = $("lib-search-input");
+  if(sinp) {
+    sinp.oninput = function() {
+      currentQuery = sinp.value.trim().toLowerCase();
+      renderLibraryList();
+    };
+  }
+
+  // Sort select
+  var ssel = $("lib-sort-select");
+  if(ssel) {
+    ssel.onchange = function() {
+      currentSort = ssel.value;
+      renderLibraryList();
+    };
+  }
+
+  function formatSize(b) {
+    if(!b || b <= 0) return "0 B";
+    if(b < 1024) return b + " B";
+    if(b < 1024 * 1024) return (b / 1024).toFixed(1) + " KB";
+    return (b / (1024 * 1024)).toFixed(1) + " MB";
+  }
+
+  function renderLibraryList() {
+    var cont = $("photon-library-container");
+    var countEl = $("lib-count-lbl");
+    if(!cont) return;
+
+    var list = photonLibraryFiles.slice();
+
+    // Category filter
+    if(currentCat !== "all") {
+      list = list.filter(function(f){ return f.category === currentCat; });
+    }
+
+    // Query filter
+    if(currentQuery) {
+      list = list.filter(function(f){ return (f.name && f.name.toLowerCase().includes(currentQuery)); });
+    }
+
+    // Sort
+    list.sort(function(a, b) {
+      if(currentSort === "oldest") return a.at - b.at;
+      if(currentSort === "name_asc") return (a.name||"").localeCompare(b.name||"");
+      if(currentSort === "name_desc") return (b.name||"").localeCompare(a.name||"");
+      if(currentSort === "size_desc") return (b.size||0) - (a.size||0);
+      if(currentSort === "size_asc") return (a.size||0) - (b.size||0);
+      return b.at - a.at; // newest
+    });
+
+    // Update count
+    var totalBytes = list.reduce(function(acc, x){ return acc + (x.size||0); }, 0);
+    if(countEl) {
+      countEl.textContent = list.length + " files · " + (totalBytes > 0 ? formatSize(totalBytes) : "—");
+    }
+
+    if(!list.length) {
+      cont.innerHTML = '<div class="photon-empty-box-large">' +
+        '<div class="photon-empty-icon-badge">' +
+          '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>' +
+        '</div>' +
+        '<div class="photon-empty-title">Nothing stored yet</div>' +
+        '<p class="photon-empty-desc">Upload a document or image, or generate something in the Studio — it lands here.</p>' +
+      '</div>';
+      return;
+    }
+
+    var itemsHtml = '<div class="photon-lib-grid">';
+    list.forEach(function(f) {
+      var ext = (f.name.split(".").pop() || "FILE").toUpperCase();
+      var isImg = f.category === "images" && f.dataUrl;
+      itemsHtml += '<div class="photon-lib-card">' +
+        '<div class="photon-lib-card-preview">' +
+          (isImg ? '<img src="' + f.dataUrl + '" alt="' + esc(f.name) + '" style="width:100%;height:100%;object-fit:cover;border-radius:6px"/>' :
+                   '<div class="photon-file-ext-badge">' + ext + '</div>') +
+        '</div>' +
+        '<div class="photon-lib-card-info">' +
+          '<div class="photon-lib-card-name" title="' + esc(f.name) + '">' + esc(f.name) + '</div>' +
+          '<div class="photon-lib-card-meta">' + ext + ' · ' + formatSize(f.size) + ' · ' + formatPhotonRelativeTime(f.at) + '</div>' +
+        '</div>' +
+        '<div class="photon-lib-card-actions">' +
+          '<button class="photon-hist-dots-btn" type="button" onclick="deletePhotonLibFile(&quot;' + esc(f.id) + '&quot;)" title="Delete file">🗑</button>' +
+        '</div>' +
+      '</div>';
+    });
+    itemsHtml += '</div>';
+    cont.innerHTML = itemsHtml;
+  }
+
+  window.deletePhotonLibFile = function(id) {
+    if(confirm("Are you sure you want to delete this file from your Library?")) {
+      photonLibraryFiles = photonLibraryFiles.filter(function(x){ return x.id !== id; });
+      savePhotonLibrary();
+      renderLibraryList();
+    }
+  };
+
+  renderLibraryList();
 }
 
 /* ==================== 5. ARTIFACTS VIEW ==================== */
