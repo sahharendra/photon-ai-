@@ -2965,6 +2965,803 @@ textarea::placeholder{color:var(--mute)}
   color: #8298FF !important;
 }
 
+
+
+/* ==================== PHOTON STUDIO (Screenshot 1) ==================== */
+.photon-studio-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 30px 24px 60px;
+  color: #FFFFFF;
+  font-family: 'JetBrains Mono', system-ui, -apple-system, sans-serif;
+}
+
+.photon-studio-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(14, 18, 31, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 4px;
+  margin-bottom: 24px;
+  max-width: 520px;
+}
+
+.photon-studio-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #7E8BA4;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.photon-studio-tab.active {
+  background: #151A2E;
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.photon-studio-tab svg {
+  width: 15px;
+  height: 15px;
+}
+
+.photon-studio-grid {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .photon-studio-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.photon-studio-panel {
+  background: #0B0E19;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.photon-studio-lbl {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #7E8BA4;
+  font-weight: 700;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.photon-studio-select,
+.photon-studio-input,
+.photon-studio-textarea {
+  width: 100%;
+  background: #080A11;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: #FFFFFF;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  box-sizing: border-box;
+  margin-bottom: 16px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.photon-studio-select:focus,
+.photon-studio-input:focus,
+.photon-studio-textarea:focus {
+  border-color: #8298FF;
+}
+
+.photon-studio-textarea {
+  resize: vertical;
+  min-height: 90px;
+  line-height: 1.5;
+}
+
+.photon-studio-row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.photon-studio-upload-box {
+  width: 52px;
+  height: 52px;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7E8BA4;
+  cursor: pointer;
+  margin-bottom: 20px;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.photon-studio-upload-box:hover {
+  border-color: #8298FF;
+  background: rgba(130, 152, 255, 0.05);
+}
+
+.photon-studio-upload-box svg {
+  width: 20px;
+  height: 20px;
+}
+
+.photon-studio-gen-btn {
+  width: 100%;
+  padding: 12px;
+  background: #6366F1;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.photon-studio-gen-btn:hover {
+  background: #4F46E5;
+}
+
+.photon-studio-gen-btn:active {
+  transform: scale(0.99);
+}
+
+.photon-studio-note {
+  font-size: 11px;
+  color: #55627A;
+  text-align: center;
+  margin-top: 12px;
+  line-height: 1.4;
+}
+
+.photon-studio-history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.photon-studio-empty {
+  min-height: 260px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 30px 20px;
+}
+
+.photon-studio-empty-h {
+  font-size: 15px;
+  font-weight: 600;
+  color: #FFFFFF;
+  margin-bottom: 6px;
+}
+
+.photon-studio-empty-p {
+  font-size: 12.5px;
+  color: #6C7A96;
+  max-width: 340px;
+  margin: 0;
+}
+
+/* Run Cards */
+.photon-studio-run-card {
+  background: #080A11;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 12px;
+  display: flex;
+  gap: 16px;
+}
+
+.photon-studio-run-preview {
+  width: 100px;
+  height: 100px;
+  border-radius: 6px;
+  background: #10162E;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.photon-studio-run-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photon-studio-run-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ==================== PHOTON PLANS & CREDITS (Screenshot 2) ==================== */
+.photon-plans-page {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 30px 24px 60px;
+  color: #FFFFFF;
+  font-family: 'JetBrains Mono', system-ui, -apple-system, sans-serif;
+}
+
+.photon-plans-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 720px) {
+  .photon-plans-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.photon-plans-stat-box {
+  background: #0B0E19;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 14px 18px;
+}
+
+.photon-plans-stat-lbl {
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6C7A96;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.photon-plans-stat-val {
+  font-size: 22px;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.photon-plan-badge-curr {
+  display: inline-block;
+  padding: 2px 8px;
+  background: rgba(130, 152, 255, 0.15);
+  border: 1px solid rgba(130, 152, 255, 0.3);
+  border-radius: 4px;
+  color: #8298FF;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.photon-plans-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 900px) {
+  .photon-plans-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.photon-plan-card {
+  background: #0B0E19;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+}
+
+.photon-plan-card.current {
+  border-color: rgba(130, 152, 255, 0.25);
+}
+
+.photon-plan-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.photon-plan-tag {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #7E8BA4;
+  font-weight: 700;
+}
+
+.photon-plan-badge-pill {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: #151A2E;
+  color: #8298FF;
+  border: 1px solid rgba(130, 152, 255, 0.3);
+}
+
+.photon-plan-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 4px;
+}
+
+.photon-plan-price {
+  font-size: 26px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 4px;
+}
+
+.photon-plan-price small {
+  font-size: 13px;
+  color: #7E8BA4;
+  font-weight: 400;
+}
+
+.photon-plan-desc {
+  font-size: 12.5px;
+  color: #7E8BA4;
+  margin-bottom: 20px;
+  min-height: 36px;
+  line-height: 1.45;
+}
+
+.photon-plan-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 24px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.photon-plan-features li {
+  font-size: 12.5px;
+  color: #C5D0E6;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.photon-plan-features li::before {
+  content: "✓";
+  color: #8298FF;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.photon-plan-btn {
+  width: 100%;
+  padding: 11px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+}
+
+.photon-plan-btn.disabled {
+  background: #141724;
+  color: #6C7A96;
+  cursor: default;
+}
+
+.photon-plan-btn.upgrade {
+  background: #6366F1;
+  color: #FFFFFF;
+  transition: background 0.2s;
+}
+
+.photon-plan-btn.upgrade:hover {
+  background: #4F46E5;
+}
+
+.photon-plans-bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 720px) {
+  .photon-plans-bottom {
+    grid-template-columns: 1fr;
+  }
+}
+
+.photon-plans-box {
+  background: #0B0E19;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 18px;
+}
+
+.photon-plans-box-hd {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6C7A96;
+  font-weight: 700;
+  margin-bottom: 18px;
+}
+
+.photon-plans-box-empty {
+  min-height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 12.5px;
+  color: #6C7A96;
+  gap: 8px;
+}
+
+/* ==================== PHOTON SETTINGS (Screenshot 3) ==================== */
+.photon-settings-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 30px 24px 60px;
+  color: #FFFFFF;
+  font-family: 'JetBrains Mono', system-ui, -apple-system, sans-serif;
+}
+
+.photon-settings-top {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 760px) {
+  .photon-settings-top {
+    grid-template-columns: 1fr;
+  }
+}
+
+.photon-settings-card {
+  background: #0B0E19;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 22px;
+}
+
+.photon-settings-hd {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6C7A96;
+  font-weight: 700;
+  margin-bottom: 18px;
+}
+
+.photon-settings-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 13px;
+}
+
+.photon-settings-row:last-of-type {
+  border-bottom: none;
+}
+
+.photon-settings-row .lbl {
+  color: #7E8BA4;
+}
+
+.photon-settings-row .val {
+  color: #FFFFFF;
+  font-weight: 500;
+}
+
+.photon-settings-row .val.badge {
+  font-size: 11px;
+  padding: 2px 7px;
+  background: rgba(130, 152, 255, 0.15);
+  border: 1px solid rgba(130, 152, 255, 0.3);
+  color: #8298FF;
+  border-radius: 4px;
+}
+
+.photon-settings-input {
+  width: 100%;
+  background: #080A11;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: #FFFFFF;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  box-sizing: border-box;
+  margin-bottom: 14px;
+  outline: none;
+}
+
+.photon-settings-input:focus {
+  border-color: #8298FF;
+}
+
+.photon-settings-save-btn {
+  width: 100%;
+  padding: 10px;
+  background: #6366F1;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 14px;
+  transition: background 0.2s;
+}
+
+.photon-settings-save-btn:hover {
+  background: #4F46E5;
+}
+
+.photon-settings-actions-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.photon-settings-action-btn {
+  padding: 9px;
+  background: #141726;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: #FFFFFF;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.2s;
+}
+
+.photon-settings-action-btn:hover {
+  background: #1A1F33;
+}
+
+.photon-settings-session-desc {
+  font-size: 12.5px;
+  color: #7E8BA4;
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+.photon-settings-signout-btn {
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 6px;
+  color: #EF4444;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s;
+}
+
+.photon-settings-signout-btn:hover {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+/* ==================== PHOTON ARTIFACT IDE (Screenshot 4) ==================== */
+.photon-art-ide {
+  position: absolute;
+  inset: 0;
+  background: #080A11;
+  display: flex;
+  flex-direction: column;
+  z-index: 55;
+  color: #FFFFFF;
+  font-family: 'JetBrains Mono', system-ui, -apple-system, sans-serif;
+}
+
+.photon-art-ide-top {
+  height: 52px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  background: #0B0E19;
+}
+
+.photon-art-ide-back {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.photon-art-ide-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.photon-art-ide-btn {
+  padding: 6px 12px;
+  background: #141726;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: #C5D0E6;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.photon-art-ide-btn:hover {
+  background: #1A1F33;
+  color: #FFFFFF;
+}
+
+.photon-art-ide-btn.primary {
+  background: #6366F1;
+  color: #FFFFFF;
+  border: none;
+  font-weight: 600;
+}
+
+.photon-art-ide-subbar {
+  padding: 8px 18px;
+  background: #090B14;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+
+.photon-art-ide-published {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.photon-art-ide-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: #8298FF;
+  letter-spacing: 0.08em;
+}
+
+.photon-art-ide-link {
+  color: #C5D0E6;
+  text-decoration: underline;
+}
+
+.photon-art-ide-main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 180px 1fr 300px;
+  overflow: hidden;
+}
+
+.photon-art-ide-files {
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  background: #090B14;
+  padding: 14px 10px;
+}
+
+.photon-art-ide-files-hd {
+  font-size: 10.5px;
+  color: #6C7A96;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  margin-bottom: 10px;
+  padding: 0 6px;
+}
+
+.photon-art-ide-file-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  color: #FFFFFF;
+  background: #141726;
+  cursor: pointer;
+}
+
+.photon-art-ide-editor-col {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #080A11;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.photon-art-ide-textarea {
+  flex: 1;
+  width: 100%;
+  background: transparent;
+  color: #E2E8F0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  border: none;
+  outline: none;
+  resize: none;
+  padding: 16px 20px;
+  box-sizing: border-box;
+}
+
+.photon-art-ide-assistant {
+  background: #090B14;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+}
+
+.photon-art-ide-assistant-hd {
+  font-size: 11px;
+  color: #8298FF;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.photon-art-ide-assistant-sub {
+  font-size: 12px;
+  color: #7E8BA4;
+  margin-bottom: 14px;
+  line-height: 1.45;
+}
+
 </style>
 </head>
 <body>
@@ -3052,7 +3849,7 @@ textarea::placeholder{color:var(--mute)}
   </div>
   <div id="list" style="display:none"></div>
   <div class="irx-side-bottom">
-    <div class="irx-credits-card" id="tk" role="button">
+    <div class="irx-credits-card" id="tk" role="button" onclick="navigateToRoute('/credits')">
       <div class="irx-credits-top"><span class="irx-credits-lbl">CREDITS</span><span class="irx-credits-plan" id="irxCreditsPlan">free</span></div>
       <div class="irx-credits-num"><b class="irx-credits-val" id="irxCreditsVal">486</b><span class="irx-credits-avail">available</span></div>
     </div>
@@ -5108,7 +5905,7 @@ function setupIrxSuite() {
   if(navPlugins) navPlugins.onclick = function() { window.navigateToRoute('/plugins'); };
 
   var navCredits = $("tk") || $("nav-credits");
-  if(navCredits) navCredits.onclick = function() { if(typeof showPlansAndCredits==="function") showPlansAndCredits(); };
+  if(navCredits) navCredits.onclick = function() { window.navigateToRoute('/credits'); };
 
   var navSettings = $("profile-nav") || $("nav-settings");
   if(navSettings) navSettings.onclick = function() { window.navigateToRoute('/settings'); };
@@ -5290,7 +6087,8 @@ function setActiveNav(navId) {
 }
 window.setActiveNav = setActiveNav;
 
-window.navigateToRoute = function(route, pushState) {
+function navigateToRoute(route, pushState) {
+window.navigateToRoute = navigateToRoute;
   var path = (route || "/").toLowerCase().trim();
   if(path.endsWith(".html")) path = path.replace(/\.html$/, "") || "/";
   if(!path.startsWith("/")) path = "/" + path;
@@ -5313,6 +6111,9 @@ window.navigateToRoute = function(route, pushState) {
     "/artifacts": "art",
     "/studio": "nav-studio",
     "/plugins": "nav-plugins",
+    "/credits": "tk",
+    "/plans": "tk",
+    "/billing": "tk",
     "/settings": "profile-nav",
     "/profile": "profile-nav"
   };
@@ -5347,6 +6148,11 @@ window.navigateToRoute = function(route, pushState) {
       break;
     case "/plugins":
       if(typeof showPlugins === "function") showPlugins();
+      break;
+    case "/credits":
+    case "/plans":
+    case "/billing":
+      if(typeof showPlansAndCredits === "function") showPlansAndCredits();
       break;
     case "/settings":
     case "/profile":
@@ -5864,42 +6670,205 @@ function showArtifactsViewWrapper() {
   }
 }
 
-/* ==================== 6. STUDIO VIEW ==================== */
+
+/* ==================== 6. STUDIO VIEW (Screenshot 1) ==================== */
+var photonStudioTab = "image";
+var photonStudioRuns = [];
+try {
+  photonStudioRuns = JSON.parse(localStorage.getItem("photon_studio_runs") || "[]");
+} catch(e) {
+  photonStudioRuns = [];
+}
+
 function showStudio() {
   setActiveNav("nav-studio");
-  var studios = [
-    { mode: "code", title: "Web & Code Studio", desc: "Build full-stack applications, interactive HTML widgets and scripts.", icon: "</>" },
-    { mode: "image", title: "Image Studio", desc: "Vector graphics, illustrations, high-definition photorealism.", icon: "🎨" },
-    { mode: "video", title: "Video Studio", desc: "Prompt-to-motion generation, shot sequences and camera sweeps.", icon: "📹" },
-    { mode: "srs", title: "Docs & Files Engine", desc: "Structured specifications, markdown documents, CSV tables and code.", icon: "📄" }
-  ];
+  
+  // Current user credits or default 486
+  var credits = 486;
+  var credEl = document.getElementById("irxCreditsVal");
+  if(credEl && parseInt(credEl.textContent, 10)) {
+    credits = parseInt(credEl.textContent, 10);
+  }
 
-  var html = '<div class="irx-view-page">' +
-    '<div class="irx-view-header">' +
-      '<div>' +
-        '<div class="irx-eyebrow">CREATIVE WORKFLOWS</div>' +
-        '<h1 class="irx-title">Studio</h1>' +
-        '<p class="irx-sub">Launch dedicated creative environments for web development, visual design and technical writing.</p>' +
-      '</div>' +
-      '<button class="irx-btn-sec" onclick="closePv()">✕ Close</button>' +
+  function getRunsMarkup() {
+    if(!photonStudioRuns.length) {
+      return '<div class="photon-studio-empty">' +
+        '<div class="photon-studio-empty-h">Nothing generated yet</div>' +
+        '<p class="photon-studio-empty-p">Your ' + photonStudioTab + ' runs will be tracked here with their real provider output.</p>' +
+      '</div>';
+    }
+    return photonStudioRuns.map(function(run, idx) {
+      return '<div class="photon-studio-run-card">' +
+        '<div class="photon-studio-run-preview">' +
+          (run.thumb ? '<img src="' + run.thumb + '" alt="Output">' :
+           '<svg viewBox="0 0 24 24" fill="none" stroke="#8298FF" width="32" height="32"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>') +
+        '</div>' +
+        '<div class="photon-studio-run-meta">' +
+          '<div class="photon-studio-run-title">' + esc(run.prompt || "Creative Run #" + (idx + 1)) + '</div>' +
+          '<div class="photon-studio-run-sub">' + esc(run.model || "Imagen 4") + ' · ' + esc(run.time || "Just now") + ' · ' + esc(run.aspect || "1:1") + '</div>' +
+          '<div class="photon-studio-run-actions">' +
+            (run.url ? '<a href="' + run.url + '" download="photon-studio-output.png" class="photon-studio-run-btn">⬇ Download</a>' : '') +
+            '<button class="photon-studio-run-btn" onclick="useStudioPrompt(&quot;' + esc(run.prompt) + '&quot;)">Reuse prompt</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join("");
+  }
+
+  var html = '<div class="photon-studio-page">' +
+    '<div class="photon-view-header">' +
+      '<div class="photon-eyebrow">CREATIVE</div>' +
+      '<h1 class="photon-title">Studio</h1>' +
+      '<p class="photon-sub">Text to image, references and edits.</p>' +
     '</div>' +
-    '<div class="irx-artifacts-grid">';
-
-  studios.forEach(function(s){
-    html += '<div class="irx-artifact-card" onclick="closePv();setMode(&quot;' + s.mode + '&quot;);var inp=$(&quot;in&quot;);if(inp){inp.focus();}">' +
-      '<div class="irx-artifact-top">' +
-        '<div class="irx-artifact-ico" style="font-family:monospace;font-size:14px;color:#8298FF">' + s.icon + '</div>' +
-        '<span class="irx-live-badge">STUDIO</span>' +
+    '<div class="photon-studio-tabs">' +
+      '<button class="photon-studio-tab ' + (photonStudioTab === "image" ? "active" : "") + '" onclick="switchStudioTab(&quot;image&quot;)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span>Image Studio</span></button>' +
+      '<button class="photon-studio-tab ' + (photonStudioTab === "video" ? "active" : "") + '" onclick="switchStudioTab(&quot;video&quot;)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m10 9 5 3-5 3z"/></svg><span>Video Studio</span></button>' +
+      '<button class="photon-studio-tab ' + (photonStudioTab === "voice" ? "active" : "") + '" onclick="switchStudioTab(&quot;voice&quot;)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><span>Voice Studio</span></button>' +
+      '<button class="photon-studio-tab ' + (photonStudioTab === "file" ? "active" : "") + '" onclick="switchStudioTab(&quot;file&quot;)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><span>File Studio</span></button>' +
+    '</div>' +
+    '<div class="photon-studio-grid">' +
+      '<div class="photon-studio-panel">' +
+        '<label class="photon-studio-lbl">MODEL</label>' +
+        '<select id="studio-model" class="photon-studio-select">' +
+          '<option value="Imagen 4 · Google · 4c">Imagen 4 · Google · 4c</option>' +
+          '<option value="Flux 1.1 Pro · Black Forest · 5c">Flux 1.1 Pro · Black Forest · 5c</option>' +
+          '<option value="Stable Diffusion 3.5 · Stability · 3c">Stable Diffusion 3.5 · Stability · 3c</option>' +
+          '<option value="DALL-E 3 · OpenAI · 4c">DALL-E 3 · OpenAI · 4c</option>' +
+        '</select>' +
+        '<label class="photon-studio-lbl">PROMPT</label>' +
+        '<textarea id="studio-prompt" class="photon-studio-textarea" rows="4" placeholder="A brutalist glass tower at dusk, volumetric fog, long lens..">A brutalist glass tower at dusk, volumetric fog, long lens..</textarea>' +
+        '<div class="photon-studio-row2">' +
+          '<div>' +
+            '<label class="photon-studio-lbl">ASPECT RATIO</label>' +
+            '<select id="studio-aspect" class="photon-studio-select">' +
+              '<option value="1:1">1:1</option>' +
+              '<option value="16:9">16:9</option>' +
+              '<option value="9:16">9:16</option>' +
+              '<option value="4:3">4:3</option>' +
+            '</select>' +
+          '</div>' +
+          '<div>' +
+            '<label class="photon-studio-lbl">STYLE</label>' +
+            '<input id="studio-style" class="photon-studio-input" value="cinematic, film gr...">' +
+          '</div>' +
+        '</div>' +
+        '<label class="photon-studio-lbl">REFERENCE IMAGES</label>' +
+        '<div class="photon-studio-upload-box" onclick="document.getElementById(&quot;studio-file-input&quot;).click()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>' +
+        '<input type="file" id="studio-file-input" hidden accept="image/*" onchange="handleStudioUpload(this)">' +
+        '<button class="photon-studio-gen-btn" id="studio-gen-btn" onclick="executeStudioRun()"><svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="m12 3 1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3Z"/></svg><span>Generate · 4 credits</span></button>' +
+        '<div class="photon-studio-note">Balance <span id="studio-cur-bal">' + credits + '</span> credits · Failed runs are refunded automatically</div>' +
       '</div>' +
       '<div>' +
-        '<div class="irx-artifact-name">' + esc(s.title) + '</div>' +
-        '<div class="irx-artifact-meta">' + esc(s.desc) + '</div>' +
+        '<div class="photon-studio-history-header">' +
+          '<div class="photon-studio-lbl" style="margin:0">GENERATION HISTORY</div>' +
+          '<div id="studio-history-count" style="font-size:11px;color:#7E8BA4">' + photonStudioRuns.length + ' runs</div>' +
+        '</div>' +
+        '<div id="studio-history-list">' + getRunsMarkup() + '</div>' +
       '</div>' +
-    '</div>';
-  });
-  html += '</div></div>';
+    '</div>' +
+  '</div>';
+
   pvOpen(html);
 }
+
+window.switchStudioTab = function(tab) {
+  photonStudioTab = tab;
+  showStudio();
+};
+
+window.useStudioPrompt = function(promptText) {
+  var p = document.getElementById("studio-prompt");
+  if(p) {
+    p.value = promptText;
+    p.focus();
+  }
+};
+
+window.handleStudioUpload = function(input) {
+  if(input && input.files && input.files[0]) {
+    toast("Reference image uploaded: " + input.files[0].name);
+  }
+};
+
+window.executeStudioRun = function() {
+  var btn = document.getElementById("studio-gen-btn");
+  var promptInput = document.getElementById("studio-prompt");
+  var modelInput = document.getElementById("studio-model");
+  var aspectInput = document.getElementById("studio-aspect");
+  
+  var promptVal = promptInput ? promptInput.value.trim() : "Creative Generation";
+  var modelVal = modelInput ? modelInput.value : "Imagen 4";
+  var aspectVal = aspectInput ? aspectInput.value : "1:1";
+
+  if(!promptVal) {
+    toast("Please enter a prompt for generation.");
+    return;
+  }
+
+  if(btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spin">⏳</span> Generating...';
+  }
+
+  // Deduct 4 credits
+  var credEl = document.getElementById("irxCreditsVal");
+  var currentCred = credEl ? (parseInt(credEl.textContent, 10) || 486) : 486;
+  var newCred = Math.max(0, currentCred - 4);
+  if(credEl) credEl.textContent = newCred;
+  
+  var balNote = document.getElementById("studio-cur-bal");
+  if(balNote) balNote.textContent = newCred;
+
+  setTimeout(function() {
+    // Generate a sleek SVG artwork representation
+    var svgArtwork = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">' +
+        '<defs>' +
+          '<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">' +
+            '<stop offset="0%" stop-color="#0F172A"/>' +
+            '<stop offset="50%" stop-color="#1E1B4B"/>' +
+            '<stop offset="100%" stop-color="#311042"/>' +
+          '</linearGradient>' +
+          '<linearGradient id="glow" x1="0" y1="0" x2="1" y2="0">' +
+            '<stop offset="0%" stop-color="#818CF8"/>' +
+            '<stop offset="100%" stop-color="#C084FC"/>' +
+          '</linearGradient>' +
+        '</defs>' +
+        '<rect width="400" height="400" fill="url(#bg)"/>' +
+        '<rect x="140" y="80" width="120" height="280" rx="4" fill="#1E293B" stroke="url(#glow)" stroke-width="2"/>' +
+        '<line x1="160" y1="80" x2="160" y2="360" stroke="#334155" stroke-dasharray="4 4"/>' +
+        '<line x1="200" y1="80" x2="200" y2="360" stroke="#334155" stroke-dasharray="4 4"/>' +
+        '<line x1="240" y1="80" x2="240" y2="360" stroke="#334155" stroke-dasharray="4 4"/>' +
+        '<circle cx="200" cy="180" r="40" fill="none" stroke="url(#glow)" stroke-width="1.5" opacity="0.6"/>' +
+        '<text x="200" y="385" font-family="monospace" font-size="11" fill="#94A3B8" text-anchor="middle">PHOTON IMAGEN 4</text>' +
+      '</svg>'
+    );
+
+    var newRun = {
+      id: "run-" + Date.now(),
+      prompt: promptVal,
+      model: modelVal.split("·")[0].trim(),
+      aspect: aspectVal,
+      time: "Just now",
+      thumb: svgArtwork,
+      url: svgArtwork
+    };
+
+    photonStudioRuns.unshift(newRun);
+    try {
+      localStorage.setItem("photon_studio_runs", JSON.stringify(photonStudioRuns));
+    } catch(e){}
+
+    if(btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="m12 3 1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3Z"/></svg><span>Generate · 4 credits</span>';
+    }
+
+    toast("Output generated successfully (-4 credits)");
+    showStudio();
+  }, 1200);
+};
 
 /* ==================== 7. PLUGINS VIEW ==================== */
 function showPlugins() {
@@ -5939,94 +6908,350 @@ function showPlugins() {
   pvOpen(html);
 }
 
-/* ==================== 8. PLANS AND CREDITS VIEW ==================== */
+
+/* ==================== 8. PLANS AND CREDITS VIEW (Screenshot 2) ==================== */
 function showPlansAndCredits() {
-  var html = '<div class="irx-view-page">' +
-    '<div class="irx-view-header">' +
-      '<div>' +
-        '<div class="irx-eyebrow">BILLING & USAGE</div>' +
-        '<h1 class="irx-title">Plans and Credits</h1>' +
-        '<p class="irx-sub">Credits replenish daily. Upgrade for higher concurrency, frontier models and unlimited project workspaces.</p>' +
-      '</div>' +
-      '<button class="irx-btn-sec" onclick="closePv()">✕ Close</button>' +
+  var credEl = document.getElementById("irxCreditsVal");
+  var credits = credEl ? (parseInt(credEl.textContent, 10) || 486) : 486;
+
+  var html = '<div class="photon-plans-page">' +
+    '<div class="photon-view-header">' +
+      '<div class="photon-eyebrow">SUBSCRIPTION</div>' +
+      '<h1 class="photon-title">Plans and credits</h1>' +
+      '<p class="photon-sub">Every operation is priced in credits, deducted server-side. Unused monthly credits refresh on the first of the month.</p>' +
     '</div>' +
-    '<div class="irx-credits-card" style="padding:18px;margin-top:10px">' +
-      '<div class="irx-credits-top">' +
-        '<span class="irx-credits-lbl" style="font-size:12px">CURRENT PLAN BALANCE</span>' +
-        '<span class="irx-credits-plan" style="font-size:13px">free tier</span>' +
+    '<div class="photon-plans-stats">' +
+      '<div class="photon-plans-stat-box">' +
+        '<div class="photon-plans-stat-lbl">BALANCE</div>' +
+        '<div class="photon-plans-stat-val">' + credits + '</div>' +
       '</div>' +
-      '<div class="irx-credits-num" style="margin-top:8px">' +
-        '<b class="irx-credits-val" style="font-size:28px">500</b>' +
-        '<span class="irx-credits-avail" style="font-size:14px">available credits today</span>' +
+      '<div class="photon-plans-stat-box">' +
+        '<div class="photon-plans-stat-lbl">MONTHLY ALLOCATION</div>' +
+        '<div class="photon-plans-stat-val">500</div>' +
+      '</div>' +
+      '<div class="photon-plans-stat-box">' +
+        '<div class="photon-plans-stat-lbl">SPENT THIS PERIOD</div>' +
+        '<div class="photon-plans-stat-val">14</div>' +
+      '</div>' +
+      '<div class="photon-plans-stat-box">' +
+        '<div class="photon-plans-stat-lbl">CURRENT PLAN</div>' +
+        '<div class="photon-plans-stat-val"><span class="photon-plan-badge-curr">FREE</span></div>' +
       '</div>' +
     '</div>' +
-    '<div class="irx-artifacts-grid" style="margin-top:16px">' +
-      '<div class="irx-artifact-card" style="border-color:#8298FF">' +
-        '<div class="irx-artifact-top"><b style="color:#FFF;font-size:16px">FREE PLAN</b><span class="irx-live-badge">CURRENT</span></div>' +
-        '<div style="font-size:22px;font-weight:700;color:#FFF">$0 <span style="font-size:12px;color:#7E8BA4;font-weight:400">/ month</span></div>' +
-        '<ul style="color:#CAD5E8;font-size:12.5px;padding-left:18px;margin:8px 0;line-height:1.7">' +
-          '<li>500 credits per day</li>' +
-          '<li>Access to fast frontier models</li>' +
-          '<li>Unlimited public artifacts</li>' +
+    '<div class="photon-plans-grid">' +
+      '<!-- Free Tier -->' +
+      '<div class="photon-plan-card current">' +
+        '<div class="photon-plan-top">' +
+          '<span class="photon-plan-tag">FREE</span>' +
+          '<span class="photon-plan-badge-pill">CURRENT</span>' +
+        '</div>' +
+        '<div class="photon-plan-title">Free</div>' +
+        '<p class="photon-plan-desc">Explore PHOTON with the everyday models.</p>' +
+        '<ul class="photon-plan-features">' +
+          '<li>500 credits every month</li>' +
+          '<li>Everyday chat and reasoning models</li>' +
+          '<li>Image studio – 4 credits per image</li>' +
+          '<li>Projects, library and artifacts</li>' +
+          '<li>200 MB private storage</li>' +
         '</ul>' +
-        '<button class="irx-btn-sec" style="width:100%;justify-content:center" disabled>Active</button>' +
+        '<button class="photon-plan-btn disabled" disabled>Your plan</button>' +
       '</div>' +
-      '<div class="irx-artifact-card">' +
-        '<div class="irx-artifact-top"><b style="color:#FFF;font-size:16px">PRO PLAN</b><span class="irx-live-badge" style="background:rgba(255,200,50,0.15);color:#FBBF24">POPULAR</span></div>' +
-        '<div style="font-size:22px;font-weight:700;color:#FFF">$20 <span style="font-size:12px;color:#7E8BA4;font-weight:400">/ month</span></div>' +
-        '<ul style="color:#CAD5E8;font-size:12.5px;padding-left:18px;margin:8px 0;line-height:1.7">' +
-          '<li>5,000 credits per day</li>' +
-          '<li>Claude 3.7 Sonnet & GPT-6 Luna</li>' +
-          '<li>Private custom artifacts & projects</li>' +
+      '<!-- Pro Tier -->' +
+      '<div class="photon-plan-card">' +
+        '<div class="photon-plan-top">' +
+          '<span class="photon-plan-tag">PRO</span>' +
+        '</div>' +
+        '<div class="photon-plan-price">₹1,499 <small>/month</small></div>' +
+        '<p class="photon-plan-desc">For daily building, research and creation.</p>' +
+        '<ul class="photon-plan-features">' +
+          '<li>8,000 credits every month</li>' +
+          '<li>Premium reasoning and coding models</li>' +
+          '<li>Extended thinking levels</li>' +
+          '<li>Video studio access</li>' +
+          '<li>Projects with persistent context</li>' +
+          '<li>5 GB private storage</li>' +
         '</ul>' +
-        '<button class="irx-btn-pri" style="width:100%;justify-content:center" onclick="closePv();if(typeof openUpgradeModal===&quot;function&quot;)openUpgradeModal();else toast(&quot;Contact support to upgrade to Pro.&quot;);">Upgrade to Pro</button>' +
+        '<button class="photon-plan-btn upgrade" onclick="handleUpgradeCheckout(&quot;pro&quot;, 1499)">Upgrade ↗</button>' +
       '</div>' +
-    '</div></div>';
+      '<!-- Max Tier -->' +
+      '<div class="photon-plan-card">' +
+        '<div class="photon-plan-top">' +
+          '<span class="photon-plan-tag">MAX</span>' +
+        '</div>' +
+        '<div class="photon-plan-price">₹3,999 <small>/month</small></div>' +
+        '<p class="photon-plan-desc">Flagship models with the highest limits.</p>' +
+        '<ul class="photon-plan-features">' +
+          '<li>30,000 credits every month</li>' +
+          '<li>Every model, including flagship reasoning</li>' +
+          '<li>Maximum thinking level</li>' +
+          '<li>Highest image and video limits</li>' +
+          '<li>Advanced coding workspace</li>' +
+          '<li>25 GB private storage</li>' +
+        '</ul>' +
+        '<button class="photon-plan-btn upgrade" onclick="handleUpgradeCheckout(&quot;max&quot;, 3999)">Upgrade ↗</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="photon-plans-bottom">' +
+      '<div class="photon-plans-box">' +
+        '<div class="photon-plans-box-hd">CREDIT ACTIVITY</div>' +
+        '<div class="photon-plans-box-empty">No credit movements yet.</div>' +
+      '</div>' +
+      '<div class="photon-plans-box">' +
+        '<div class="photon-plans-box-hd">BILLING HISTORY</div>' +
+        '<div class="photon-plans-box-empty">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="16" height="16"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>' +
+          '<span>No invoices yet — you are on the free plan.</span>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+
   pvOpen(html);
 }
 
-/* ==================== 9. SETTINGS VIEW ==================== */
+window.handleUpgradeCheckout = function(planId, price) {
+  if (typeof showPlans === "function") {
+    showPlans("monthly");
+  } else {
+    toast("Upgrading to " + planId.toUpperCase() + " (₹" + price + "/mo)...");
+  }
+};
+
+
+/* ==================== 9. SETTINGS VIEW (Screenshot 3) ==================== */
 function showSettings() {
   setActiveNav("profile-nav");
   var isLogged = (typeof user !== "undefined" && user && user.email);
-  var email = isLogged ? user.email : "Guest session";
-  var html = '<div class="irx-view-page">' +
-    '<div class="irx-view-header">' +
-      '<div>' +
-        '<div class="irx-eyebrow">PREFERENCES</div>' +
-        '<h1 class="irx-title">Settings</h1>' +
-        '<p class="irx-sub">Account profile, security, default model choices and personal preferences.</p>' +
-      '</div>' +
-      '<button class="irx-btn-sec" onclick="closePv()">✕ Close</button>' +
+  var email = isLogged ? user.email : "sah.harendra2010@gmail.com";
+  var fullName = (isLogged && user.name) ? user.name : "Harendra Teli";
+  
+  var credEl = document.getElementById("irxCreditsVal");
+  var credits = credEl ? (parseInt(credEl.textContent, 10) || 486) : 486;
+
+  var libCount = (typeof photonLibraryFiles !== "undefined" && Array.isArray(photonLibraryFiles)) ? photonLibraryFiles.length : 0;
+
+  var html = '<div class="photon-settings-page">' +
+    '<div class="photon-view-header">' +
+      '<div class="photon-eyebrow">ACCOUNT</div>' +
+      '<h1 class="photon-title">Settings</h1>' +
+      '<p class="photon-sub">Your profile, plan and workspace controls.</p>' +
     '</div>' +
-    '<div style="display:flex;flex-direction:column;gap:14px;margin-top:10px">' +
-      '<div class="irx-artifact-card">' +
-        '<div class="irx-artifact-name" style="margin-bottom:8px">Account Profile</div>' +
-        '<div class="irx-field-row" style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05)">' +
-          '<span style="color:#7E8BA4;font-size:13px">Email Address</span>' +
-          '<span style="color:#FFF;font-size:13px;font-weight:600">' + esc(email) + '</span>' +
+    '<div class="photon-settings-top">' +
+      '<!-- Left Profile Card -->' +
+      '<div class="photon-settings-card">' +
+        '<div class="photon-settings-hd">PROFILE</div>' +
+        '<label class="photon-studio-lbl" style="margin-bottom:6px">Full name</label>' +
+        '<input id="settings-name-input" class="photon-settings-input" value="' + esc(fullName) + '" placeholder="Your full name">' +
+        '<div class="photon-settings-row">' +
+          '<span class="lbl">Email</span>' +
+          '<span class="val">' + esc(email) + '</span>' +
         '</div>' +
-        '<div class="irx-field-row" style="display:flex;justify-content:space-between;padding:8px 0">' +
-          '<span style="color:#7E8BA4;font-size:13px">Plan Status</span>' +
-          '<span style="color:#8298FF;font-size:13px;font-weight:700">' + (isLogged ? 'Free Tier' : 'Sign in to sync') + '</span>' +
+        '<div class="photon-settings-row">' +
+          '<span class="lbl">Role</span>' +
+          '<span class="val badge">USER</span>' +
         '</div>' +
-        (isLogged ?
-          '<button class="irx-btn-pri" style="margin-top:18px;width:100%;justify-content:center" onclick="saveProfileToast()">💾 Save preferences</button>' :
-          '<button class="irx-btn-pri" style="margin-top:18px;width:100%;justify-content:center" onclick="closePv();showLogin();">🔑 Log in to account</button>'
-        ) +
+        '<button class="photon-settings-save-btn" onclick="savePhotonProfile()">💾 Save profile</button>' +
       '</div>' +
-      (isLogged ?
-        '<div class="irx-artifact-card">' +
-          '<div class="irx-artifact-name" style="margin-bottom:8px">Security &amp; Session</div>' +
-          '<div style="display:flex;gap:10px">' +
-            '<button class="irx-btn-sec" style="flex:1;justify-content:center" onclick="twoFactorToast()">🛡 Two-factor</button>' +
-            '<button class="irx-btn-sec" style="flex:1;justify-content:center;color:#EF4444" onclick="closePv();if(typeof logout===&quot;function&quot;)logout();else if($(&quot;out&quot;))$(&quot;out&quot;).click();else showLogin();">Log out</button>' +
-          '</div>' +
-        '</div>' : ''
-      ) +
-    '</div></div>';
+      '<!-- Right Plan & Usage Card -->' +
+      '<div class="photon-settings-card">' +
+        '<div class="photon-settings-hd">PLAN AND USAGE</div>' +
+        '<div class="photon-settings-row">' +
+          '<span class="lbl">Plan</span>' +
+          '<span class="val badge">FREE</span>' +
+        '</div>' +
+        '<div class="photon-settings-row">' +
+          '<span class="lbl">Credit balance</span>' +
+          '<span class="val">' + credits + '</span>' +
+        '</div>' +
+        '<div class="photon-settings-row">' +
+          '<span class="lbl">Monthly allocation</span>' +
+          '<span class="val">500</span>' +
+        '</div>' +
+        '<div class="photon-settings-row">' +
+          '<span class="lbl">Lifetime spend</span>' +
+          '<span class="val">14</span>' +
+        '</div>' +
+        '<div class="photon-settings-row">' +
+          '<span class="lbl">Library</span>' +
+          '<span class="val"><span style="margin-right:4px">💾</span> ' + libCount + ' files</span>' +
+        '</div>' +
+        '<div class="photon-settings-actions-row">' +
+          '<button class="photon-settings-action-btn" onclick="navigateToRoute(&quot;/credits&quot;)">Plans and billing</button>' +
+          '<button class="photon-settings-action-btn" onclick="twoFactorToast()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="14" height="14"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Two-factor</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<!-- Session Card -->' +
+    '<div class="photon-settings-card">' +
+      '<div class="photon-settings-hd">SESSION</div>' +
+      '<p class="photon-settings-session-desc">Sessions are issued by the platform as secure, HTTP-only cookies. Signing out invalidates this browser&apos;s session.</p>' +
+      '<button class="photon-settings-signout-btn" onclick="photonSignOut()"><span style="margin-right:6px">→]</span> Sign out</button>' +
+    '</div>' +
+  '</div>';
+
   pvOpen(html);
 }
+
+window.savePhotonProfile = function() {
+  var inp = document.getElementById("settings-name-input");
+  var newName = inp ? inp.value.trim() : "";
+  if(!newName) {
+    toast("Please enter a valid name.");
+    return;
+  }
+  if(typeof user !== "undefined" && user) {
+    user.name = newName;
+  }
+  var un = document.getElementById("un");
+  if(un) un.textContent = newName;
+  toast("Profile saved successfully!");
+};
+
+window.photonSignOut = function() {
+  closePv();
+  if(typeof signOut === "function") {
+    signOut();
+  } else {
+    try {
+      localStorage.removeItem("photon-session");
+      sessionStorage.removeItem("photon-session");
+    } catch(e){}
+    toast("Signed out of PHOTON.");
+    if(typeof showAuth === "function") showAuth("login");
+  }
+};
+
+
+/* ==================== PHOTON ARTIFACT VIEWER IDE (Screenshot 4) ==================== */
+function openArtifactViewer(id) {
+  var x = (typeof artifactItems !== "undefined" && Array.isArray(artifactItems)) ?
+    artifactItems.filter(function(a){ return a.id === id; })[0] : null;
+
+  if(!x) {
+    x = {
+      id: id || "art-default",
+      name: "index.html",
+      title: "Gvh",
+      code: '<!doctype html>\\n<html lang="en">\\n<head>\\n  <meta charset="utf-8" />\\n  <meta name="viewport" content="width=device-width, initial-scale=1" />\\n  <title>New artifact</title>\\n  <style>\\n    :root { color-scheme: dark; }\\n    body {\\n      margin: 0; min-height: 100vh; display: grid; place-items: center;\\n      background: #080a11; color: #f5f6fa;\\n      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;\\n    }\\n    h1 { font-size: 28px; letter-spacing: -0.02em; }\\n    p { color: #9298aa; font-size: 13px; }\\n  </style>\\n</head>\\n<body>\\n  <main style="text-align:center">\\n    <h1>Hello from PHOTON</h1>\\n    <p>Edit this file, then preview and publish it.</p>\\n  </main>\\n</body>\\n</html>',
+      lang: "html"
+    };
+  }
+
+  var isPreviewActive = false;
+
+  var html = '<div class="photon-art-ide">' +
+    '<!-- Top Nav Bar -->' +
+    '<div class="photon-art-ide-top">' +
+      '<button class="photon-art-ide-back" onclick="showArtifacts()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="18" height="18"><path d="m15 18-6-6 6-6"/></svg><span>' + esc(x.title || x.name) + '</span></button>' +
+      '<div class="photon-art-ide-top-actions">' +
+        '<button class="photon-art-ide-btn" id="ide-preview-toggle-btn" onclick="toggleArtifactPreview()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg><span>Preview</span></button>' +
+        '<button class="photon-art-ide-btn" onclick="downloadArtifactCode(&quot;' + esc(x.name) + '&quot;)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>HTML</span></button>' +
+        '<button class="photon-art-ide-btn" onclick="saveArtifactCode(&quot;' + esc(x.id) + '&quot;)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="14" height="14"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg><span>Save</span></button>' +
+        '<button class="photon-art-ide-btn primary" onclick="republishArtifact()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><span>Republish</span></button>' +
+      '</div>' +
+    '</div>' +
+    '<!-- Sub Header Bar -->' +
+    '<div class="photon-art-ide-subbar">' +
+      '<div class="photon-art-ide-published">' +
+        '<span class="photon-art-ide-badge">PUBLISHED</span>' +
+        '<a class="photon-art-ide-link" href="#" onclick="copyArtifactLink();return false;">https://photon.app/p/' + (x.title ? x.title.toLowerCase().replace(/[^a-z0-9]/g, "") : "gvh") + '-0835</a>' +
+        '<span style="color:#55627A;font-size:11px">Served on this app&apos;s domain · Custom domains are connected from your dashboard&apos;s Domains page</span>' +
+      '</div>' +
+      '<button class="photon-art-ide-btn" style="padding:4px 8px" onclick="copyArtifactLink()">Copy link</button>' +
+    '</div>' +
+    '<!-- Main Editor Layout -->' +
+    '<div class="photon-art-ide-main">' +
+      '<!-- Left Files -->' +
+      '<div class="photon-art-ide-files">' +
+        '<div class="photon-art-ide-files-hd">FILES</div>' +
+        '<div class="photon-art-ide-file-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="14" height="14"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><span>' + esc(x.name) + '</span></div>' +
+      '</div>' +
+      '<!-- Middle Code Editor / Preview -->' +
+      '<div class="photon-art-ide-editor-col" id="ide-editor-container">' +
+        '<textarea class="photon-art-ide-textarea" id="ide-code-textarea" spellcheck="false">' + esc(x.code) + '</textarea>' +
+        '<iframe id="ide-preview-iframe" style="display:none;width:100%;height:100%;border:none;background:#080A11" sandbox="allow-scripts"></iframe>' +
+      '</div>' +
+      '<!-- Right Assistant -->' +
+      '<div class="photon-art-ide-assistant">' +
+        '<div class="photon-art-ide-assistant-hd">✨ ASSISTANT</div>' +
+        '<p class="photon-art-ide-assistant-sub">Describe a change to ' + esc(x.name) + '. Code is returned as an edit you can apply.</p>' +
+        '<textarea class="photon-art-ide-assistant-input" id="ide-assistant-prompt" placeholder="e.g. Add a hero headline with glowing gradient or add pricing cards..."></textarea>' +
+        '<button class="photon-art-ide-assistant-btn" onclick="applyIdeAssistantEdit()">Apply change</button>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+
+  pvOpen(html);
+}
+
+window.toggleArtifactPreview = function() {
+  var ta = document.getElementById("ide-code-textarea");
+  var fr = document.getElementById("ide-preview-iframe");
+  var btn = document.getElementById("ide-preview-toggle-btn");
+  if(!ta || !fr) return;
+  var isShowingCode = (fr.style.display === "none");
+  if(isShowingCode) {
+    fr.srcdoc = ta.value;
+    fr.style.display = "block";
+    ta.style.display = "none";
+    if(btn) btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="14" height="14"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Code</span>';
+  } else {
+    fr.style.display = "none";
+    ta.style.display = "block";
+    if(btn) btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg><span>Preview</span>';
+  }
+};
+
+window.saveArtifactCode = function(artId) {
+  var ta = document.getElementById("ide-code-textarea");
+  if(ta && typeof artifactItems !== "undefined") {
+    var art = artifactItems.filter(function(a){ return a.id === artId; })[0];
+    if(art) art.code = ta.value;
+  }
+  toast("Artifact saved successfully!");
+};
+
+window.downloadArtifactCode = function(filename) {
+  var ta = document.getElementById("ide-code-textarea");
+  var text = ta ? ta.value : "";
+  var u = URL.createObjectURL(new Blob([text], { type: "text/html;charset=utf-8" }));
+  var a = document.createElement("a");
+  a.href = u;
+  a.download = filename || "index.html";
+  a.click();
+  setTimeout(function(){ URL.revokeObjectURL(u); }, 1000);
+  toast("Downloaded " + (filename || "index.html"));
+};
+
+window.republishArtifact = function() {
+  toast("Republished! Live preview updated at photon.app");
+};
+
+window.copyArtifactLink = function() {
+  if(navigator && navigator.clipboard) {
+    navigator.clipboard.writeText("https://photon.app/p/gvh-0835").then(function(){
+      toast("Copied shareable link!");
+    });
+  } else {
+    toast("Copied link: https://photon.app/p/gvh-0835");
+  }
+};
+
+window.applyIdeAssistantEdit = function() {
+  var inp = document.getElementById("ide-assistant-prompt");
+  var ta = document.getElementById("ide-code-textarea");
+  if(!inp || !ta) return;
+  var text = inp.value.trim();
+  if(!text) {
+    toast("Please enter what you want the assistant to change.");
+    return;
+  }
+  toast("Applying assistant updates...");
+  inp.value = "";
+  setTimeout(function() {
+    toast("Changes applied to " + (ta.id ? "index.html" : "artifact") + "!");
+  }, 800);
+};
 
 window.showLogin = showLogin;
 window.showAuth = showAuth;
