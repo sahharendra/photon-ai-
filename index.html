@@ -3058,7 +3058,7 @@ textarea::placeholder{color:var(--mute)}
     </div>
     <button class="irx-nav-item" id="profile-nav" type="button" onclick="navigateToRoute('/settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Settings</span></button>
   </div>
-  <div id="usr-hidden" style="display:none"><b id="av">U</b><span id="un">User</span><button id="out">Log out</button><button id="upg">Upgrade</button><input id="chat-search-input"><div id="rl"></div><div id="tkt"></div><div class="tkbar"><i id="tkb"></i></div></div>
+  <div id="usr-hidden" style="display:none"><div id="wave"></div><div id="pop"></div><div id="tkn"></div><div id="boxFlow"></div><button id="search-chats"></button><button id="plus"></button><b id="av">U</b><span id="un">User</span><button id="out">Log out</button><button id="upg">Upgrade</button><input id="chat-search-input"><div id="rl"></div><div id="tkt"></div><div class="tkbar"><i id="tkb"></i></div></div>
 </aside>
 <div id="main">
   <canvas id="topo"></canvas>
@@ -3159,7 +3159,7 @@ textarea::placeholder{color:var(--mute)}
 (function(){
 var MODES={general:["Chat","General reasoning and writing."],image:["Create image","image"],video:["Create video","video"],code:["Code","Write clean, production-grade code with language-tagged code blocks and brief explanations."],architecture:["Architecture","Design system architecture: components, data flow, trade-offs, and databases."],srs:["SRS document","Produce an IEEE 830 style Software Requirements Specification."]};
 var SYS="You are Photon, an AI assistant for general reasoning, coding and software architecture. Always respond in English unless the user explicitly requests another language. Answer with clean Markdown: headings, bullets, and language-tagged code blocks. When the user asks for a file (a web page, script, config, data file and so on), write the complete file in one code block whose opening fence has the language and then the file name, for example ```html index.html. Never say you cannot create files: the app shows a Download button on every code block and a Preview button for HTML. If a project needs several files, use one code block per file, each with its own file name.";
-var WAVE=document.getElementById("wave").outerHTML;var basePH="Message Photon — ask, build, create or research…",tokDay="",projs=[],user=null,vm=false,speaking=false,chats=[],cur=null,mode="general",busy=false,ctl=null,rec=null,pendingChatFiles=[],chatSearch="",photonProfile=null,profileConfig=null,profileConfigFetchedAt=0,profileActivities=[],billingAvailable=false,presenceTimer=null,presenceVisibilityHandler=null;
+var WAVE=(document.getElementById("wave")?document.getElementById("wave").outerHTML:"");var basePH="Message Photon — ask, build, create or research…",tokDay="",projs=[],user=null,vm=false,speaking=false,chats=[],cur=null,mode="general",busy=false,ctl=null,rec=null,pendingChatFiles=[],chatSearch="",photonProfile=null,profileConfig=null,profileConfigFetchedAt=0,profileActivities=[],billingAvailable=false,presenceTimer=null,presenceVisibilityHandler=null;
 var $=function(i){return document.getElementById(i)};
 function toast(t){var e=$("toast");e.textContent=t;e.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(function(){e.classList.remove("on")},2200)}
 function CK(){return"photon-chats-"+(user?user.email:"")}
@@ -3395,7 +3395,7 @@ function closePv(){
     try { window.history.pushState({ route: "/" }, "", "/"); } catch(e){}
   }
 }
-function closePv(){var v=$("pv");v.hidden=true;v.innerHTML=""}
+// dup closePv removed
 function projChat(pr,prompt){closePv();var c=cur&&!cur.msgs.length?cur:null;if(!c){c={id:"c"+Date.now(),title:"New chat",msgs:[]};chats.unshift(c)}c.pid=pr.id;cur=c;save();render();if(prompt){$("in").value=prompt;send()}}
 function modal(h,wire){var old=$("sm");if(old)old.remove();var g=document.createElement("div");g.id="sm";g.innerHTML='<div class="card" style="max-width:480px"><button class="xx" id="smx">✕</button>'+h+'</div>';if(h.indexOf('artifact-viewer-head')>-1)g.querySelector('.card').classList.add('artifact-viewer');document.body.append(g);var x=function(){g.remove()};$("smx").onclick=x;g.onclick=function(e){if(e.target===g)x()};wire(x);return x}
 function showProjects(){
@@ -3806,7 +3806,7 @@ function startVoice(){if(left()<=0){lockUI();return}vm=true;$("vo").classList.ad
 function endVoice(){vm=false;$("vo").classList.remove("on");stopSpeak();try{if(rec)rec.stop()}catch(e){}rec=null}
 $("ve").onclick=endVoice;
 $("tk").onclick=showUsage;
-$("tkn").onclick=function(e){if(e.target.dataset&&e.target.dataset.up!==undefined)showPlans()};
+if($("tkn"))$("tkn").onclick=function(e){if(e.target.dataset&&e.target.dataset.up!==undefined)showPlans()};
 setInterval(function(){if(!user)return;var d=dayKey();if(tokDay&&tokDay!==d)toast("Your daily tokens have been reset");tokDay=d;tokUI()},30000);
 $("go").onclick=function(){if(!$("in").value.trim()&&!busy){startVoice();return}send()};
 $("in").addEventListener("keydown",function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();if(!busy)send()}});
@@ -3829,17 +3829,17 @@ $("in").addEventListener("paste",async function(e){
     await handleChatFiles({target:{files:imageFiles,value:""}});
   }
 });
-$("new").onclick=function(){closePv();$("side").classList.remove("show");newChat()};
+if($("new"))$("new").onclick=function(){if(typeof window.navigateToRoute==="function")window.navigateToRoute("/");else{closePv();newChat();}};
 $("upg").onclick=$("upl").onclick=function(){showPlans()};
-$("proj").onclick=showProjects;
-$("art").onclick=showArtifacts;
+if($("proj"))$("proj").onclick=function(){if(typeof window.navigateToRoute==="function")window.navigateToRoute("/projects");else showProjects();};
+if($("art"))$("art").onclick=function(){if(typeof window.navigateToRoute==="function")window.navigateToRoute("/artifacts");else showArtifacts();};
 $("tog").onclick=function(){var s=$("side");if(window.innerWidth<=720)s.classList.toggle("show");else s.classList.toggle("hide")};
-$("search-chats").onclick=function(){var input=$("chat-search-input"),open=input.hidden;input.hidden=!open;this.setAttribute("aria-expanded",String(open));if(open){input.focus()}else{input.value="";chatSearch="";render()}};
+if($("search-chats"))$("search-chats").onclick=function(){var input=$("chat-search-input"),open=input.hidden;input.hidden=!open;this.setAttribute("aria-expanded",String(open));if(open){input.focus()}else{input.value="";chatSearch="";render()}};
 $("chat-search-input").addEventListener("input",function(){chatSearch=this.value;render()});
-$("plus").onclick=function(e){e.stopPropagation();$("pop").classList.toggle("on")};
+if($("plus"))$("plus").onclick=function(e){e.stopPropagation();if($("pop"))$("pop").classList.toggle("on")};
 $("attach-files").onclick=function(){$("chat-file-input").click()};
 $("chat-file-input").addEventListener("change",handleChatFiles);
-document.addEventListener("click",function(e){if(!$("pop").contains(e.target))$("pop").classList.remove("on")});
+document.addEventListener("click",function(e){if($("pop")&&!$("pop").contains(e.target))$("pop").classList.remove("on")});
 $("mic").onclick=function(){
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){toast("Dictation isn't supported here");return}
@@ -5116,14 +5116,12 @@ function setupIrxSuite() {
   // Dispatch initial path route if user opened directly with a path
   var initialPathname = window.location.pathname;
   if(initialPathname && initialPathname !== "/" && initialPathname !== "/index.html") {
-    // Initial route dispatch - only as fallback if enter() already handled it
+    // Fast initial route dispatch
     setTimeout(function() {
-      var pv = document.getElementById("pv");
-      var pvIsHidden = !pv || pv.hidden;
-      if(pvIsHidden && window.navigateToRoute) {
+      if(window.navigateToRoute) {
         window.navigateToRoute(initialPathname, false);
       }
-    }, 800);
+    }, 50);
   }
 
   var newBtn = $("new");
@@ -5281,7 +5279,7 @@ function formatPhotonRelativeTime(timestamp) {
 
 
 /* ==================== PHOTON CLIENT-SIDE ROUTER ==================== */
-window.setActiveNav = function(navId) {
+function setActiveNav(navId) {
   document.querySelectorAll(".irx-nav-item").forEach(function(el) {
     el.classList.remove("active");
   });
@@ -5289,7 +5287,8 @@ window.setActiveNav = function(navId) {
     var target = document.getElementById(navId);
     if(target) target.classList.add("active");
   }
-};
+}
+window.setActiveNav = setActiveNav;
 
 window.navigateToRoute = function(route, pushState) {
   var path = (route || "/").toLowerCase().trim();
