@@ -2948,6 +2948,23 @@ textarea::placeholder{color:var(--mute)}
   flex-shrink: 0;
 }
 
+
+/* ===== #pv and Sidebar Active State Fixes ===== */
+#pv[hidden] {
+  display: none !important;
+}
+#pv:not([hidden]) {
+  display: block !important;
+}
+.irx-nav-item.active {
+  background: #141726 !important;
+  color: #FFFFFF !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+.irx-nav-item.active svg {
+  color: #8298FF !important;
+}
+
 </style>
 </head>
 <body>
@@ -3023,15 +3040,15 @@ textarea::placeholder{color:var(--mute)}
     </div>
     <button class="irx-collapse-btn" id="tog-side" aria-label="Collapse sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 3v18M14 9l-3 3 3 3"/></svg></button>
   </div>
-  <button class="irx-new-chat-btn" id="new" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg><span>New chat</span></button>
+  <button class="irx-new-chat-btn" id="new" type="button" onclick="navigateToRoute('/')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg><span>New chat</span></button>
   <div class="irx-nav-stack">
-    <button class="irx-nav-item" id="nav-search" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Search</span></button>
-    <button class="irx-nav-item" id="nav-history" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg><span>History</span></button>
-    <button class="irx-nav-item" id="proj" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/><path d="M8 11v3M12 11v3M16 11v3"/></svg><span>Projects</span></button>
-    <button class="irx-nav-item" id="nav-library" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m16 6 4 14M12 6v14M8 8v12M4 4v16"/></svg><span>Library</span></button>
-    <button class="irx-nav-item" id="art" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m21 16-9 5-9-5V8l9-5 9 5v8Z"/><path d="m12 12.5 9-4.5M12 12.5v9M12 12.5 3 8"/></svg><span>Artifacts</span></button>
-    <button class="irx-nav-item" id="nav-studio" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3Z"/><path d="M5 3v4M3 5h4"/></svg><span>Studio</span></button>
-    <button class="irx-nav-item" id="nav-plugins" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2v6M9 2v4M15 2v4M18 9a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8h12v1ZM12 13v7M9 22h6"/></svg><span>Plugins</span></button>
+    <button class="irx-nav-item" id="nav-search" type="button" onclick="navigateToRoute('/search')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Search</span></button>
+    <button class="irx-nav-item" id="nav-history" type="button" onclick="navigateToRoute('/history')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg><span>History</span></button>
+    <button class="irx-nav-item" id="proj" type="button" onclick="navigateToRoute('/projects')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/><path d="M8 11v3M12 11v3M16 11v3"/></svg><span>Projects</span></button>
+    <button class="irx-nav-item" id="nav-library" type="button" onclick="navigateToRoute('/library')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m16 6 4 14M12 6v14M8 8v12M4 4v16"/></svg><span>Library</span></button>
+    <button class="irx-nav-item" id="art" type="button" onclick="navigateToRoute('/artifacts')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m21 16-9 5-9-5V8l9-5 9 5v8Z"/><path d="m12 12.5 9-4.5M12 12.5v9M12 12.5 3 8"/></svg><span>Artifacts</span></button>
+    <button class="irx-nav-item" id="nav-studio" type="button" onclick="navigateToRoute('/studio')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3Z"/><path d="M5 3v4M3 5h4"/></svg><span>Studio</span></button>
+    <button class="irx-nav-item" id="nav-plugins" type="button" onclick="navigateToRoute('/plugins')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2v6M9 2v4M15 2v4M18 9a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8h12v1ZM12 13v7M9 22h6"/></svg><span>Plugins</span></button>
   </div>
   <div id="list" style="display:none"></div>
   <div class="irx-side-bottom">
@@ -3039,7 +3056,7 @@ textarea::placeholder{color:var(--mute)}
       <div class="irx-credits-top"><span class="irx-credits-lbl">CREDITS</span><span class="irx-credits-plan" id="irxCreditsPlan">free</span></div>
       <div class="irx-credits-num"><b class="irx-credits-val" id="irxCreditsVal">486</b><span class="irx-credits-avail">available</span></div>
     </div>
-    <button class="irx-nav-item" id="profile-nav" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Settings</span></button>
+    <button class="irx-nav-item" id="profile-nav" type="button" onclick="navigateToRoute('/settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Settings</span></button>
   </div>
   <div id="usr-hidden" style="display:none"><b id="av">U</b><span id="un">User</span><button id="out">Log out</button><button id="upg">Upgrade</button><input id="chat-search-input"><div id="rl"></div><div id="tkt"></div><div class="tkbar"><i id="tkb"></i></div></div>
 </aside>
@@ -3354,7 +3371,30 @@ function projCtx(){var p=curProj();if(!p)return"";
   return o}
 function ago(t){var m=Math.floor((Date.now()-t)/6e4);if(m<1)return"just now";if(m<60)return m+" min ago";var h=Math.floor(m/60);if(h<24)return h+(h===1?" hour ago":" hours ago");var d=Math.floor(h/24);return d===1?"yesterday":d+" days ago"}
 function projChats(id){return chats.filter(function(c){return c.pid===id&&c.msgs.length}).sort(function(a,b){return(b.t||+a.id.slice(1)||0)-(a.t||+b.id.slice(1)||0)})}
-function pvOpen(h){var v=$("pv");v.hidden=false;v.innerHTML=h;v.scrollTop=0;$("side").classList.remove("show")}
+function pvOpen(h){
+  var v=$("pv");
+  if(!v) return;
+  v.hidden=false;
+  v.style.display="block";
+  v.innerHTML=h;
+  v.scrollTop=0;
+  if(window.innerWidth<=720){
+    var s=$("side");
+    if(s) s.classList.remove("show");
+  }
+}
+function closePv(){
+  var v=$("pv");
+  if(v){
+    v.hidden=true;
+    v.style.display="none";
+    v.innerHTML="";
+  }
+  if(typeof setActiveNav === "function") setActiveNav("");
+  if(window.location.pathname !== "/" && window.location.pathname !== "/index.html"){
+    try { window.history.pushState({ route: "/" }, "", "/"); } catch(e){}
+  }
+}
 function closePv(){var v=$("pv");v.hidden=true;v.innerHTML=""}
 function projChat(pr,prompt){closePv();var c=cur&&!cur.msgs.length?cur:null;if(!c){c={id:"c"+Date.now(),title:"New chat",msgs:[]};chats.unshift(c)}c.pid=pr.id;cur=c;save();render();if(prompt){$("in").value=prompt;send()}}
 function modal(h,wire){var old=$("sm");if(old)old.remove();var g=document.createElement("div");g.id="sm";g.innerHTML='<div class="card" style="max-width:480px"><button class="xx" id="smx">✕</button>'+h+'</div>';if(h.indexOf('artifact-viewer-head')>-1)g.querySelector('.card').classList.add('artifact-viewer');document.body.append(g);var x=function(){g.remove()};$("smx").onclick=x;g.onclick=function(e){if(e.target===g)x()};wire(x);return x}
@@ -5045,33 +5085,41 @@ function setupIrxSuite() {
     };
   });
 
-  // Sidebar navigation items
+  // Sidebar navigation items with full URL routing
   var navSearch = $("nav-search");
-  if(navSearch) navSearch.onclick = showSearch;
+  if(navSearch) navSearch.onclick = function() { window.navigateToRoute('/search'); };
 
   var navHistory = $("nav-history");
-  if(navHistory) navHistory.onclick = showHistory;
+  if(navHistory) navHistory.onclick = function() { window.navigateToRoute('/history'); };
 
   var navProjects = $("proj") || $("nav-projects");
-  if(navProjects) navProjects.onclick = showProjects;
+  if(navProjects) navProjects.onclick = function() { window.navigateToRoute('/projects'); };
 
   var navLibrary = $("nav-library");
-  if(navLibrary) navLibrary.onclick = showLibrary;
+  if(navLibrary) navLibrary.onclick = function() { window.navigateToRoute('/library'); };
 
   var navArtifacts = $("art") || $("nav-artifacts");
-  if(navArtifacts) navArtifacts.onclick = showArtifacts;
+  if(navArtifacts) navArtifacts.onclick = function() { window.navigateToRoute('/artifacts'); };
 
   var navStudio = $("nav-studio");
-  if(navStudio) navStudio.onclick = showStudio;
+  if(navStudio) navStudio.onclick = function() { window.navigateToRoute('/studio'); };
 
   var navPlugins = $("nav-plugins");
-  if(navPlugins) navPlugins.onclick = showPlugins;
+  if(navPlugins) navPlugins.onclick = function() { window.navigateToRoute('/plugins'); };
 
   var navCredits = $("tk") || $("nav-credits");
-  if(navCredits) navCredits.onclick = showPlansAndCredits;
+  if(navCredits) navCredits.onclick = function() { if(typeof showPlansAndCredits==="function") showPlansAndCredits(); };
 
   var navSettings = $("profile-nav") || $("nav-settings");
-  if(navSettings) navSettings.onclick = showSettings;
+  if(navSettings) navSettings.onclick = function() { window.navigateToRoute('/settings'); };
+
+  // Dispatch initial path route if user opened directly with a path
+  var initialPathname = window.location.pathname;
+  if(initialPathname && initialPathname !== "/" && initialPathname !== "/index.html") {
+    setTimeout(function() {
+      window.navigateToRoute(initialPathname, false);
+    }, 60);
+  }
 
   var newBtn = $("new");
   if(newBtn) {
@@ -5225,6 +5273,92 @@ function formatPhotonRelativeTime(timestamp) {
   if(mo < 12) return mo + "mo ago";
   return Math.floor(mo / 12) + "y ago";
 }
+
+
+/* ==================== PHOTON CLIENT-SIDE ROUTER ==================== */
+window.setActiveNav = function(navId) {
+  document.querySelectorAll(".irx-nav-item").forEach(function(el) {
+    el.classList.remove("active");
+  });
+  if(navId) {
+    var target = document.getElementById(navId);
+    if(target) target.classList.add("active");
+  }
+};
+
+window.navigateToRoute = function(route, pushState) {
+  var path = (route || "/").toLowerCase().trim();
+  if(path.endsWith(".html")) path = path.replace(/\.html$/, "") || "/";
+  if(!path.startsWith("/")) path = "/" + path;
+
+  if(pushState !== false) {
+    if(window.location.pathname !== path) {
+      try {
+        window.history.pushState({ route: path }, "", path);
+      } catch(e) {}
+    }
+  }
+
+  // Active navigation highlight
+  var navMap = {
+    "/": "",
+    "/search": "nav-search",
+    "/history": "nav-history",
+    "/projects": "proj",
+    "/library": "nav-library",
+    "/artifacts": "art",
+    "/studio": "nav-studio",
+    "/plugins": "nav-plugins",
+    "/settings": "profile-nav",
+    "/profile": "profile-nav"
+  };
+
+  var targetId = navMap[path] !== undefined ? navMap[path] : "";
+  window.setActiveNav(targetId);
+
+  if(window.innerWidth <= 720) {
+    var s = document.getElementById("side");
+    if(s) s.classList.remove("show");
+  }
+
+  switch(path) {
+    case "/search":
+      if(typeof showSearch === "function") showSearch();
+      break;
+    case "/history":
+      if(typeof showHistory === "function") showHistory();
+      break;
+    case "/projects":
+      if(typeof showProjects === "function") showProjects();
+      break;
+    case "/library":
+      if(typeof showLibrary === "function") showLibrary();
+      break;
+    case "/artifacts":
+      if(typeof showArtifacts === "function") showArtifacts();
+      else if(typeof showArtifactsViewWrapper === "function") showArtifactsViewWrapper();
+      break;
+    case "/studio":
+      if(typeof showStudio === "function") showStudio();
+      break;
+    case "/plugins":
+      if(typeof showPlugins === "function") showPlugins();
+      break;
+    case "/settings":
+    case "/profile":
+      if(typeof showSettings === "function") showSettings();
+      break;
+    case "/":
+    default:
+      if(typeof closePv === "function") closePv();
+      break;
+  }
+};
+
+window.addEventListener("popstate", function() {
+  var currentPath = window.location.pathname;
+  window.navigateToRoute(currentPath, false);
+});
 
 /* ==================== 1. SEARCH VIEW ==================== */
 function showSearch() {
