@@ -2463,11 +2463,7 @@ function showArtifacts(){
       name: "index.html",
       title: "New Website",
       lang: "html",
-      code: "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\"/>\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/>\n  <title>New Artifact</title>\n  <style>\n    body { margin:0; min-height:100vh; background:#080A11; color:#F1F5F9; display:grid; place-items:center; font-family:system-ui,sans-serif; text-align:center; }\n    h1 { font-size:32px; color:#FFFFFF; margin-bottom:8px; }\n    p { color:#8298FF; font-size:14px; }\n  
-
-
-
-</style>\n</head>\n<body>\n  <div>\n    <h1>Blank Website</h1>\n    <p>Edit this file, preview live and publish.</p>\n  </div>\n</body>\n</html>",
+      code: "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\"/>\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/>\n  <title>New Artifact</title>\n  <style>\n    body { margin:0; min-height:100vh; background:#080A11; color:#F1F5F9; display:grid; place-items:center; font-family:system-ui,sans-serif; text-align:center; }\n    h1 { font-size:32px; color:#FFFFFF; margin-bottom:8px; }\n    p { color:#8298FF; font-size:14px; }\n  </style>\n</head>\n<body>\n  <div>\n    <h1>Blank Website</h1>\n    <p>Edit this file, preview live and publish.</p>\n  </div>\n</body>\n</html>",
       at: Date.now(),
       chatId: cur ? cur.id : null
     };
@@ -3758,8 +3754,93 @@ var irxModelCategories = [
   }
 ];
 
-function setupIrxSuite() {
+/* ==================== GLOBAL HELPER FUNCTIONS FOR WORKSPACE VIEWS ==================== */
+window.openSearchChat = function(id) {
+  closePv();
+  if (typeof chats !== "undefined" && Array.isArray(chats)) {
+    cur = chats.filter(function(x){ return x.id === id; })[0];
+    if (typeof render === "function") render();
+  }
+};
 
+window.openHistoryChat = function(id) {
+  closePv();
+  if (typeof chats !== "undefined" && Array.isArray(chats)) {
+    cur = chats.filter(function(x){ return x.id === id; })[0];
+    if (typeof render === "function") render();
+  }
+};
+
+window.openChatMenuFromHistory = function(e, id, btn) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  if (typeof chats !== "undefined" && Array.isArray(chats) && typeof chatMenu === "function") {
+    var c = chats.filter(function(x){ return x.id === id; })[0];
+    chatMenu(c, btn);
+  }
+};
+
+window.togglePlugin = function(btn, name) {
+  if (!btn) return;
+  var isConn = btn.textContent.indexOf("Connected") !== -1;
+  btn.textContent = isConn ? "Connect" : "Connected ✓";
+  btn.classList.toggle("irx-btn-pri", isConn);
+  btn.classList.toggle("irx-btn-sec", !isConn);
+  if (typeof toast === "function") toast((name || "Plugin") + " status updated");
+};
+
+window.saveProfileToast = function() {
+  if (typeof toast === "function") toast("Profile updated successfully!");
+};
+
+window.twoFactorToast = function() {
+  if (typeof toast === "function") toast("Two-factor authentication is active.");
+};
+
+window.setActiveNav = function(navId) {
+  document.querySelectorAll(".irx-nav-item").forEach(function(el) {
+    el.classList.remove("active");
+  });
+  var target = document.getElementById(navId);
+  if (target) target.classList.add("active");
+};
+
+/* ==================== MODELS & THINKING DATA ==================== */
+var irxModelCategories = [
+  {
+    category: "FLAGSHIP",
+    models: [
+      { id: "gpt-6-luna", name: "GPT-6 Luna", provider: "OpenAI Frontier", ctx: "128k ctx", cost: "free", tier: "FREE" },
+      { id: "claude-3-7-sonnet", name: "Claude 3.7 Sonnet", provider: "Anthropic", ctx: "200k ctx", cost: "PRO", tier: "PRO", locked: true },
+      { id: "gemini-2-5-pro", name: "Gemini 2.5 Pro", provider: "Google DeepMind", ctx: "1M ctx", cost: "PRO", tier: "PRO", locked: true }
+    ]
+  },
+  {
+    category: "FAST & EFFICIENT",
+    models: [
+      { id: "google/gemma-4-26b-a4b-it:free", name: "Gemma 4 26B", provider: "Google / OpenRouter", ctx: "128k ctx", cost: "free", tier: "FREE" },
+      { id: "meta-llama/llama-3.3-70b-instruct:free", name: "Llama 3.3 70B", provider: "Meta / OpenRouter", ctx: "128k ctx", cost: "free", tier: "FREE" },
+      { id: "deepseek/deepseek-chat", name: "DeepSeek V3", provider: "DeepSeek", ctx: "64k ctx", cost: "free", tier: "FREE" }
+    ]
+  },
+  {
+    category: "REASONING & THINKING",
+    models: [
+      { id: "deepseek/deepseek-r1", name: "DeepSeek R1", provider: "DeepSeek Reasoning", ctx: "64k ctx", cost: "free", tier: "FREE" },
+      { id: "openai/o3-mini", name: "o3-mini", provider: "OpenAI STEM", ctx: "128k ctx", cost: "PRO", tier: "PRO", locked: true }
+    ]
+  }
+];
+
+var currentThinkingLevel = "Normal";
+var thinkingLevels = [
+  { id: "Off", name: "Off", desc: "No extended reasoning, fastest replies" },
+  { id: "Normal", name: "Normal", desc: "Balanced reasoning and depth (Default)" },
+  { id: "Deep", name: "Deep", desc: "Extended step-by-step thinking for hard tasks" },
+  { id: "Max", name: "Max", desc: "Exhaustive chain-of-thought analysis" }
+];
+
+/* ==================== WORKSPACE SUITE CONTROLLER ==================== */
+function setupIrxSuite() {
   // Wire hero cards
   document.querySelectorAll(".irx-hero-card").forEach(function(card){
     card.onclick = function() {
@@ -3772,7 +3853,8 @@ function setupIrxSuite() {
         explore: "Explore and explain the latest developments in AI and computing",
         creative: "Create something: a novel creative concept from scratch"
       };
-      var val = prompts[act] || (card.querySelector(".irx-hero-card-p") ? card.querySelector(".irx-hero-card-p").textContent : "");
+      var pEl = card.querySelector(".irx-hero-card-p");
+      var val = prompts[act] || (pEl ? pEl.textContent : "");
       var inp = $("in");
       if(inp) {
         inp.value = val;
@@ -3781,7 +3863,7 @@ function setupIrxSuite() {
     };
   });
 
-  // Sidebar items wiring
+  // Sidebar navigation items
   var navSearch = $("nav-search");
   if(navSearch) navSearch.onclick = showSearch;
 
@@ -3809,10 +3891,26 @@ function setupIrxSuite() {
   var navSettings = $("profile-nav") || $("nav-settings");
   if(navSettings) navSettings.onclick = showSettings;
 
+  var newBtn = $("new");
+  if(newBtn) {
+    newBtn.onclick = function() {
+      closePv();
+      if(typeof cur !== "undefined") {
+        cur = { id: "c" + Date.now(), title: "New chat", msgs: [] };
+        if(typeof chats !== "undefined") chats.unshift(cur);
+        if(typeof save === "function") save();
+        if(typeof render === "function") render();
+      }
+      var inp = $("in");
+      if(inp) { inp.value = ""; inp.focus(); }
+    };
+  }
+
   var collapseBtn = $("tog-side") || $("tog");
   if(collapseBtn) {
     collapseBtn.onclick = function() {
       var side = $("side");
+      if(!side) return;
       if(window.innerWidth <= 720) {
         side.classList.toggle("show");
       } else {
@@ -3838,17 +3936,20 @@ function setupIrxSuite() {
   if(thinkingPill && thinkingMenu) {
     thinkingPill.onclick = function(e) {
       e.stopPropagation();
-      if(modelMenu) modelMenu.classList.remove("open");
+      var mMenu = $("irx-model-menu");
+      if(mMenu) mMenu.classList.remove("open");
       thinkingMenu.classList.toggle("open");
     };
   }
 
   document.addEventListener("click", function(e) {
-    if(!e.target.closest("#irx-model-pill") && !e.target.closest("#irx-model-menu")) {
-      if(modelMenu) modelMenu.classList.remove("open");
+    var mMenu = $("irx-model-menu");
+    var tMenu = $("irx-thinking-menu");
+    if(mMenu && !e.target.closest("#irx-model-pill") && !e.target.closest("#irx-model-menu")) {
+      mMenu.classList.remove("open");
     }
-    if(!e.target.closest("#irx-thinking-pill") && !e.target.closest("#irx-thinking-menu")) {
-      if(thinkingMenu) thinkingMenu.classList.remove("open");
+    if(tMenu && !e.target.closest("#irx-thinking-pill") && !e.target.closest("#irx-thinking-menu")) {
+      tMenu.classList.remove("open");
     }
   });
 
@@ -3859,12 +3960,12 @@ function setupIrxSuite() {
 function renderModelMenu() {
   var menu = $("irx-model-menu");
   if(!menu) return;
-  var currentModelId = (cur && cur.model) || (user && user.defaultModel) || "google/gemma-4-26b-a4b-it:free";
+  var currentModelId = (typeof cur !== "undefined" && cur && cur.model) || (typeof user !== "undefined" && user && user.defaultModel) || "google/gemma-4-26b-a4b-it:free";
   var html = "";
   irxModelCategories.forEach(function(cat) {
     html += '<div class="irx-dd-group-lbl">' + esc(cat.category) + '</div>';
     cat.models.forEach(function(m) {
-      var isCur = m.id === currentModelId || (m.name === "Gemma 4 26B" && currentModelId.includes("gemma"));
+      var isCur = m.id === currentModelId || (m.name === "Gemma 4 26B" && currentModelId.indexOf("gemma") !== -1);
       html += '<div class="irx-dd-item' + (isCur ? ' active' : '') + '" data-model="' + esc(m.id) + '" data-locked="' + (m.locked ? 'true' : 'false') + '">' +
         '<div class="irx-dd-item-left">' +
           '<div class="irx-dd-item-name">' + esc(m.name) + (m.locked ? ' <span style="font-size:11px;opacity:0.7">🔒</span>' : '') + (isCur ? ' <span style="color:#8298FF">✓</span>' : '') + '</div>' +
@@ -3884,13 +3985,16 @@ function renderModelMenu() {
         return;
       }
       var mId = el.dataset.model;
-      if(cur) cur.model = mId;
-      if(user) user.defaultModel = mId;
+      if(typeof cur !== "undefined" && cur) cur.model = mId;
+      if(typeof user !== "undefined" && user) user.defaultModel = mId;
       var nameEl = $("irx-current-model-name");
-      if(nameEl) nameEl.textContent = el.querySelector(".irx-dd-item-name").textContent.replace(/🔒|✓/g, "").trim();
+      if(nameEl) {
+        var nNode = el.querySelector(".irx-dd-item-name");
+        if(nNode) nameEl.textContent = nNode.textContent.replace(/🔒|✓/g, "").trim();
+      }
       menu.classList.remove("open");
       renderModelMenu();
-      toast("Selected model: " + mId);
+      if(typeof toast === "function") toast("Selected model: " + mId);
     };
   });
 }
@@ -3917,7 +4021,7 @@ function renderThinkingMenu() {
       if(nameEl) nameEl.textContent = currentThinkingLevel;
       menu.classList.remove("open");
       renderThinkingMenu();
-      toast("Thinking depth set to: " + currentThinkingLevel);
+      if(typeof toast === "function") toast("Thinking depth set to: " + currentThinkingLevel);
     };
   });
 }
@@ -3954,20 +4058,23 @@ function showSearch() {
         res.innerHTML = '<p style="color:#7E8BA4;font-size:13px">Type at least two characters.</p>';
         return;
       }
-      var matchedChats = chats.filter(function(c) {
-        return (c.title && c.title.toLowerCase().includes(q)) || (c.msgs && c.msgs.some(function(m){ return String(m.content||"").toLowerCase().includes(q); }));
-      });
+      var matchedChats = (typeof chats !== "undefined" && Array.isArray(chats)) ? chats.filter(function(c) {
+        return (c.title && c.title.toLowerCase().indexOf(q) !== -1) || (c.msgs && c.msgs.some(function(m){ return String(m.content||"").toLowerCase().indexOf(q) !== -1; }));
+      }) : [];
       if(!matchedChats.length) {
         res.innerHTML = '<div class="irx-empty-box"><div class="irx-empty-h">No results found</div><p class="irx-empty-p">No conversations, files or artifacts match "' + esc(q) + '".</p></div>';
         return;
       }
-      res.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px">' + matchedChats.map(function(c){
+      var itemsHtml = '<div style="display:flex;flex-direction:column;gap:8px">';
+      matchedChats.forEach(function(c){
         var snippet = (c.msgs && c.msgs.length ? c.msgs[c.msgs.length-1].content : "").slice(0, 100);
-        return '<div class="irx-hero-card" onclick="closePv();cur=chats.filter(function(x){return x.id===\\'' + esc(c.id) + '\\'})[0];render()">' +
+        itemsHtml += '<div class="irx-hero-card" onclick="openSearchChat(&quot;' + esc(c.id) + '&quot;)">' +
           '<div style="font-weight:700;color:#FFF;font-size:14px;margin-bottom:4px">' + esc(c.title || "Untitled") + '</div>' +
           '<div style="color:#7E8BA4;font-size:12px">' + esc(snippet) + '</div>' +
         '</div>';
-      }).join("") + '</div>';
+      });
+      itemsHtml += '</div>';
+      res.innerHTML = itemsHtml;
     };
   }
 }
@@ -3980,60 +4087,33 @@ function showHistory() {
       '<div>' +
         '<div class="irx-eyebrow">CONVERSATIONS</div>' +
         '<h1 class="irx-title">History</h1>' +
-        '<p class="irx-sub">Every conversation is stored server-side and only visible to you.</p>' +
+        '<p class="irx-sub">Review, search and resume your past chats across all AI models.</p>' +
       '</div>' +
-      '<div style="display:flex;gap:10px">' +
-        '<button class="irx-btn-pri" id="hist-new-btn">+ New chat</button>' +
-        '<button class="irx-btn-sec" onclick="closePv()">✕ Close</button>' +
-      '</div>' +
+      '<button class="irx-btn-sec" onclick="closePv()">✕ Close</button>' +
     '</div>' +
-    '<div style="margin-bottom:20px;max-width:380px">' +
-      '<input id="hist-search-input" style="width:100%;padding:10px 14px;border:1px solid rgba(255,255,255,0.08);border-radius:8px;background:#0D1326;color:#FFF;font-family:inherit;font-size:13px" placeholder="Search titles...">' +
-    '</div>' +
-    '<div id="history-items-list" style="display:flex;flex-direction:column;gap:1px;border-top:1px solid rgba(255,255,255,0.06)"></div>' +
-  '</div>';
+    '<div id="history-list" style="display:flex;flex-direction:column;gap:8px;margin-top:10px">';
 
-  pvOpen(html);
-
-  $("hist-new-btn").onclick = function() {
-    closePv();
-    newChat();
-  };
-
-  function drawHist(filter) {
-    var listEl = $("history-items-list");
-    if(!listEl) return;
-    var filtered = chats.filter(function(c) {
-      if(!filter) return true;
-      return (c.title||"").toLowerCase().includes(filter.toLowerCase());
-    });
-    if(!filtered.length) {
-      listEl.innerHTML = '<div class="irx-empty-box"><div class="irx-empty-h">No conversations yet</div><p class="irx-empty-p">Start a conversation with Photon and your full history will show here.</p></div>';
-      return;
-    }
-    listEl.innerHTML = filtered.map(function(c) {
-      var snippet = (c.msgs && c.msgs.length ? c.msgs[c.msgs.length-1].content : "No messages yet").slice(0, 90);
-      var timeStr = ago(c.updatedAt || c.t || +c.id.slice(1) || Date.now());
-      return '<div class="irx-field-row" style="padding:14px 10px;cursor:pointer;transition:background .15s" onclick="closePv();cur=chats.filter(function(x){return x.id===\\'' + esc(c.id) + '\\'})[0];render()">' +
+  var allChats = (typeof chats !== "undefined" && Array.isArray(chats)) ? chats.filter(function(c){ return c.msgs && c.msgs.length; }) : [];
+  if(!allChats.length) {
+    html += '<div class="irx-empty-box"><div class="irx-empty-h">No conversation history</div><p class="irx-empty-p">Start a chat with Photon to build history.</p></div>';
+  } else {
+    allChats.forEach(function(c){
+      var snippet = (c.msgs && c.msgs.length ? c.msgs[c.msgs.length-1].content : "").slice(0, 120);
+      var count = c.msgs.length;
+      html += '<div class="irx-field-row" style="padding:14px 10px;cursor:pointer;transition:background .15s" onclick="openHistoryChat(&quot;' + esc(c.id) + '&quot;)">' +
         '<div style="flex:1;min-width:0">' +
-          '<div style="color:#FFF;font-weight:600;font-size:13.5px;margin-bottom:3px">' + esc(c.title || "Untitled conversation") + '</div>' +
-          '<div style="color:#7E8BA4;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(snippet) + '</div>' +
+          '<div style="font-size:14.5px;font-weight:700;color:#FFFFFF;margin-bottom:4px">' + esc(c.title || "Untitled") + '</div>' +
+          '<div style="font-size:12px;color:#7E8BA4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(snippet) + '</div>' +
         '</div>' +
-        '<div style="display:flex;align-items:center;gap:12px">' +
-          '<span style="color:#7E8BA4;font-size:11.5px">' + esc(timeStr) + '</span>' +
-          '<button style="background:none;border:0;color:#7E8BA4;font-size:16px;cursor:pointer" onclick="event.stopPropagation();chatMenu(chats.filter(function(x){return x.id===\\'' + esc(c.id) + '\\'})[0],this)">⋯</button>' +
+        '<div style="display:flex;align-items:center;gap:10px">' +
+          '<span style="font-family:monospace;font-size:11px;color:#8298FF">' + count + ' msg' + (count > 1 ? 's' : '') + '</span>' +
+          '<button style="background:none;border:0;color:#7E8BA4;font-size:16px;cursor:pointer" onclick="openChatMenuFromHistory(event, &quot;' + esc(c.id) + '&quot;, this)">⋯</button>' +
         '</div>' +
       '</div>';
-    }).join("");
+    });
   }
-
-  drawHist("");
-  var inp = $("hist-search-input");
-  if(inp) {
-    inp.oninput = function() {
-      drawHist(inp.value.trim());
-    };
-  }
+  html += '</div></div>';
+  pvOpen(html);
 }
 
 /* ==================== 3. PROJECTS VIEW ==================== */
@@ -4044,148 +4124,163 @@ function showProjects() {
       '<div>' +
         '<div class="irx-eyebrow">WORKSPACE</div>' +
         '<h1 class="irx-title">Projects</h1>' +
-        '<p class="irx-sub">Group conversations, files and artifacts under persistent instructions the assistant follows.</p>' +
+        '<p class="irx-sub">Organize your conversations, files, codebases and specialized custom instructions into focused workspaces.</p>' +
       '</div>' +
-      '<div style="display:flex;gap:10px">' +
-        '<button class="irx-btn-pri" id="proj-new-btn">+ New project</button>' +
+      '<div style="display:flex;gap:8px">' +
+        '<button class="irx-btn-pri" id="new-proj-btn">+ New project</button>' +
         '<button class="irx-btn-sec" onclick="closePv()">✕ Close</button>' +
       '</div>' +
     '</div>' +
-    '<div class="irx-empty-box">' +
-      '<div class="irx-empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/><path d="M8 11v3M12 11v3M16 11v3"/></svg></div>' +
-      '<div class="irx-empty-h">No projects yet</div>' +
-      '<p class="irx-empty-p">Projects keep a long-running body of work together — its instructions, chats and files.</p>' +
-    '</div>' +
-  '</div>';
+    '<div class="irx-artifacts-grid" id="project-grid">';
 
+  var allProjs = (typeof projs !== "undefined" && Array.isArray(projs)) ? projs : [];
+  if(!allProjs.length) {
+    html += '<div class="irx-empty-box" style="grid-column:1/-1">' +
+      '<div class="irx-empty-h">No projects yet</div>' +
+      '<p class="irx-empty-p">Create your first project to bundle files, documents and custom context together.</p>' +
+    '</div>';
+  } else {
+    allProjs.forEach(function(pr){
+      html += '<div class="irx-artifact-card" onclick="showProject(&quot;' + esc(pr.id) + '&quot;)">' +
+        '<div class="irx-artifact-top">' +
+          '<div class="irx-artifact-ico">📁</div>' +
+          '<span class="irx-live-badge">PROJECT</span>' +
+        '</div>' +
+        '<div>' +
+          '<div class="irx-artifact-name">' + esc(pr.name) + '</div>' +
+          '<div class="irx-artifact-meta">' + esc(pr.desc || "No description provided.") + '</div>' +
+        '</div>' +
+      '</div>';
+    });
+  }
+  html += '</div></div>';
   pvOpen(html);
 
-  $("proj-new-btn").onclick = function() {
-    modal('<h2>Create a project</h2><p class="s">Keep instructions and files together.</p><label>Name</label><input id="pn" placeholder="e.g. My Next.js SaaS" maxlength="60"><label>Instructions (optional)</label><textarea id="pd" rows="3" placeholder="Custom instructions for Photon..."></textarea><div class="gbt2"><button class="pv-btn ghost" id="pcx">Cancel</button><button class="pv-btn" id="pgo">Create</button></div>', function(close) {
-      $("pcx").onclick = close;
-      $("pgo").onclick = function() {
-        var nm = $("pn").value.trim();
-        if(!nm) return;
-        var p = { id: "p" + Date.now(), name: nm, desc: $("pd").value.trim(), t: Date.now() };
-        projs.unshift(p);
-        saveProj();
-        close();
-        showProject(p.id);
-      };
-    });
-  };
+  var npb = $("new-proj-btn");
+  if(npb && typeof newProjModal === "function") {
+    npb.onclick = newProjModal;
+  }
 }
 
 /* ==================== 4. LIBRARY VIEW ==================== */
 function showLibrary() {
   setActiveNav("nav-library");
+  var samplePrompts = [
+    { title: "Full-Stack SaaS Blueprint", desc: "Production architectural spec with auth, billing and schemas.", prompt: "Build a full-stack SaaS with Next.js, Tailwind CSS and Stripe checkout" },
+    { title: "Modern Landing Page", desc: "Interactive vector layouts, micro-animations and responsive hero sections.", prompt: "Create a modern landing page with dark mode, glowing accents and high conversion CTA" },
+    { title: "IEEE 830 SRS Document", desc: "Software Requirements Specification with functional and system requirements.", prompt: "Write a complete IEEE 830 Software Requirements Specification for an AI platform" },
+    { title: "Database Schema & Architecture", desc: "PostgreSQL relational schemas, indexing strategies and data flows.", prompt: "Design an optimized PostgreSQL schema for high-throughput multi-tenant SaaS" }
+  ];
+
   var html = '<div class="irx-view-page">' +
     '<div class="irx-view-header">' +
       '<div>' +
-        '<div class="irx-eyebrow">PERSONAL STORAGE</div>' +
+        '<div class="irx-eyebrow">WORKSPACE</div>' +
         '<h1 class="irx-title">Library</h1>' +
-        '<p class="irx-sub">Every file you upload or generate, stored privately and visible only to you.</p>' +
-      '</div>' +
-      '<div style="display:flex;gap:10px">' +
-        '<button class="irx-btn-pri" id="lib-upload-btn">⤒ Upload</button>' +
-        '<button class="irx-btn-sec" onclick="closePv()">✕ Close</button>' +
-      '</div>' +
-    '</div>' +
-    '<div class="irx-pills-row">' +
-      '<button class="irx-filter-pill active">All</button>' +
-      '<button class="irx-filter-pill">Documents</button>' +
-      '<button class="irx-filter-pill">Images</button>' +
-      '<button class="irx-filter-pill">Video</button>' +
-      '<button class="irx-filter-pill">Audio</button>' +
-      '<button class="irx-filter-pill">Archives</button>' +
-      '<div style="margin-left:auto;display:flex;align-items:center;gap:10px">' +
-        '<input style="background:#0D1326;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:6px 12px;color:#FFF;font-family:inherit;font-size:12px" placeholder="Search files...">' +
-        '<span style="color:#7E8BA4;font-size:11px">0 files · —</span>' +
-      '</div>' +
-    '</div>' +
-    '<div class="irx-empty-box">' +
-      '<div class="irx-empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m16 6 4 14M12 6v14M8 8v12M4 4v16"/></svg></div>' +
-      '<div class="irx-empty-h">Nothing stored yet</div>' +
-      '<p class="irx-empty-p">Upload a document or image, or generate something in the Studio — it lands here.</p>' +
-    '</div>' +
-  '</div>';
-
-  pvOpen(html);
-
-  $("lib-upload-btn").onclick = function() {
-    $("chat-file-input").click();
-  };
-}
-
-/* ==================== 5. STUDIO VIEW ==================== */
-function showStudio() {
-  setActiveNav("nav-studio");
-  var html = '<div class="irx-view-page">' +
-    '<div class="irx-view-header">' +
-      '<div>' +
-        '<div class="irx-eyebrow">CREATIVE</div>' +
-        '<h1 class="irx-title">Studio</h1>' +
-        '<p class="irx-sub">Text to image, references and edits.</p>' +
+        '<p class="irx-sub">Pre-configured prompts, architecture blueprints and reusable engineering templates.</p>' +
       '</div>' +
       '<button class="irx-btn-sec" onclick="closePv()">✕ Close</button>' +
     '</div>' +
-    '<div class="irx-pills-row" style="background:#0D1326;padding:4px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);width:fit-content">' +
-      '<button class="irx-filter-pill active" id="st-img">Image Studio</button>' +
-      '<button class="irx-filter-pill" id="st-vid">Video Studio</button>' +
-      '<button class="irx-filter-pill" id="st-voc">Voice Studio</button>' +
-      '<button class="irx-filter-pill" id="st-fil">File Studio</button>' +
-    '</div>' +
-    '<div style="display:grid;grid-template-columns:360px 1fr;gap:24px;margin-top:20px">' +
-      '<div class="irx-plan-box" style="padding:20px">' +
-        '<div style="font-size:11px;font-weight:700;color:#7E8BA4;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:8px">MODEL</div>' +
-        '<select style="width:100%;background:#080A11;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:8px 10px;color:#FFF;font-family:inherit;font-size:12.5px;margin-bottom:14px"><option>Imagen 4 · Google · 4c</option><option>Flux Pro · 5c</option></select>' +
-        '<div style="font-size:11px;font-weight:700;color:#7E8BA4;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:8px">PROMPT</div>' +
-        '<textarea id="studio-prompt" style="width:100%;background:#080A11;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:10px;color:#FFF;font-family:inherit;font-size:13px;resize:none;min-height:90px;margin-bottom:14px" placeholder="A brutalist glass tower at dusk, volumetric fog, long lens..."></textarea>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">' +
-          '<div><div style="font-size:10px;font-weight:700;color:#7E8BA4;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:6px">ASPECT RATIO</div><select style="width:100%;background:#080A11;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:7px;color:#FFF;font-family:inherit;font-size:12px"><option>1:1</option><option>16:9</option><option>9:16</option></select></div>' +
-          '<div><div style="font-size:10px;font-weight:700;color:#7E8BA4;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:6px">STYLE</div><input style="width:100%;background:#080A11;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:7px;color:#FFF;font-family:inherit;font-size:12px" value="cinematic, film gra..."></div>' +
-        '</div>' +
-        '<div style="font-size:10px;font-weight:700;color:#7E8BA4;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:6px">REFERENCE IMAGES</div>' +
-        '<div style="width:48px;height:48px;border:1px dashed rgba(255,255,255,0.12);border-radius:8px;display:grid;place-items:center;color:#7E8BA4;cursor:pointer;margin-bottom:18px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>' +
-        '<button class="irx-btn-pri" id="studio-generate-btn" style="width:100%;justify-content:center;padding:11px">✨ Generate · 4 credits</button>' +
-        '<div style="font-size:10.5px;color:#7E8BA4;text-align:center;margin-top:10px">Balance 486 credits · Failed runs are refunded automatically</div>' +
-      '</div>' +
-      '<div class="irx-plan-box" style="padding:20px">' +
-        '<div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:#7E8BA4;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:16px"><span>GENERATION HISTORY</span><span>0 runs</span></div>' +
-        '<div class="irx-empty-box" style="margin-top:40px;border:0;background:transparent">' +
-          '<div class="irx-empty-h" style="font-size:15px">Nothing generated yet</div>' +
-          '<p class="irx-empty-p" style="font-size:12px">Your image runs will be tracked here with their real provider output.</p>' +
-        '</div>' +
-      '</div>' +
-    '</div>' +
-  '</div>';
+    '<div class="irx-artifacts-grid">';
 
+  samplePrompts.forEach(function(p){
+    html += '<div class="irx-artifact-card" onclick="closePv();var inp=$(&quot;in&quot;);if(inp){inp.value=&quot;' + esc(p.prompt) + '&quot;;inp.focus();}">' +
+      '<div class="irx-artifact-top">' +
+        '<div class="irx-artifact-ico">📚</div>' +
+        '<span class="irx-live-badge">TEMPLATE</span>' +
+      '</div>' +
+      '<div>' +
+        '<div class="irx-artifact-name">' + esc(p.title) + '</div>' +
+        '<div class="irx-artifact-meta">' + esc(p.desc) + '</div>' +
+      '</div>' +
+    '</div>';
+  });
+  html += '</div></div>';
   pvOpen(html);
-
-  $("studio-generate-btn").onclick = function() {
-    var p = $("studio-prompt").value.trim();
-    if(!p) {
-      toast("Please enter an image prompt");
-      return;
-    }
-    closePv();
-    mode = "image";
-    newChat();
-    $("in").value = p;
-    send();
-  };
 }
 
-/* ==================== 6. PLUGINS VIEW ==================== */
+/* ==================== 5. ARTIFACTS VIEW ==================== */
+function showArtifacts() {
+  setActiveNav("art");
+  if(typeof window.renderArtifactsWorkspace === "function") {
+    window.renderArtifactsWorkspace();
+    return;
+  }
+  var html = '<div class="irx-view-page">' +
+    '<div class="irx-view-header">' +
+      '<div>' +
+        '<div class="irx-eyebrow">WORKSPACE</div>' +
+        '<h1 class="irx-title">Artifacts</h1>' +
+        '<p class="irx-sub">Websites built from a prompt. Generate, edit the files, preview, then publish to a shareable link.</p>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px">' +
+        '<button class="irx-btn-pri" id="art-build-btn">✨ Build a website</button>' +
+        '<button class="irx-btn-sec" onclick="closePv()">✕ Close</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="irx-artifacts-grid">' +
+      '<div class="irx-artifact-card" onclick="closePv();var inp=$(&quot;in&quot;);if(inp){inp.value=&quot;Build a website for &quot;;inp.focus();}">' +
+        '<div class="irx-artifact-top"><div class="irx-artifact-ico">🌐</div><span class="irx-live-badge">HTML · 1 FILES</span></div>' +
+        '<div><div class="irx-artifact-name">Sample Artifact</div><div class="irx-artifact-meta">Interactive web preview generated by Photon.</div></div>' +
+      '</div>' +
+    '</div></div>';
+  pvOpen(html);
+
+  var bb = $("art-build-btn");
+  if(bb) {
+    bb.onclick = function() {
+      closePv();
+      var inp = $("in");
+      if(inp) { inp.value = "Build a modern website with HTML, Tailwind CSS and JS"; inp.focus(); }
+    };
+  }
+}
+
+/* ==================== 6. STUDIO VIEW ==================== */
+function showStudio() {
+  setActiveNav("nav-studio");
+  var studios = [
+    { mode: "code", title: "Web & Code Studio", desc: "Build full-stack applications, interactive HTML widgets and scripts.", icon: "</>" },
+    { mode: "image", title: "Image Studio", desc: "Vector graphics, illustrations, high-definition photorealism.", icon: "🎨" },
+    { mode: "video", title: "Video Studio", desc: "Prompt-to-motion generation, shot sequences and camera sweeps.", icon: "📹" },
+    { mode: "srs", title: "Docs & Files Engine", desc: "Structured specifications, markdown documents, CSV tables and code.", icon: "📄" }
+  ];
+
+  var html = '<div class="irx-view-page">' +
+    '<div class="irx-view-header">' +
+      '<div>' +
+        '<div class="irx-eyebrow">CREATIVE WORKFLOWS</div>' +
+        '<h1 class="irx-title">Studio</h1>' +
+        '<p class="irx-sub">Launch dedicated creative environments for web development, visual design and technical writing.</p>' +
+      '</div>' +
+      '<button class="irx-btn-sec" onclick="closePv()">✕ Close</button>' +
+    '</div>' +
+    '<div class="irx-artifacts-grid">';
+
+  studios.forEach(function(s){
+    html += '<div class="irx-artifact-card" onclick="closePv();setMode(&quot;' + s.mode + '&quot;);var inp=$(&quot;in&quot;);if(inp){inp.focus();}">' +
+      '<div class="irx-artifact-top">' +
+        '<div class="irx-artifact-ico" style="font-family:monospace;font-size:14px;color:#8298FF">' + s.icon + '</div>' +
+        '<span class="irx-live-badge">STUDIO</span>' +
+      '</div>' +
+      '<div>' +
+        '<div class="irx-artifact-name">' + esc(s.title) + '</div>' +
+        '<div class="irx-artifact-meta">' + esc(s.desc) + '</div>' +
+      '</div>' +
+    '</div>';
+  });
+  html += '</div></div>';
+  pvOpen(html);
+}
+
+/* ==================== 7. PLUGINS VIEW ==================== */
 function showPlugins() {
   setActiveNav("nav-plugins");
-  var pluginCards = [
-    { name: "Research Desk", desc: "Live web research with structured briefs, facts and sources.", tag: "RESEARCH · 1 TOOL" },
-    { name: "Image Forge", desc: "Turn a prompt into a finished image inside chat.", tag: "CREATIVE · 1 TOOL" },
-    { name: "Doc Reader", desc: "Summarise PDFs, documents and spreadsheets you attach.", tag: "PRODUCTIVITY · 1 TOOL" },
-    { name: "Code Auditor", desc: "Line-level defect review with a corrected version.", tag: "ENGINEERING · 1 TOOL" },
-    { name: "Translator", desc: "Tone-preserving translation with ambiguity notes.", tag: "LANGUAGE · 1 TOOL" },
-    { name: "Data Analyst", desc: "Paste a table or dataset and get patterns, outliers and a recommendation.", tag: "ANALYTICS · 1 TOOL" }
+  var plugins = [
+    { name: "Live Web Search", desc: "Ground Photon responses with real-time web discovery and reference citations.", tag: "INTEGRATION", active: true },
+    { name: "Code Interpreter", desc: "Run Python, Node.js and SQL in a sandboxed compute container.", tag: "RUNTIME", active: true },
+    { name: "GitHub Connector", desc: "Browse repos, pull requests, open issues and commit code changes.", tag: "DEVELOPER", active: false },
+    { name: "Artifacts Publisher", desc: "Publish websites, dashboards and web apps directly to live URLs.", tag: "HOSTING", active: true }
   ];
 
   var html = '<div class="irx-view-page">' +
@@ -4193,218 +4288,118 @@ function showPlugins() {
       '<div>' +
         '<div class="irx-eyebrow">EXTENSIONS</div>' +
         '<h1 class="irx-title">Plugins</h1>' +
-        '<p class="irx-sub">Connect a plugin to grant its tools. Every run executes through a backend function with your credit balance enforced server-side.</p>' +
+        '<p class="irx-sub">Connect Photon to external services, developer platforms and real-time data providers.</p>' +
       '</div>' +
       '<button class="irx-btn-sec" onclick="closePv()">✕ Close</button>' +
     '</div>' +
-    '<div class="irx-pills-row">' +
-      '<button class="irx-filter-pill active">All</button>' +
-      '<button class="irx-filter-pill">Research</button>' +
-      '<button class="irx-filter-pill">Creative</button>' +
-      '<button class="irx-filter-pill">Productivity</button>' +
-      '<button class="irx-filter-pill">Engineering</button>' +
-      '<button class="irx-filter-pill">Language</button>' +
-      '<button class="irx-filter-pill">Analytics</button>' +
-      '<input style="margin-left:auto;background:#0D1326;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:6px 12px;color:#FFF;font-family:inherit;font-size:12px" placeholder="Search plugins..">' +
-    '</div>' +
-    '<div style="display:grid;grid-template-columns:1fr 340px;gap:24px;margin-top:16px">' +
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">' +
-        pluginCards.map(function(pc){
-          return '<div class="irx-plan-box" style="padding:18px">' +
-            '<div style="font-size:18px;color:#8298FF;margin-bottom:8px">🔌</div>' +
-            '<div style="font-size:15px;font-weight:700;color:#FFF;margin-bottom:4px">' + esc(pc.name) + '</div>' +
-            '<div style="font-size:12px;color:#7E8BA4;line-height:1.45;margin-bottom:12px;min-height:34px">' + esc(pc.desc) + '</div>' +
-            '<div style="font-size:10px;color:#7E8BA4;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:14px">' + esc(pc.tag) + '</div>' +
-            '<button class="irx-btn-pri" style="width:100%;justify-content:center;padding:8px" onclick="this.textContent = this.textContent===\\'Connect\\'?\\'Connected ✓\\':\\'Connect\\';toast(\\'' + esc(pc.name) + ' status updated\\')">Connect</button>' +
-          '</div>';
-        }).join("") +
-      '</div>' +
-      '<div class="irx-plan-box" style="padding:24px;border:1px dashed rgba(255,255,255,0.08);background:transparent;display:grid;place-items:center;text-align:center;color:#7E8BA4;font-size:13px">' +
-        'Connect a plugin and open it to run its tools here.' +
-      '</div>' +
-    '</div>' +
-  '</div>';
+    '<div class="irx-artifacts-grid">';
 
+  plugins.forEach(function(p){
+    html += '<div class="irx-artifact-card">' +
+      '<div class="irx-artifact-top">' +
+        '<div class="irx-artifact-ico">🔌</div>' +
+        '<span class="irx-live-badge">' + p.tag + '</span>' +
+      '</div>' +
+      '<div style="flex:1">' +
+        '<div class="irx-artifact-name">' + esc(p.name) + '</div>' +
+        '<div class="irx-artifact-meta">' + esc(p.desc) + '</div>' +
+      '</div>' +
+      '<button class="irx-btn-pri" style="width:100%;justify-content:center;padding:8px" onclick="togglePlugin(this, &quot;' + esc(p.name) + '&quot;)">' + (p.active ? 'Connected ✓' : 'Connect') + '</button>' +
+    '</div>';
+  });
+  html += '</div></div>';
   pvOpen(html);
 }
 
-/* ==================== 7. PLANS AND CREDITS VIEW ==================== */
+/* ==================== 8. PLANS AND CREDITS VIEW ==================== */
 function showPlansAndCredits() {
-  setActiveNav("nav-credits");
   var html = '<div class="irx-view-page">' +
     '<div class="irx-view-header">' +
       '<div>' +
-        '<div class="irx-eyebrow">SUBSCRIPTION</div>' +
-        '<h1 class="irx-title">Plans and credits</h1>' +
-        '<p class="irx-sub">Every operation is priced in credits, deducted server-side. Unused monthly credits refresh on the first of the month.</p>' +
+        '<div class="irx-eyebrow">BILLING & USAGE</div>' +
+        '<h1 class="irx-title">Plans and Credits</h1>' +
+        '<p class="irx-sub">Credits replenish daily. Upgrade for higher concurrency, frontier models and unlimited project workspaces.</p>' +
       '</div>' +
       '<button class="irx-btn-sec" onclick="closePv()">✕ Close</button>' +
     '</div>' +
-    '<div class="irx-stats-bar">' +
-      '<div class="irx-stat-card"><div class="irx-stat-lbl">BALANCE</div><div class="irx-stat-val">486</div></div>' +
-      '<div class="irx-stat-card"><div class="irx-stat-lbl">MONTHLY ALLOCATION</div><div class="irx-stat-val">500</div></div>' +
-      '<div class="irx-stat-card"><div class="irx-stat-lbl">SPENT THIS PERIOD</div><div class="irx-stat-val">14</div></div>' +
-      '<div class="irx-stat-card"><div class="irx-stat-lbl">CURRENT PLAN</div><div class="irx-stat-val" style="color:#8298FF">FREE</div></div>' +
-    '</div>' +
-    '<div class="irx-plans-grid">' +
-      '<div class="irx-plan-box cur">' +
-        '<div class="irx-plan-badge">CURRENT</div>' +
-        '<div class="irx-eyebrow" style="margin-bottom:12px">FREE</div>' +
-        '<div class="irx-plan-name">Free</div>' +
-        '<div class="irx-plan-desc">Explore Photon with the everyday models.</div>' +
-        '<ul class="irx-plan-features">' +
-          '<li>500 credits every month</li>' +
-          '<li>Everyday chat and reasoning models</li>' +
-          '<li>Image studio — 4 credits per image</li>' +
-          '<li>Projects, library and artifacts</li>' +
-          '<li>200 MB private storage</li>' +
-        '</ul>' +
-        '<button class="irx-btn-sec" disabled style="width:100%;justify-content:center;opacity:0.6">Your plan</button>' +
+    '<div class="irx-credits-card" style="padding:18px;margin-top:10px">' +
+      '<div class="irx-credits-top">' +
+        '<span class="irx-credits-lbl" style="font-size:12px">CURRENT PLAN BALANCE</span>' +
+        '<span class="irx-credits-plan" style="font-size:13px">free tier</span>' +
       '</div>' +
-      '<div class="irx-plan-box">' +
-        '<div class="irx-eyebrow" style="margin-bottom:12px">PRO</div>' +
-        '<div class="irx-plan-name">₹1,499 <span style="font-size:12px;color:#7E8BA4;font-weight:400">/month</span></div>' +
-        '<div class="irx-plan-desc">For daily building, research and creation.</div>' +
-        '<ul class="irx-plan-features">' +
-          '<li>8,000 credits every month</li>' +
-          '<li>Premium reasoning and coding models</li>' +
-          '<li>Extended thinking levels</li>' +
-          '<li>Video studio access</li>' +
-          '<li>Projects with persistent context</li>' +
-          '<li>5 GB private storage</li>' +
-        '</ul>' +
-        '<button class="irx-btn-pri" style="width:100%;justify-content:center" onclick="showPlans()">Upgrade ↗</button>' +
-      '</div>' +
-      '<div class="irx-plan-box">' +
-        '<div class="irx-eyebrow" style="margin-bottom:12px">MAX</div>' +
-        '<div class="irx-plan-name">₹3,999 <span style="font-size:12px;color:#7E8BA4;font-weight:400">/month</span></div>' +
-        '<div class="irx-plan-desc">Flagship models with the highest limits.</div>' +
-        '<ul class="irx-plan-features">' +
-          '<li>30,000 credits every month</li>' +
-          '<li>Every model, including flagship reasoning</li>' +
-          '<li>Maximum thinking level</li>' +
-          '<li>Highest image and video limits</li>' +
-          '<li>Advanced coding workspace</li>' +
-          '<li>25 GB private storage</li>' +
-        '</ul>' +
-        '<button class="irx-btn-pri" style="width:100%;justify-content:center" onclick="showPlans()">Upgrade ↗</button>' +
+      '<div class="irx-credits-num" style="margin-top:8px">' +
+        '<b class="irx-credits-val" style="font-size:28px">500</b>' +
+        '<span class="irx-credits-avail" style="font-size:14px">available credits today</span>' +
       '</div>' +
     '</div>' +
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">' +
-      '<div class="irx-plan-box"><div class="irx-eyebrow">CREDIT ACTIVITY</div><p style="color:#7E8BA4;font-size:13px;text-align:center;padding:32px 0">No credit movements yet.</p></div>' +
-      '<div class="irx-plan-box"><div class="irx-eyebrow">BILLING HISTORY</div><p style="color:#7E8BA4;font-size:13px;text-align:center;padding:32px 0">No invoices yet — you are on the free plan.</p></div>' +
-    '</div>' +
-  '</div>';
-
+    '<div class="irx-artifacts-grid" style="margin-top:16px">' +
+      '<div class="irx-artifact-card" style="border-color:#8298FF">' +
+        '<div class="irx-artifact-top"><b style="color:#FFF;font-size:16px">FREE PLAN</b><span class="irx-live-badge">CURRENT</span></div>' +
+        '<div style="font-size:22px;font-weight:700;color:#FFF">$0 <span style="font-size:12px;color:#7E8BA4;font-weight:400">/ month</span></div>' +
+        '<ul style="color:#CAD5E8;font-size:12.5px;padding-left:18px;margin:8px 0;line-height:1.7">' +
+          '<li>500 credits per day</li>' +
+          '<li>Access to fast frontier models</li>' +
+          '<li>Unlimited public artifacts</li>' +
+        '</ul>' +
+        '<button class="irx-btn-sec" style="width:100%;justify-content:center" disabled>Active</button>' +
+      '</div>' +
+      '<div class="irx-artifact-card">' +
+        '<div class="irx-artifact-top"><b style="color:#FFF;font-size:16px">PRO PLAN</b><span class="irx-live-badge" style="background:rgba(255,200,50,0.15);color:#FBBF24">POPULAR</span></div>' +
+        '<div style="font-size:22px;font-weight:700;color:#FFF">$20 <span style="font-size:12px;color:#7E8BA4;font-weight:400">/ month</span></div>' +
+        '<ul style="color:#CAD5E8;font-size:12.5px;padding-left:18px;margin:8px 0;line-height:1.7">' +
+          '<li>5,000 credits per day</li>' +
+          '<li>Claude 3.7 Sonnet & GPT-6 Luna</li>' +
+          '<li>Private custom artifacts & projects</li>' +
+        '</ul>' +
+        '<button class="irx-btn-pri" style="width:100%;justify-content:center" onclick="closePv();if(typeof openUpgradeModal===&quot;function&quot;)openUpgradeModal();else toast(&quot;Contact support to upgrade to Pro.&quot;);">Upgrade to Pro</button>' +
+      '</div>' +
+    '</div></div>';
   pvOpen(html);
 }
 
-/* ==================== 8. SETTINGS VIEW ==================== */
+/* ==================== 9. SETTINGS VIEW ==================== */
 function showSettings() {
   setActiveNav("profile-nav");
-  var uName = (user && (user.fullName || user.email.split("@")[0])) || "Harendra Teli";
-  var uEmail = (user && user.email) || "sah.harendra2010@gmail.com";
+  var email = (typeof user !== "undefined" && user && user.email) ? user.email : "user@photon.ai";
   var html = '<div class="irx-view-page">' +
     '<div class="irx-view-header">' +
       '<div>' +
-        '<div class="irx-eyebrow">ACCOUNT</div>' +
+        '<div class="irx-eyebrow">PREFERENCES</div>' +
         '<h1 class="irx-title">Settings</h1>' +
-        '<p class="irx-sub">Your profile, plan and workspace controls.</p>' +
+        '<p class="irx-sub">Account profile, security, default model choices and personal preferences.</p>' +
       '</div>' +
       '<button class="irx-btn-sec" onclick="closePv()">✕ Close</button>' +
     '</div>' +
-    '<div class="irx-settings-grid">' +
-      '<div class="irx-settings-box">' +
-        '<div class="irx-box-tag">PROFILE</div>' +
-        '<label style="display:block;font-size:12px;color:#7E8BA4;margin-bottom:6px">Full name</label>' +
-        '<input id="irx-set-name" value="' + esc(uName) + '" style="width:100%;background:#080A11;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:9px 12px;color:#FFF;font-family:inherit;font-size:13px;margin-bottom:14px">' +
-        '<div class="irx-field-row"><span class="irx-field-lbl">Email</span><span class="irx-field-val">' + esc(uEmail) + '</span></div>' +
-        '<div class="irx-field-row"><span class="irx-field-lbl">Role</span><span class="irx-field-val">USER</span></div>' +
-        '<button class="irx-btn-pri" style="margin-top:18px;width:100%;justify-content:center" onclick="toast(\\'Profile updated successfully!\\')">💾 Save profile</button>' +
+    '<div style="display:flex;flex-direction:column;gap:14px;margin-top:10px">' +
+      '<div class="irx-artifact-card">' +
+        '<div class="irx-artifact-name" style="margin-bottom:8px">Account Profile</div>' +
+        '<div class="irx-field-row">' +
+          '<span class="irx-field-lbl">Email Address</span>' +
+          '<span class="irx-field-val">' + esc(email) + '</span>' +
+        '</div>' +
+        '<div class="irx-field-row">' +
+          '<span class="irx-field-lbl">Tier</span>' +
+          '<span class="irx-field-val" style="color:#8298FF;font-weight:700">Free Tier</span>' +
+        '</div>' +
+        '<button class="irx-btn-pri" style="margin-top:18px;width:100%;justify-content:center" onclick="saveProfileToast()">💾 Save profile</button>' +
       '</div>' +
-      '<div class="irx-settings-box">' +
-        '<div class="irx-box-tag">PLAN AND USAGE</div>' +
-        '<div class="irx-field-row"><span class="irx-field-lbl">Plan</span><span class="irx-field-val" style="color:#8298FF">FREE</span></div>' +
-        '<div class="irx-field-row"><span class="irx-field-lbl">Credit balance</span><span class="irx-field-val">486</span></div>' +
-        '<div class="irx-field-row"><span class="irx-field-lbl">Monthly allocation</span><span class="irx-field-val">500</span></div>' +
-        '<div class="irx-field-row"><span class="irx-field-lbl">Lifetime spend</span><span class="irx-field-val">14</span></div>' +
-        '<div class="irx-field-row"><span class="irx-field-lbl">Library</span><span class="irx-field-val">0 files</span></div>' +
-        '<div style="display:flex;gap:10px;margin-top:18px">' +
-          '<button class="irx-btn-sec" style="flex:1;justify-content:center" onclick="showPlansAndCredits()">Plans and billing</button>' +
-          '<button class="irx-btn-sec" style="flex:1;justify-content:center" onclick="toast(\\'Two-factor authentication is active.\\')">🛡 Two-factor</button>' +
+      '<div class="irx-artifact-card">' +
+        '<div class="irx-artifact-name" style="margin-bottom:8px">Security & Access</div>' +
+        '<div style="display:flex;gap:10px">' +
+          '<button class="irx-btn-sec" style="flex:1;justify-content:center" onclick="twoFactorToast()">🛡 Two-factor</button>' +
+          '<button class="irx-btn-sec" style="flex:1;justify-content:center;color:#EF4444" onclick="closePv();if(typeof logout===&quot;function&quot;)logout();">Log out</button>' +
         '</div>' +
       '</div>' +
-    '</div>' +
-    '<div class="irx-settings-box">' +
-      '<div class="irx-box-tag">SESSION</div>' +
-      '<p style="color:#7E8BA4;font-size:13px;margin:0 0 16px">Sessions are issued by the platform as secure, HTTP-only cookies. Signing out invalidates this browser\\'s session.</p>' +
-      '<button class="irx-btn-sec" style="color:#FF7B7B;border-color:rgba(255,123,123,0.3)" onclick="out()">[→ Sign out</button>' +
-    '</div>' +
-  '</div>';
-
+    '</div></div>';
   pvOpen(html);
 }
 
-function setActiveNav(navId) {
-  document.querySelectorAll(".irx-nav-item").forEach(function(el){ el.classList.remove("active"); });
-  var target = $(navId);
-  if(target) target.classList.add("active");
-}
-`;
-
-
-function setupIrxEvents(){
+// Auto-boot suite controller
+if(document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", setupIrxSuite);
+} else {
   setupIrxSuite();
-  setupIrxSidebarEvents();
-  var sNav=$("studioNav");
-  if(sNav){
-    sNav.onclick=function(e){
-      var tab=e.target.closest("[data-mode]");
-      if(!tab)return;
-      mode=tab.dataset.mode;
-      syncStudioTabs();
-      var inp=$("in");
-      if(mode==="image")inp.placeholder="Describe the image or vector art you want to create...";
-      else if(mode==="video")inp.placeholder="Describe the animation or video you want to generate...";
-      else if(mode==="code")inp.placeholder="Describe the web app, UI or code you want to build...";
-      else if(mode==="srs")inp.placeholder="Describe the document, report or specification you need...";
-      else inp.placeholder=cur&&cur.msgs.length?"Message Photon...":"How can I help you today?";
-      render();
-    };
-  }
-  var wrap=$("irxCards");
-  if(wrap){
-    wrap.onclick=function(e){
-      var card=e.target.closest("[data-action]");
-      if(!card)return;
-      var act=card.dataset.action;
-      var inp=$("in");
-      if(act==="build"){
-        mode="code";
-        inp.value="Build a modern responsive web application with HTML, CSS and interactive JavaScript: ";
-      }else if(act==="image"){
-        mode="image";
-        inp.value="A futuristic glowing vector illustration of ";
-      }else if(act==="video"){
-        mode="video";
-        inp.value="A smooth looping cinematic animation of ";
-      }else if(act==="file"){
-        mode="srs";
-        inp.value="Generate a comprehensive structured documentation file for ";
-      }
-      syncStudioTabs();
-      inp.focus();
-      render();
-      upd();
-    };
-  }
 }
-setupIrxEvents();
-syncStudioTabs();
-showAuth("login");
-topo();
-loadPublicConfig();window.addEventListener("focus",function(){if(user)syncAuthenticatedAccount();else loadPublicConfig()});document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible"){if(user)syncAuthenticatedAccount();else loadPublicConfig()}});
-checkRedirectAuth();
 })();
 </script>
 </body></html>
