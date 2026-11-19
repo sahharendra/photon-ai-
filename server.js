@@ -2235,7 +2235,7 @@ const server = http.createServer(async (req, res) => {
         return fs.createReadStream(qrPath).pipe(res);
       }
     }
-    if (['/', '/index.html', '/profile', '/search', '/history', '/projects', '/library', '/artifacts', '/studio', '/plugins', '/settings', '/credits', '/plans', '/billing'].includes(pathname)) {
+    if (['/', '/index.html', '/profile', '/search', '/history', '/projects', '/library', '/artifacts', '/studio', '/plugins', '/settings', '/credits', '/plans', '/billing', '/login', '/signin', '/signup', '/auth', '/register'].includes(pathname)) {
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
       if (req.method === 'HEAD') return res.end();
       return fs.createReadStream(path.join(ROOT, 'index.html')).pipe(res);
