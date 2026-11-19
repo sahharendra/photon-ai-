@@ -4161,26 +4161,23 @@ function formatAssistantMessage(rawText) {
     if (t.trim()) thoughts += (thoughts ? "\n\n" : "") + t.trim();
     return "";
   });
+  // Strip incomplete open thinking block while streaming
+  text = text.replace(/<(?:think|thought)>[\s\S]*$/i, "");
 
-  // Check for monologue preamble before actual response (like "Okay, the user said... Let me...")
-  var monologueMatch = /^(?:Okay|Alright|Wait|Let me think|Thinking Process:)[^]*?(?:(?:\r?\n\r?\n)|(?=(?:Hello|Hi |Hey |Certainly|Sure|I'd be happy|Here is|To |In order to|Welcome)))/i.exec(text);
-  if (monologueMatch && monologueMatch[0].length < text.length && monologueMatch[0].length > 30) {
-    var thoughtPart = monologueMatch[0].trim();
-    var restPart = text.slice(monologueMatch[0].length).trim();
-    if (restPart) {
-      thoughts += (thoughts ? "\n\n" : "") + thoughtPart;
-      text = restPart;
+  // Check for monologue preamble before actual response (e.g. "Okay, the user said... Let me...")
+  if (/^(?:Okay|Alright|Wait|Let me think|Thinking Process:)/i.test(text.trim())) {
+    var greetingIdx = text.search(/\b(?:Hello|Hi|Hey|Greetings|Welcome)\b[!,.]?/);
+    if (greetingIdx > 20) {
+      var thoughtPart = text.slice(0, greetingIdx).trim();
+      var restPart = text.slice(greetingIdx).trim();
+      if (restPart) {
+        thoughts += (thoughts ? "\n\n" : "") + thoughtPart;
+        text = restPart;
+      }
     }
   }
 
   var htmlOut = md(text.trim());
-  if (thoughts) {
-    var thoughtBox = '<details class="photon-think-box">' +
-      '<summary class="photon-think-summary"><span>⚡ Thought process</span></summary>' +
-      '<div class="photon-think-body">' + esc(thoughts) + '</div>' +
-    '</details>';
-    htmlOut = thoughtBox + htmlOut;
-  }
   return htmlOut;
 }
 
@@ -4575,7 +4572,7 @@ function render(){
   rest.forEach(item);
   if(query&&!vis.length){var empty=document.createElement("div");empty.className="lbl";empty.textContent="No matching conversations";L.append(empty)}
   var has=cur.msgs.length>0,main=$("main");
-  main.classList.toggle("chat",has);basePH=has?"Message Photon...":"Message Photon — ask, build, create or research...";$("in").placeholder=basePH;$("hero").hidden=has;$("msgs").hidden=!has;
+  main.classList.toggle("chat",has);basePH=has?"Message Photon...":"Message Photon — ask, build, create or research...";$("in").placeholder=basePH;$("hero").hidden=has;$("hero").style.display=has?"none":"flex";$("msgs").hidden=!has;$("msgs").style.display=has?"flex":"none";
   $("greet").textContent="What can I help you with?";
   var pr=curProj(),pb=$("pbar");pb.hidden=!pr;
   if(pr){pb.innerHTML='<button id="pbn">'+FOLD+esc(pr.name)+'</button><button id="pbc">+ New chat</button>';$("pbn").onclick=function(){showProject(pr.id)};$("pbc").onclick=function(){projChat(pr,"")}}
@@ -6129,40 +6126,203 @@ window.showPlansAndCredits = typeof showPlansAndCredits === "function" ? showPla
 window.showSettings = typeof showSettings === "function" ? showSettings : function() { if (typeof showSettings === "function") showSettings(); };
 window.closePv = typeof closePv === "function" ? closePv : function() { if (typeof closePv === "function") closePv(); };
 
-/* ==================== MODELS & THINKING DATA ==================== */
-var irxModelCategories = [
-  {
-    category: "FLAGSHIP",
-    models: [
-      { id: "gpt-6-luna", name: "GPT-6 Luna", provider: "OpenAI Frontier", ctx: "128k ctx", cost: "free", tier: "FREE" },
-      { id: "claude-3-7-sonnet", name: "Claude 3.7 Sonnet", provider: "Anthropic", ctx: "200k ctx", cost: "PRO", tier: "PRO", locked: true },
-      { id: "gemini-2-5-pro", name: "Gemini 2.5 Pro", provider: "Google DeepMind", ctx: "1M ctx", cost: "PRO", tier: "PRO", locked: true }
-    ]
-  },
-  {
-    category: "FAST & EFFICIENT",
-    models: [
-      { id: "google/gemma-4-26b-a4b-it:free", name: "Gemma 4 26B", provider: "Google / OpenRouter", ctx: "128k ctx", cost: "free", tier: "FREE" },
-      { id: "meta-llama/llama-3.3-70b-instruct:free", name: "Llama 3.3 70B", provider: "Meta / OpenRouter", ctx: "128k ctx", cost: "free", tier: "FREE" },
-      { id: "deepseek/deepseek-chat", name: "DeepSeek V3", provider: "DeepSeek", ctx: "64k ctx", cost: "free", tier: "FREE" }
-    ]
-  },
-  {
-    category: "REASONING & THINKING",
-    models: [
-      { id: "deepseek/deepseek-r1", name: "DeepSeek R1", provider: "DeepSeek Reasoning", ctx: "64k ctx", cost: "free", tier: "FREE" },
-      { id: "openai/o3-mini", name: "o3-mini", provider: "OpenAI STEM", ctx: "128k ctx", cost: "PRO", tier: "PRO", locked: true }
-    ]
-  }
-];
+/* ==================== WORKSPACE SUITE CONTROLLER ==================== */
+function setupIrxSuite() {
+  // Wire hero cards
+  document.querySelectorAll(".irx-hero-card").forEach(function(card){
+    card.onclick = function() {
+      var act = card.dataset.action;
+      var prompts = {
+        build: "Build a website with interactive components and modern responsive UI",
+        image: "Create an image with high detail and modern aesthetic",
+        video: "Generate a video scene with smooth cinematic motion",
+        file: "Generate a file: complete technical specification and documentation",
+        explore: "Explore and explain the latest developments in AI and computing",
+        creative: "Create something: a novel creative concept from scratch"
+      };
+      var pEl = card.querySelector(".irx-hero-card-p");
+      var val = prompts[act] || (pEl ? pEl.textContent : "");
+      var inp = $("in");
+      if(inp) {
+        inp.value = val;
+        inp.focus();
+      }
+    };
+  });
 
-var currentThinkingLevel = "Normal";
-var thinkingLevels = [
-  { id: "Off", name: "Off", desc: "No extended reasoning, fastest replies" },
-  { id: "Normal", name: "Normal", desc: "Balanced reasoning and depth (Default)" },
-  { id: "Deep", name: "Deep", desc: "Extended step-by-step thinking for hard tasks" },
-  { id: "Max", name: "Max", desc: "Exhaustive chain-of-thought analysis" }
-];
+  // Sidebar navigation items with full URL routing
+  var navSearch = $("nav-search");
+  if(navSearch) navSearch.onclick = function(e) { if(e) e.preventDefault(); (window.navigateToRoute || navigateToRoute)('/search'); };
+
+  var navHistory = $("nav-history");
+  if(navHistory) navHistory.onclick = function(e) { if(e) e.preventDefault(); (window.navigateToRoute || navigateToRoute)('/history'); };
+
+  var navProjects = $("proj") || $("nav-projects");
+  if(navProjects) navProjects.onclick = function(e) { if(e) e.preventDefault(); (window.navigateToRoute || navigateToRoute)('/projects'); };
+
+  var navLibrary = $("nav-library");
+  if(navLibrary) navLibrary.onclick = function(e) { if(e) e.preventDefault(); (window.navigateToRoute || navigateToRoute)('/library'); };
+
+  var navArtifacts = $("art") || $("nav-artifacts");
+  if(navArtifacts) navArtifacts.onclick = function(e) { if(e) e.preventDefault(); (window.navigateToRoute || navigateToRoute)('/artifacts'); };
+
+  var navStudio = $("nav-studio");
+  if(navStudio) navStudio.onclick = function(e) { if(e) e.preventDefault(); (window.navigateToRoute || navigateToRoute)('/studio'); };
+
+  var navPlugins = $("nav-plugins");
+  if(navPlugins) navPlugins.onclick = function(e) { if(e) e.preventDefault(); (window.navigateToRoute || navigateToRoute)('/plugins'); };
+
+  var navCredits = $("tk") || $("nav-credits");
+  if(navCredits) navCredits.onclick = function(e) { if(e) e.preventDefault(); (window.navigateToRoute || navigateToRoute)('/credits'); };
+
+  var navSettings = $("profile-nav") || $("nav-settings");
+  if(navSettings) navSettings.onclick = function(e) { if(e) e.preventDefault(); (window.navigateToRoute || navigateToRoute)('/settings'); };
+
+  // Dispatch initial path route if user opened directly with a path
+  var initialPathname = window.location.pathname;
+  if(initialPathname && initialPathname !== "/" && initialPathname !== "/index.html") {
+    setTimeout(function() {
+      var nav = window.navigateToRoute || navigateToRoute;
+      if(typeof nav === "function") {
+        nav(initialPathname, false);
+      }
+    }, 20);
+  }
+
+  var newBtn = $("new");
+  if(newBtn) {
+    newBtn.onclick = function() {
+      closePv();
+      if(typeof cur !== "undefined") {
+        cur = { id: "c" + Date.now(), title: "New chat", msgs: [] };
+        if(typeof chats !== "undefined") chats.unshift(cur);
+        if(typeof save === "function") save();
+        if(typeof render === "function") render();
+      }
+      var inp = $("in");
+      if(inp) { inp.value = ""; inp.focus(); }
+    };
+  }
+
+  var collapseBtn = $("tog-side") || $("tog");
+  if(collapseBtn) {
+    collapseBtn.onclick = function() {
+      var side = $("side");
+      if(!side) return;
+      if(window.innerWidth <= 720) {
+        side.classList.toggle("show");
+      } else {
+        side.classList.toggle("hide");
+      }
+    };
+  }
+
+  // Model & Thinking Pills dropdown wiring
+  var modelPill = $("irx-model-pill");
+  var modelMenu = $("irx-model-menu");
+  if(modelPill && modelMenu) {
+    modelPill.onclick = function(e) {
+      e.stopPropagation();
+      var thinkingMenu = $("irx-thinking-menu");
+      if(thinkingMenu) thinkingMenu.classList.remove("open");
+      modelMenu.classList.toggle("open");
+    };
+  }
+
+  var thinkingPill = $("irx-thinking-pill");
+  var thinkingMenu = $("irx-thinking-menu");
+  if(thinkingPill && thinkingMenu) {
+    thinkingPill.onclick = function(e) {
+      e.stopPropagation();
+      var mMenu = $("irx-model-menu");
+      if(mMenu) mMenu.classList.remove("open");
+      thinkingMenu.classList.toggle("open");
+    };
+  }
+
+  document.addEventListener("click", function(e) {
+    var mMenu = $("irx-model-menu");
+    var tMenu = $("irx-thinking-menu");
+    if(mMenu && !e.target.closest("#irx-model-pill") && !e.target.closest("#irx-model-menu")) {
+      mMenu.classList.remove("open");
+    }
+    if(tMenu && !e.target.closest("#irx-thinking-pill") && !e.target.closest("#irx-thinking-menu")) {
+      tMenu.classList.remove("open");
+    }
+  });
+
+  renderModelMenu();
+  renderThinkingMenu();
+}
+
+function renderModelMenu() {
+  var menu = $("irx-model-menu");
+  if(!menu) return;
+  var currentModelId = (typeof cur !== "undefined" && cur && cur.model) || (typeof user !== "undefined" && user && user.defaultModel) || "gpt-6-luna";
+  var html = "";
+  irxModelCategories.forEach(function(cat) {
+    html += '<div class="irx-dd-group-lbl">' + esc(cat.category) + '</div>';
+    cat.models.forEach(function(m) {
+      var isCur = m.id === currentModelId;
+      var tierHtml = (m.tier === "PRO" || m.tier === "MAX") ? ' · <span class="irx-dd-tier-tag" style="color:#F59E0B;font-weight:700;font-size:10px">' + esc(m.tier) + '</span>' : '';
+      html += '<div class="irx-dd-item' + (isCur ? ' active' : '') + '" data-model="' + esc(m.id) + '" data-name="' + esc(m.name) + '" data-locked="' + (m.locked ? 'true' : 'false') + '">' +
+        '<div class="irx-dd-item-left">' +
+          '<div class="irx-dd-item-name">' + esc(m.name) + (m.locked ? ' <span style="font-size:11px;opacity:0.85">🔒</span>' : '') + (isCur ? ' <span style="color:#8298FF">✓</span>' : '') + '</div>' +
+          '<div class="irx-dd-item-meta">' + esc(m.provider) + ' · ' + esc(m.ctx) + tierHtml + '</div>' +
+        '</div>' +
+        '<div class="irx-dd-cost">' + esc(m.cost) + '</div>' +
+      '</div>';
+    });
+  });
+  html += '<div class="irx-dd-footer">Plans above FREE unlock the models marked with a lock.</div>';
+  menu.innerHTML = html;
+
+  menu.querySelectorAll(".irx-dd-item").forEach(function(el) {
+    el.onclick = function() {
+      if(el.dataset.locked === "true") {
+        if(typeof showPlansAndCredits === "function") showPlansAndCredits();
+        return;
+      }
+      var mId = el.dataset.model;
+      if(typeof cur !== "undefined" && cur) cur.model = mId;
+      if(typeof user !== "undefined" && user) user.defaultModel = mId;
+      var nameEl = $("irx-current-model-name");
+      if(nameEl) {
+        nameEl.textContent = el.dataset.name || mId;
+      }
+      menu.classList.remove("open");
+      renderModelMenu();
+      if(typeof toast === "function") toast("Selected model: " + (el.dataset.name || mId));
+    };
+  });
+}
+
+function renderThinkingMenu() {
+  var menu = $("irx-thinking-menu");
+  if(!menu) return;
+  var html = '<div class="irx-dd-group-lbl">THINKING</div>';
+  thinkingLevels.forEach(function(lvl) {
+    var isCur = lvl.id === currentThinkingLevel;
+    html += '<div class="irx-dd-item' + (isCur ? ' active' : '') + '" data-thinking="' + esc(lvl.id) + '" data-name="' + esc(lvl.name) + '">' +
+      '<div class="irx-dd-item-left">' +
+        '<div class="irx-dd-item-name">' + esc(lvl.name) + (isCur ? ' <span style="color:#8298FF">✓</span>' : '') + '</div>' +
+        '<div class="irx-dd-item-desc">' + esc(lvl.desc) + '</div>' +
+      '</div>' +
+    '</div>';
+  });
+  menu.innerHTML = html;
+
+  menu.querySelectorAll(".irx-dd-item").forEach(function(el) {
+    el.onclick = function() {
+      currentThinkingLevel = el.dataset.thinking;
+      var nameEl = $("irx-current-thinking-name");
+      if(nameEl) nameEl.textContent = el.dataset.name || currentThinkingLevel;
+      menu.classList.remove("open");
+      renderThinkingMenu();
+      if(typeof toast === "function") toast("Thinking level: " + (el.dataset.name || currentThinkingLevel));
+    };
+  });
+}
 
 /* ==================== WORKSPACE SUITE CONTROLLER ==================== */
 function setupIrxSuite() {

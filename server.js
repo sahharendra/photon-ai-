@@ -163,6 +163,17 @@ function getActiveGatewayService(data) {
 // The default model is whatever the live Gemini catalog currently returns first. Nothing is
 // hardcoded: if the account has no Gemini models, the caller must choose another provider.
 function preferredGeminiModel() { return gemini.defaultModelId(); }
+const PHOTON_MODEL_ALIASES = {
+  'gpt-6-luna': ['google/gemma-4-26b-a4b-it:free', 'google/gemma-4-31b-it:free', 'nvidia/nemotron-3.5-lightning:free', 'openrouter/free'],
+  'gemini-3.8-flash': ['gemini-2.0-flash', 'gemini-1.5-flash', 'google/gemma-4-26b-a4b-it:free', 'openrouter/free'],
+  'glm-5.2': ['google/gemma-4-26b-a4b-it:free', 'qwen2.5-coder:3b', 'openrouter/free'],
+  'claude-sonnet-5': ['kimi-k2.6', 'google/gemma-4-31b-it:free', 'openrouter/free'],
+  'gpt-6-astra': ['openai/o3-mini', 'google/gemma-4-31b-it:free', 'openrouter/free'],
+  'gpt-6-sol': ['deepseek/deepseek-r1:free', 'nvidia/nemotron-3.5-lightning:free', 'openrouter/free'],
+  'claude-opus-5.5': ['deepseek/deepseek-r1:free', 'google/gemma-4-31b-it:free', 'openrouter/free'],
+  'claude-fable-5.1': ['kimi-k2.6', 'google/gemma-4-26b-a4b-it:free', 'openrouter/free']
+};
+
 function fallbackModelId(profile) {
   const pref = profile && profile.defaultModel;
   if (pref) {
@@ -174,6 +185,13 @@ function fallbackModelId(profile) {
 }
 function requireModelId(profile, requested) {
   let id = requested || fallbackModelId(profile);
+  const allAvailable = availableModels().filter(m => m.available && !m.creditsExhausted);
+  if (PHOTON_MODEL_ALIASES[id]) {
+    for (const cand of PHOTON_MODEL_ALIASES[id]) {
+      const match = allAvailable.find(m => m.id === cand);
+      if (match) return match.id;
+    }
+  }
   const opt = availableModels().find(m => m.id === id);
   if (opt && (!opt.available || opt.creditsExhausted)) {
     const fast = getFastestAvailableModel(profile ? userEffectivePlanId(profile) : 'basic');
@@ -781,7 +799,13 @@ async function callGemini(model, contents, systemInstruction) {
 }
 async function resolveModel(id) {
   await Promise.allSettled([gemini.refreshModels(), openrouter.refreshModels(), codecraft.refreshModels(), groq.refreshModels(), nvidia.refreshModels(), openai.refreshModels(), llmtr.refreshModels(), ollama.refreshModels()]);
-  const option = availableModels().find(m => m.id === id);
+  let option = availableModels().find(m => m.id === id);
+  if (!option && PHOTON_MODEL_ALIASES[id]) {
+    for (const cand of PHOTON_MODEL_ALIASES[id]) {
+      const match = availableModels().find(m => m.id === cand && m.available && !m.creditsExhausted);
+      if (match) { option = match; break; }
+    }
+  }
   if (!option || !option.available) throw new HttpError(503, 'model_unavailable', option && option.configured === false ? `${option.provider} is not configured on this server. Choose another model.` : 'The selected AI model is not available. Choose another model in your profile settings.');
   return option;
 }
