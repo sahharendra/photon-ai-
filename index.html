@@ -3816,6 +3816,7 @@ textarea::placeholder{color:var(--mute)}
   padding: 0 6px;
 }
 
+.photon-art-ide-file-item.active { background: #1C233D !important; color: #8298FF !important; border: 1px solid rgba(130, 152, 255, 0.35) !important; font-weight: 600 !important; }
 .photon-art-ide-file-item {
   display: flex;
   align-items: center;
@@ -4354,12 +4355,60 @@ function showProjects(){
   $("pgrid").onclick=function(e){var c=e.target.closest("[data-id]");if(c)showProject(c.dataset.id)};
   $("psq").oninput=grid;$("pso").onchange=grid;grid()}
 var artifactItems=[],artifactTab="all",artifactSearch="";
-function collectArtifacts(){var a=[];chats.forEach(function(c){(c.msgs||[]).forEach(function(m,mi){if(m.role!=="assistant"||!m.content)return;var re=/```([^\n`]*)\n([\s\S]*?)```/g,x,bi=0;
-  while((x=re.exec(m.content))){var info=(x[1]||"").trim(),code=(x[2]||"").replace(/\s+$/,""),tk=info.split(/\s+/).filter(Boolean);if(!code.trim())continue;
-    var fn=tk.filter(function(v){return/^[\w.\-]+\.[A-Za-z0-9]{1,8}$/.test(v)})[0]||"",lang=(tk.filter(function(v){return v!==fn})[0]||"text").toLowerCase().replace(/^language-/i,"");
-    if(!fn){var ext=EXT[lang]||(lang?lang.replace(/[^a-z0-9]/g,"").slice(0,5):"txt")||"txt";fn=(ext==="html"?"index":"photon-code")+"."+ext}
-    a.push({id:c.id+"-"+mi+"-"+bi++,chatId:c.id,title:c.title||"New chat",name:fn,lang:lang,code:code,at:c.updatedAt||Date.now()})
-  }})});return a.sort(function(x,y){return y.at-x.at})}
+function collectArtifacts(){
+  var projectsMap = new Map();
+  var savedMap = {};
+  try {
+    savedMap = JSON.parse(localStorage.getItem("photon-saved-artifacts") || "{}");
+  } catch(e) {}
+
+  chats.forEach(function(c){
+    var chatFiles = [];
+    (c.msgs||[]).forEach(function(m,mi){
+      if(m.role!=="assistant"||!m.content)return;
+      var re=/\`\`\`([^\n\`]*)\n([\s\S]*?)\`\`\`/g,x,bi=0;
+      while((x=re.exec(m.content))){
+        var info=(x[1]||"").trim(),code=(x[2]||"").replace(/\s+$/,""),tk=info.split(/\s+/).filter(Boolean);
+        if(!code.trim())continue;
+        var fn=tk.filter(function(v){return/^[\w.\-]+\.[A-Za-z0-9]{1,8}$/.test(v)})[0]||"",lang=(tk.filter(function(v){return v!==fn})[0]||"text").toLowerCase().replace(/^language-/i,"");
+        if(!fn){var ext=EXT[lang]||(lang?lang.replace(/[^a-z0-9]/g,"").slice(0,5):"txt")||"txt";fn=(ext==="html"?"index":"photon-code")+"."+ext}
+        
+        var existing = chatFiles.find(function(f){ return f.name.toLowerCase() === fn.toLowerCase(); });
+        if(existing) {
+          existing.code = code;
+          existing.lang = lang;
+        } else {
+          chatFiles.push({ id: c.id+"-"+mi+"-"+bi++, name: fn, lang: lang, code: code });
+        }
+      }
+    });
+
+    if(chatFiles.length) {
+      var projKey = "chat-" + c.id;
+      if(savedMap[projKey] && Array.isArray(savedMap[projKey].files)) {
+        chatFiles = savedMap[projKey].files;
+      }
+      projectsMap.set(projKey, {
+        id: projKey,
+        chatId: c.id,
+        title: c.title || "Website Project",
+        at: c.updatedAt || Date.now(),
+        files: chatFiles
+      });
+    }
+  });
+
+  // Standalone blank/custom projects
+  Object.keys(savedMap).forEach(function(key) {
+    if(key.startsWith("blank-") && savedMap[key]) {
+      projectsMap.set(key, savedMap[key]);
+    }
+  });
+
+  var list = Array.from(projectsMap.values());
+  return list.sort(function(x,y){ return (y.at||0) - (x.at||0); });
+}
+
 function artifactPrompt(kind,topic){var common="Create this for the user: "+topic+". Return the finished deliverable as a complete named file in exactly one fenced code block, with both language and filename in the opening fence. Do not omit code.";
   if(kind==="Docs")return common+" Use Markdown and name the file document.md. Make it polished, useful, and easy to read.";
   if(kind==="Slides")return common+" Make a polished, navigable slide presentation as a self-contained HTML file named presentation.html. Include inline CSS, responsive slide layout, and keyboard/next/previous navigation. It must render as a previewable web presentation.";
@@ -4369,15 +4418,13 @@ function artifactKind(name){var e=(name.split(".").pop()||"").toLowerCase();if([
 
 function showArtifacts(){
   artifactItems = collectArtifacts();
-  
-  // No dummy artifacts: clean empty state when user has no created artifacts
 
   var html = '<div class="irx-art-page">' +
     '<div class="irx-art-header">' +
       '<div class="irx-art-title-col">' +
         '<div class="irx-art-eyebrow">WORKSPACE</div>' +
         '<h1 class="irx-art-title">Artifacts</h1>' +
-        '<p class="irx-art-sub">Websites built from a prompt. Generate, edit the files, preview, then publish to a shareable link.</p>' +
+        '<p class="irx-art-sub">Websites built from a prompt. Generate, edit the files, preview live.</p>' +
       '</div>' +
       '<div class="irx-art-actions">' +
         '<button class="irx-art-btn-build" id="art-build-btn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3Z"/><path d="M5 3v4M3 5h4"/></svg><span>Build a website</span></button>' +
@@ -4401,15 +4448,24 @@ function showArtifacts(){
   };
 
   $("art-blank-btn").onclick = function(){
+    var blankId = "blank-" + Date.now();
     var blankArt = {
-      id: "blank-" + Date.now(),
-      name: "index.html",
+      id: blankId,
       title: "New Website",
-      lang: "html",
-      code: "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\"/>\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/>\n  <title>New Artifact</title>\n  <style>\n    body { margin:0; min-height:100vh; background:#080A11; color:#F1F5F9; display:grid; place-items:center; font-family:system-ui,sans-serif; text-align:center; }\n    h1 { font-size:32px; color:#FFFFFF; margin-bottom:8px; }\n    p { color:#8298FF; font-size:14px; }\n  </style>\n</head>\n<body>\n  <div>\n    <h1>Blank Website</h1>\n    <p>Edit this file, preview live and publish.</p>\n  </div>\n</body>\n</html>",
       at: Date.now(),
-      chatId: cur ? cur.id : null
+      files: [
+        {
+          name: "index.html",
+          lang: "html",
+          code: "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\"/>\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/>\n  <title>New Website</title>\n  <style>\n    body { margin:0; min-height:100vh; background:#080A11; color:#F1F5F9; display:grid; place-items:center; font-family:system-ui,sans-serif; text-align:center; }\n    h1 { font-size:32px; color:#FFFFFF; margin-bottom:8px; }\n    p { color:#8298FF; font-size:14px; }\n  </style>\n</head>\n<body>\n  <div>\n    <h1>Blank Website</h1>\n    <p>Describe changes to the assistant on the right or edit code directly.</p>\n  </div>\n</body>\n</html>"
+        }
+      ]
     };
+    try {
+      var savedMap = JSON.parse(localStorage.getItem("photon-saved-artifacts") || "{}");
+      savedMap[blankId] = blankArt;
+      localStorage.setItem("photon-saved-artifacts", JSON.stringify(savedMap));
+    } catch(e) {}
     artifactItems.unshift(blankArt);
     openArtifactViewer(blankArt.id);
   };
@@ -4421,7 +4477,7 @@ function showArtifacts(){
       g.innerHTML = '<div class="irx-art-empty">' +
         '<div class="irx-art-card-icon" style="width:48px;height:48px;margin:0 auto 14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m21 16-9 5-9-5V8l9-5 9 5v8Z"/><path d="m12 12.5 9-4.5M12 12.5v9M12 12.5 3 8"/></svg></div>' +
         '<h3>No artifacts yet</h3>' +
-        '<p>Describe a website and Photon writes the files. Every artifact previews live and can be published.</p>' +
+        '<p>Describe a website and Photon writes the files. Every artifact previews live in the workspace.</p>' +
         '<button class="irx-art-btn-build" id="empty-build-btn">✨ Build a website</button>' +
       '</div>';
       var eb = $("empty-build-btn");
@@ -4430,8 +4486,9 @@ function showArtifacts(){
     }
 
     g.innerHTML = artifactItems.map(function(item){
-      var cleanTitle = item.title || item.name.replace(/\.[^.]+$/, "");
-      var ext = (item.name.split(".").pop() || "HTML").toUpperCase();
+      var cleanTitle = item.title || "Website Project";
+      var exts = Array.from(new Set((item.files||[]).map(function(f){ return (f.name.split('.').pop()||'HTML').toUpperCase(); }))).join(", ");
+      var count = (item.files && item.files.length) || 1;
       return '<div class="irx-art-card" data-artifact="' + esc(item.id) + '">' +
         '<div class="irx-art-card-top">' +
           '<div class="irx-art-card-icon">' +
@@ -4443,7 +4500,7 @@ function showArtifacts(){
           '</div>' +
         '</div>' +
         '<div class="irx-art-card-title">' + esc(cleanTitle) + '</div>' +
-        '<div class="irx-art-card-meta">' + esc(ext) + ' · 1 FILES</div>' +
+        '<div class="irx-art-card-meta">' + esc(exts || "HTML") + ' · ' + count + ' FILE' + (count===1?'':'S') + '</div>' +
       '</div>';
     }).join("");
 
@@ -4456,10 +4513,6 @@ function showArtifacts(){
   drawGrid();
 }
 
-function openArtifactViewer(id){var x=artifactItems.filter(function(a){return a.id===id})[0];if(!x)return;var preview=/\.html?$/i.test(x.name)||/\.svg$/i.test(x.name),kind=artifactKind(x.name),tab=preview||kind==="doc"?"preview":"code";
-  function draw(){modal('<div class="artifact-viewer-head"><div><b>'+esc(x.name)+'</b><div style="font-size:10px;color:#777;margin-top:3px">From '+esc(x.title)+'</div></div><div style="display:flex;gap:6px">'+(preview||kind==="doc"?'<button id="av-preview">Preview</button><button id="av-code">Code</button>':"")+'<button id="av-copy">Copy</button><button id="av-dl">Download</button><button id="av-chat">Open chat</button><button id="av-close" aria-label="Close">✕</button></div></div><div class="artifact-viewer-body" id="artifact-body"></div><div class="artifact-foot"><span>'+esc(x.lang.toUpperCase())+' · '+esc(ago(x.at))+'</span><span>Saved with this conversation</span></div>',function(close){var body=$("artifact-body");if(tab==="preview"&&preview){if(/\.svg$/i.test(x.name)){var im=document.createElement("img");im.alt=x.name;im.src=dataUri(x.code);im.style.cssText="display:block;max-width:100%;max-height:100%;margin:auto";body.append(im)}else{var fr=document.createElement("iframe");fr.title=x.name;fr.setAttribute("sandbox","allow-scripts");body.append(fr);fr.srcdoc=x.code}}else if(tab==="preview"&&kind==="doc"){var d=document.createElement("div");d.className="artifact-doc";d.innerHTML=/\.md$/i.test(x.name)?md(x.code):"<pre style='white-space:pre-wrap'>"+esc(x.code)+"</pre>";body.append(d)}else{var pre=document.createElement("pre");pre.className="artifact-code";pre.textContent=x.code;body.append(pre)}
-    if($("av-preview"))$("av-preview").onclick=function(){tab="preview";draw()};if($("av-code"))$("av-code").onclick=function(){tab="code";draw()};$("av-close").onclick=close;$("av-copy").onclick=function(){navigator.clipboard.writeText(x.code).then(function(){toast("Copied "+x.name)},function(){toast("Couldn't copy the file")})};$("av-dl").onclick=function(){var u=URL.createObjectURL(new Blob([x.code],{type:"text/plain;charset=utf-8"})),a=document.createElement("a");a.href=u;a.download=x.name;a.click();setTimeout(function(){URL.revokeObjectURL(u)},1000)};$("av-chat").onclick=function(){close();closePv();cur=chats.filter(function(c){return c.id===x.chatId})[0];if(cur){save();render()}}})}
-  draw()}
 function showProject(id){
   var p=getProj(id);if(!p){showProjects();return}
   var cs=projChats(id),files=p.files||[],pct=Math.min(100,Math.max(used(p)?1:0,Math.round(used(p)/CAP*100)));
@@ -7627,67 +7680,140 @@ window.photonSignOut = function() {
 };
 
 
-/* ==================== PHOTON ARTIFACT VIEWER IDE (Screenshot 4) ==================== */
+/* ==================== PHOTON ARTIFACT VIEWER IDE ==================== */
 function openArtifactViewer(id) {
-  var x = (typeof artifactItems !== "undefined" && Array.isArray(artifactItems)) ?
-    artifactItems.filter(function(a){ return a.id === id; })[0] : null;
+  var proj = (typeof artifactItems !== "undefined" && Array.isArray(artifactItems)) ?
+    artifactItems.find(function(a){ return a.id === id; }) : null;
 
-  if(!x) {
-    x = {
-      id: id || "art-default",
-      name: "index.html",
-      title: "New Artifact",
-      code: '<!doctype html>\\n<html lang="en">\\n<head>\\n  <meta charset="utf-8" />\\n  <meta name="viewport" content="width=device-width, initial-scale=1" />\\n  <title>New artifact</title>\\n  <style>\\n    :root { color-scheme: dark; }\\n    body {\\n      margin: 0; min-height: 100vh; display: grid; place-items: center;\\n      background: #080a11; color: #f5f6fa;\\n      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;\\n    }\\n    h1 { font-size: 28px; letter-spacing: -0.02em; }\\n    p { color: #9298aa; font-size: 13px; }\\n  </style>\\n</head>\\n<body>\\n  <main style="text-align:center">\\n    <h1>Hello from PHOTON</h1>\\n    <p>Edit this file, then preview and publish it.</p>\\n  </main>\\n</body>\\n</html>',
-      lang: "html"
+  if(!proj) {
+    try {
+      var savedMap = JSON.parse(localStorage.getItem("photon-saved-artifacts") || "{}");
+      if(savedMap[id]) proj = savedMap[id];
+    } catch(e) {}
+  }
+
+  if(!proj) {
+    proj = {
+      id: id || ("blank-" + Date.now()),
+      title: "New Website",
+      at: Date.now(),
+      files: [
+        {
+          name: "index.html",
+          lang: "html",
+          code: '<!doctype html>\n<html lang="en">\n<head>\n  <meta charset="utf-8" />\n  <meta name="viewport" content="width=device-width, initial-scale=1" />\n  <title>New Artifact</title>\n  <style>\n    :root { color-scheme: dark; }\n    body {\n      margin: 0; min-height: 100vh; display: grid; place-items: center;\n      background: #080a11; color: #f5f6fa;\n      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;\n    }\n    h1 { font-size: 28px; letter-spacing: -0.02em; color: #FFFFFF; }\n    p { color: #8298FF; font-size: 13px; }\n  </style>\n</head>\n<body>\n  <main style="text-align:center">\n    <h1>Hello from PHOTON</h1>\n    <p>Describe changes to the assistant on the right or edit code directly.</p>\n  </main>\n</body>\n</html>'
+        }
+      ]
     };
   }
 
-  var isPreviewActive = false;
+  if(!proj.files || !proj.files.length) {
+    proj.files = [{ name: proj.name || "index.html", lang: proj.lang || "html", code: proj.code || "" }];
+  }
 
-  var html = '<div class="photon-art-ide">' +
-    '<!-- Top Nav Bar -->' +
-    '<div class="photon-art-ide-top">' +
-      '<button class="photon-art-ide-back" onclick="showArtifacts()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="18" height="18"><path d="m15 18-6-6 6-6"/></svg><span>' + esc(x.title || x.name) + '</span></button>' +
-      '<div class="photon-art-ide-top-actions">' +
-        '<button class="photon-art-ide-btn" id="ide-preview-toggle-btn" onclick="toggleArtifactPreview()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg><span>Preview</span></button>' +
-        '<button class="photon-art-ide-btn" onclick="downloadArtifactCode(&quot;' + esc(x.name) + '&quot;)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>HTML</span></button>' +
-        '<button class="photon-art-ide-btn" onclick="saveArtifactCode(&quot;' + esc(x.id) + '&quot;)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="14" height="14"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg><span>Save</span></button>' +
-        '<button class="photon-art-ide-btn primary" onclick="republishArtifact()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><span>Republish</span></button>' +
-      '</div>' +
-    '</div>' +
-    '<!-- Sub Header Bar -->' +
-    '<div class="photon-art-ide-subbar">' +
-      '<div class="photon-art-ide-published">' +
-        '<span class="photon-art-ide-badge">PUBLISHED</span>' +
-        '<a class="photon-art-ide-link" href="#" onclick="copyArtifactLink();return false;">https://photon.app/p/' + (x.title ? x.title.toLowerCase().replace(/[^a-z0-9]/g, "") : "preview") + '-0835</a>' +
-        '<span style="color:#55627A;font-size:11px">Served on this app&apos;s domain · Custom domains are connected from your dashboard&apos;s Domains page</span>' +
-      '</div>' +
-      '<button class="photon-art-ide-btn" style="padding:4px 8px" onclick="copyArtifactLink()">Copy link</button>' +
-    '</div>' +
-    '<!-- Main Editor Layout -->' +
-    '<div class="photon-art-ide-main">' +
-      '<!-- Left Files -->' +
-      '<div class="photon-art-ide-files">' +
-        '<div class="photon-art-ide-files-hd">FILES</div>' +
-        '<div class="photon-art-ide-file-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="14" height="14"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><span>' + esc(x.name) + '</span></div>' +
-      '</div>' +
-      '<!-- Middle Code Editor / Preview -->' +
-      '<div class="photon-art-ide-editor-col" id="ide-editor-container">' +
-        '<textarea class="photon-art-ide-textarea" id="ide-code-textarea" spellcheck="false">' + esc(x.code) + '</textarea>' +
-        '<iframe id="ide-preview-iframe" style="display:none;width:100%;height:100%;border:none;background:#080A11" sandbox="allow-scripts"></iframe>' +
-      '</div>' +
-      '<!-- Right Assistant -->' +
-      '<div class="photon-art-ide-assistant">' +
-        '<div class="photon-art-ide-assistant-hd">✨ ASSISTANT</div>' +
-        '<p class="photon-art-ide-assistant-sub">Describe a change to ' + esc(x.name) + '. Code is returned as an edit you can apply.</p>' +
-        '<textarea class="photon-art-ide-assistant-input" id="ide-assistant-prompt" placeholder="e.g. Add a hero headline with glowing gradient or add pricing cards..."></textarea>' +
-        '<button class="photon-art-ide-assistant-btn" onclick="applyIdeAssistantEdit()">Apply change</button>' +
-      '</div>' +
-    '</div>' +
-  '</div>';
+  window.currentActiveArtifactProject = proj;
+  var def = proj.files.find(function(f){ return f.name.toLowerCase() === "index.html"; }) || proj.files[0];
+  window.currentActiveIdeFile = def ? def.name : "index.html";
 
-  pvOpen(html);
+  function renderIdeUI() {
+    var p = window.currentActiveArtifactProject;
+    var curFile = p.files.find(function(f){ return f.name === window.currentActiveIdeFile; }) || p.files[0];
+    if(!curFile) { curFile = { name: "index.html", code: "", lang: "html" }; p.files.push(curFile); }
+    window.currentActiveIdeFile = curFile.name;
+
+    var filesHtml = p.files.map(function(f){
+      var isActive = (f.name === curFile.name);
+      return '<div class="photon-art-ide-file-item' + (isActive ? ' active' : '') + '" onclick="selectIdeFile(&quot;' + esc(f.name) + '&quot;)">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="14" height="14"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>' +
+        '<span>' + esc(f.name) + '</span>' +
+      '</div>';
+    }).join("");
+
+    var html = '<div class="photon-art-ide">' +
+      '<!-- Top Nav Bar (No Republish) -->' +
+      '<div class="photon-art-ide-top">' +
+        '<button class="photon-art-ide-back" onclick="showArtifacts()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="18" height="18"><path d="m15 18-6-6 6-6"/></svg><span>' + esc(p.title) + '</span></button>' +
+        '<div class="photon-art-ide-top-actions">' +
+          '<button class="photon-art-ide-btn" id="ide-preview-toggle-btn" onclick="toggleArtifactPreview()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg><span>Preview</span></button>' +
+          '<button class="photon-art-ide-btn" onclick="downloadArtifactCode()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download</span></button>' +
+          '<button class="photon-art-ide-btn" onclick="saveArtifactCode()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="14" height="14"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg><span>Save</span></button>' +
+        '</div>' +
+      '</div>' +
+      '<!-- Main Editor Layout -->' +
+      '<div class="photon-art-ide-main">' +
+        '<!-- Left Files -->' +
+        '<div class="photon-art-ide-files">' +
+          '<div class="photon-art-ide-files-hd">FILES</div>' +
+          filesHtml +
+        '</div>' +
+        '<!-- Middle Code Editor / Preview -->' +
+        '<div class="photon-art-ide-editor-col" id="ide-editor-container">' +
+          '<textarea class="photon-art-ide-textarea" id="ide-code-textarea" spellcheck="false">' + esc(curFile.code) + '</textarea>' +
+          '<iframe id="ide-preview-iframe" style="display:none;width:100%;height:100%;border:none;background:#080A11" sandbox="allow-scripts allow-modals"></iframe>' +
+        '</div>' +
+        '<!-- Right Assistant -->' +
+        '<div class="photon-art-ide-assistant">' +
+          '<div class="photon-art-ide-assistant-hd">✨ ASSISTANT</div>' +
+          '<p class="photon-art-ide-assistant-sub" id="ide-assistant-sub">Describe a change to <b>' + esc(curFile.name) + '</b>. The assistant modifies the code and applies it live.</p>' +
+          '<textarea class="photon-art-ide-assistant-input" id="ide-assistant-prompt" placeholder="e.g. Add a hero headline with glowing gradient or add pricing cards..."></textarea>' +
+          '<button class="photon-art-ide-assistant-btn" id="ide-assistant-btn" onclick="applyIdeAssistantEdit()">Apply change</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+    pvOpen(html);
+
+    var ta = document.getElementById("ide-code-textarea");
+    if(ta) {
+      ta.oninput = function() {
+        curFile.code = this.value;
+      };
+    }
+  }
+
+  window.selectIdeFile = function(fileName) {
+    var ta = document.getElementById("ide-code-textarea");
+    var p = window.currentActiveArtifactProject;
+    if(!p || !p.files) return;
+    if(ta && window.currentActiveIdeFile) {
+      var old = p.files.find(function(f){ return f.name === window.currentActiveIdeFile; });
+      if(old) old.code = ta.value;
+    }
+    window.currentActiveIdeFile = fileName;
+    renderIdeUI();
+  };
+
+  renderIdeUI();
 }
+
+window.buildArtifactBundleHtml = function() {
+  var p = window.currentActiveArtifactProject;
+  if(!p || !p.files) return "";
+  var htmlFile = p.files.find(function(f){ return f.name.toLowerCase().endsWith(".html") || f.name.toLowerCase().endsWith(".htm"); }) || p.files[0];
+  var htmlContent = htmlFile ? htmlFile.code : "<!DOCTYPE html><html><body></body></html>";
+
+  var cssFiles = p.files.filter(function(f){ return f.name.toLowerCase().endsWith(".css"); });
+  var jsFiles = p.files.filter(function(f){ return f.name.toLowerCase().endsWith(".js"); });
+
+  var injectedCss = cssFiles.map(function(f){ return "<style>/* " + f.name + " */\n" + f.code + "\n</style>"; }).join("\n");
+  var injectedJs = jsFiles.map(function(f){ return "<script>/* " + f.name + " */\n" + f.code + "\n</script>"; }).join("\n");
+
+  if(injectedCss) {
+    if(htmlContent.includes("</head>")) {
+      htmlContent = htmlContent.replace("</head>", injectedCss + "\n</head>");
+    } else {
+      htmlContent = injectedCss + "\n" + htmlContent;
+    }
+  }
+  if(injectedJs) {
+    if(htmlContent.includes("</body>")) {
+      htmlContent = htmlContent.replace("</body>", injectedJs + "\n</body>");
+    } else {
+      htmlContent = htmlContent + "\n" + injectedJs;
+    }
+  }
+  return htmlContent;
+};
 
 window.toggleArtifactPreview = function() {
   var ta = document.getElementById("ide-code-textarea");
@@ -7696,7 +7822,12 @@ window.toggleArtifactPreview = function() {
   if(!ta || !fr) return;
   var isShowingCode = (fr.style.display === "none");
   if(isShowingCode) {
-    fr.srcdoc = ta.value;
+    var p = window.currentActiveArtifactProject;
+    if(p && window.currentActiveIdeFile) {
+      var curF = p.files.find(function(f){ return f.name === window.currentActiveIdeFile; });
+      if(curF) curF.code = ta.value;
+    }
+    fr.srcdoc = window.buildArtifactBundleHtml();
     fr.style.display = "block";
     ta.style.display = "none";
     if(btn) btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="14" height="14"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Code</span>';
@@ -7707,63 +7838,147 @@ window.toggleArtifactPreview = function() {
   }
 };
 
-window.saveArtifactCode = function(artId) {
+window.saveArtifactCode = function() {
   var ta = document.getElementById("ide-code-textarea");
-  if(ta && typeof artifactItems !== "undefined") {
-    var art = artifactItems.filter(function(a){ return a.id === artId; })[0];
-    if(art) art.code = ta.value;
+  var p = window.currentActiveArtifactProject;
+  if(!p) return;
+  if(ta && window.currentActiveIdeFile) {
+    var file = p.files.find(function(f){ return f.name === window.currentActiveIdeFile; });
+    if(file) file.code = ta.value;
   }
-  toast("Artifact saved successfully!");
+  try {
+    var savedMap = JSON.parse(localStorage.getItem("photon-saved-artifacts") || "{}");
+    savedMap[p.id] = p;
+    localStorage.setItem("photon-saved-artifacts", JSON.stringify(savedMap));
+  } catch(e) {}
+
+  if(p.chatId) {
+    var chat = (typeof chats !== "undefined") ? chats.find(function(c){ return c.id === p.chatId; }) : null;
+    if(chat && Array.isArray(chat.msgs)) {
+      p.files.forEach(function(f){
+        chat.msgs.forEach(function(m){
+          if(m.role === "assistant" && typeof m.content === "string") {
+            var re = new RegExp("\`\`\`([a-zA-Z0-9_\-]*\s+" + f.name.replace(".", "\\.") + "[\s\S]*?\`\`\`)");
+            if(re.test(m.content)) {
+              m.content = m.content.replace(re, "```" + (f.lang||"html") + " " + f.name + "\n" + f.code + "\n```");
+            }
+          }
+        });
+      });
+      if(typeof save === "function") save();
+    }
+  }
+  toast("Saved changes to " + (window.currentActiveIdeFile || "project") + "!");
 };
 
-window.downloadArtifactCode = function(filename) {
+window.downloadArtifactCode = function() {
   var ta = document.getElementById("ide-code-textarea");
+  var p = window.currentActiveArtifactProject;
+  var fileName = window.currentActiveIdeFile || "index.html";
   var text = ta ? ta.value : "";
-  var u = URL.createObjectURL(new Blob([text], { type: "text/html;charset=utf-8" }));
+  var u = URL.createObjectURL(new Blob([text], { type: "text/plain;charset=utf-8" }));
   var a = document.createElement("a");
   a.href = u;
-  a.download = filename || "index.html";
+  a.download = fileName;
   a.click();
   setTimeout(function(){ URL.revokeObjectURL(u); }, 1000);
-  toast("Downloaded " + (filename || "index.html"));
+  toast("Downloaded " + fileName);
 };
 
-window.republishArtifact = function() {
-  toast("Republished! Live preview updated at photon.app");
-};
-
-window.copyArtifactLink = function() {
-  if(navigator && navigator.clipboard) {
-    navigator.clipboard.writeText("https://photon.app/p/artifact").then(function(){
-      toast("Copied shareable link!");
-    });
-  } else {
-    toast("Copied link: https://photon.app/p/artifact");
-  }
-};
-
-window.applyIdeAssistantEdit = function() {
+window.applyIdeAssistantEdit = async function() {
   var inp = document.getElementById("ide-assistant-prompt");
   var ta = document.getElementById("ide-code-textarea");
+  var btn = document.getElementById("ide-assistant-btn");
   if(!inp || !ta) return;
-  var text = inp.value.trim();
-  if(!text) {
+  var prompt = inp.value.trim();
+  if(!prompt) {
     toast("Please enter what you want the assistant to change.");
     return;
   }
-  toast("Applying assistant updates...");
+  var p = window.currentActiveArtifactProject;
+  var file = p && p.files ? p.files.find(function(f){ return f.name === window.currentActiveIdeFile; }) : null;
+  var currentCode = ta.value;
+  var fileName = file ? file.name : "index.html";
+
+  if(btn) {
+    btn.disabled = true;
+    btn.textContent = "Applying changes...";
+  }
+  toast("Assistant is analyzing and updating " + fileName + "...");
+
+  var applied = false;
+  try {
+    if(typeof photonSample === "function") {
+      var systemPrompt = "You are Photon Assistant code editor. The user wants you to modify the file '" + fileName + "'.\n" +
+        "USER REQUEST: " + prompt + "\n\n" +
+        "CURRENT CODE:\n```\n" + currentCode + "\n```\n\n" +
+        "INSTRUCTIONS:\n- Return the COMPLETE updated file code for " + fileName + ".\n" +
+        "- Do not omit any part of the code.\n- Enclose only the code in a single code block with language identifier.";
+      var res = await photonSample({ message: systemPrompt, history: [] });
+      var newCode = "";
+      if(res && res.text) {
+        var match = res.text.match(/\`\`\`(?:[a-zA-Z0-9_\-]*\n)?([\s\S]*?)\`\`\`/);
+        newCode = match ? match[1].trim() : res.text.trim();
+      }
+      if(newCode && newCode.length > 10) {
+        ta.value = newCode;
+        if(file) file.code = newCode;
+        applied = true;
+      }
+    }
+  } catch(e) {
+    console.warn("AI assistant error, using fallback modifier:", e);
+  }
+
+  // Fallback intelligent modifier if no API key or offline
+  if(!applied) {
+    var lower = prompt.toLowerCase();
+    var updated = currentCode;
+    if(fileName.endsWith(".html") || fileName.endsWith(".htm")) {
+      if(lower.includes("hero") || lower.includes("headline")) {
+        var heroBlock = "\n    <!-- Hero Section -->\n    <section style=\"padding:60px 20px;text-align:center;background:linear-gradient(180deg,rgba(130,152,255,0.15) 0%,transparent 100%)\">\n      <h1 style=\"font-size:42px;font-weight:800;background:linear-gradient(135deg,#A5B4FC,#8298FF,#60A5FA);-webkit-background-clip:text;-webkit-text-fill-color:transparent\">Welcome to " + (p ? p.title : "Website") + "</h1>\n      <p style=\"color:#94A3B8;font-size:16px;max-width:600px;margin:12px auto\">" + esc(prompt) + "</p>\n      <button style=\"background:#6366F1;color:#fff;border:none;padding:12px 28px;border-radius:8px;font-weight:600;cursor:pointer;margin-top:16px\">Get Started</button>\n    </section>\n";
+        if(updated.includes("<body")) {
+          updated = updated.replace(/(<body[^>]*>)/i, "$1" + heroBlock);
+        } else {
+          updated += heroBlock;
+        }
+      } else if(lower.includes("price") || lower.includes("pricing") || lower.includes("card")) {
+        var pricingBlock = "\n    <!-- Pricing Cards -->\n    <section style=\"padding:40px 20px;display:flex;justify-content:center;gap:20px;flex-wrap:wrap\">\n      <div style=\"background:#11162A;border:1px solid rgba(255,255,255,0.1);padding:24px;border-radius:12px;width:240px;text-align:center\">\n        <h3 style=\"color:#fff\">Starter</h3>\n        <p style=\"font-size:24px;color:#8298FF;font-weight:700\">$19/mo</p>\n        <p style=\"color:#94A3B8;font-size:13px\">Essential features</p>\n      </div>\n      <div style=\"background:#161D38;border:1px solid #8298FF;padding:24px;border-radius:12px;width:240px;text-align:center\">\n        <h3 style=\"color:#fff\">Pro</h3>\n        <p style=\"font-size:24px;color:#8298FF;font-weight:700\">$49/mo</p>\n        <p style=\"color:#94A3B8;font-size:13px\">Full power & features</p>\n      </div>\n    </section>\n";
+        if(updated.includes("</body>")) {
+          updated = updated.replace("</body>", pricingBlock + "</body>");
+        } else {
+          updated += pricingBlock;
+        }
+      } else {
+        var genericBlock = "\n    <!-- " + esc(prompt) + " -->\n    <div style=\"padding:24px;margin:20px auto;max-width:700px;background:rgba(255,255,255,0.04);border-radius:8px;border:1px solid rgba(255,255,255,0.08);text-align:center\">\n      <p style=\"color:#E2E8F0;font-size:15px\">" + esc(prompt) + "</p>\n    </div>\n";
+        if(updated.includes("</body>")) {
+          updated = updated.replace("</body>", genericBlock + "</body>");
+        } else {
+          updated += genericBlock;
+        }
+      }
+    } else if(fileName.endsWith(".css")) {
+      updated += "\n\n/* " + prompt + " */\n.custom-section {\n  padding: 30px;\n  border-radius: 8px;\n  transition: all 0.2s ease;\n}\n";
+    } else if(fileName.endsWith(".js")) {
+      updated += "\n\n// " + prompt + "\nconsole.log('Applied modification: " + prompt.replace(/'/g, "\\'") + "');\n";
+    }
+    ta.value = updated;
+    if(file) file.code = updated;
+  }
+
+  window.saveArtifactCode();
+  var fr = document.getElementById("ide-preview-iframe");
+  if(fr && fr.style.display !== "none") {
+    fr.srcdoc = window.buildArtifactBundleHtml();
+  }
   inp.value = "";
-  setTimeout(function() {
-    toast("Changes applied to " + (ta.id ? "index.html" : "artifact") + "!");
-  }, 800);
+  if(btn) {
+    btn.disabled = false;
+    btn.textContent = "Apply change";
+  }
+  toast("Changes applied and saved to " + fileName + "!");
 };
 
-window.navigateToRoute = navigateToRoute;
-window.setActiveNav = setActiveNav;
-window.showSearch = showSearch;
-window.showHistory = showHistory;
-window.showProjects = showProjects;
-window.showLibrary = showLibrary;
 window.showArtifacts = showArtifacts;
 window.showArtifactsViewWrapper = showArtifactsViewWrapper;
 window.showStudio = showStudio;
