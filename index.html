@@ -1446,13 +1446,26 @@ textarea::placeholder{color:var(--mute)}
 #main {
   background: #0B0D14 !important;
   position: relative !important;
-  overflow-y: auto !important;
   display: flex !important;
   flex-direction: column !important;
+  min-width: 0 !important;
+  height: 100% !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+
+#main:not(.chat) {
   align-items: center !important;
   justify-content: flex-start !important;
   padding-top: 40px !important;
-  box-sizing: border-box !important;
+  overflow-y: auto !important;
+}
+
+#main.chat {
+  align-items: stretch !important;
+  justify-content: space-between !important;
+  padding-top: 0 !important;
+  overflow: hidden !important;
 }
 
 #hero {
@@ -1464,6 +1477,104 @@ textarea::placeholder{color:var(--mute)}
   flex-direction: column !important;
   align-items: center !important;
   box-sizing: border-box !important;
+}
+
+#hero[hidden],
+#main.chat #hero {
+  display: none !important;
+}
+
+#msgs[hidden] {
+  display: none !important;
+}
+
+#main.chat #msgs {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 0% !important;
+  width: 100% !important;
+  max-width: 840px !important;
+  margin: 0 auto !important;
+  overflow-y: auto !important;
+  padding: 24px 20px 16px !important;
+  box-sizing: border-box !important;
+}
+
+#main.chat #comp {
+  width: 100% !important;
+  max-width: 840px !important;
+  margin: 0 auto !important;
+  padding: 0 20px 20px !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* SLEEK SCROLLBAR NO ARROWS */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+::-webkit-scrollbar {
+  width: 6px !important;
+  height: 6px !important;
+}
+::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-radius: 99px !important;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(130, 152, 255, 0.35) !important;
+}
+::-webkit-scrollbar-button,
+::-webkit-scrollbar-button:single-button,
+::-webkit-scrollbar-button:vertical:decrement,
+::-webkit-scrollbar-button:vertical:increment,
+::-webkit-scrollbar-button:horizontal:decrement,
+::-webkit-scrollbar-button:horizontal:increment {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+::-webkit-scrollbar-corner {
+  background: transparent !important;
+}
+
+/* THOUGHT PROCESS COLLAPSIBLE */
+.photon-think-box {
+  margin: 0 0 12px;
+  background: rgba(16, 22, 46, 0.55);
+  border: 1px solid rgba(130, 152, 255, 0.18);
+  border-radius: 8px;
+  overflow: hidden;
+  font-size: 12px;
+}
+.photon-think-summary {
+  padding: 7px 12px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #8298FF;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  outline: none;
+  font-size: 12px;
+}
+.photon-think-summary:hover {
+  background: rgba(130, 152, 255, 0.08);
+}
+.photon-think-body {
+  padding: 10px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  white-space: pre-wrap;
+  line-height: 1.5;
+  color: #94a3b8;
+  font-size: 11.5px;
+  max-height: 220px;
+  overflow-y: auto;
 }
 
 .irx-hero-emblem-wrap {
@@ -4036,6 +4147,43 @@ function loadZip(){if(window.JSZip)return Promise.resolve(window.JSZip);if(!zipP
 async function saveCode(name,text){var d=await claude.use("downloads");if(!d)throw 0;var ext=(name.split(".").pop()||"").toLowerCase();
   if(DLOK.indexOf(ext)>-1){await d.save({filename:name,data:text});return}
   var Z=await loadZip(),z=new Z();z.file(name,text);var blob=await z.generateAsync({type:"blob"});await d.save({filename:name.replace(/\.[^.]+$/,"")+".zip",data:blob})}
+function formatAssistantMessage(rawText) {
+  if (!rawText || typeof rawText !== "string") return "";
+  var thoughts = "";
+  var text = rawText;
+
+  // Extract <think>...</think>
+  text = text.replace(/<think>([\s\S]*?)<\/think>/gi, function(match, t) {
+    if (t.trim()) thoughts += (thoughts ? "\n\n" : "") + t.trim();
+    return "";
+  });
+  text = text.replace(/<thought>([\s\S]*?)<\/thought>/gi, function(match, t) {
+    if (t.trim()) thoughts += (thoughts ? "\n\n" : "") + t.trim();
+    return "";
+  });
+
+  // Check for monologue preamble before actual response (like "Okay, the user said... Let me...")
+  var monologueMatch = /^(?:Okay|Alright|Wait|Let me think|Thinking Process:)[^]*?(?:(?:\r?\n\r?\n)|(?=(?:Hello|Hi |Hey |Certainly|Sure|I'd be happy|Here is|To |In order to|Welcome)))/i.exec(text);
+  if (monologueMatch && monologueMatch[0].length < text.length && monologueMatch[0].length > 30) {
+    var thoughtPart = monologueMatch[0].trim();
+    var restPart = text.slice(monologueMatch[0].length).trim();
+    if (restPart) {
+      thoughts += (thoughts ? "\n\n" : "") + thoughtPart;
+      text = restPart;
+    }
+  }
+
+  var htmlOut = md(text.trim());
+  if (thoughts) {
+    var thoughtBox = '<details class="photon-think-box">' +
+      '<summary class="photon-think-summary"><span>⚡ Thought process</span></summary>' +
+      '<div class="photon-think-body">' + esc(thoughts) + '</div>' +
+    '</details>';
+    htmlOut = thoughtBox + htmlOut;
+  }
+  return htmlOut;
+}
+
 function md(t){
   var out="",parts=t.split(/```/);
   for(var i=0;i<parts.length;i++){
@@ -4090,7 +4238,7 @@ function dataUri(svg){return"data:image/svg+xml;charset=utf-8,"+encodeURICompone
 function addRow(role,text,m,i){var r=document.createElement("div");r.className="row "+(role==="user"?"u":"a");if(i!=null)r.dataset.i=i;var b=document.createElement("div");b.className="b";
   if(role==="user"){b.textContent=text;if(m&&m.attachments&&m.attachments.length){var files=document.createElement("div");files.className="file-attachments";m.attachments.forEach(function(f){var isImg=(f.mimeType&&f.mimeType.startsWith("image/"))||(/\.(png|jpe?g|webp|gif|svg)$/i.test(f.name)),imgSrc=f.preview||f.dataUrl||(f.kind==="inline"&&f.data?("data:"+(f.mimeType||"image/png")+";base64,"+f.data):"");if(isImg&&!imgSrc&&f.id){getAttachmentData(f.id).then(function(saved){if(saved&&(saved.preview||saved.dataUrl||saved.data)){f.preview=saved.preview||saved.dataUrl;f.dataUrl=saved.dataUrl;f.data=saved.data;if(b.isConnected)render()}})}if(isImg&&imgSrc){var card=document.createElement("div");card.className="chat-att-img-card";var img=document.createElement("img");img.src=imgSrc;img.alt=f.name;img.title="Click to view "+f.name;img.onclick=function(){previewChatImage(f)};var info=document.createElement("div");info.className="chat-att-img-info";var n=document.createElement("span");n.textContent=f.name;n.title=f.name;var dl=document.createElement("button");dl.type="button";dl.textContent="⬇ Download";dl.onclick=function(e){e.stopPropagation();downloadChatAttachment(f)};info.append(n,dl);card.append(img,info);files.appendChild(card)}else{var chip=document.createElement("div");chip.className="chat-att-chip";var n=document.createElement("span");n.textContent="📎 "+f.name+(f.size?" ("+(f.size<1024?f.size+" B":(f.size/1024).toFixed(0)+" KB")+")":"");n.title=f.name;var dl=document.createElement("button");dl.type="button";dl.textContent="⬇ Download";dl.onclick=function(e){e.stopPropagation();downloadChatAttachment(f)};chip.append(n,dl);files.appendChild(chip)}});b.appendChild(files)}}
   else if(m&&m.svg){b.innerHTML='<figure class="media"><img alt="" src="'+dataUri(m.svg)+'"><div class="act"><button data-dl>Download</button>'+(m.kind==="video"?'<button data-replay>Replay</button>':'')+'</div><figcaption>'+esc(m.kind==="video"?"Video · ":"Image · ")+esc(m.prompt||"")+'</figcaption></figure>'}
-  else{b.innerHTML=md(text);if(m&&text)b.insertAdjacentHTML("beforeend",'<div class="act"><button data-speak>🔊 Listen</button>'+((text.match(/```/g)||[]).length>=4?'<button data-zipall>Download all (.zip)</button>':'')+'</div>')}
+  else{b.innerHTML=formatAssistantMessage(text);if(m&&text)b.insertAdjacentHTML("beforeend",'<div class="act"><button data-speak>🔊 Listen</button>'+((text.match(/```/g)||[]).length>=4?'<button data-zipall>Download all (.zip)</button>':'')+'</div>')}
   r.append(b);$("msgs").append(r);return b}
 var PIN='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 3l7 7-2 1-3.5 3.5.5 4.5-1.5 1.5-4-4L5 21l-1-1 5.5-5.5-4-4L7 9.5 11.5 10 15 6.5z"/></svg>';
 function closeMenu(){var m=$("cm");if(m)m.remove()}
@@ -4579,7 +4727,7 @@ async function send(retry){
   ctl=new AbortController();busy=true;upd();var got="",failure="",failureCode="",serverSynced=false;
   try{
     if(kind){var q="Generate a fast, clean, high-quality "+(kind==="video"?"looping SVG animation with CSS keyframes":"vector SVG illustration")+" for: "+text+"\nOutput ONLY the SVG markup from <svg> to </svg> with viewBox=\"0 0 800 450\". No commentary, no markdown fences.";var r=await photonSample(q,{signal:ctl.signal,kind:kind}),mt=(r.text||"").match(/<svg[\s\S]*<\/svg>/i);if(!mt||/<script|onload\s*=|<foreignObject|href\s*=\s*["']\s*https?:/i.test(mt[0]))throw{code:"bad_output"};if(r.profileUsage)serverSynced=true;cur.msgs.push({role:"assistant",content:"["+kind+" created: "+text+"]",svg:mt[0],kind:kind,prompt:text});got="created"}
-    else{var history=cur.msgs.slice(0,-1).slice(-20).filter(function(m){return (m.role==="user"||m.role==="assistant")&&typeof m.content==="string"&&m.content.trim().length>0}).map(function(m){return{role:m.role,content:m.content.trim()}});var answer=await photonStream({conversation_id:cur.id,message:text,history:history,system_instruction:SYS+projCtx()+"\nMode: "+MODES[mode][1],request_id:userMsg.request_id,attachments:requestFiles.map(function(f){return f.kind==="text"?{name:f.name,mimeType:f.mimeType,kind:"text",text:f.text}:{name:f.name,mimeType:f.mimeType,kind:"inline",data:f.data||(f.dataUrl?String(f.dataUrl).split(",")[1]:"")}}),model:cur.model||user.defaultModel||null,activity_type:vm?"voice":k0==="code"?"code":"chat",token_cost_type:billKind},{signal:ctl.signal},function(delta,full){if(out.isConnected){out.innerHTML=md(full);$("msgs").scrollTop=$("msgs").scrollHeight}});got=answer.text;if(answer.profileUsage)serverSynced=true;cur.msgs.push({role:"assistant",content:got});if(answer.fallback){var fb=answer.fallback;toast("Your selected model was temporarily unavailable, so this reply used "+fb.provider+" ("+fb.to+")"+(fb.paid?". Estimated provider cost applies.":"."))}}
+    else{var history=cur.msgs.slice(0,-1).slice(-20).filter(function(m){return (m.role==="user"||m.role==="assistant")&&typeof m.content==="string"&&m.content.trim().length>0}).map(function(m){return{role:m.role,content:m.content.trim()}});var answer=await photonStream({conversation_id:cur.id,message:text,history:history,system_instruction:SYS+projCtx()+"\nMode: "+MODES[mode][1],request_id:userMsg.request_id,attachments:requestFiles.map(function(f){return f.kind==="text"?{name:f.name,mimeType:f.mimeType,kind:"text",text:f.text}:{name:f.name,mimeType:f.mimeType,kind:"inline",data:f.data||(f.dataUrl?String(f.dataUrl).split(",")[1]:"")}}),model:cur.model||user.defaultModel||null,activity_type:vm?"voice":k0==="code"?"code":"chat",token_cost_type:billKind},{signal:ctl.signal},function(delta,full){if(out.isConnected){out.innerHTML=formatAssistantMessage(full);$("msgs").scrollTop=$("msgs").scrollHeight}});got=answer.text;if(answer.profileUsage)serverSynced=true;cur.msgs.push({role:"assistant",content:got});if(answer.fallback){var fb=answer.fallback;toast("Your selected model was temporarily unavailable, so this reply used "+fb.provider+" ("+fb.to+")"+(fb.paid?". Estimated provider cost applies.":"."))}}
   }catch(er){failureCode=er&&er.code||"";failure=er&&er.message||"The AI request failed. Please try again.";if(er&&er.code==="auth_required"){failure="Your sign-in session expired. Sign in again, then retry this message."}}
   finally{busy=false;ctl=null;if(got&&!serverSynced)spend(billKind);pendingChatFiles=[];renderChatFileList();save();render();if(failure){var row=addRow("assistant","");var canSwitchFree=["billing_required","billing_blocked","quota_or_rate_limit","model_unavailable","provider_forbidden","invalid_model","invalid_api_key"].indexOf(failureCode)!==-1;row.innerHTML='<span class="err">'+esc(failure)+'</span> <button class="retry" data-retry="1">Retry</button>'+(canSwitchFree?' <button class="retry" data-switch-free="1">Switch to Free Model &amp; Retry</button>':'')}if(vm){if(got)speak(got,listen);else listen()}}
 }
