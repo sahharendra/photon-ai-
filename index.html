@@ -3978,6 +3978,10 @@ var PLANS=[{id:"basic",n:"Free",m:0,tok:50,billingPeriod:"free",description:"Per
 function syncProfileUsage(pu){if(!pu||!user)return;tokSave({d:dayKey(),u:Number(pu.used)||0,by:pu.by||{}});if(photonProfile){photonProfile.usage=Object.assign({},photonProfile.usage||{},pu)}tokUI()}
 function applyPublicConfig(cfg){if(!cfg)return;billingAvailable=!!cfg.billingAvailable;if(cfg.paymentGateway)paymentGateway=Object.assign({},paymentGateway,cfg.paymentGateway);if(Array.isArray(cfg.plans)&&cfg.plans.length){PLANS=cfg.plans.map(function(p){var price=Number(p.price)||0,bp=p.billingPeriod||(price===0?"free":"monthly");return{id:p.id,n:p.name,m:price,tok:Number(p.dailyTokens)||1,billingPeriod:bp,description:p.description||"",displayOrder:Number(p.displayOrder)||99,y:bp==="yearly"?price:price*12}}).sort(function(a,b){return(a.displayOrder-b.displayOrder)||a.n.localeCompare(b.n)})}if(Array.isArray(cfg.tokenRules)&&cfg.tokenRules.length){TOKEN_RULES=cfg.tokenRules.slice();cfg.tokenRules.forEach(function(r){COST[r.id]=Number(r.tokenCost)||1;KLAB[r.id]=r.name||r.id})}if(cfg.tokenCosts){COST=Object.assign({},COST,cfg.tokenCosts)}if(user){$("upl").parentNode.firstChild.textContent=planName()+" plan - ";tokUI()};checkPrivateModeGate();}
 function checkPrivateModeGate(){
+  var p = (window.location.pathname || "").toLowerCase();
+  if (p === "/login" || p === "/signin" || p === "/signup" || p === "/auth" || p === "/register" || p === "/admin") {
+    var ex=document.getElementById("private-mode-overlay");if(ex)ex.remove();return;
+  }
   if(!profileConfig||!profileConfig.privateMode||!profileConfig.privateMode.enabled){
     var ex=document.getElementById("private-mode-overlay");if(ex)ex.remove();return;
   }
@@ -5006,6 +5010,15 @@ function signOut(authInstance) {
   return Promise.resolve();
 }
 
+var FIREBASE_CONFIG = window.PHOTON_FIREBASE_CONFIG || {
+  apiKey: "AIzaSyAG_GrbYi9axQFAbKmzJ3OJcgVQIg5T01E",
+  authDomain: "photon-ai-e8b88.firebaseapp.com",
+  projectId: "photon-ai-e8b88",
+  storageBucket: "photon-ai-e8b88.firebasestorage.app",
+  messagingSenderId: "294366959181",
+  appId: "1:294366959181:web:87b1615f6512546f55ae04"
+};
+
 function getFirebaseConfig() {
   if (window.PHOTON_FIREBASE_CONFIG && window.PHOTON_FIREBASE_CONFIG.apiKey && window.PHOTON_FIREBASE_CONFIG.apiKey !== "YOUR_FIREBASE_API_KEY") {
     return window.PHOTON_FIREBASE_CONFIG;
@@ -5017,11 +5030,7 @@ function getFirebaseConfig() {
       if (parsed && parsed.apiKey && parsed.apiKey !== "YOUR_FIREBASE_API_KEY") return parsed;
     }
   } catch (e) {}
-  return window.FIREBASE_CONFIG || {
-    apiKey: "YOUR_FIREBASE_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID"
-  };
+  return FIREBASE_CONFIG;
 }
 
 function isValidFirebaseApiKey(key) {
@@ -7354,11 +7363,13 @@ function bootPhotonApp() {
   try { loadPublicConfig(); } catch(e){}
   try { checkRedirectAuth(); } catch(e){}
   try { topo(); } catch(e){}
-  var p = window.location.pathname.toLowerCase();
+  var p = (window.location.pathname || "/").toLowerCase();
   if (p === "/login" || p === "/signin" || p === "/auth") {
     showAuth("login");
   } else if (p === "/signup" || p === "/register") {
     showAuth("signup");
+  } else if (p !== "/" && p !== "/index.html") {
+    navigateToRoute(p, false);
   }
 }
 

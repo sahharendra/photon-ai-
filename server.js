@@ -1884,7 +1884,7 @@ const server = http.createServer(async (req, res) => {
             qrImageUrl: '/upi-qr.jpg',
           },
           privateMode: {
-            enabled: data.settings?.privateMode?.enabled !== undefined ? Boolean(data.settings.privateMode.enabled) : true,
+            enabled: data.settings?.privateMode?.enabled !== undefined ? Boolean(data.settings.privateMode.enabled) : false,
             message: data.settings?.privateMode?.message || 'Photon AI is currently in private preview & maintenance. Public access will reopen in a few days!',
           },
           refreshedAt: new Date().toISOString(),

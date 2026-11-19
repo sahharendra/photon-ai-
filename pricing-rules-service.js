@@ -309,7 +309,7 @@ function normalizeSettings(raw) {
     ? input.privateMode
     : (input.maintenance && typeof input.maintenance === 'object') ? input.maintenance : {};
   const privateMode = {
-    enabled: privateModeRaw.enabled !== undefined ? Boolean(privateModeRaw.enabled) : true,
+    enabled: privateModeRaw.enabled !== undefined ? Boolean(privateModeRaw.enabled) : false,
     passcode: String(privateModeRaw.passcode || process.env.PHOTON_PRIVATE_PASSCODE || 'photon2026').trim(),
     message: String(privateModeRaw.message || 'Photon AI is currently in private preview & maintenance. Public access will reopen in a few days!').trim(),
   };
