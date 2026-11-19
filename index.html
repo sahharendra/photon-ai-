@@ -3853,7 +3853,6 @@ textarea::placeholder{color:var(--mute)}
       <div class="irx-credits-top"><span class="irx-credits-lbl">CREDITS</span><span class="irx-credits-plan" id="irxCreditsPlan">free</span></div>
       <div class="irx-credits-num"><b class="irx-credits-val" id="irxCreditsVal">500</b><span class="irx-credits-avail">available / day</span></div>
     </div>
-    <button class="irx-nav-item" id="nav-admin" type="button" onclick="window.location.href='/admin'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 8 3 3-3 3M15 14h.01"/></svg><span>Admin</span></button>
     <button class="irx-nav-item" id="profile-nav" type="button" onclick="navigateToRoute('/settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Settings</span></button>
   </div>
   <div id="usr-hidden" style="display:none"><div id="wave"></div><div id="pop"></div><div id="tkn"></div><div id="boxFlow"></div><button id="search-chats"></button><button id="plus"></button><b id="av">U</b><span id="un">User</span><button id="out">Log out</button><button id="upg">Upgrade</button><input id="chat-search-input"><div id="rl"></div><div id="tkt"></div><div class="tkbar"><i id="tkb"></i></div></div>
@@ -4734,7 +4733,10 @@ function showLogin() {
   });
 
   $("gbtn").onclick = showGoogle;
-  $("fgt").onclick = showForgot;
+  $("fgt").onclick = function(){
+    var existingEmail = $("fe") ? $("fe").value.trim() : "";
+    showForgot(existingEmail);
+  };
   $("gsu").onclick = function(){ SU = { d: {} }; showAuth("signup"); };
 
   var go = async function(){
@@ -4775,30 +4777,57 @@ function showLogin() {
   });
 }
 
-function showForgot() {
+function checkCommonEmailDomainTypo(email) {
+  if (!email || typeof email !== "string") return null;
+  var em = email.trim().toLowerCase();
+  var match = /@([a-z0-9.-]+)$/.exec(em);
+  if (!match) return null;
+  var domain = match[1];
+  var typos = {
+    "gamil.com": "gmail.com",
+    "gmial.com": "gmail.com",
+    "gmaill.com": "gmail.com",
+    "gmal.com": "gmail.com",
+    "gmai.com": "gmail.com",
+    "g-mail.com": "gmail.com",
+    "yaho.com": "yahoo.com",
+    "hotmial.com": "hotmail.com"
+  };
+  if (typos[domain]) {
+    return em.replace("@" + domain, "@" + typos[domain]);
+  }
+  return null;
+}
+
+function showForgot(presetEmail) {
   var pLogoSvg = getPhotonLogoSvg(30);
   var html = '<div class="photon-auth-wrap">' +
     '<div class="photon-auth-emblem">' + pLogoSvg + '</div>' +
     '<h1 class="photon-auth-title">Reset password</h1>' +
-    '<p class="photon-auth-sub">Enter your email for your PHOTON account to receive a secure password reset link.</p>' +
+    '<p class="photon-auth-sub">Enter your email to receive a secure password reset link.</p>' +
     '<div class="photon-auth-card">' +
       '<button class="photon-auth-close-btn" id="px" type="button" aria-label="Close">✕</button>' +
       '<div class="photon-auth-field">' +
-        '<label class="photon-auth-label" for="re">Email</label>' +
+        '<label class="photon-auth-label" for="re">Email address</label>' +
         '<div class="photon-auth-input-wrap">' +
           '<svg class="photon-auth-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>' +
-          '<input id="re" type="email" placeholder="you@example.com" autocomplete="email" required>' +
+          '<input id="re" type="email" placeholder="you@example.com" autocomplete="email" value="' + esc(presetEmail || "") + '" required>' +
         '</div>' +
       '</div>' +
       '<div class="ferr" id="rer" role="status" aria-live="polite"></div>' +
       '<button class="photon-auth-submit-btn" id="rgo" type="button">Send reset link</button>' +
       '<button class="photon-auth-sec-btn" id="rbk" type="button">Back to log in</button>' +
+      '<div class="photon-auth-footer" style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);font-size:12px;color:var(--mute)">' +
+        'Don&apos;t have an account? <a id="rfsu" href="javascript:void(0)" style="color:#8298FF;font-weight:600">Create one</a> · <a id="rfgg" href="javascript:void(0)" style="color:#8298FF;font-weight:600">Sign in with Google</a>' +
+      '</div>' +
     '</div>' +
   '</div>';
 
   ov(html, true);
 
   $("px").onclick = $("rbk").onclick = function(){ showAuth("login"); };
+  var suBtn = $("rfsu"); if (suBtn) suBtn.onclick = function(){ SU = { d: {} }; showAuth("signup"); };
+  var ggBtn = $("rfgg"); if (ggBtn) ggBtn.onclick = function(){ showAuth("login"); setTimeout(showGoogle, 150); };
 
   var go = async function(){
     var er = $("rer"), button = $("rgo"), em = $("re").value.trim().toLowerCase();
@@ -4807,26 +4836,57 @@ function showForgot() {
       er.textContent = "Enter a valid email address.";
       return;
     }
+    var suggested = checkCommonEmailDomainTypo(em);
+    if (suggested) {
+      er.innerHTML = 'Did you mean <b style="color:#fff">' + esc(suggested) + '</b>? <button type="button" id="fix-typo-btn" style="background:#1B2038;border:1px solid #8298FF;color:#8298FF;padding:2px 8px;border-radius:4px;cursor:pointer;margin-left:6px;font-size:11px">Use ' + esc(suggested) + '</button>';
+      var ftb = $("fix-typo-btn");
+      if (ftb) ftb.onclick = function() {
+        $("re").value = suggested;
+        er.innerHTML = "";
+        go();
+      };
+      return;
+    }
     button.disabled = true;
     button.textContent = "Sending...";
     try {
       var auth = await ensureFirebaseAuth();
       if(!auth) throw new Error("Firebase is not configured.");
-      await auth.sendPasswordResetEmail(em);
-      er.textContent = "If an account exists for this email, a reset link has been sent. Check your inbox and spam folder.";
-      er.style.color = "#8298FF";
+      var actionCodeSettings = {
+        url: window.location.origin + "/login",
+        handleCodeInApp: false
+      };
+      try {
+        await auth.sendPasswordResetEmail(em, actionCodeSettings);
+      } catch (sdkErr) {
+        await auth.sendPasswordResetEmail(em);
+      }
+      er.innerHTML = '<div style="background:#0e172a;border:1px solid #3b82f6;border-radius:8px;padding:12px;margin:8px 0;text-align:left;line-height:1.5">' +
+        '<div style="color:#60a5fa;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:6px">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>' +
+          '<span>Password reset link dispatched</span>' +
+        '</div>' +
+        '<div style="color:#cbd5e1;font-size:12.5px;margin-bottom:8px">A password reset email has been sent to <b style="color:#fff">' + esc(em) + '</b>.</div>' +
+        '<div style="background:#1e293b;border-radius:6px;padding:8px 10px;font-size:11.5px;color:#94a3b8;line-height:1.5">' +
+          '<strong style="color:#f8fafc">⚠️ If you don&apos;t see it in Primary:</strong><br>' +
+          '1. The email is sent from <b style="color:#e2e8f0">noreply@photon-ai-e8b88.firebaseapp.com</b>.<br>' +
+          '2. Check your <b>Spam</b>, <b>Junk</b>, or <b>Updates / Promotions</b> folder.<br>' +
+          '3. If you signed in with Google, you don&apos;t need a password &mdash; simply <a href="javascript:void(0)" id="r_google_link" style="color:#8298FF;font-weight:600">Continue with Google</a>.<br>' +
+          '4. Haven&apos;t registered yet? <a href="javascript:void(0)" id="r_signup_link" style="color:#8298FF;font-weight:600">Create an account here</a>.' +
+        '</div>' +
+      '</div>';
+      var gl = $("r_google_link"); if (gl) gl.onclick = function() { showAuth("login"); setTimeout(showGoogle, 150); };
+      var sl = $("r_signup_link"); if (sl) sl.onclick = function() { SU = { d: {} }; showAuth("signup"); };
     } catch(e) {
       var code = e && e.code || "";
       if(code === "auth/user-not-found" || code === "auth/email-not-found"){
-        er.textContent = "If an account exists for this email, a reset link has been sent. Check your inbox and spam folder.";
-        er.style.color = "#8298FF";
+        er.innerHTML = '<div style="color:#8298FF;font-size:12.5px;line-height:1.4">If an account exists for this email, a reset link has been sent. Check your <b>Inbox</b> and <b>Spam</b> folder. If you registered with Google, please click <b>Continue with Google</b> on the login screen.</div>';
       } else {
         er.textContent = getGoogleErrorMessage(e);
-        er.style.color = "";
       }
     } finally {
       button.disabled = false;
-      button.textContent = "Send reset link";
+      button.textContent = "Resend reset link";
     }
   };
 
@@ -4966,6 +5026,13 @@ function showAuth(tab, step) {
       er.textContent = "";
       if(!fn || !ln){ er.textContent = "Enter your first and last name."; return; }
       if(!/^\S+@\S+\.\S+$/.test(em)){ er.textContent = "Enter a valid email address."; return; }
+      var suggested = typeof checkCommonEmailDomainTypo === "function" ? checkCommonEmailDomainTypo(em) : null;
+      if (suggested) {
+        er.innerHTML = 'Did you mean <b style="color:#fff">' + esc(suggested) + '</b>? <button type="button" id="fix-typo-su" style="background:#1B2038;border:1px solid #8298FF;color:#8298FF;padding:2px 8px;border-radius:4px;cursor:pointer;margin-left:6px;font-size:11px">Use ' + esc(suggested) + '</button>';
+        var ftb = $("fix-typo-su");
+        if (ftb) ftb.onclick = function() { $("fe").value = suggested; er.innerHTML = ""; go(); };
+        return;
+      }
       if(pw.length < 8){ er.textContent = "Password must be at least 8 characters."; return; }
       SU.d = { fn: fn, ln: ln, em: em, pw: pw };
       showAuth("signup", 2);
@@ -6233,6 +6300,13 @@ function navigateToRoute(route, pushState) {
       if(typeof closePv === "function") closePv();
       if(typeof showAuth === "function") showAuth("signup");
       break;
+    case "/forgot":
+    case "/forgot-password":
+    case "/reset":
+    case "/reset-password":
+      if(typeof closePv === "function") closePv();
+      if(typeof showForgot === "function") showForgot();
+      break;
     case "/search":
       if(typeof showSearch === "function") showSearch();
       break;
@@ -7188,12 +7262,6 @@ function showSettings() {
         '</div>' +
       '</div>' +
     '</div>' +
-    '<!-- Administration Card -->' +
-    '<div class="photon-settings-card" style="margin-bottom:16px">' +
-      '<div class="photon-settings-hd">ADMINISTRATION</div>' +
-      '<p class="photon-settings-session-desc">Configure AI providers, manage API keys, token pricing rules, users, and platform controls.</p>' +
-      '<button class="photon-settings-action-btn" style="background:#1B2038;border:1px solid rgba(130,152,255,0.3);color:#8298FF;font-weight:600;margin-top:12px;display:inline-flex;align-items:center;gap:6px" onclick="window.location.href=&quot;/admin&quot;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="14" height="14"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 8 3 3-3 3M15 14h.01"/></svg>Open Admin Panel ↗</button>' +
-    '</div>' +
     '<!-- Session Card -->' +
     '<div class="photon-settings-card">' +
       '<div class="photon-settings-hd">SESSION</div>' +
@@ -7389,6 +7457,7 @@ window.showSettings = showSettings;
 window.closePv = closePv;
 window.showLogin = showLogin;
 window.showAuth = showAuth;
+window.showForgot = showForgot;
 
 // Auto-boot suite controller
 function bootPhotonApp() {
@@ -7401,6 +7470,8 @@ function bootPhotonApp() {
     showAuth("login");
   } else if (p === "/signup" || p === "/register") {
     showAuth("signup");
+  } else if (p === "/forgot" || p === "/forgot-password" || p === "/reset" || p === "/reset-password") {
+    showForgot();
   } else if (p !== "/" && p !== "/index.html") {
     navigateToRoute(p, false);
   }
