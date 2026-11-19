@@ -7795,8 +7795,8 @@ window.buildArtifactBundleHtml = function() {
   var cssFiles = p.files.filter(function(f){ return f.name.toLowerCase().endsWith(".css"); });
   var jsFiles = p.files.filter(function(f){ return f.name.toLowerCase().endsWith(".js"); });
 
-  var injectedCss = cssFiles.map(function(f){ return "<style>/* " + f.name + " */\n" + f.code + "\n</style>"; }).join("\n");
-  var injectedJs = jsFiles.map(function(f){ return "<script>/* " + f.name + " */\n" + f.code + "\n</script>"; }).join("\n");
+  var injectedCss = cssFiles.map(function(f){ return "<style>/* " + f.name + " */\n" + f.code + "\n" + "</" + "style>"; }).join("\n");
+  var injectedJs = jsFiles.map(function(f){ return "<script>/* " + f.name + " */\n" + f.code + "\n" + "</" + "script>"; }).join("\n");
 
   if(injectedCss) {
     if(htmlContent.includes("</head>")) {
