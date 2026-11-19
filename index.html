@@ -3851,8 +3851,9 @@ textarea::placeholder{color:var(--mute)}
   <div class="irx-side-bottom">
     <div class="irx-credits-card" id="tk" role="button" onclick="navigateToRoute('/credits')">
       <div class="irx-credits-top"><span class="irx-credits-lbl">CREDITS</span><span class="irx-credits-plan" id="irxCreditsPlan">free</span></div>
-      <div class="irx-credits-num"><b class="irx-credits-val" id="irxCreditsVal">486</b><span class="irx-credits-avail">available</span></div>
+      <div class="irx-credits-num"><b class="irx-credits-val" id="irxCreditsVal">500</b><span class="irx-credits-avail">available / day</span></div>
     </div>
+    <button class="irx-nav-item" id="nav-admin" type="button" onclick="window.location.href='/admin'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 8 3 3-3 3M15 14h.01"/></svg><span>Admin</span></button>
     <button class="irx-nav-item" id="profile-nav" type="button" onclick="navigateToRoute('/settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Settings</span></button>
   </div>
   <div id="usr-hidden" style="display:none"><div id="wave"></div><div id="pop"></div><div id="tkn"></div><div id="boxFlow"></div><button id="search-chats"></button><button id="plus"></button><b id="av">U</b><span id="un">User</span><button id="out">Log out</button><button id="upg">Upgrade</button><input id="chat-search-input"><div id="rl"></div><div id="tkt"></div><div class="tkbar"><i id="tkb"></i></div></div>
@@ -3974,7 +3975,7 @@ function save(){try{var list=chats.filter(function(c){return c.pin}).concat(chat
 function users(){try{return JSON.parse(localStorage.getItem("photon-users")||localStorage.getItem("orca-users")||"{}")}catch(e){return{}}}
 function putUsers(u){try{localStorage.setItem("photon-users",JSON.stringify(u))}catch(e){}}
 async function hash(t){try{var b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,"0")}).join("")}catch(e){var h=5381;for(var i=0;i<t.length;i++)h=(h*33)^t.charCodeAt(i);return"x"+(h>>>0)}}
-var PLANS=[{id:"basic",n:"Free",m:0,tok:50,billingPeriod:"free",description:"Perfect for trying Photon, casual chats and light creative work.",displayOrder:1},{id:"pro",n:"Pro",m:399,tok:200,billingPeriod:"monthly",description:"More daily tokens for creators, students and professionals.",displayOrder:2},{id:"premium",n:"Premium",m:1499,tok:2000,billingPeriod:"monthly",description:"Maximum daily tokens for heavy creators and developers.",displayOrder:3}];var planBillingCycle="monthly";var paymentGateway={gateway:"direct_upi",ready:true,configured:true,enabled:true,mode:"live",supportedMethods:["upi"],currency:"INR"};var TOKEN_RULES=[];
+var PLANS=[{id:"basic",n:"Free",m:0,tok:500,billingPeriod:"free",description:"Perfect for trying Photon, casual chats and light creative work (500 credits/day).",displayOrder:1},{id:"pro",n:"Pro",m:399,tok:2000,billingPeriod:"monthly",description:"More daily tokens for creators, students and professionals.",displayOrder:2},{id:"premium",n:"Premium",m:1499,tok:10000,billingPeriod:"monthly",description:"Maximum daily tokens for heavy creators and developers.",displayOrder:3}];var planBillingCycle="monthly";var paymentGateway={gateway:"direct_upi",ready:true,configured:true,enabled:true,mode:"live",supportedMethods:["upi"],currency:"INR"};var TOKEN_RULES=[];
 function syncProfileUsage(pu){if(!pu||!user)return;tokSave({d:dayKey(),u:Number(pu.used)||0,by:pu.by||{}});if(photonProfile){photonProfile.usage=Object.assign({},photonProfile.usage||{},pu)}tokUI()}
 function applyPublicConfig(cfg){if(!cfg)return;billingAvailable=!!cfg.billingAvailable;if(cfg.paymentGateway)paymentGateway=Object.assign({},paymentGateway,cfg.paymentGateway);if(Array.isArray(cfg.plans)&&cfg.plans.length){PLANS=cfg.plans.map(function(p){var price=Number(p.price)||0,bp=p.billingPeriod||(price===0?"free":"monthly");return{id:p.id,n:p.name,m:price,tok:Number(p.dailyTokens)||1,billingPeriod:bp,description:p.description||"",displayOrder:Number(p.displayOrder)||99,y:bp==="yearly"?price:price*12}}).sort(function(a,b){return(a.displayOrder-b.displayOrder)||a.n.localeCompare(b.n)})}if(Array.isArray(cfg.tokenRules)&&cfg.tokenRules.length){TOKEN_RULES=cfg.tokenRules.slice();cfg.tokenRules.forEach(function(r){COST[r.id]=Number(r.tokenCost)||1;KLAB[r.id]=r.name||r.id})}if(cfg.tokenCosts){COST=Object.assign({},COST,cfg.tokenCosts)}if(user){$("upl").parentNode.firstChild.textContent=planName()+" plan - ";tokUI()};checkPrivateModeGate();}
 function checkPrivateModeGate(){
@@ -4124,7 +4125,7 @@ function dayKey(){var t=new Date();return t.getFullYear()+"-"+(t.getMonth()+1)+"
 function tokState(){var o=null;try{o=JSON.parse(localStorage.getItem("photon-tok-"+user.email)||localStorage.getItem("orca-tok-"+user.email)||"null")}catch(e){}
   if(!o||o.d!==dayKey())o={d:dayKey(),u:0,by:{text:0,voice:0,image:0,video:0,code:0}};if(!o.by)o.by={text:0,voice:0,image:0,video:0,code:0};return o}
 function tokSave(o){try{localStorage.setItem("photon-tok-"+user.email,JSON.stringify(o))}catch(e){}}
-function limit(){var p=PLANS.filter(function(x){return x.id===user.plan})[0];return p?p.tok:50}
+function limit(){var p=PLANS.filter(function(x){return x.id===user.plan})[0];return p?p.tok:500}
 function left(){return Math.max(0,limit()-tokState().u)}
 function spend(k){var o=tokState();o.u+=COST[k];o.by[k]=(o.by[k]||0)+1;tokSave(o);tokUI()}
 function untilReset(){var n=new Date(),m=new Date(n.getFullYear(),n.getMonth(),n.getDate()+1),ms=m-n;return Math.floor(ms/36e5)+"h "+Math.floor(ms%36e5/6e4)+"m"}
@@ -6217,6 +6218,10 @@ function navigateToRoute(route, pushState) {
   }
 
   switch(path) {
+    case "/admin":
+    case "/admin.html":
+      window.location.href = "/admin";
+      return;
     case "/login":
     case "/signin":
     case "/auth":
@@ -7020,7 +7025,7 @@ function showPlansAndCredits() {
     '<div class="photon-view-header">' +
       '<div class="photon-eyebrow">SUBSCRIPTION</div>' +
       '<h1 class="photon-title">Plans and credits</h1>' +
-      '<p class="photon-sub">Every operation is priced in credits, deducted server-side. Unused monthly credits refresh on the first of the month.</p>' +
+      '<p class="photon-sub">Every operation is priced in credits, deducted server-side. Unused credits refresh daily at midnight.</p>' +
     '</div>' +
     '<div class="photon-plans-stats">' +
       '<div class="photon-plans-stat-box">' +
@@ -7028,11 +7033,11 @@ function showPlansAndCredits() {
         '<div class="photon-plans-stat-val">' + credits + '</div>' +
       '</div>' +
       '<div class="photon-plans-stat-box">' +
-        '<div class="photon-plans-stat-lbl">MONTHLY ALLOCATION</div>' +
+        '<div class="photon-plans-stat-lbl">DAILY ALLOCATION</div>' +
         '<div class="photon-plans-stat-val">500</div>' +
       '</div>' +
       '<div class="photon-plans-stat-box">' +
-        '<div class="photon-plans-stat-lbl">SPENT THIS PERIOD</div>' +
+        '<div class="photon-plans-stat-lbl">SPENT TODAY</div>' +
         '<div class="photon-plans-stat-val">14</div>' +
       '</div>' +
       '<div class="photon-plans-stat-box">' +
@@ -7050,7 +7055,7 @@ function showPlansAndCredits() {
         '<div class="photon-plan-title">Free</div>' +
         '<p class="photon-plan-desc">Explore PHOTON with the everyday models.</p>' +
         '<ul class="photon-plan-features">' +
-          '<li>500 credits every month</li>' +
+          '<li>500 credits every day</li>' +
           '<li>Everyday chat and reasoning models</li>' +
           '<li>Image studio – 4 credits per image</li>' +
           '<li>Projects, library and artifacts</li>' +
@@ -7166,12 +7171,12 @@ function showSettings() {
           '<span class="val">' + credits + '</span>' +
         '</div>' +
         '<div class="photon-settings-row">' +
-          '<span class="lbl">Monthly allocation</span>' +
-          '<span class="val">500</span>' +
+          '<span class="lbl">Daily allocation</span>' +
+          '<span class="val">500 credits / day</span>' +
         '</div>' +
         '<div class="photon-settings-row">' +
-          '<span class="lbl">Lifetime spend</span>' +
-          '<span class="val">14</span>' +
+          '<span class="lbl">Daily spend</span>' +
+          '<span class="val">0 credits</span>' +
         '</div>' +
         '<div class="photon-settings-row">' +
           '<span class="lbl">Library</span>' +
@@ -7182,6 +7187,12 @@ function showSettings() {
           '<button class="photon-settings-action-btn" onclick="twoFactorToast()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="14" height="14"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Two-factor</button>' +
         '</div>' +
       '</div>' +
+    '</div>' +
+    '<!-- Administration Card -->' +
+    '<div class="photon-settings-card" style="margin-bottom:16px">' +
+      '<div class="photon-settings-hd">ADMINISTRATION</div>' +
+      '<p class="photon-settings-session-desc">Configure AI providers, manage API keys, token pricing rules, users, and platform controls.</p>' +
+      '<button class="photon-settings-action-btn" style="background:#1B2038;border:1px solid rgba(130,152,255,0.3);color:#8298FF;font-weight:600;margin-top:12px;display:inline-flex;align-items:center;gap:6px" onclick="window.location.href=&quot;/admin&quot;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="14" height="14"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 8 3 3-3 3M15 14h.01"/></svg>Open Admin Panel ↗</button>' +
     '</div>' +
     '<!-- Session Card -->' +
     '<div class="photon-settings-card">' +
