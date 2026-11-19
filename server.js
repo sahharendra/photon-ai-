@@ -164,14 +164,14 @@ function getActiveGatewayService(data) {
 // hardcoded: if the account has no Gemini models, the caller must choose another provider.
 function preferredGeminiModel() { return gemini.defaultModelId(); }
 const PHOTON_MODEL_ALIASES = {
-  'gpt-6-luna': ['google/gemma-4-26b-a4b-it:free', 'google/gemma-4-31b-it:free', 'nvidia/nemotron-3.5-lightning:free', 'openrouter/free'],
-  'gemini-3.8-flash': ['gemini-2.0-flash', 'gemini-1.5-flash', 'google/gemma-4-26b-a4b-it:free', 'openrouter/free'],
-  'glm-5.2': ['google/gemma-4-26b-a4b-it:free', 'qwen2.5-coder:3b', 'openrouter/free'],
-  'claude-sonnet-5': ['kimi-k2.6', 'google/gemma-4-31b-it:free', 'openrouter/free'],
-  'gpt-6-astra': ['openai/o3-mini', 'google/gemma-4-31b-it:free', 'openrouter/free'],
-  'gpt-6-sol': ['deepseek/deepseek-r1:free', 'nvidia/nemotron-3.5-lightning:free', 'openrouter/free'],
-  'claude-opus-5.5': ['deepseek/deepseek-r1:free', 'google/gemma-4-31b-it:free', 'openrouter/free'],
-  'claude-fable-5.1': ['kimi-k2.6', 'google/gemma-4-26b-a4b-it:free', 'openrouter/free']
+  'gpt-6-luna': ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'gemini-2.0-flash', 'gemini-1.5-flash', 'google/gemma-4-26b-a4b-it:free', 'google/gemma-4-31b-it:free', 'nvidia/nemotron-3.5-lightning:free', 'openrouter/free'],
+  'gemini-3.8-flash': ['gemini-2.0-flash', 'gemini-1.5-flash', 'llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'google/gemma-4-26b-a4b-it:free', 'openrouter/free'],
+  'glm-5.2': ['llama-3.3-70b-versatile', 'gemini-2.0-flash', 'google/gemma-4-26b-a4b-it:free', 'qwen2.5-coder:3b', 'openrouter/free'],
+  'claude-sonnet-5': ['llama-3.3-70b-versatile', 'gemini-2.0-flash', 'kimi-k2.6', 'google/gemma-4-31b-it:free', 'openrouter/free'],
+  'gpt-6-astra': ['llama-3.3-70b-versatile', 'openai/o3-mini', 'google/gemma-4-31b-it:free', 'openrouter/free'],
+  'gpt-6-sol': ['llama-3.3-70b-versatile', 'deepseek/deepseek-r1:free', 'nvidia/nemotron-3.5-lightning:free', 'openrouter/free'],
+  'claude-opus-5.5': ['llama-3.3-70b-versatile', 'deepseek/deepseek-r1:free', 'google/gemma-4-31b-it:free', 'openrouter/free'],
+  'claude-fable-5.1': ['llama-3.3-70b-versatile', 'gemini-2.0-flash', 'kimi-k2.6', 'google/gemma-4-26b-a4b-it:free', 'openrouter/free']
 };
 
 function fallbackModelId(profile) {
@@ -193,16 +193,11 @@ function requireModelId(profile, requested) {
     }
   }
   const opt = availableModels().find(m => m.id === id);
-  if (opt && (!opt.available || opt.creditsExhausted)) {
-    const fast = getFastestAvailableModel(profile ? userEffectivePlanId(profile) : 'basic');
-    if (fast) return fast.id;
-  }
-  if (!id) {
-    const fast = getFastestAvailableModel(profile ? userEffectivePlanId(profile) : 'basic');
-    if (fast) return fast.id;
-    throw new HttpError(503, 'model_unavailable', 'No AI model is configured on this server. Ask the administrator to add a provider key.');
-  }
-  return id;
+  if (opt && opt.available && !opt.creditsExhausted) return opt.id;
+  if (allAvailable.length > 0) return allAvailable[0].id;
+  const fast = getFastestAvailableModel(profile ? userEffectivePlanId(profile) : 'basic');
+  if (fast) return fast.id;
+  return id || 'gpt-6-luna';
 }
 function adminGeminiAction(fn) {
   try { return fn(); } catch (error) {
@@ -806,7 +801,11 @@ async function resolveModel(id) {
       if (match) { option = match; break; }
     }
   }
-  if (!option || !option.available) throw new HttpError(503, 'model_unavailable', option && option.configured === false ? `${option.provider} is not configured on this server. Choose another model.` : 'The selected AI model is not available. Choose another model in your profile settings.');
+  if (!option || !option.available || option.creditsExhausted) {
+    const anyAvailable = availableModels().find(m => m.available && !m.creditsExhausted);
+    if (anyAvailable) option = anyAvailable;
+  }
+  if (!option || !option.available) throw new HttpError(503, 'model_unavailable', 'No working AI provider key is configured on the server. Please add an API key (Groq, Gemini, or OpenRouter) in the Admin panel or Render environment.');
   return option;
 }
 function providerKey(option) {
