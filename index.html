@@ -4747,6 +4747,8 @@ function showLogin() {
       er.textContent = "Enter your password.";
       return;
     }
+    var btn = $("fgo");
+    if(btn) { btn.disabled = true; btn.textContent = "Logging in..."; }
     try{
       var auth = await ensureFirebaseAuth();
       if(!auth) throw new Error("Firebase is not configured.");
@@ -4761,6 +4763,8 @@ function showLogin() {
         }).catch(function(){});
       }catch(ignore){}
       er.textContent = getGoogleErrorMessage(e);
+    }finally{
+      if(btn) { btn.disabled = false; btn.textContent = "Log in"; }
     }
   };
 
@@ -5010,6 +5014,11 @@ function signOut(authInstance) {
   return Promise.resolve();
 }
 
+var firebaseApp = null;
+var firebaseAuth = null;
+var GoogleAuthProvider = null;
+var isGoogleAuthInProgress = false;
+
 var FIREBASE_CONFIG = window.PHOTON_FIREBASE_CONFIG || {
   apiKey: "AIzaSyAG_GrbYi9axQFAbKmzJ3OJcgVQIg5T01E",
   authDomain: "photon-ai-e8b88.firebaseapp.com",
@@ -5114,21 +5123,24 @@ function setGoogleLoading(loading, msg) {
 }
 
 function getGoogleErrorMessage(error) {
-  if (!error) return "Google authentication failed. Please try again.";
-  var code = error.code || "";
-  var msg = error.message || "";
+  if (!error) return "Authentication failed. Please try again.";
+  var code = (error && error.code) || "";
+  var msg = (error && error.message) || "";
 
+  if (code === "auth/invalid-login-credentials" || code === "auth/invalid-credential" || code === "auth/wrong-password" || code === "auth/user-not-found" || msg.indexOf("INVALID_LOGIN_CREDENTIALS") > -1) {
+    return "Incorrect email or password. Please verify your credentials or click 'Create one' to register.";
+  }
   if (code === "auth/operation-not-supported-in-this-environment") {
     if (window.location.protocol === "file:") {
       return "Google OAuth requires the app server. Run start.bat and open http://localhost:3001.";
     }
-    return "This browser environment does not support popups. Run the app at http://localhost:3001 and allow popups, or try again.";
+    return "This browser environment does not support popups. Please allow popups or try again.";
   }
   if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
     return "Google sign-in was cancelled.";
   }
   if (code === "auth/popup-blocked") {
-    return "Sign-in popup was blocked by your browser. Please allow popups or use redirect sign-in.";
+    return "Sign-in popup was blocked by your browser. Please allow popups for this site.";
   }
   if (code === "auth/unauthorized-domain") {
     var host = window.location.hostname || "localhost";
@@ -5141,7 +5153,7 @@ function getGoogleErrorMessage(error) {
     return "An account already exists with this email address using another authentication method. Please sign in with your email and password.";
   }
   if (code === "auth/operation-not-allowed") {
-    return "This sign-in method is disabled in Firebase Authentication. Enable Email/Password for password sign-up, or Google for Google sign-in.";
+    return "This sign-in method is disabled in Firebase Authentication. Enable Email/Password for password sign-up, or Google for Google sign-in in Firebase Console.";
   }
   if (code === "auth/invalid-api-key" || code === "auth/api-key-not-valid") {
     return "Invalid Firebase API key string. The API key must start with 'AIzaSy...', not the key name.";
@@ -5153,17 +5165,24 @@ function getGoogleErrorMessage(error) {
     return "This user account has been disabled. Please contact support.";
   }
   if (code === "auth/timeout") {
-    return "Google authentication timed out. Please try again.";
+    return "Authentication timed out. Please try again.";
   }
-  if (msg.indexOf("configuration") > -1 || code.indexOf("config") > -1) {
-    return "Firebase configuration error. Please verify your Firebase project settings.";
+  if (code === "auth/email-already-in-use") {
+    return "An account already uses that email address. Please log in instead.";
   }
-  if (code === "auth/email-already-in-use") return "An account already uses that email. Sign in with its existing method.";
-  if (code === "auth/weak-password") return "Choose a password with at least 6 characters.";
-  if (code === "auth/invalid-email") return "Enter a valid email address.";
-  if (code === "auth/invalid-credential" || code === "auth/wrong-password" || code === "auth/user-not-found") return "Email or password is incorrect.";
-  if (code === "auth/operation-not-allowed") return "This sign-in method is not enabled in Firebase Authentication. Enable Google and Email/Password in Firebase Console.";
-  return "Google authentication failed. Please check your connection and try again.";
+  if (code === "auth/weak-password") {
+    return "Choose a password with at least 8 characters.";
+  }
+  if (code === "auth/invalid-email") {
+    return "Enter a valid email address.";
+  }
+  if (msg.indexOf("configuration") > -1 || code.indexOf("config") > -1 || msg.indexOf("configured") > -1) {
+    return "Firebase configuration error. Please verify your project settings.";
+  }
+  if (msg && !code) {
+    return msg;
+  }
+  return "Authentication failed. Please check your credentials and connection and try again.";
 }
 
 function showFirebaseConfigModal(onSaved, initialError) {
@@ -5311,6 +5330,9 @@ async function showGoogle() {
       return;
     }
 
+    if (!GoogleAuthProvider && window.firebase && window.firebase.auth) {
+      GoogleAuthProvider = window.firebase.auth.GoogleAuthProvider;
+    }
     var provider = new GoogleAuthProvider();
     provider.addScope("profile");
     provider.addScope("email");
