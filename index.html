@@ -5823,6 +5823,19 @@ window.setActiveNav = function(navId) {
   if (target) target.classList.add("active");
 };
 
+// Hoist and bind core router & views to window immediately
+window.navigateToRoute = typeof navigateToRoute === "function" ? navigateToRoute : function(r, p) { if (typeof navigateToRoute === "function") navigateToRoute(r, p); };
+window.showSearch = typeof showSearch === "function" ? showSearch : function() { if (typeof showSearch === "function") showSearch(); };
+window.showHistory = typeof showHistory === "function" ? showHistory : function() { if (typeof showHistory === "function") showHistory(); };
+window.showProjects = typeof showProjects === "function" ? showProjects : function() { if (typeof showProjects === "function") showProjects(); };
+window.showLibrary = typeof showLibrary === "function" ? showLibrary : function() { if (typeof showLibrary === "function") showLibrary(); };
+window.showArtifacts = typeof showArtifacts === "function" ? showArtifacts : function() { if (typeof showArtifacts === "function") showArtifacts(); };
+window.showStudio = typeof showStudio === "function" ? showStudio : function() { if (typeof showStudio === "function") showStudio(); };
+window.showPlugins = typeof showPlugins === "function" ? showPlugins : function() { if (typeof showPlugins === "function") showPlugins(); };
+window.showPlansAndCredits = typeof showPlansAndCredits === "function" ? showPlansAndCredits : function() { if (typeof showPlansAndCredits === "function") showPlansAndCredits(); };
+window.showSettings = typeof showSettings === "function" ? showSettings : function() { if (typeof showSettings === "function") showSettings(); };
+window.closePv = typeof closePv === "function" ? closePv : function() { if (typeof closePv === "function") closePv(); };
+
 /* ==================== MODELS & THINKING DATA ==================== */
 var irxModelCategories = [
   {
@@ -5884,41 +5897,41 @@ function setupIrxSuite() {
 
   // Sidebar navigation items with full URL routing
   var navSearch = $("nav-search");
-  if(navSearch) navSearch.onclick = function() { window.navigateToRoute('/search'); };
+  if(navSearch) navSearch.onclick = function(e) { if(e) e.preventDefault(); (window.navigateToRoute || navigateToRoute)('/search'); };
 
   var navHistory = $("nav-history");
-  if(navHistory) navHistory.onclick = function() { window.navigateToRoute('/history'); };
+  if(navHistory) navHistory.onclick = function(e) { if(e) e.preventDefault(); (window.navigateToRoute || navigateToRoute)('/history'); };
 
   var navProjects = $("proj") || $("nav-projects");
-  if(navProjects) navProjects.onclick = function() { window.navigateToRoute('/projects'); };
+  if(navProjects) navProjects.onclick = function(e) { if(e) e.preventDefault(); (window.navigateToRoute || navigateToRoute)('/projects'); };
 
   var navLibrary = $("nav-library");
-  if(navLibrary) navLibrary.onclick = function() { window.navigateToRoute('/library'); };
+  if(navLibrary) navLibrary.onclick = function(e) { if(e) e.preventDefault(); (window.navigateToRoute || navigateToRoute)('/library'); };
 
   var navArtifacts = $("art") || $("nav-artifacts");
-  if(navArtifacts) navArtifacts.onclick = function() { window.navigateToRoute('/artifacts'); };
+  if(navArtifacts) navArtifacts.onclick = function(e) { if(e) e.preventDefault(); (window.navigateToRoute || navigateToRoute)('/artifacts'); };
 
   var navStudio = $("nav-studio");
-  if(navStudio) navStudio.onclick = function() { window.navigateToRoute('/studio'); };
+  if(navStudio) navStudio.onclick = function(e) { if(e) e.preventDefault(); (window.navigateToRoute || navigateToRoute)('/studio'); };
 
   var navPlugins = $("nav-plugins");
-  if(navPlugins) navPlugins.onclick = function() { window.navigateToRoute('/plugins'); };
+  if(navPlugins) navPlugins.onclick = function(e) { if(e) e.preventDefault(); (window.navigateToRoute || navigateToRoute)('/plugins'); };
 
   var navCredits = $("tk") || $("nav-credits");
-  if(navCredits) navCredits.onclick = function() { window.navigateToRoute('/credits'); };
+  if(navCredits) navCredits.onclick = function(e) { if(e) e.preventDefault(); (window.navigateToRoute || navigateToRoute)('/credits'); };
 
   var navSettings = $("profile-nav") || $("nav-settings");
-  if(navSettings) navSettings.onclick = function() { window.navigateToRoute('/settings'); };
+  if(navSettings) navSettings.onclick = function(e) { if(e) e.preventDefault(); (window.navigateToRoute || navigateToRoute)('/settings'); };
 
   // Dispatch initial path route if user opened directly with a path
   var initialPathname = window.location.pathname;
   if(initialPathname && initialPathname !== "/" && initialPathname !== "/index.html") {
-    // Fast initial route dispatch
     setTimeout(function() {
-      if(window.navigateToRoute) {
-        window.navigateToRoute(initialPathname, false);
+      var nav = window.navigateToRoute || navigateToRoute;
+      if(typeof nav === "function") {
+        nav(initialPathname, false);
       }
-    }, 50);
+    }, 20);
   }
 
   var newBtn = $("new");
@@ -6088,7 +6101,7 @@ function setActiveNav(navId) {
 window.setActiveNav = setActiveNav;
 
 function navigateToRoute(route, pushState) {
-window.navigateToRoute = navigateToRoute;
+  window.navigateToRoute = navigateToRoute;
   var path = (route || "/").toLowerCase().trim();
   if(path.endsWith(".html")) path = path.replace(/\.html$/, "") || "/";
   if(!path.startsWith("/")) path = "/" + path;
@@ -6164,6 +6177,7 @@ window.navigateToRoute = navigateToRoute;
       break;
   }
 };
+window.navigateToRoute = navigateToRoute;
 
 window.addEventListener("popstate", function() {
   var currentPath = window.location.pathname;
@@ -7253,6 +7267,19 @@ window.applyIdeAssistantEdit = function() {
   }, 800);
 };
 
+window.navigateToRoute = navigateToRoute;
+window.setActiveNav = setActiveNav;
+window.showSearch = showSearch;
+window.showHistory = showHistory;
+window.showProjects = showProjects;
+window.showLibrary = showLibrary;
+window.showArtifacts = showArtifacts;
+window.showArtifactsViewWrapper = showArtifactsViewWrapper;
+window.showStudio = showStudio;
+window.showPlugins = showPlugins;
+window.showPlansAndCredits = showPlansAndCredits;
+window.showSettings = showSettings;
+window.closePv = closePv;
 window.showLogin = showLogin;
 window.showAuth = showAuth;
 
