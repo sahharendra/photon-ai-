@@ -1,4 +1,7 @@
 ﻿<!doctype html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="content-language" content="en"><meta name="google" content="notranslate"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Photon</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <link rel="canonical" href="https://photon.app/">
 <meta property="og:url" content="https://photon.app/">
 <meta property="og:title" content="Photon">
@@ -553,6 +556,8 @@ textarea::placeholder{color:var(--mute)}
 <div id="toast"></div>
 <script>
 (function(){
+try{if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++)rs[i].unregister()})}}catch(_){}
+try{if('caches' in window){caches.keys().then(function(ks){for(var i=0;i<ks.length;i++)caches.delete(ks[i])})}}catch(_){}
 var MODES={general:["Chat","General reasoning and writing."],image:["Create image","image"],video:["Create video","video"],code:["Code","Write clean, production-grade code with language-tagged code blocks and brief explanations."],architecture:["Architecture","Design system architecture: components, data flow, trade-offs, and databases."],srs:["SRS document","Produce an IEEE 830 style Software Requirements Specification."]};
 var SYS="You are Photon, an AI assistant for general reasoning, coding and software architecture. Always respond in English unless the user explicitly requests another language. Answer with clean Markdown: headings, bullets, and language-tagged code blocks. When the user asks for a file (a web page, script, config, data file and so on), write the complete file in one code block whose opening fence has the language and then the file name, for example ```html index.html. Never say you cannot create files: the app shows a Download button on every code block and a Preview button for HTML. If a project needs several files, use one code block per file, each with its own file name.";
 var WAVE=document.getElementById("wave").outerHTML;var basePH="How can I help you today?",tokDay="",projs=[],user=null,vm=false,speaking=false,chats=[],cur=null,mode="general",busy=false,ctl=null,rec=null,pendingChatFiles=[],chatSearch="",photonProfile=null,profileConfig=null,profileConfigFetchedAt=0,profileActivities=[],billingAvailable=false,presenceTimer=null,presenceVisibilityHandler=null;

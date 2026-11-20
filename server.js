@@ -25,6 +25,8 @@ const { createOllamaConfig } = require('./ollama-config');
 const { createOllamaProvider } = require('./ollama-provider');
 const { createCloudflareConfig } = require('./cloudflare-config');
 const { createCloudflareProvider } = require('./cloudflare-provider');
+const { createCohereConfig } = require('./cohere-config');
+const { createCohereProvider } = require('./cohere-provider');
 // Anthropic provider is disabled (no key configured).
 // File is kept on disk for future re-enablement. To re-enable, restore the imports
 // and provider instance below, and add ANTHROPIC_API_KEY to API.env.
@@ -151,6 +153,8 @@ const cashfree = createCashfreeService({ env: process.env });
 const razorpay = createRazorpayService({ env: process.env });
 const cloudflareConfig = createCloudflareConfig({ dir: ROOT, env: process.env });
 const cloudflare = createCloudflareProvider({ HttpError, env: process.env, config: cloudflareConfig });
+const cohereConfig = createCohereConfig({ dir: ROOT, env: process.env });
+const cohere = createCohereProvider({ HttpError, env: process.env, config: cohereConfig });
 
 function getActiveGatewayName(data) {
   if (process.env.RAZORPAY_KEY_ID && !process.env.CASHFREE_CLIENT_ID) return 'razorpay';
@@ -558,6 +562,7 @@ const providerCreditStatus = {
   ollama: { exhausted: false },
   llmtr: { exhausted: false },
   cloudflare: { exhausted: false },
+  cohere: { exhausted: false },
 };
 
 function normalizeProviderKey(name) {
@@ -571,6 +576,7 @@ function normalizeProviderKey(name) {
   if (s.includes('gemini') || s.includes('google')) return 'gemini';
   if (s.includes('llmtr') || s.includes('freellmapi')) return 'llmtr';
   if (s.includes('cloudflare')) return 'cloudflare';
+  if (s.includes('cohere')) return 'cohere';
   return s;
 }
 
@@ -631,7 +637,8 @@ function availableModels() {
   const ltr = llmtr.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: Boolean(m.free), pricingVerified: Boolean(m.available), contextLength: m.contextLength, capabilities: m.capabilities || { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
   const olm = ollama.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: Boolean(m.free), pricingVerified: Boolean(m.available), contextLength: m.contextLength, capabilities: m.capabilities || { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
   const cf = cloudflare.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: true, pricingVerified: Boolean(m.available), contextLength: m.contextLength, capabilities: m.capabilities || { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
-  const merged = [...base, ...google, ...claude, ...free, ...gpt, ...cc, ...gq, ...nv, ...ltr, ...olm, ...cf];
+  const coh = cohere.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: false, pricingVerified: Boolean(m.available), contextLength: m.contextLength, capabilities: m.capabilities || { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
+  const merged = [...base, ...google, ...claude, ...free, ...gpt, ...cc, ...gq, ...nv, ...ltr, ...olm, ...cf, ...coh];
   const seen = new Set();
   const out = [];
   for (const item of merged) {
@@ -800,7 +807,7 @@ async function callGemini(model, contents, systemInstruction) {
   return gemini.generate({ model, contents, systemInstruction });
 }
 async function resolveModel(id) {
-  await Promise.allSettled([gemini.refreshModels(), openrouter.refreshModels(), codecraft.refreshModels(), groq.refreshModels(), nvidia.refreshModels(), openai.refreshModels(), llmtr.refreshModels(), ollama.refreshModels(), cloudflare.refreshModels()]);
+  await Promise.allSettled([gemini.refreshModels(), openrouter.refreshModels(), codecraft.refreshModels(), groq.refreshModels(), nvidia.refreshModels(), openai.refreshModels(), llmtr.refreshModels(), ollama.refreshModels(), cloudflare.refreshModels(), cohere.refreshModels()]);
   let option = availableModels().find(m => m.id === id);
   if (!option && PHOTON_MODEL_ALIASES[id]) {
     for (const cand of PHOTON_MODEL_ALIASES[id]) {
@@ -824,6 +831,7 @@ function providerKey(option) {
   if (option.provider === 'LLMTR') return 'llmtr';
   if (option.provider === 'Ollama') return 'ollama';
   if (option.provider === 'Cloudflare Workers AI' || option.provider === 'Cloudflare' || option.providerId === 'cloudflare_workers_ai') return 'cloudflare';
+  if (option.provider === 'Cohere' || option.providerId === 'cohere') return 'cohere';
   return 'gemini';
 }
 async function generateProvider({ providerName, modelId, system, history, text, attachments, contents, maxTokens }) {
@@ -835,6 +843,7 @@ async function generateProvider({ providerName, modelId, system, history, text, 
   if (providerName === 'llmtr') return llmtr.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
   if (providerName === 'ollama') return ollama.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
   if (providerName === 'cloudflare') return cloudflare.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
+  if (providerName === 'cohere') return cohere.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}), isProductionTraffic: true });
   return callGemini(modelId, contents || [{ role: 'user', parts: [{ text }] }], system);
 }
 async function* streamProvider({ providerName, modelId, system, history, text, attachments, contents, maxTokens, signal }) {
@@ -864,6 +873,14 @@ async function* streamProvider({ providerName, modelId, system, history, text, a
   }
   if (providerName === 'ollama') {
     yield* ollama.streamGenerate({ model: modelId, system, history, text, attachments, maxTokens, signal });
+    return;
+  }
+  if (providerName === 'cloudflare') {
+    yield* cloudflare.streamGenerate({ model: modelId, system, history, text, attachments, maxTokens, signal });
+    return;
+  }
+  if (providerName === 'cohere') {
+    yield* cohere.streamGenerate({ model: modelId, system, history, text, attachments, maxTokens, signal, isProductionTraffic: true });
     return;
   }
   if (providerName === 'gemini') {
@@ -1453,6 +1470,58 @@ const server = http.createServer(async (req, res) => {
         return reply(res, 200, { success: true, data: cloudflare.status() });
       }
       if (pathname.startsWith('/api/admin/cloudflare')) return fail(res, new HttpError(404, 'not_found', 'Cloudflare admin route not found.'), requestId);
+      if (pathname === '/api/admin/cohere' && req.method === 'GET') { await cohere.refreshModels(); return reply(res, 200, { success: true, data: cohere.status() }); }
+      if (pathname === '/api/admin/cohere' && req.method === 'PUT') {
+        const body = await readBody(req);
+        try {
+          if (typeof body.enabled === 'boolean') cohereConfig.setEnabled(body.enabled);
+          if (typeof body.spendingPolicy === 'string') cohereConfig.setSpendingPolicy(body.spendingPolicy);
+          if (typeof body.keyType === 'string') cohereConfig.setKeyType(body.keyType);
+          if (typeof body.productionAuthorized === 'boolean') cohereConfig.setProductionAuthorized(body.productionAuthorized);
+          if (body.monthlyTrialLimit !== undefined) cohereConfig.setMonthlyTrialLimit(body.monthlyTrialLimit);
+          if (body.defaultModelId !== undefined) cohereConfig.setDefaultModelId(body.defaultModelId || null);
+        } catch (error) {
+          if (error instanceof HttpError) throw error;
+          throw new HttpError(400, error?.code || 'invalid_settings', error?.message || 'Invalid Cohere settings.');
+        }
+        await cohere.refreshModels();
+        return reply(res, 200, { success: true, data: cohere.status() });
+      }
+      if (pathname === '/api/admin/cohere/connection' && req.method === 'POST') {
+        const result = await cohere.testConnection();
+        if (result.ok) clearProviderCreditsExhausted('cohere');
+        else if (result.code === 'quota_exhausted' || result.code === 'rate_limit_exceeded') markProviderCreditsExhausted('cohere', result.message);
+        return reply(res, 200, { success: true, data: { result, status: cohere.status(), creditsExhausted: isProviderCreditsExhausted('cohere') } });
+      }
+      if (pathname === '/api/admin/cohere/refresh' && req.method === 'POST') { await cohere.refreshModels(true); return reply(res, 200, { success: true, data: cohere.status() }); }
+      if (pathname === '/api/admin/cohere/test-model' && req.method === 'POST') {
+        const body = await readBody(req);
+        const result = await cohere.testModel(String(body.model || ''));
+        await cohere.refreshModels();
+        return reply(res, 200, { success: true, data: { result, status: cohere.status() } });
+      }
+      const cohereModelRoute = /^\/api\/admin\/cohere\/models\/([A-Za-z0-9@_.:/-]{1,160})$/.exec(pathname);
+      if (cohereModelRoute) {
+        if (req.method !== 'PUT') return fail(res, new HttpError(405, 'method_not_allowed', 'Method not allowed.'), requestId);
+        const modelId = decodeURIComponent(cohereModelRoute[1]);
+        const body = await readBody(req);
+        try { if (typeof body.enabled === 'boolean') cohereConfig.setModelEnabled(modelId, body.enabled); } catch (error) { throw new HttpError(400, error?.code || 'invalid_model', error?.message || 'Invalid model ID.'); }
+        return reply(res, 200, { success: true, data: cohere.status() });
+      }
+      if (pathname === '/api/admin/cohere/key' && req.method === 'POST') {
+        const body = await readBody(req);
+        const key = typeof body.apiKey === 'string' ? body.apiKey.trim() : (typeof body.key === 'string' ? body.key.trim() : '');
+        if (!key) throw new HttpError(400, 'invalid_key', 'Cohere API key cannot be empty.');
+        setEnvKey('COHERE_API_KEY', key);
+        await cohere.refreshModels(true);
+        return reply(res, 200, { success: true, data: cohere.status() });
+      }
+      if (pathname === '/api/admin/cohere/key' && req.method === 'DELETE') {
+        clearEnvKey('COHERE_API_KEY');
+        await cohere.refreshModels(true);
+        return reply(res, 200, { success: true, data: cohere.status() });
+      }
+      if (pathname.startsWith('/api/admin/cohere')) return fail(res, new HttpError(404, 'not_found', 'Cohere admin route not found.'), requestId);
       if (pathname === '/api/admin/llmtr' && req.method === 'GET') { await llmtr.refreshModels(); return reply(res, 200, { success: true, data: llmtr.status() }); }
       if (pathname === '/api/admin/llmtr' && req.method === 'PUT') {
         const body = await readBody(req);
@@ -1502,7 +1571,7 @@ const server = http.createServer(async (req, res) => {
       }
       if (pathname.startsWith('/api/admin/llmtr')) return fail(res, new HttpError(404, 'not_found', 'LLMTR admin route not found.'), requestId);
       if (pathname === '/api/admin/provider-status' && req.method === 'GET') {
-        await Promise.allSettled([gemini.refreshModels(true), openrouter.refreshModels(true), codecraft.refreshModels(true), groq.refreshModels(true), nvidia.refreshModels(true), openai.refreshModels(true), llmtr.refreshModels(true), ollama.refreshModels(true), cloudflare.refreshModels(true)]);
+        await Promise.allSettled([gemini.refreshModels(true), openrouter.refreshModels(true), codecraft.refreshModels(true), groq.refreshModels(true), nvidia.refreshModels(true), openai.refreshModels(true), llmtr.refreshModels(true), ollama.refreshModels(true), cloudflare.refreshModels(true), cohere.refreshModels(true)]);
         return reply(res, 200, {
           success: true,
           data: {
@@ -1516,6 +1585,7 @@ const server = http.createServer(async (req, res) => {
             llmtr: llmtr.status(),
             ollama: ollama.status(),
             cloudflare: cloudflare.status(),
+            cohere: cohere.status(),
             creditsExhausted: { ...providerCreditStatus },
           },
         });
@@ -2327,7 +2397,7 @@ const server = http.createServer(async (req, res) => {
       }
     }
     if (['/', '/index.html', '/profile', '/search', '/history', '/projects', '/library', '/artifacts', '/studio', '/plugins', '/settings', '/credits', '/plans', '/billing', '/login', '/signin', '/signup', '/auth', '/register', '/forgot', '/forgot-password', '/reset', '/reset-password'].includes(pathname)) {
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0', 'Pragma': 'no-cache', 'Expires': '0', 'X-Content-Type-Options': 'nosniff' });
       if (req.method === 'HEAD') return res.end();
       return fs.createReadStream(path.join(ROOT, 'index.html')).pipe(res);
     }
@@ -2463,6 +2533,14 @@ async function logProviderDiagnostics() {
     console.log(`Ollama configured: ${Boolean(status.maskedKey || status.configured)} (${status.isCloud ? 'Cloud' : 'Local'}, ${status.modelCount} model(s) discovered; spending policy: ${status.spendingPolicy})`);
   } else {
     console.log('Ollama configured: false (set OLLAMA_API_KEY in admin or API.env to enable Ollama Cloud)');
+  }
+  if (cohere.configured()) {
+    console.log('Validating Cohere key with a live API request...');
+    await cohere.refreshModels(true);
+    const status = cohere.status();
+    console.log(`Cohere configured: ${status.validation === 'ok'} (${status.validation}; ${status.modelCount} model(s) discovered, ${status.enabledModelCount} enabled; keyType: ${status.keyType}, monthly trial used: ${status.monthlyTrialUsage}/${status.monthlyTrialLimit})`);
+  } else {
+    console.log('Cohere configured: false (set COHERE_API_KEY in API.env or admin panel to enable Cohere models)');
   }
   const ignoredOpenRouter = openrouterKeys.ignoredEnvNames();
   if (ignoredOpenRouter.length) console.log(`OpenRouter: ignoring unsupported variable(s) ${ignoredOpenRouter.join(', ')}. Slots are OPENROUTER_API_KEY and OPENROUTER_API_KEY_2 ... _10.`);

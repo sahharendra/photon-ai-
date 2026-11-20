@@ -267,6 +267,67 @@
 </form>
 <div class="settings-grid" style="margin-top:18px"><div class="field"><label>Request, token &amp; Neuron usage</label><div id="cloudflare-usage" class="muted">Not loaded.</div></div></div><form id="cloudflare-settings-form" style="margin-top:14px"><div class="settings-grid"><div class="field"><label for="cloudflare-enabled">Provider state</label><select id="cloudflare-enabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div><div class="field"><label for="cloudflare-spending-policy">Spending policy</label><select id="cloudflare-spending-policy"><option value="allow_free_only">Allow free models &amp; daily neurons only (zero-billing safe)</option><option value="block">Block all requests</option></select></div><div class="field"><label for="cloudflare-daily-neurons">Daily Neuron Limit</label><input id="cloudflare-daily-neurons" type="number" min="100" max="1000000" step="1000" value="10000"></div></div><div class="save-row"><small class="muted">Cloudflare Workers AI 10,000 free daily Neurons. Strict zero-billing protection stops calls when free quota is reached.</small><button id="cloudflare-save-settings" type="submit">Save Cloudflare settings</button></div></form><div class="head" style="margin-top:28px"><div><h2>Cloudflare Workers AI models</h2><small>Discovered from GET /v1/models. High-speed edge inference models.</small></div></div><div class="scroll"><table class="subscriptions-table"><thead><tr><th>Model</th><th>Status</th><th>Context window</th><th>Actions</th></tr></thead><tbody id="cloudflare-models"></tbody></table></div><div class="head" style="margin-top:28px"><div><h2>Recent Cloudflare errors</h2><small>Key-free error codes only.</small></div></div><div id="cloudflare-errors" class="list"></div>
 
+<div class="head" style="margin-top:34px"><div><h2>Cohere API v2</h2><small>COHERE_API_KEY is read from environment. Official Cohere v2 chat completions and model discovery with strict Trial (dev/testing only) protection.</small></div><div class="actions"><button id="cohere-test-connection" type="button">Test connection</button><button id="cohere-refresh" type="button">Refresh models</button></div></div><div id="cohere-diag" class="list"></div>
+<form id="cohere-key-form" class="inline-add-box" style="margin-top:14px">
+  <div class="settings-grid">
+    <div class="field">
+      <label for="cohere-key-input">API Key (Cohere Trial or Production)</label>
+      <div style="display:flex;gap:6px">
+        <input id="cohere-key-input" type="password" autocomplete="new-password" placeholder="Enter Cohere API key">
+        <button type="button" id="cohere-key-eye" style="padding:0 12px;background:#17213a;border:1px solid #2e4063;border-radius:7px;color:#c4ccdc;cursor:pointer" title="Show/Hide key">👁</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Configured Status</label>
+      <div style="display:flex;align-items:center;gap:8px;height:40px;padding:0 4px">
+        <span id="cohere-key-badge" class="pill">Checking...</span>
+        <code id="cohere-masked-key" style="color:#b4c0d4">••••</code>
+        <span id="cohere-key-type" class="pill warning">Trial – Development Only</span>
+      </div>
+    </div>
+  </div>
+  <div class="save-row" style="margin-top:10px">
+    <button id="cohere-remove-key" type="button" style="border-color:#593434;color:#ffdede;display:none">Remove Key</button>
+    <button id="cohere-save-key" type="submit">Save API Key</button>
+  </div>
+  <small class="muted" style="display:block;margin-top:6px;font-size:11px">Tip: For permanent persistence across Render sleep cycles, add <code>COHERE_API_KEY</code> in Render Dashboard &rarr; Environment.</small>
+</form>
+<div class="settings-grid" style="margin-top:18px"><div class="field"><label>Request, token &amp; trial usage</label><div id="cohere-usage" class="muted">Not loaded.</div></div></div>
+<form id="cohere-settings-form" style="margin-top:14px">
+  <div class="settings-grid">
+    <div class="field">
+      <label for="cohere-enabled">Provider state</label>
+      <select id="cohere-enabled"><option value="true">Enabled</option><option value="false">Disabled</option></select>
+    </div>
+    <div class="field">
+      <label for="cohere-spending-policy">Spending policy</label>
+      <select id="cohere-spending-policy">
+        <option value="allow_trial_only">Allow trial only (zero paid fallback)</option>
+        <option value="block">Block all requests</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="cohere-key-type-select">Key Type</label>
+      <select id="cohere-key-type-select">
+        <option value="trial">Trial (Dev / Testing only - Public traffic blocked)</option>
+        <option value="production">Production (Commercial key)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="cohere-monthly-limit">Monthly Trial Request Limit</label>
+      <input id="cohere-monthly-limit" type="number" min="1" max="100000" step="50" value="1000">
+    </div>
+  </div>
+  <div class="save-row">
+    <small class="muted">Strict Cohere Trial protection: Trial keys must NOT serve public commercial customers. Zero-billing safe.</small>
+    <button id="cohere-save-settings" type="submit">Save Cohere settings</button>
+  </div>
+</form>
+<div class="head" style="margin-top:28px"><div><h2>Cohere models</h2><small>Discovered from GET /v1/models (v2 chat endpoints). Command R+, Command R7B, Aya Expanse.</small></div></div>
+<div class="scroll"><table class="subscriptions-table"><thead><tr><th>Model</th><th>Status</th><th>Context window</th><th>Actions</th></tr></thead><tbody id="cohere-models"></tbody></table></div>
+<div class="head" style="margin-top:28px"><div><h2>Recent Cohere errors</h2><small>Key-free error codes only.</small></div></div>
+<div id="cohere-errors" class="list"></div>
+
 <div class="head" style="margin-top:34px"><div><h2>LLMTR / FreeLLMAPI Router</h2><small>LLMTR_API_KEY is read from environment. Unified OpenAI-compatible gateway with Turkish &amp; Creekside free models (Qwen 3.8, Gemma 4, Muse).</small></div><div class="actions"><button id="llmtr-test-connection" type="button">Test connection</button><button id="llmtr-refresh" type="button">Refresh models</button></div></div><div id="llmtr-diag" class="list"></div>
 <form id="llmtr-key-form" class="inline-add-box" style="margin-top:14px">
   <div class="settings-grid">
@@ -1058,6 +1119,7 @@
   setupProviderKeyEye('openai-key-eye', 'openai-key-input');
   setupProviderKeyEye('llmtr-key-eye', 'llmtr-key-input');
   setupProviderKeyEye('ollama-key-eye', 'ollama-key-input');
+  setupProviderKeyEye('cohere-key-eye', 'cohere-key-input');
 
   function updateKeyFormUi(prefix, configured, maskedKey, placeholderName) {
     const badge = $(prefix + '-key-badge');
@@ -1119,6 +1181,43 @@
     } catch (err) {
       status(err.message || 'Could not remove Cloudflare credentials.', true);
       alert(err.message || 'Could not remove Cloudflare credentials.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $('cohere-key-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = $('cohere-save-key');
+    const key = $('cohere-key-input').value.trim();
+    if (!key) { alert('Please enter a Cohere API key.'); return; }
+    btn.disabled = true; btn.textContent = 'Saving...';
+    try {
+      const data = await request('/api/admin/cohere/key', 'POST', { apiKey: key });
+      $('cohere-key-input').value = '';
+      renderCohere(data);
+      status('Cohere API key saved successfully.');
+      alert('Cohere API key saved successfully.');
+    } catch (err) {
+      status(err.message || 'Could not save Cohere API key.', true);
+      alert(err.message || 'Could not save Cohere API key.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $('cohere-remove-key')?.addEventListener('click', async () => {
+    if (!confirm('Are you sure you want to remove the Cohere API key?')) return;
+    const btn = $('cohere-remove-key');
+    btn.disabled = true;
+    try {
+      const data = await request('/api/admin/cohere/key', 'DELETE');
+      $('cohere-key-input').value = '';
+      renderCohere(data);
+      status('Cohere API key removed.');
+    } catch (err) {
+      status(err.message || 'Could not remove Cohere key.', true);
+      alert(err.message || 'Could not remove Cohere key.');
     } finally {
       btn.disabled = false;
     }
@@ -1528,10 +1627,10 @@ function setupDashboardAnalyticsFilter(){
   }
 }
 
-async function load(forceSettings=false){if(refreshing)return;refreshing=true;status('Loading admin data...');try{const data=await request('/api/admin/overview');showApp();const m=data.metrics||{};$('logout').hidden=!!data.localAccess;if($('total'))$('total').textContent=fmt(m.totalUsers);if($('login-today'))$('login-today').textContent=fmt(Math.max(Number(m.signInsToday)||0,(data.users||[]).reduce((total,u)=>total+loginsToday(u),0)));if($('tokens'))$('tokens').textContent=fmt(m.tokensToday);renderDashboard(data);setupDashboardAnalyticsFilter();loadUsersAdmin();loadSubscriptionsAdmin();if(data.paymentGateway)renderGatewayConfig(data.paymentGateway);else loadGatewayConfig();renderProviders(data.models);loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();if(forceSettings||!settingsDirty){renderPlanFields(data.settings||{});renderTokenRulesTable(data.settings||{});settingsDirty=false}renderPricingAudit(data.pricingAuditLogs||[]);runConfigVerification(true);status('Admin data loaded.')}catch(error){if(error.status===401){showLogin();return}if(error.status===503&&error.code==='admin_not_configured'){showLogin('Admin sign-in is not configured. Set PHOTON_ADMIN_PASSWORD and restart the server.');return}status(error.message||'Could not load admin data.',true)}finally{refreshing=false}}
+async function load(forceSettings=false){if(refreshing)return;refreshing=true;status('Loading admin data...');try{const data=await request('/api/admin/overview');showApp();const m=data.metrics||{};$('logout').hidden=!!data.localAccess;if($('total'))$('total').textContent=fmt(m.totalUsers);if($('login-today'))$('login-today').textContent=fmt(Math.max(Number(m.signInsToday)||0,(data.users||[]).reduce((total,u)=>total+loginsToday(u),0)));if($('tokens'))$('tokens').textContent=fmt(m.tokensToday);renderDashboard(data);setupDashboardAnalyticsFilter();loadUsersAdmin();loadSubscriptionsAdmin();if(data.paymentGateway)renderGatewayConfig(data.paymentGateway);else loadGatewayConfig();renderProviders(data.models);loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();loadCloudflare();loadCohere();if(forceSettings||!settingsDirty){renderPlanFields(data.settings||{});renderTokenRulesTable(data.settings||{});settingsDirty=false}renderPricingAudit(data.pricingAuditLogs||[]);runConfigVerification(true);status('Admin data loaded.')}catch(error){if(error.status===401){showLogin();return}if(error.status===503&&error.code==='admin_not_configured'){showLogin('Admin sign-in is not configured. Set PHOTON_ADMIN_PASSWORD and restart the server.');return}status(error.message||'Could not load admin data.',true)}finally{refreshing=false}}
  $('login-form').addEventListener('submit',async event=>{event.preventDefault();const button=$('login-button');button.disabled=true;button.textContent='Signing in...';$('login-error').hidden=true;try{await request('/api/admin/login','POST',{email:$('admin-email').value.trim(),password:$('admin-password').value});$('admin-password').value='';await load(true)}catch(error){showLogin(error.message||'Sign-in failed. Check the username and password.')}finally{button.disabled=false;button.textContent='Sign in'}});
  $('logout').addEventListener('click',async()=>{try{await request('/api/admin/logout','POST',{})}finally{showLogin('You have signed out.')}});
- const pageMeta={overview:['Dashboard','Live overview of Photon accounts and usage.'],'users-section':['Users & Sign-ins','Account access, sign-in methods, activity, and plan status.'],subscriptions:['Subscriptions & Purchases','Verified payments, revenue, MRR, and Cashfree gateway configuration.'],settings:['Pricing & Token Rules','Manage plan pricing, daily limits, and AI activity token costs.'],providers:['AI Provider Settings','Check and manage server-side AI provider keys. Secrets are never shown.']};function showPage(){let id=location.hash.slice(1)||'overview';if(!pageMeta[id])id='overview';document.querySelectorAll('.page-view').forEach(page=>page.classList.toggle('active',page.id===id));document.querySelectorAll('.sidebar nav a[href^="#"]').forEach(link=>link.classList.toggle('active',link.getAttribute('href')==='#'+id));$('page-title').textContent=pageMeta[id][0];$('page-description').textContent=pageMeta[id][1];if(id==='overview'){load()}else if(id==='users-section'){loadUsersAdmin()}else if(id==='subscriptions'){loadGatewayConfig();loadSubscriptionsAdmin()}else if(id==='settings'){load(true)}else if(id==='providers'){loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama()}}window.addEventListener('hashchange',showPage);showPage();
+ const pageMeta={overview:['Dashboard','Live overview of Photon accounts and usage.'],'users-section':['Users & Sign-ins','Account access, sign-in methods, activity, and plan status.'],subscriptions:['Subscriptions & Purchases','Verified payments, revenue, MRR, and Cashfree gateway configuration.'],settings:['Pricing & Token Rules','Manage plan pricing, daily limits, and AI activity token costs.'],providers:['AI Provider Settings','Check and manage server-side AI provider keys. Secrets are never shown.']};function showPage(){let id=location.hash.slice(1)||'overview';if(!pageMeta[id])id='overview';document.querySelectorAll('.page-view').forEach(page=>page.classList.toggle('active',page.id===id));document.querySelectorAll('.sidebar nav a[href^="#"]').forEach(link=>link.classList.toggle('active',link.getAttribute('href')==='#'+id));$('page-title').textContent=pageMeta[id][0];$('page-description').textContent=pageMeta[id][1];if(id==='overview'){load()}else if(id==='users-section'){loadUsersAdmin()}else if(id==='subscriptions'){loadGatewayConfig();loadSubscriptionsAdmin()}else if(id==='settings'){load(true)}else if(id==='providers'){loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();loadCloudflare();loadCohere();}}window.addEventListener('hashchange',showPage);showPage();
  $('settings-form').addEventListener('input',()=>{settingsDirty=true});
  $('settings-form').addEventListener('change',()=>{settingsDirty=true});
  $('verify-token-calc-btn').addEventListener('click',()=>runConfigVerification(false));
@@ -2082,6 +2181,192 @@ async function load(forceSettings=false){if(refreshing)return;refreshing=true;st
       renderCloudflare(await request('/api/admin/cloudflare/refresh', 'POST', {}));
     } catch (error) {
       alert(error.message || 'Could not refresh Cloudflare models.');
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  function coUsageText(u, st){
+    u = u || {};
+    st = st || {};
+    const trialStr = (st.monthlyTrialUsage || 0) + ' / ' + (st.monthlyTrialLimit || 1000) + ' monthly trial reqs';
+    return fmt(u.requests || 0) + ' requests (' + trialStr + '), ' + fmt(u.failures || 0) + ' failed, ' + fmt(u.inputTokens || 0) + ' in / ' + fmt(u.outputTokens || 0) + ' out tokens';
+  }
+
+  function renderCohere(view){
+    const st = (view && view.status) || view || {};
+    updateKeyFormUi('cohere', st.configured, st.maskedApiKey || st.maskedKey, 'Cohere');
+    const keyTypeEl = $('cohere-key-type');
+    if (keyTypeEl) {
+      keyTypeEl.textContent = st.keyTypeLabel || (st.keyType === 'production' ? 'Production Key' : 'Trial – Development Only');
+      keyTypeEl.className = 'pill ' + (st.keyType === 'production' ? 'ok' : 'warning');
+    }
+    const diag = $('cohere-diag');
+    diag.replaceChildren();
+    rowItem(diag, 'Cohere API v2', (st.configured ? 'key ' + (st.maskedApiKey || 'configured') : 'COHERE_API_KEY is not set') + '; ' + (st.modelCount || 0) + ' discovered, ' + (st.enabledModelCount || 0) + ' enabled', orBadge(st.validation === 'ok' ? 'Connected' : (st.validation || 'Not checked'), st.validation === 'ok'));
+    rowItem(diag, 'Key type & policy', (st.keyTypeLabel || 'Trial – Development Only') + (st.isTrialPolicyStrict ? ' (Commercial traffic blocked)' : ''), orBadge(st.keyType === 'production' ? 'Production' : 'Trial (Dev)', st.keyType === 'production'));
+    rowItem(diag, 'Monthly trial requests', (st.monthlyTrialUsage || 0) + ' of ' + (st.monthlyTrialLimit || 1000) + ' used this month (' + (st.currentMonthKey || 'UTC') + ')', orBadge(st.isMonthlyTrialExhausted ? 'Exhausted' : 'Active', !st.isMonthlyTrialExhausted));
+    if (st.usage && st.usage.lastSuccessAt) rowItem(diag, 'Last successful request', dateTime(st.usage.lastSuccessAt), '');
+    if (st.usage && st.usage.lastError) rowItem(diag, 'Last error', st.usage.lastError, orBadge('Error', false));
+    $('cohere-usage').textContent = coUsageText(st.usage, st);
+    $('cohere-enabled').value = st.enabled === false ? 'false' : 'true';
+    $('cohere-spending-policy').value = st.spendingPolicy || 'allow_trial_only';
+    $('cohere-key-type-select').value = st.keyType || 'trial';
+    $('cohere-monthly-limit').value = st.monthlyTrialLimit || 1000;
+
+    const root = $('cohere-models');
+    root.replaceChildren();
+    (st.models || []).forEach(m => {
+      const row = document.createElement('tr');
+      td(row, (m.name || m.id) + (st.defaultModelId === m.id ? ' ★ Default' : ''));
+      const statusCell = td(row, '');
+      statusCell.appendChild(orBadge(m.enabled ? 'Enabled' : 'Disabled', Boolean(m.enabled)));
+      const ctxCell = td(row, '');
+      ctxCell.textContent = m.contextLength ? (m.contextLength.toLocaleString() + ' tokens') : '128,000 tokens';
+      const actions = td(row, '');
+      actions.style.whiteSpace = 'nowrap';
+      const btn = (label, fn) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = label;
+        b.addEventListener('click', fn);
+        return b;
+      };
+      actions.append(
+        btn('Test model', () => coTestModel(m)),
+        btn(m.enabled ? 'Disable' : 'Enable', () => coPatchModel(m.id, { enabled: !m.enabled })),
+        btn('Set default', () => coSetDefault(m.id))
+      );
+      root.appendChild(row);
+    });
+    if (!(st.models || []).length) {
+      const row = document.createElement('tr'), empty = td(row, st.configured ? 'No models discovered yet. Test connection or refresh models.' : 'Set COHERE_API_KEY to discover models.');
+      empty.colSpan = 4;
+      empty.className = 'empty';
+      root.appendChild(row);
+    }
+    const errors = $('cohere-errors');
+    errors.replaceChildren();
+    (st.recentErrors || []).slice(0, 10).forEach(e => rowItem(errors, (e.code || 'error') + (e.model ? ' (' + e.model + ')' : ''), (e.message || '') + ' ' + (e.at || ''), orBadge('Failed', false)));
+    if (!(st.recentErrors || []).length) rowItem(errors, 'No recent Cohere errors', 'Successful requests and failures are tracked here.', orBadge('Clear', true));
+  }
+
+  async function loadCohere(){
+    try {
+      renderCohere(await request('/api/admin/cohere'));
+    } catch (error) {
+      status(error.message || 'Could not load Cohere status.', true);
+    }
+  }
+
+  async function coTestModel(m){
+    try {
+      const data = await request('/api/admin/cohere/test-model', 'POST', { model: m.id });
+      renderCohere(data);
+      const r = data.result || {};
+      showTestResultModal({
+        title: 'Cohere Model Test',
+        provider: 'Cohere',
+        model: m.id,
+        modelName: m.name || m.id,
+        ok: r.ok,
+        status: r.status,
+        code: r.code,
+        message: r.message,
+        responseTimeMs: r.responseTimeMs,
+        testedAt: r.testedAt,
+        reply: r.reply
+      });
+    } catch (error) {
+      showTestResultModal({
+        title: 'Cohere Model Test',
+        provider: 'Cohere',
+        model: m.id,
+        modelName: m.name || m.id,
+        ok: false,
+        status: 'failed',
+        message: error.message || 'Could not test model.'
+      });
+    }
+    await loadCohere();
+  }
+
+  async function coPatchModel(id, patch){
+    try {
+      renderCohere(await request('/api/admin/cohere/models/' + encodeURIComponent(id), 'PUT', patch));
+    } catch (error) {
+      alert(error.message || 'Could not update model state.');
+      await loadCohere();
+    }
+  }
+
+  async function coSetDefault(id){
+    try {
+      renderCohere(await request('/api/admin/cohere', 'PUT', { defaultModelId: id }));
+    } catch (error) {
+      alert(error.message || 'Could not set default Cohere model.');
+      await loadCohere();
+    }
+  }
+
+  $('cohere-settings-form')?.addEventListener('submit', async event => {
+    event.preventDefault();
+    const button = $('cohere-save-settings');
+    button.disabled = true;
+    try {
+      renderCohere(await request('/api/admin/cohere', 'PUT', {
+        enabled: $('cohere-enabled').value === 'true',
+        spendingPolicy: $('cohere-spending-policy').value,
+        keyType: $('cohere-key-type-select').value,
+        monthlyTrialLimit: Number($('cohere-monthly-limit').value) || 1000
+      }));
+    } catch (error) {
+      alert(error.message || 'Could not save Cohere settings.');
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  $('cohere-test-connection')?.addEventListener('click', async () => {
+    const button = $('cohere-test-connection');
+    button.disabled = true;
+    button.textContent = 'Testing...';
+    try {
+      const data = await request('/api/admin/cohere/connection', 'POST', {});
+      renderCohere(data);
+      const r = data.result || {};
+      showTestResultModal({
+        title: 'Cohere Connection Test',
+        provider: 'Cohere',
+        ok: r.ok,
+        status: r.status,
+        code: r.code,
+        message: r.message,
+        responseTimeMs: r.responseTimeMs,
+        testedAt: r.testedAt,
+        modelCount: r.modelCount
+      });
+    } catch (error) {
+      showTestResultModal({
+        title: 'Cohere Connection Test',
+        provider: 'Cohere',
+        ok: false,
+        status: 'connection_failed',
+        message: error.message || 'Could not test Cohere connection.'
+      });
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Test connection';
+    }
+  });
+
+  $('cohere-refresh')?.addEventListener('click', async () => {
+    const button = $('cohere-refresh');
+    button.disabled = true;
+    try {
+      renderCohere(await request('/api/admin/cohere/refresh', 'POST', {}));
+    } catch (error) {
+      alert(error.message || 'Could not refresh Cohere models.');
     } finally {
       button.disabled = false;
     }
