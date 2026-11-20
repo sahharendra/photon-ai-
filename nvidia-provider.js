@@ -596,6 +596,12 @@ function createNvidiaProvider({
 
     return {
       provider: 'NVIDIA NIM',
+      identifier: 'nvidia_nim',
+      category: 'LLM / Text Generation',
+      protocol: 'OpenAI-compatible',
+      apiBase,
+      chatEndpoint: '/chat/completions',
+      modelsEndpoint: '/models',
       configured: configured(),
       enabled: enabled(),
       validated: configured() && enabled() && modelsOk === true,

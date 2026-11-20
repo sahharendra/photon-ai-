@@ -1338,8 +1338,9 @@ const server = http.createServer(async (req, res) => {
         return reply(res, 200, { success: true, data: groq.status() });
       }
       if (pathname.startsWith('/api/admin/groq')) return fail(res, new HttpError(404, 'not_found', 'Groq admin route not found.'), requestId);
-      if (pathname === '/api/admin/nvidia' && req.method === 'GET') { await nvidia.refreshModels(); return reply(res, 200, { success: true, data: nvidia.status() }); }
-      if (pathname === '/api/admin/nvidia' && req.method === 'PUT') {
+      const nvNormPath = pathname.startsWith('/api/admin/nvidia_nim') ? pathname.replace('/api/admin/nvidia_nim', '/api/admin/nvidia') : pathname;
+      if (nvNormPath === '/api/admin/nvidia' && req.method === 'GET') { await nvidia.refreshModels(); return reply(res, 200, { success: true, data: nvidia.status() }); }
+      if (nvNormPath === '/api/admin/nvidia' && req.method === 'PUT') {
         const body = await readBody(req);
         try {
           if (typeof body.enabled === 'boolean') nvidiaConfig.setEnabled(body.enabled);
@@ -1352,20 +1353,20 @@ const server = http.createServer(async (req, res) => {
         await nvidia.refreshModels();
         return reply(res, 200, { success: true, data: nvidia.status() });
       }
-      if (pathname === '/api/admin/nvidia/connection' && req.method === 'POST') {
+      if (nvNormPath === '/api/admin/nvidia/connection' && req.method === 'POST') {
         const result = await nvidia.testConnection();
         if (result.ok) clearProviderCreditsExhausted('nvidia');
         else if (result.code === 'billing_required' || /insufficient|quota/i.test(result.message || '')) markProviderCreditsExhausted('nvidia', result.message);
         return reply(res, 200, { success: true, data: { result, status: nvidia.status(), creditsExhausted: isProviderCreditsExhausted('nvidia') } });
       }
-      if (pathname === '/api/admin/nvidia/refresh' && req.method === 'POST') { await nvidia.refreshModels(true); return reply(res, 200, { success: true, data: nvidia.status() }); }
-      if (pathname === '/api/admin/nvidia/test-model' && req.method === 'POST') {
+      if (nvNormPath === '/api/admin/nvidia/refresh' && req.method === 'POST') { await nvidia.refreshModels(true); return reply(res, 200, { success: true, data: nvidia.status() }); }
+      if (nvNormPath === '/api/admin/nvidia/test-model' && req.method === 'POST') {
         const body = await readBody(req);
         const result = await nvidia.testModel(String(body.model || ''));
         await nvidia.refreshModels();
         return reply(res, 200, { success: true, data: { result, status: nvidia.status() } });
       }
-      const nvidiaModelRoute = /^\/api\/admin\/nvidia\/models\/([A-Za-z0-9][A-Za-z0-9._:/-]{0,160})$/.exec(pathname);
+      const nvidiaModelRoute = /^\/api\/admin\/nvidia\/models\/([A-Za-z0-9][A-Za-z0-9._:/-]{0,160})$/.exec(nvNormPath);
       if (nvidiaModelRoute) {
         if (req.method !== 'PUT') return fail(res, new HttpError(405, 'method_not_allowed', 'Method not allowed.'), requestId);
         const modelId = nvidiaModelRoute[1];
@@ -1373,7 +1374,7 @@ const server = http.createServer(async (req, res) => {
         try { if (typeof body.enabled === 'boolean') nvidiaConfig.setModelEnabled(modelId, body.enabled); } catch (error) { throw new HttpError(400, error?.code || 'invalid_model', error?.message || 'Invalid model ID.'); }
         return reply(res, 200, { success: true, data: nvidia.status() });
       }
-      if (pathname === '/api/admin/nvidia/key' && req.method === 'POST') {
+      if (nvNormPath === '/api/admin/nvidia/key' && req.method === 'POST') {
         const body = await readBody(req);
         const key = String(body.key || '').trim();
         if (!key) throw new HttpError(400, 'invalid_key', 'NVIDIA API key cannot be empty.');
@@ -1381,12 +1382,12 @@ const server = http.createServer(async (req, res) => {
         await nvidia.refreshModels(true);
         return reply(res, 200, { success: true, data: nvidia.status() });
       }
-      if (pathname === '/api/admin/nvidia/key' && req.method === 'DELETE') {
+      if (nvNormPath === '/api/admin/nvidia/key' && req.method === 'DELETE') {
         clearEnvKey('NVIDIA_API_KEY');
         await nvidia.refreshModels(true);
         return reply(res, 200, { success: true, data: nvidia.status() });
       }
-      if (pathname.startsWith('/api/admin/nvidia')) return fail(res, new HttpError(404, 'not_found', 'NVIDIA admin route not found.'), requestId);
+      if (pathname.startsWith('/api/admin/nvidia') || pathname.startsWith('/api/admin/nvidia_nim')) return fail(res, new HttpError(404, 'not_found', 'NVIDIA admin route not found.'), requestId);
       if (pathname === '/api/admin/llmtr' && req.method === 'GET') { await llmtr.refreshModels(); return reply(res, 200, { success: true, data: llmtr.status() }); }
       if (pathname === '/api/admin/llmtr' && req.method === 'PUT') {
         const body = await readBody(req);
