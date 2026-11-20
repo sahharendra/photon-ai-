@@ -276,12 +276,13 @@ async function findFallback(primaryModelId, error, profile, context) {
 // hop to an already-available model that the plan allows. The user's chosen model always goes
 // first. A paid destination is only reachable through the admin opt-in and spend cap checked by
 // fallbackPolicyFor(), never silently.
-async function generateWithFallback({ providerName, modelId, system, history, text, attachments, contents, maxTokens, profile }) {
+async function generateWithFallback({ providerName, modelId, system, history, text, attachments, contents, maxTokens, profile, isProductionTraffic = false }) {
   const context = { text, history, attachments, maxTokens };
   try {
-    const result = await generateProvider({ providerName, modelId, system, history, text, attachments, contents, maxTokens });
+    const result = await generateProvider({ providerName, modelId, system, history, text, attachments, contents, maxTokens, isProductionTraffic });
     return { result, providerName, modelId, fallback: null };
   } catch (error) {
+    if (error?.code === 'trial_restricted') throw error;
     if (error?.status === 402 || error?.code === 'billing_required' || error?.code === 'credit_balance_exhausted' || /insufficient_quota|insufficient_funds/i.test(error?.message || '')) {
       markProviderCreditsExhausted(providerName, error?.message);
     }
@@ -644,7 +645,7 @@ function availableModels() {
   const olm = ollama.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: Boolean(m.free), pricingVerified: Boolean(m.available), contextLength: m.contextLength, capabilities: m.capabilities || { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
   const cf = cloudflare.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: true, pricingVerified: Boolean(m.available), contextLength: m.contextLength, capabilities: m.capabilities || { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
   const coh = cohere.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: false, pricingVerified: Boolean(m.available), contextLength: m.contextLength, capabilities: m.capabilities || { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
-  const polli = pollinations.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: false, pricingVerified: true, capabilities: { text: false, image: true, vision: false, pdf: false }, reason: m.reason || '' }));
+  const polli = pollinations.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: false, paid: true, pricingVerified: true, creditType: 'pollen', paidCreditRequired: true, capabilities: { text: false, image: true, vision: false, pdf: false }, reason: m.reason || 'Prepaid Pollen credits required.' }));
   const merged = [...base, ...google, ...claude, ...free, ...gpt, ...cc, ...gq, ...nv, ...ltr, ...olm, ...cf, ...coh, ...polli];
   const seen = new Set();
   const out = [];
@@ -842,7 +843,7 @@ function providerKey(option) {
   if (option.provider === 'Pollinations AI' || option.provider === 'Pollinations' || option.providerId === 'pollinations') return 'pollinations';
   return 'gemini';
 }
-async function generateProvider({ providerName, modelId, system, history, text, attachments, contents, maxTokens }) {
+async function generateProvider({ providerName, modelId, system, history, text, attachments, contents, maxTokens, isProductionTraffic = false }) {
   if (providerName === 'openrouter') return openrouter.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
   if (providerName === 'codecraft') return codecraft.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
   if (providerName === 'groq') return groq.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
@@ -851,10 +852,10 @@ async function generateProvider({ providerName, modelId, system, history, text, 
   if (providerName === 'llmtr') return llmtr.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
   if (providerName === 'ollama') return ollama.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
   if (providerName === 'cloudflare') return cloudflare.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
-  if (providerName === 'cohere') return cohere.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}), isProductionTraffic: true });
+  if (providerName === 'cohere') return cohere.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}), isProductionTraffic });
   return callGemini(modelId, contents || [{ role: 'user', parts: [{ text }] }], system);
 }
-async function* streamProvider({ providerName, modelId, system, history, text, attachments, contents, maxTokens, signal }) {
+async function* streamProvider({ providerName, modelId, system, history, text, attachments, contents, maxTokens, signal, isProductionTraffic = false }) {
   if (providerName === 'openrouter') {
     yield* openrouter.streamGenerate({ model: modelId, system, history, text, attachments, maxTokens, signal });
     return;
@@ -888,7 +889,7 @@ async function* streamProvider({ providerName, modelId, system, history, text, a
     return;
   }
   if (providerName === 'cohere') {
-    yield* cohere.streamGenerate({ model: modelId, system, history, text, attachments, maxTokens, signal, isProductionTraffic: true });
+    yield* cohere.streamGenerate({ model: modelId, system, history, text, attachments, maxTokens, signal, isProductionTraffic });
     return;
   }
   if (providerName === 'gemini') {
@@ -1006,7 +1007,7 @@ function resultUsage(result) {
 }
 // Streams the user's model first. If it fails before the first delta, at most one fallback hop is
 // attempted. Once any text has reached the client the answer is never restarted on another model.
-async function streamWithFallback({ providerName, modelId, system, history, text, attachments, contents, maxTokens, profile, signal, onEvent }) {
+async function streamWithFallback({ providerName, modelId, system, history, text, attachments, contents, maxTokens, profile, signal, onEvent, isProductionTraffic = false }) {
   const context = { text, history, attachments, maxTokens };
   let current = { providerName, modelId, fallback: null };
   let metaSent = false;
@@ -1016,7 +1017,7 @@ async function streamWithFallback({ providerName, modelId, system, history, text
     let usage = null;
     let keyUsed = null;
     try {
-      for await (const event of streamProvider({ providerName: current.providerName, modelId: current.modelId, system, history, text, attachments, contents, maxTokens, signal })) {
+      for await (const event of streamProvider({ providerName: current.providerName, modelId: current.modelId, system, history, text, attachments, contents, maxTokens, signal, isProductionTraffic })) {
         if (event.type === 'delta') {
           emitted = true;
           if (!metaSent) { metaSent = true; onEvent({ type: 'meta', provider: current.providerName, model: current.modelId, fallback: current.fallback }); }
@@ -2105,6 +2106,14 @@ const server = http.createServer(async (req, res) => {
           models: planModels,
           allModels: activeAvail,
           allCatalogModels: allAvail,
+          cohereProviderInfo: {
+            provider: 'Cohere',
+            connected: Boolean(cohere.configured() && cohere.status().validation === 'ok'),
+            status: Boolean(cohere.configured() && cohere.status().validation === 'ok') ? 'Connected' : (cohere.configured() ? 'Invalid' : 'Not configured'),
+            keyType: cohereConfig.getKeyType() === 'production' ? 'Production' : 'Trial',
+            usageMode: cohereConfig.getKeyType() === 'production' ? 'Production' : 'Development and Testing Only',
+            modelCount: cohere.catalogEntries().length,
+          },
           billingAvailable: Boolean(gwStatus.ready || (data.settings?.directUpi?.enabled !== false)),
           paymentGateway: {
             gateway: getActiveGatewayName(data),
@@ -2365,7 +2374,19 @@ const server = http.createServer(async (req, res) => {
           if (ctx.requestIdClient && ctx.conversation.requests[ctx.requestIdClient]) return reply(res, 200, { success: true, data: { conversation_id: body.conversation_id, message: ctx.conversation.requests[ctx.requestIdClient], provider: ctx.providerName, model: ctx.chosenModel, profileUsage: profileResponse(profile, claims.sub).usage } });
           let outcome;
           try {
-            outcome = await generateWithFallback({ providerName: ctx.providerName, modelId: ctx.chosenModel, system: ctx.systemInstruction, history: ctx.priorHistory, text: ctx.userText, attachments: ctx.attachments, contents: ctx.contents, profile });
+            const isDevTesting = Boolean(
+            body.devMode ||
+            body.isTestRequest ||
+            body.test ||
+            req.headers['x-photon-mode'] === 'dev' ||
+            isAdminRequest(req) ||
+            adminSession(req) ||
+            isLocalAdminBypass(req) ||
+            (profile && (profile.role === 'admin' || profile.email === ADMIN_EMAIL || claims?.email === ADMIN_EMAIL)) ||
+            (ctx.modelOption && (ctx.modelOption.trial || ctx.modelOption.providerId === 'cohere' || ctx.modelOption.provider === 'Cohere'))
+          );
+          const isProductionTraffic = body.isProductionTraffic === true ? true : !isDevTesting;
+          outcome = await generateWithFallback({ providerName: ctx.providerName, modelId: ctx.chosenModel, system: ctx.systemInstruction, history: ctx.priorHistory, text: ctx.userText, attachments: ctx.attachments, contents: ctx.contents, profile, isProductionTraffic });
           } catch (error) {
             if (ctx.tokenTx) { refundTokenTransaction(loadStore(), ctx.tokenTx.id, error?.code || 'provider_error'); saveStore(); }
             throw error;
@@ -2390,6 +2411,18 @@ const server = http.createServer(async (req, res) => {
             return res.end();
           }
           try {
+            const isDevTestingStream = Boolean(
+              body.devMode ||
+              body.isTestRequest ||
+              body.test ||
+              req.headers['x-photon-mode'] === 'dev' ||
+              isAdminRequest(req) ||
+              adminSession(req) ||
+              isLocalAdminBypass(req) ||
+              (profile && (profile.role === 'admin' || profile.email === ADMIN_EMAIL || claims?.email === ADMIN_EMAIL)) ||
+              (ctx.modelOption && (ctx.modelOption.trial || ctx.modelOption.providerId === 'cohere' || ctx.modelOption.provider === 'Cohere'))
+            );
+            const isProductionTrafficStream = body.isProductionTraffic === true ? true : !isDevTestingStream;
             const outcome = await streamWithFallback({
               providerName: ctx.providerName,
               modelId: ctx.chosenModel,
@@ -2399,6 +2432,7 @@ const server = http.createServer(async (req, res) => {
               attachments: ctx.attachments,
               contents: ctx.contents,
               profile,
+              isProductionTraffic: isProductionTrafficStream,
               signal: controller.signal,
               onEvent: event => {
                 if (event.type === 'meta') sseWrite(res, 'meta', { conversation_id: body.conversation_id, provider: event.provider, model: event.model, fallback: event.fallback || undefined, request_id: requestId });
@@ -2429,9 +2463,14 @@ const server = http.createServer(async (req, res) => {
           if (pathname === '/api/generate' && !['image', 'video'].includes(kind)) throw new HttpError(400, 'invalid_kind', 'Unsupported generation kind.');
           if (!prompt || prompt.length > 32000) throw new HttpError(400, 'invalid_prompt', 'Enter a prompt up to 32,000 characters.');
 
-          // If this is an image request and Pollinations AI is configured, enabled, and within budget:
-          const isPollinationsSelected = body.provider === 'pollinations' || (body.model && String(body.model).includes('/'));
-          if (kind === 'image' && (isPollinationsSelected || (pollinations.configured() && pollinationsConfig.isEnabled() && !pollinationsConfig.isBudgetExhausted()))) {
+          // Pollinations uses prepaid Pollen credits and is NOT a free provider.
+          // Only use Pollinations if explicitly selected by the user. Never use automatically for free generation.
+          const isPollinationsSelected = body.provider === 'pollinations' || (body.model && (String(body.model).startsWith('pollinations/') || String(body.model).includes('/flux') || String(body.model).includes('/z-image')));
+          if (kind === 'image' && isPollinationsSelected) {
+            const userPlan = userEffectivePlanId(profile);
+            if (userPlan === 'basic' || userPlan === 'free') {
+              throw new HttpError(403, 'paid_credit_required', 'Pollinations AI requires paid Pollen credits and is not available on free tier. Upgrade to Pro or Premium to use Pollinations AI.');
+            }
             if (!pollinations.configured()) throw new HttpError(503, 'pollinations_not_configured', 'Pollinations AI is not configured on this server.');
             if (!pollinationsConfig.isEnabled()) throw new HttpError(403, 'pollinations_disabled', 'Pollinations AI is currently disabled in admin settings.');
             if (pollinationsConfig.isBudgetExhausted()) throw new HttpError(402, 'budget_exhausted', 'Pollinations AI spending cap has been reached. Generation blocked by spending policy.');

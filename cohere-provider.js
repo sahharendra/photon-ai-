@@ -205,32 +205,57 @@ function createCohereProvider({
 
   async function fetchModels() {
     const key = secret();
-    const signal = AbortSignal.timeout(15000);
-    let res;
-    try {
-      res = await fetchImpl(modelsUrl, {
-        method: 'GET',
-        headers: authHeaders(key),
-        signal,
-      });
-    } catch (err) {
-      throw mapError(err);
-    }
+    let allRaw = [];
+    let pageToken = null;
+    let pagesFetched = 0;
 
-    const rlHeaders = extractRateLimitHeaders(res.headers);
-    cfg.updateRateLimits(rlHeaders);
+    do {
+      const url = new URL(`${apiBase}/v1/models`);
+      url.searchParams.set('endpoint', 'chat');
+      url.searchParams.set('page_size', '1000');
+      if (pageToken) url.searchParams.set('page_token', pageToken);
 
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      const err = new Error(body?.message || `Cohere returned HTTP ${res.status}`);
-      err.status = res.status;
-      throw mapError(err);
-    }
+      const signal = AbortSignal.timeout(15000);
+      let res;
+      try {
+        res = await fetchImpl(url.toString(), {
+          method: 'GET',
+          headers: authHeaders(key),
+          signal,
+        });
+      } catch (err) {
+        throw mapError(err);
+      }
 
-    const payload = await res.json().catch(() => ({}));
-    const rawList = Array.isArray(payload.models) ? payload.models : (Array.isArray(payload.data) ? payload.data : []);
-    const chatOnly = rawList.filter(m => isCohereChatModel(m.name || m.id));
-    return cfg.syncDiscoveredModels(chatOnly);
+      const rlHeaders = extractRateLimitHeaders(res.headers);
+      cfg.updateRateLimits(rlHeaders);
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        const err = new Error(body?.message || `Cohere returned HTTP ${res.status}`);
+        err.status = res.status;
+        throw mapError(err);
+      }
+
+      const payload = await res.json().catch(() => ({}));
+      const rawList = Array.isArray(payload.models) ? payload.models : (Array.isArray(payload.data) ? payload.data : []);
+      allRaw.push(...rawList);
+
+      pageToken = payload.next_page_token || null;
+      pagesFetched++;
+    } while (pageToken && pagesFetched < 5);
+
+    // Filter out deprecated models, non-chat models, and preserve exact model IDs
+    const eligible = allRaw.filter(m => {
+      if (!m) return false;
+      const id = m.name || m.id;
+      if (!id || !isCohereChatModel(id)) return false;
+      if (m.is_deprecated === true || m.deprecated === true) return false;
+      if (Array.isArray(m.endpoints) && !m.endpoints.includes('chat')) return false;
+      return true;
+    });
+
+    return cfg.syncDiscoveredModels(eligible);
   }
 
   async function refreshModels(force = false) {
@@ -696,6 +721,7 @@ function createCohereProvider({
       validation,
       keyType: snap.keyType, // 'trial' or 'production'
       keyTypeLabel: snap.keyType === 'trial' ? 'Trial – Development Only' : 'Production',
+      usageMode: snap.keyType === 'trial' ? 'Development and Testing Only' : 'Production',
       productionAuthorized: snap.productionAuthorized,
       environmentAvailability: snap.keyType === 'trial' ? 'Development / Testing Only' : (snap.productionAuthorized ? 'Production Authorized' : 'Production Unauthorized'),
       keyFormatWarning: keyFormatWarning(),

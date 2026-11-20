@@ -12,8 +12,8 @@
  */
 
 const PLAN_ALLOWED_PROVIDERS = Object.freeze({
-  basic: Object.freeze(['openrouter', 'codecraft', 'ollama', 'llmtr', 'cohere', 'cloudflare', 'pollinations']),
-  free: Object.freeze(['openrouter', 'codecraft', 'ollama', 'llmtr', 'cohere', 'cloudflare', 'pollinations']),
+  basic: Object.freeze(['openrouter', 'codecraft', 'ollama', 'llmtr', 'cohere', 'cloudflare']),
+  free: Object.freeze(['openrouter', 'codecraft', 'ollama', 'llmtr', 'cohere', 'cloudflare']),
   pro: Object.freeze(['openrouter', 'codecraft', 'groq', 'ollama', 'llmtr', 'cohere', 'cloudflare', 'pollinations']),
   premium: Object.freeze(['openrouter', 'codecraft', 'groq', 'nvidia', 'openai', 'google', 'ollama', 'llmtr', 'cohere', 'cloudflare', 'pollinations', '*']),
 });

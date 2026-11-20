@@ -14,6 +14,10 @@ const DEFAULT_IMAGE_MODELS = [
     enabled: true,
     capabilities: { image: true, text: true },
     pricing: { currency: 'pollen', completionImageTokens: '0.0006' },
+    free: false,
+    paid: true,
+    creditType: 'pollen',
+    paidCreditRequired: true,
     defaultSize: '1024x1024',
     contextLength: 1024,
     description: 'Ultra-fast state-of-the-art open-source text-to-image model.'

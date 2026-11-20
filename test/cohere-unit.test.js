@@ -330,4 +330,53 @@ describe('cohere-provider', () => {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
   });
+
+  it('model discovery handles endpoint=chat, page_size=1000, pagination, and excludes deprecated models', async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'co-p8-'));
+    const env = { COHERE_API_KEY: 'cohere_pagination_key' };
+    const recordedUrls = [];
+    try {
+      const cfg = createCohereConfig({ dir: tmpDir, env });
+      const fetchImpl = async (url) => {
+        recordedUrls.push(url.toString());
+        if (recordedUrls.length === 1) {
+          return {
+            ok: true,
+            status: 200,
+            headers: {},
+            json: async () => ({
+              models: [
+                { name: 'command-r-08-2024', endpoints: ['chat'], is_deprecated: false },
+                { name: 'old-deprecated-chat', endpoints: ['chat'], is_deprecated: true },
+              ],
+              next_page_token: 'page2_token',
+            }),
+          };
+        }
+        return {
+          ok: true,
+          status: 200,
+          headers: {},
+          json: async () => ({
+            models: [
+              { name: 'c4ai-aya-expanse-32b', endpoints: ['chat'] },
+            ],
+          }),
+        };
+      };
+
+      const provider = createCohereProvider({ HttpError, env, config: cfg, fetchImpl });
+      const discovered = await provider.refreshModels(true);
+      assert.ok(recordedUrls[0].includes('endpoint=chat'));
+      assert.ok(recordedUrls[0].includes('page_size=1000'));
+      assert.ok(recordedUrls[1].includes('page_token=page2_token'));
+
+      const ids = discovered.map(m => m.id);
+      assert.ok(ids.includes('command-r-08-2024'));
+      assert.ok(ids.includes('c4ai-aya-expanse-32b'));
+      assert.ok(!ids.includes('old-deprecated-chat'), 'deprecated model must be excluded');
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
 });
