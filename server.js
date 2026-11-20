@@ -23,6 +23,8 @@ const { createLlmtrConfig } = require('./llmtr-config');
 const { createLlmtrProvider } = require('./llmtr-provider');
 const { createOllamaConfig } = require('./ollama-config');
 const { createOllamaProvider } = require('./ollama-provider');
+const { createCloudflareConfig } = require('./cloudflare-config');
+const { createCloudflareProvider } = require('./cloudflare-provider');
 // Anthropic provider is disabled (no key configured).
 // File is kept on disk for future re-enablement. To re-enable, restore the imports
 // and provider instance below, and add ANTHROPIC_API_KEY to API.env.
@@ -147,6 +149,8 @@ const llmtrConfig = createLlmtrConfig({ dir: ROOT, env: process.env, logger: con
 const llmtr = createLlmtrProvider({ HttpError, env: process.env, cfg: llmtrConfig, dir: ROOT, logger: console });
 const cashfree = createCashfreeService({ env: process.env });
 const razorpay = createRazorpayService({ env: process.env });
+const cloudflareConfig = createCloudflareConfig({ dir: ROOT, env: process.env });
+const cloudflare = createCloudflareProvider({ HttpError, env: process.env, config: cloudflareConfig });
 
 function getActiveGatewayName(data) {
   if (process.env.RAZORPAY_KEY_ID && !process.env.CASHFREE_CLIENT_ID) return 'razorpay';
@@ -553,6 +557,7 @@ const providerCreditStatus = {
   openrouter: { exhausted: false },
   ollama: { exhausted: false },
   llmtr: { exhausted: false },
+  cloudflare: { exhausted: false },
 };
 
 function normalizeProviderKey(name) {
@@ -565,6 +570,7 @@ function normalizeProviderKey(name) {
   if (s.includes('nvidia')) return 'nvidia';
   if (s.includes('gemini') || s.includes('google')) return 'gemini';
   if (s.includes('llmtr') || s.includes('freellmapi')) return 'llmtr';
+  if (s.includes('cloudflare')) return 'cloudflare';
   return s;
 }
 
@@ -624,7 +630,8 @@ function availableModels() {
   const nv = nvidia.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: true, pricingVerified: Boolean(m.available), contextLength: m.contextLength, capabilities: m.capabilities || { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
   const ltr = llmtr.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: Boolean(m.free), pricingVerified: Boolean(m.available), contextLength: m.contextLength, capabilities: m.capabilities || { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
   const olm = ollama.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: Boolean(m.free), pricingVerified: Boolean(m.available), contextLength: m.contextLength, capabilities: m.capabilities || { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
-  const merged = [...base, ...google, ...claude, ...free, ...gpt, ...cc, ...gq, ...nv, ...ltr, ...olm];
+  const cf = cloudflare.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: true, pricingVerified: Boolean(m.available), contextLength: m.contextLength, capabilities: m.capabilities || { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
+  const merged = [...base, ...google, ...claude, ...free, ...gpt, ...cc, ...gq, ...nv, ...ltr, ...olm, ...cf];
   const seen = new Set();
   const out = [];
   for (const item of merged) {
@@ -793,7 +800,7 @@ async function callGemini(model, contents, systemInstruction) {
   return gemini.generate({ model, contents, systemInstruction });
 }
 async function resolveModel(id) {
-  await Promise.allSettled([gemini.refreshModels(), openrouter.refreshModels(), codecraft.refreshModels(), groq.refreshModels(), nvidia.refreshModels(), openai.refreshModels(), llmtr.refreshModels(), ollama.refreshModels()]);
+  await Promise.allSettled([gemini.refreshModels(), openrouter.refreshModels(), codecraft.refreshModels(), groq.refreshModels(), nvidia.refreshModels(), openai.refreshModels(), llmtr.refreshModels(), ollama.refreshModels(), cloudflare.refreshModels()]);
   let option = availableModels().find(m => m.id === id);
   if (!option && PHOTON_MODEL_ALIASES[id]) {
     for (const cand of PHOTON_MODEL_ALIASES[id]) {
@@ -816,6 +823,7 @@ function providerKey(option) {
   if (option.provider === 'OpenAI') return 'openai';
   if (option.provider === 'LLMTR') return 'llmtr';
   if (option.provider === 'Ollama') return 'ollama';
+  if (option.provider === 'Cloudflare Workers AI' || option.provider === 'Cloudflare' || option.providerId === 'cloudflare_workers_ai') return 'cloudflare';
   return 'gemini';
 }
 async function generateProvider({ providerName, modelId, system, history, text, attachments, contents, maxTokens }) {
@@ -826,6 +834,7 @@ async function generateProvider({ providerName, modelId, system, history, text, 
   if (providerName === 'openai') return openai.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
   if (providerName === 'llmtr') return llmtr.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
   if (providerName === 'ollama') return ollama.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
+  if (providerName === 'cloudflare') return cloudflare.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
   return callGemini(modelId, contents || [{ role: 'user', parts: [{ text }] }], system);
 }
 async function* streamProvider({ providerName, modelId, system, history, text, attachments, contents, maxTokens, signal }) {
@@ -1388,6 +1397,62 @@ const server = http.createServer(async (req, res) => {
         return reply(res, 200, { success: true, data: nvidia.status() });
       }
       if (pathname.startsWith('/api/admin/nvidia') || pathname.startsWith('/api/admin/nvidia_nim')) return fail(res, new HttpError(404, 'not_found', 'NVIDIA admin route not found.'), requestId);
+      
+      // Cloudflare Workers AI Admin routes
+      const cfNormPath = (pathname.startsWith('/api/admin/cloudflare_workers_ai') ? pathname.replace('/api/admin/cloudflare_workers_ai', '/api/admin/cloudflare') : pathname);
+      if (cfNormPath === '/api/admin/cloudflare' && req.method === 'GET') { await cloudflare.refreshModels(); return reply(res, 200, { success: true, data: cloudflare.status() }); }
+      if (cfNormPath === '/api/admin/cloudflare' && req.method === 'PUT') {
+        const body = await readBody(req);
+        try {
+          if (typeof body.enabled === 'boolean') cloudflareConfig.setEnabled(body.enabled);
+          if (typeof body.spendingPolicy === 'string') cloudflareConfig.setSpendingPolicy(body.spendingPolicy);
+          if (body.dailyNeuronsLimit !== undefined) cloudflareConfig.setDailyNeuronsLimit(body.dailyNeuronsLimit);
+          if (body.defaultModelId !== undefined) cloudflareConfig.setDefaultModelId(body.defaultModelId || null);
+        } catch (error) {
+          if (error instanceof HttpError) throw error;
+          throw new HttpError(400, error?.code || 'invalid_settings', error?.message || 'Invalid Cloudflare settings.');
+        }
+        await cloudflare.refreshModels();
+        return reply(res, 200, { success: true, data: cloudflare.status() });
+      }
+      if (cfNormPath === '/api/admin/cloudflare/connection' && req.method === 'POST') {
+        const result = await cloudflare.testConnection();
+        if (result.ok) clearProviderCreditsExhausted('cloudflare');
+        else if (result.code === 'quota_exhausted' || result.code === 'billing_required') markProviderCreditsExhausted('cloudflare', result.message);
+        return reply(res, 200, { success: true, data: { result, status: cloudflare.status(), creditsExhausted: isProviderCreditsExhausted('cloudflare') } });
+      }
+      if (cfNormPath === '/api/admin/cloudflare/refresh' && req.method === 'POST') { await cloudflare.refreshModels(true); return reply(res, 200, { success: true, data: cloudflare.status() }); }
+      if (cfNormPath === '/api/admin/cloudflare/test-model' && req.method === 'POST') {
+        const body = await readBody(req);
+        const result = await cloudflare.testModel(String(body.model || ''));
+        await cloudflare.refreshModels();
+        return reply(res, 200, { success: true, data: { result, status: cloudflare.status() } });
+      }
+      const cfModelRoute = /^\/api\/admin\/cloudflare\/models\/([A-Za-z0-9@_.:/-]{1,160})$/.exec(cfNormPath);
+      if (cfModelRoute) {
+        if (req.method !== 'PUT') return fail(res, new HttpError(405, 'method_not_allowed', 'Method not allowed.'), requestId);
+        const modelId = cfModelRoute[1];
+        const body = await readBody(req);
+        try { if (typeof body.enabled === 'boolean') cloudflareConfig.setModelEnabled(modelId, body.enabled); } catch (error) { throw new HttpError(400, error?.code || 'invalid_model', error?.message || 'Invalid model ID.'); }
+        return reply(res, 200, { success: true, data: cloudflare.status() });
+      }
+      if (cfNormPath === '/api/admin/cloudflare/key' && req.method === 'POST') {
+        const body = await readBody(req);
+        const accountId = String(body.accountId || body.account_id || '').trim();
+        const token = String(body.token || body.apiToken || body.key || '').trim();
+        if (!accountId && !token) throw new HttpError(400, 'invalid_credentials', 'Cloudflare Account ID or API Token must be provided.');
+        if (accountId) setEnvKey('CLOUDFLARE_ACCOUNT_ID', accountId);
+        if (token) setEnvKey('CLOUDFLARE_API_TOKEN', token);
+        await cloudflare.refreshModels(true);
+        return reply(res, 200, { success: true, data: cloudflare.status() });
+      }
+      if (cfNormPath === '/api/admin/cloudflare/key' && req.method === 'DELETE') {
+        clearEnvKey('CLOUDFLARE_ACCOUNT_ID');
+        clearEnvKey('CLOUDFLARE_API_TOKEN');
+        await cloudflare.refreshModels(true);
+        return reply(res, 200, { success: true, data: cloudflare.status() });
+      }
+      if (pathname.startsWith('/api/admin/cloudflare')) return fail(res, new HttpError(404, 'not_found', 'Cloudflare admin route not found.'), requestId);
       if (pathname === '/api/admin/llmtr' && req.method === 'GET') { await llmtr.refreshModels(); return reply(res, 200, { success: true, data: llmtr.status() }); }
       if (pathname === '/api/admin/llmtr' && req.method === 'PUT') {
         const body = await readBody(req);
@@ -1437,7 +1502,7 @@ const server = http.createServer(async (req, res) => {
       }
       if (pathname.startsWith('/api/admin/llmtr')) return fail(res, new HttpError(404, 'not_found', 'LLMTR admin route not found.'), requestId);
       if (pathname === '/api/admin/provider-status' && req.method === 'GET') {
-        await Promise.allSettled([gemini.refreshModels(true), openrouter.refreshModels(true), codecraft.refreshModels(true), groq.refreshModels(true), nvidia.refreshModels(true), openai.refreshModels(true), llmtr.refreshModels(true), ollama.refreshModels(true)]);
+        await Promise.allSettled([gemini.refreshModels(true), openrouter.refreshModels(true), codecraft.refreshModels(true), groq.refreshModels(true), nvidia.refreshModels(true), openai.refreshModels(true), llmtr.refreshModels(true), ollama.refreshModels(true), cloudflare.refreshModels(true)]);
         return reply(res, 200, {
           success: true,
           data: {
@@ -1450,6 +1515,7 @@ const server = http.createServer(async (req, res) => {
             nvidia: nvidia.status(),
             llmtr: llmtr.status(),
             ollama: ollama.status(),
+            cloudflare: cloudflare.status(),
             creditsExhausted: { ...providerCreditStatus },
           },
         });
@@ -2351,6 +2417,14 @@ async function logProviderDiagnostics() {
     console.log(`CodeCraft configured: ${status.validation === 'ok'} (${status.validation}; ${status.modelCount} model(s) discovered, ${status.enabledModelCount} enabled; spending policy: ${status.spendingPolicy}${status.keyFormatWarning ? '; ' + status.keyFormatWarning : ''})`);
   } else {
     console.log('CodeCraft configured: false (set CODECRAFT_API_KEY in API.env or .env to enable CodeCraft models)');
+  }
+  if (cloudflare.configured()) {
+    console.log('Validating Cloudflare Workers AI with a live API request...');
+    await cloudflare.refreshModels(true);
+    const status = cloudflare.status();
+    console.log(`Cloudflare configured: ${status.validation === 'ok'} (${status.validation}; ${status.modelCount} model(s) discovered, ${status.enabledModelCount} enabled; remaining neurons: ${status.remainingDailyNeurons})`);
+  } else {
+    console.log('Cloudflare configured: false (set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN in API.env or .env to enable Cloudflare Workers AI)');
   }
   if (groq.configured()) {
     groqConfig.setEnabled(true);

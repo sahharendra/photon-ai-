@@ -14,4 +14,5 @@ photon-profile-data.json.lock
 .photon-nvidia-config.json
 .photon-llmtr-config.json
 .photon-ollama-config.json
+.photon-cloudflare-config.json
 *.log

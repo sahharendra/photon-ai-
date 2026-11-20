@@ -227,7 +227,47 @@
     <button id="nvidia-save-key" type="submit">Save API Key</button>
   </div>
 </form>
-<div class="settings-grid" style="margin-top:18px"><div class="field"><label>Request &amp; token usage</label><div id="nvidia-usage" class="muted">Not loaded.</div></div></div><form id="nvidia-settings-form" style="margin-top:14px"><div class="settings-grid"><div class="field"><label for="nvidia-enabled">Provider state</label><select id="nvidia-enabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div><div class="field"><label for="nvidia-spending-policy">Spending policy</label><select id="nvidia-spending-policy"><option value="allow_free_only">Allow free credits only (zero-billing safe)</option><option value="block">Block all requests</option></select></div></div><div class="save-row"><small class="muted">NVIDIA NIM free trial credits only. API key is never stored or shown.</small><button id="nvidia-save-settings" type="submit">Save NVIDIA settings</button></div></form><div class="head" style="margin-top:28px"><div><h2>NVIDIA NIM models</h2><small>Discovered from GET /v1/models. High-speed open models.</small></div></div><div class="scroll"><table class="subscriptions-table"><thead><tr><th>Model</th><th>Status</th><th>Context window</th><th>Actions</th></tr></thead><tbody id="nvidia-models"></tbody></table></div><div class="head" style="margin-top:28px"><div><h2>Recent NVIDIA errors</h2><small>Key-free error codes only.</small></div></div><div id="nvidia-errors" class="list"></div><div class="head" style="margin-top:34px"><div><h2>LLMTR / FreeLLMAPI Router</h2><small>LLMTR_API_KEY is read from environment. Unified OpenAI-compatible gateway with Turkish &amp; Creekside free models (Qwen 3.8, Gemma 4, Muse).</small></div><div class="actions"><button id="llmtr-test-connection" type="button">Test connection</button><button id="llmtr-refresh" type="button">Refresh models</button></div></div><div id="llmtr-diag" class="list"></div>
+<div class="settings-grid" style="margin-top:18px"><div class="field"><label>Request &amp; token usage</label><div id="nvidia-usage" class="muted">Not loaded.</div></div></div><form id="nvidia-settings-form" style="margin-top:14px"><div class="settings-grid"><div class="field"><label for="nvidia-enabled">Provider state</label><select id="nvidia-enabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div><div class="field"><label for="nvidia-spending-policy">Spending policy</label><select id="nvidia-spending-policy"><option value="allow_free_only">Allow free credits only (zero-billing safe)</option><option value="block">Block all requests</option></select></div></div><div class="save-row"><small class="muted">NVIDIA NIM free trial credits only. API key is never stored or shown.</small><button id="nvidia-save-settings" type="submit">Save NVIDIA settings</button></div></form><div class="head" style="margin-top:28px"><div><h2>NVIDIA NIM models</h2><small>Discovered from GET /v1/models. High-speed open models.</small></div></div><div class="scroll"><table class="subscriptions-table"><thead><tr><th>Model</th><th>Status</th><th>Context window</th><th>Actions</th></tr></thead><tbody id="nvidia-models"></tbody></table></div><div class="head" style="margin-top:28px"><div><h2>Recent NVIDIA errors</h2><small>Key-free error codes only.</small></div></div><div id="nvidia-errors" class="list"></div>
+<div class="head" style="margin-top:34px"><div><h2>Cloudflare Workers AI</h2><small>CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN are read only from the backend environment. High-speed AI inference at the edge (10,000 Free Neurons/day with 00:00 UTC reset).</small></div><div class="actions"><button id="cloudflare-test-connection" type="button">Test connection</button><button id="cloudflare-refresh" type="button">Refresh models</button></div></div><div id="cloudflare-diag" class="list"></div>
+<form id="cloudflare-key-form" class="inline-add-box" style="margin-top:14px">
+  <div class="settings-grid">
+    <div class="field">
+      <label for="cloudflare-account-id-input">Cloudflare Account ID</label>
+      <input id="cloudflare-account-id-input" type="text" autocomplete="off" placeholder="Enter Cloudflare Account ID (32 hex chars)">
+    </div>
+    <div class="field">
+      <label for="cloudflare-token-input">Cloudflare API Token (Workers AI: Read/Edit)</label>
+      <div style="display:flex;gap:6px">
+        <input id="cloudflare-token-input" type="password" autocomplete="new-password" placeholder="Enter Cloudflare API Token">
+        <button type="button" id="cloudflare-token-eye" style="padding:0 12px;background:#17213a;border:1px solid #2e4063;border-radius:7px;color:#c4ccdc;cursor:pointer" title="Show/Hide Token">👁</button>
+      </div>
+    </div>
+  </div>
+  <div class="settings-grid" style="margin-top:10px">
+    <div class="field">
+      <label>Configured Status</label>
+      <div style="display:flex;align-items:center;gap:8px;height:40px;padding:0 4px">
+        <span id="cloudflare-key-badge" class="pill">Checking...</span>
+        <code id="cloudflare-masked-creds" style="color:#b4c0d4">••••</code>
+      </div>
+    </div>
+    <div class="field">
+      <label>Free Tier Daily Quota (00:00 UTC Reset)</label>
+      <div style="display:flex;align-items:center;gap:8px;height:40px;padding:0 4px">
+        <span id="cloudflare-quota-badge" class="pill ok">10,000 Neurons/day</span>
+        <small id="cloudflare-remaining-neurons" class="muted">10,000 remaining today</small>
+      </div>
+    </div>
+  </div>
+  <div class="save-row" style="margin-top:10px">
+    <button id="cloudflare-remove-key" type="button" style="border-color:#593434;color:#ffdede;display:none">Remove Credentials</button>
+    <button id="cloudflare-save-key" type="submit">Save Credentials</button>
+  </div>
+  <small class="muted" style="display:block;margin-top:6px;font-size:11px">Tip: For permanent persistence across Render sleep cycles, add <code>CLOUDFLARE_ACCOUNT_ID</code> and <code>CLOUDFLARE_API_TOKEN</code> in Render Dashboard &rarr; Environment.</small>
+</form>
+<div class="settings-grid" style="margin-top:18px"><div class="field"><label>Request, token &amp; Neuron usage</label><div id="cloudflare-usage" class="muted">Not loaded.</div></div></div><form id="cloudflare-settings-form" style="margin-top:14px"><div class="settings-grid"><div class="field"><label for="cloudflare-enabled">Provider state</label><select id="cloudflare-enabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div><div class="field"><label for="cloudflare-spending-policy">Spending policy</label><select id="cloudflare-spending-policy"><option value="allow_free_only">Allow free models &amp; daily neurons only (zero-billing safe)</option><option value="block">Block all requests</option></select></div><div class="field"><label for="cloudflare-daily-neurons">Daily Neuron Limit</label><input id="cloudflare-daily-neurons" type="number" min="100" max="1000000" step="1000" value="10000"></div></div><div class="save-row"><small class="muted">Cloudflare Workers AI 10,000 free daily Neurons. Strict zero-billing protection stops calls when free quota is reached.</small><button id="cloudflare-save-settings" type="submit">Save Cloudflare settings</button></div></form><div class="head" style="margin-top:28px"><div><h2>Cloudflare Workers AI models</h2><small>Discovered from GET /v1/models. High-speed edge inference models.</small></div></div><div class="scroll"><table class="subscriptions-table"><thead><tr><th>Model</th><th>Status</th><th>Context window</th><th>Actions</th></tr></thead><tbody id="cloudflare-models"></tbody></table></div><div class="head" style="margin-top:28px"><div><h2>Recent Cloudflare errors</h2><small>Key-free error codes only.</small></div></div><div id="cloudflare-errors" class="list"></div>
+
+<div class="head" style="margin-top:34px"><div><h2>LLMTR / FreeLLMAPI Router</h2><small>LLMTR_API_KEY is read from environment. Unified OpenAI-compatible gateway with Turkish &amp; Creekside free models (Qwen 3.8, Gemma 4, Muse).</small></div><div class="actions"><button id="llmtr-test-connection" type="button">Test connection</button><button id="llmtr-refresh" type="button">Refresh models</button></div></div><div id="llmtr-diag" class="list"></div>
 <form id="llmtr-key-form" class="inline-add-box" style="margin-top:14px">
   <div class="settings-grid">
     <div class="field">
@@ -1012,6 +1052,7 @@
     }
   }
   setupProviderKeyEye('nvidia-key-eye', 'nvidia-key-input');
+  setupProviderKeyEye('cloudflare-token-eye', 'cloudflare-token-input');
   setupProviderKeyEye('groq-key-eye', 'groq-key-input');
   setupProviderKeyEye('codecraft-key-eye', 'codecraft-key-input');
   setupProviderKeyEye('openai-key-eye', 'openai-key-input');
@@ -1043,6 +1084,46 @@
   }
 
   // Key form event wireups
+  
+  $('cloudflare-key-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = $('cloudflare-save-key');
+    const acct = $('cloudflare-account-id-input').value.trim();
+    const tok = $('cloudflare-token-input').value.trim();
+    if (!acct && !tok) { alert('Please enter Cloudflare Account ID and/or API Token.'); return; }
+    btn.disabled = true; btn.textContent = 'Saving...';
+    try {
+      const data = await request('/api/admin/cloudflare/key', 'POST', { accountId: acct, token: tok });
+      $('cloudflare-account-id-input').value = '';
+      $('cloudflare-token-input').value = '';
+      renderCloudflare(data);
+      status('Cloudflare credentials saved successfully.');
+      alert('Cloudflare credentials saved successfully.');
+    } catch (err) {
+      status(err.message || 'Could not save Cloudflare credentials.', true);
+      alert(err.message || 'Could not save Cloudflare credentials.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $('cloudflare-remove-key').addEventListener('click', async () => {
+    if (!confirm('Are you sure you want to remove the saved Cloudflare credentials?')) return;
+    const btn = $('cloudflare-remove-key');
+    btn.disabled = true;
+    try {
+      const data = await request('/api/admin/cloudflare/key', 'DELETE', {});
+      renderCloudflare(data);
+      status('Cloudflare credentials removed.');
+      alert('Cloudflare credentials removed.');
+    } catch (err) {
+      status(err.message || 'Could not remove Cloudflare credentials.', true);
+      alert(err.message || 'Could not remove Cloudflare credentials.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
   $('nvidia-key-form').addEventListener('submit', async e => {
     e.preventDefault();
     const btn = $('nvidia-save-key');
@@ -1798,6 +1879,214 @@ async function load(forceSettings=false){if(refreshing)return;refreshing=true;st
   $('groq-settings-form').addEventListener('submit',async event=>{event.preventDefault();const button=$('groq-save-settings');button.disabled=true;try{renderGroq(await request('/api/admin/groq','PUT',{enabled:$('groq-enabled').value==='true',spendingPolicy:$('groq-spending-policy').value}))}catch(error){alert(error.message||'Could not save Groq settings.')}finally{button.disabled=false}});
   $('groq-test-connection').addEventListener('click',async()=>{const button=$('groq-test-connection');button.disabled=true;button.textContent='Testing...';try{const data=await request('/api/admin/groq/connection','POST',{});renderGroq(data);const r=data.result||{};showTestResultModal({title:'Groq Connection Test',provider:'GroqCloud',ok:r.ok,status:r.status,code:r.code,message:r.message,responseTimeMs:r.responseTimeMs,testedAt:r.testedAt,modelCount:r.modelCount});}catch(error){showTestResultModal({title:'Groq Connection Test',provider:'GroqCloud',ok:false,status:'connection_failed',message:error.message||'Could not test Groq connection.'});}finally{button.disabled=false;button.textContent='Test connection'}});
   $('groq-refresh').addEventListener('click',async()=>{const button=$('groq-refresh');button.disabled=true;try{renderGroq(await request('/api/admin/groq/refresh','POST',{}))}catch(error){alert(error.message||'Could not refresh Groq models.')}finally{button.disabled=false}});
+  
+  function cfUsageText(u, snap){
+    u = u || {};
+    const used = u.estimatedNeuronsUsedToday != null ? Math.round(u.estimatedNeuronsUsedToday) : 0;
+    const rem = snap && snap.remainingDailyNeurons != null ? Math.round(snap.remainingDailyNeurons) : (10000 - used);
+    return fmt(u.requests || 0) + ' requests, ' + fmt(u.failures || 0) + ' failed | ' + fmt(u.inputTokens || 0) + ' in / ' + fmt(u.outputTokens || 0) + ' out tokens | Today: ' + fmt(used) + ' Neurons used (' + fmt(Math.max(0, rem)) + ' Neurons remaining)';
+  }
+
+  function renderCloudflare(view){
+    const st = (view && view.status) || view || {};
+    const configured = Boolean(st.configured);
+    const badge = $('cloudflare-key-badge');
+    const creds = $('cloudflare-masked-creds');
+    const remBtn = $('cloudflare-remove-key');
+    const saveBtn = $('cloudflare-save-key');
+    const qBadge = $('cloudflare-quota-badge');
+    const qRem = $('cloudflare-remaining-neurons');
+
+    if (badge) {
+      badge.className = 'pill ' + (configured ? 'ok' : 'no');
+      badge.textContent = configured ? 'Configured' : 'Not Configured';
+    }
+    if (creds) {
+      creds.textContent = configured ? ((st.maskedAccountId || '••••') + ' / ' + (st.maskedToken || '••••')) : 'None';
+    }
+    if (remBtn) remBtn.style.display = configured ? 'inline-block' : 'none';
+    if (saveBtn) saveBtn.textContent = configured ? 'Update Credentials' : 'Save Credentials';
+
+    if (qBadge && qRem) {
+      const isExhausted = Boolean(st.isDailyQuotaExhausted);
+      qBadge.className = 'pill ' + (isExhausted ? 'no' : 'ok');
+      qBadge.textContent = isExhausted ? 'Daily Quota Exhausted' : (fmt(st.dailyNeuronsLimit || 10000) + ' Neurons/day');
+      qRem.textContent = fmt(Math.max(0, Math.round(st.remainingDailyNeurons != null ? st.remainingDailyNeurons : 10000))) + ' remaining today (resets 00:00 UTC)';
+    }
+
+    const diag = $('cloudflare-diag');
+    if (diag) {
+      diag.replaceChildren();
+      rowItem(diag, 'Cloudflare Workers AI', (configured ? 'Configured (' + (st.maskedAccountId || '') + ')' : 'Credentials not set') + '; ' + (st.modelCount || 0) + ' models discovered, ' + (st.enabledModelCount || 0) + ' enabled', orBadge(st.validation === 'ok' ? 'Connected' : (st.validation || 'Not checked'), st.validation === 'ok'));
+      rowItem(diag, 'Spending policy', st.spendingPolicy === 'block' ? 'Block all requests' : 'Allow free credits/neurons only (zero-billing safe)', orBadge(st.spendingPolicy === 'block' ? 'Blocked' : 'Free only', st.spendingPolicy !== 'block'));
+      if (st.keyFormatWarning) rowItem(diag, 'Key format warning', st.keyFormatWarning, orBadge('Check credentials', false));
+      if (st.usage && st.usage.lastSuccessAt) rowItem(diag, 'Last successful request', dateTime(st.usage.lastSuccessAt), '');
+      if (st.usage && st.usage.lastError) rowItem(diag, 'Last error', st.usage.lastError.message || st.usage.lastError, orBadge('Error', false));
+    }
+
+    if ($('cloudflare-usage')) $('cloudflare-usage').textContent = cfUsageText(st.usage, st);
+    if ($('cloudflare-enabled')) $('cloudflare-enabled').value = st.enabled === false ? 'false' : 'true';
+    if ($('cloudflare-spending-policy')) $('cloudflare-spending-policy').value = st.spendingPolicy || 'allow_free_only';
+    if ($('cloudflare-daily-neurons') && st.dailyNeuronsLimit) $('cloudflare-daily-neurons').value = st.dailyNeuronsLimit;
+
+    const root = $('cloudflare-models');
+    if (root) {
+      root.replaceChildren();
+      (st.models || []).forEach(m => {
+        const row = document.createElement('tr');
+        td(row, (m.name || m.id) + (st.defaultModelId === m.id ? ' ★ Default' : ''));
+        const statusCell = td(row, '');
+        statusCell.appendChild(orBadge(m.enabled ? 'Enabled' : 'Disabled', Boolean(m.enabled)));
+        const ctxCell = td(row, '');
+        ctxCell.textContent = m.contextWindow ? (m.contextWindow.toLocaleString() + ' tokens') : '32,768 tokens';
+        const actions = td(row, '');
+        actions.style.whiteSpace = 'nowrap';
+        const btn = (label, fn) => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.textContent = label;
+          b.addEventListener('click', fn);
+          return b;
+        };
+        actions.append(
+          btn('Test model', () => cfTestModel(m)),
+          btn(m.enabled ? 'Disable' : 'Enable', async () => {
+            try {
+              await request('/api/admin/cloudflare/models/' + encodeURIComponent(m.id), 'PUT', { enabled: !m.enabled });
+              await loadCloudflare();
+            } catch (err) { alert(err.message || 'Could not toggle model.'); }
+          }),
+          btn('Set default', async () => {
+            try {
+              renderCloudflare(await request('/api/admin/cloudflare', 'PUT', { defaultModelId: m.id }));
+            } catch (err) { alert(err.message || 'Could not set default model.'); await loadCloudflare(); }
+          })
+        );
+        root.appendChild(row);
+      });
+      if (!(st.models || []).length) {
+        const row = document.createElement('tr');
+        const empty = td(row, configured ? 'No models discovered yet. Click Test connection or Refresh models.' : 'Set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN to discover models.');
+        empty.colSpan = 4;
+        empty.className = 'empty';
+        root.appendChild(row);
+      }
+    }
+
+    const errors = $('cloudflare-errors');
+    if (errors) {
+      errors.replaceChildren();
+      (st.recentErrors || []).slice(0, 10).forEach(e => {
+        rowItem(errors, (e.code || 'error') + (e.model ? ' (' + e.model + ')' : ''), (e.message || '') + ' ' + (e.at || ''), orBadge('Failed', false));
+      });
+      if (!(st.recentErrors || []).length) {
+        rowItem(errors, 'No recent Cloudflare errors', 'Successful requests and failures are tracked here.', orBadge('Clear', true));
+      }
+    }
+  }
+
+  async function loadCloudflare(){
+    try {
+      renderCloudflare(await request('/api/admin/cloudflare'));
+    } catch (err) {
+      status(err.message || 'Could not load Cloudflare status.', true);
+    }
+  }
+
+  async function cfTestModel(m){
+    try {
+      const data = await request('/api/admin/cloudflare/test-model', 'POST', { model: m.id });
+      renderCloudflare(data);
+      const r = data.result || {};
+      showTestResultModal({
+        title: 'Cloudflare Model Test',
+        provider: 'Cloudflare Workers AI',
+        model: m.id,
+        modelName: m.name || m.id,
+        ok: r.ok,
+        status: r.status,
+        code: r.code,
+        message: r.message,
+        responseTimeMs: r.responseTimeMs,
+        testedAt: r.testedAt,
+        reply: r.reply,
+      });
+    } catch (error) {
+      showTestResultModal({
+        title: 'Cloudflare Model Test',
+        provider: 'Cloudflare Workers AI',
+        model: m.id,
+        modelName: m.name || m.id,
+        ok: false,
+        status: 'failed',
+        message: error.message || 'Could not test model.',
+      });
+    }
+    await loadCloudflare();
+  }
+
+  $('cloudflare-settings-form')?.addEventListener('submit', async event => {
+    event.preventDefault();
+    const button = $('cloudflare-save-settings');
+    button.disabled = true;
+    try {
+      renderCloudflare(await request('/api/admin/cloudflare', 'PUT', {
+        enabled: $('cloudflare-enabled').value === 'true',
+        spendingPolicy: $('cloudflare-spending-policy').value,
+        dailyNeuronsLimit: Number($('cloudflare-daily-neurons').value) || 10000,
+      }));
+    } catch (error) {
+      alert(error.message || 'Could not save Cloudflare settings.');
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  $('cloudflare-test-connection')?.addEventListener('click', async () => {
+    const button = $('cloudflare-test-connection');
+    button.disabled = true;
+    button.textContent = 'Testing...';
+    try {
+      const data = await request('/api/admin/cloudflare/connection', 'POST', {});
+      renderCloudflare(data);
+      const r = data.result || {};
+      showTestResultModal({
+        title: 'Cloudflare Connection Test',
+        provider: 'Cloudflare Workers AI',
+        ok: r.ok,
+        status: r.status,
+        code: r.code,
+        message: r.message,
+        responseTimeMs: r.responseTimeMs,
+        testedAt: r.testedAt,
+        modelCount: r.modelCount,
+      });
+    } catch (error) {
+      showTestResultModal({
+        title: 'Cloudflare Connection Test',
+        provider: 'Cloudflare Workers AI',
+        ok: false,
+        status: 'connection_failed',
+        message: error.message || 'Could not test Cloudflare connection.',
+      });
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Test connection';
+    }
+  });
+
+  $('cloudflare-refresh')?.addEventListener('click', async () => {
+    const button = $('cloudflare-refresh');
+    button.disabled = true;
+    try {
+      renderCloudflare(await request('/api/admin/cloudflare/refresh', 'POST', {}));
+    } catch (error) {
+      alert(error.message || 'Could not refresh Cloudflare models.');
+    } finally {
+      button.disabled = false;
+    }
+  });
+
   function nvUsageText(u){u=u||{};return fmt(u.requests)+' requests, '+fmt(u.failures)+' failed, '+fmt(u.inputTokens)+' in / '+fmt(u.outputTokens)+' out tokens ('+fmt(u.totalTokens)+' total)'}
   function renderNvidia(view){const st=(view&&view.status)||view||{};updateKeyFormUi('nvidia',st.configured,st.maskedKey,'NVIDIA');const diag=$('nvidia-diag');diag.replaceChildren();rowItem(diag,'NVIDIA NIM API',(st.configured?'key '+(st.maskedKey||'configured'):'NVIDIA_API_KEY is not set')+'; '+(st.modelCount||0)+' discovered, '+(st.enabledModelCount||0)+' enabled',orBadge(st.validation==='ok'?'Connected':(st.validation||'Not checked'),st.validation==='ok'));if(st.keyFormatWarning)rowItem(diag,'Key format warning',st.keyFormatWarning,orBadge('Check key',false));rowItem(diag,'Spending policy',st.spendingPolicy==='block'?'Block all requests':'Allow free credits only (zero-billing safe)',orBadge(st.spendingPolicy==='block'?'Blocked':'Free only',st.spendingPolicy!=='block'));if(st.usage&&st.usage.lastSuccessAt)rowItem(diag,'Last successful request',dateTime(st.usage.lastSuccessAt),'');if(st.usage&&st.usage.lastError)rowItem(diag,'Last error',st.usage.lastError,orBadge('Error',false));$('nvidia-usage').textContent=nvUsageText(st.usage);$('nvidia-enabled').value=st.enabled===false?'false':'true';$('nvidia-spending-policy').value=st.spendingPolicy||'allow_free_only';const root=$('nvidia-models');root.replaceChildren();(st.models||[]).forEach(m=>{const row=document.createElement('tr');td(row,(m.name||m.id)+(st.defaultModelId===m.id?' ★ Default':''));const statusCell=td(row,'');statusCell.appendChild(orBadge(m.enabled?'Enabled':'Disabled',Boolean(m.enabled)));const ctxCell=td(row,'');ctxCell.textContent=m.contextWindow?(m.contextWindow.toLocaleString()+' tokens'):'131,072 tokens';const actions=td(row,'');actions.style.whiteSpace='nowrap';const btn=(label,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.addEventListener('click',fn);return b};actions.append(btn('Test model',()=>nvTestModel(m)),btn(m.enabled?'Disable':'Enable',()=>nvPatchModel(m.id,{enabled:!m.enabled})),btn('Set default',()=>nvSetDefault(m.id)));root.appendChild(row)});if(!(st.models||[]).length){const row=document.createElement('tr'),empty=td(row,st.configured?'No models discovered yet. Test connection or refresh models.':'Set NVIDIA_API_KEY to discover models.');empty.colSpan=4;empty.className='empty';root.appendChild(row)}const errors=$('nvidia-errors');errors.replaceChildren();(st.recentErrors||[]).slice(0,10).forEach(e=>rowItem(errors,(e.code||'error')+(e.model?' ('+e.model+')':''),(e.message||'')+' '+(e.at||''),orBadge('Failed',false)));if(!(st.recentErrors||[]).length)rowItem(errors,'No recent NVIDIA errors','Successful requests and failures are tracked here.',orBadge('Clear',true))}
   async function loadNvidia(){try{renderNvidia(await request('/api/admin/nvidia'))}catch(error){status(error.message||'Could not load NVIDIA status.',true)}}
