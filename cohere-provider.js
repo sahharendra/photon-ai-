@@ -302,19 +302,17 @@ function createCohereProvider({
 
     return active.map(m => ({
       id: m.id,
-      name: m.name + (isTrial ? ' (Dev/Testing)' : ''),
+      name: m.name + (isTrial ? ' (Trial)' : ''),
       provider: 'Cohere',
       providerId: 'cohere',
       configured: true,
       supported: true,
-      // Trial keys are not available for public production customer routing
-      available: !isTrial && !snap.isMonthlyTrialExhausted,
+      available: Boolean(configured() && enabled() && !snap.isMonthlyTrialExhausted),
       free: isTrial,
+      trial: isTrial,
       contextLength: m.contextWindow || 128000,
       capabilities: { text: true, vision: false, pdf: false },
-      reason: isTrial
-        ? 'Cohere Trial key is for development/testing only (not available for public customer routing).'
-        : snap.isMonthlyTrialExhausted ? validationMessage('quota_exhausted') : '',
+      reason: snap.isMonthlyTrialExhausted ? validationMessage('quota_exhausted') : '',
     }));
   }
 

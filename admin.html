@@ -384,6 +384,57 @@
   <small class="muted" style="display:block;margin-top:6px;font-size:11px">Tip: For permanent persistence across Render sleep cycles, add <code>OLLAMA_API_KEY</code> in Render Dashboard &rarr; Environment.</small>
 </form>
 <div class="settings-grid" style="margin-top:18px"><div class="field"><label>Request &amp; token usage</label><div id="ollama-usage" class="muted">Not loaded.</div></div></div><form id="ollama-settings-form" style="margin-top:14px"><div class="settings-grid"><div class="field"><label for="ollama-enabled">Provider state</label><select id="ollama-enabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div><div class="field"><label for="ollama-spending-policy">Spending policy</label><select id="ollama-spending-policy"><option value="allow_free_only">Allow free models only (zero-billing safe)</option><option value="allow_all">Allow all models</option><option value="block">Block all requests</option></select></div></div><div class="save-row"><small class="muted">Ollama Cloud / Local open models. API key is never stored in browser.</small><button id="ollama-save-settings" type="submit">Save Ollama settings</button></div></form><div class="head" style="margin-top:28px"><div><h2>Ollama models</h2><small>Discovered from GET /api/tags or GET /v1/models.</small></div></div><div class="scroll"><table class="subscriptions-table"><thead><tr><th>Model</th><th>Status</th><th>Context window</th><th>Actions</th></tr></thead><tbody id="ollama-models"></tbody></table></div><div class="head" style="margin-top:28px"><div><h2>Recent Ollama errors</h2><small>Key-free error codes only.</small></div></div><div id="ollama-errors" class="list"></div>
+
+<div class="head" style="margin-top:34px"><div><h2>Pollinations AI (Image Generation)</h2><small>POLLINATIONS_API_KEY is read from environment. Official Pollinations AI text-to-image generation with monthly budget protection.</small></div><div class="actions"><button id="pollinations-test-connection" type="button">Test connection</button><button id="pollinations-refresh" type="button">Refresh models</button></div></div><div id="pollinations-diag" class="list"></div>
+<form id="pollinations-key-form" class="inline-add-box" style="margin-top:14px">
+  <div class="settings-grid">
+    <div class="field">
+      <label for="pollinations-key-input">API Key (Pollinations sk_... Secret Key)</label>
+      <div style="display:flex;gap:6px">
+        <input id="pollinations-key-input" type="password" autocomplete="new-password" placeholder="Enter Pollinations sk_... API key">
+        <button type="button" id="pollinations-key-eye" style="padding:0 12px;background:#17213a;border:1px solid #2e4063;border-radius:7px;color:#c4ccdc;cursor:pointer" title="Show/Hide key">👁</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Configured Status</label>
+      <div style="display:flex;align-items:center;gap:8px;height:40px;padding:0 4px">
+        <span id="pollinations-key-badge" class="pill">Checking...</span>
+        <code id="pollinations-masked-key" style="color:#b4c0d4">••••</code>
+      </div>
+    </div>
+  </div>
+  <div class="save-row" style="margin-top:10px">
+    <button id="pollinations-remove-key" type="button" style="border-color:#593434;color:#ffdede;display:none">Remove Key</button>
+    <button id="pollinations-save-key" type="submit">Save API Key</button>
+  </div>
+  <small class="muted" style="display:block;margin-top:6px;font-size:11px">Tip: For permanent persistence across Render sleep cycles, add <code>POLLINATIONS_API_KEY</code> in Render Dashboard &rarr; Environment.</small>
+</form>
+<div class="settings-grid" style="margin-top:18px"><div class="field"><label>Request &amp; budget spend</label><div id="pollinations-usage" class="muted">Not loaded.</div></div></div>
+<form id="pollinations-settings-form" style="margin-top:14px">
+  <div class="settings-grid">
+    <div class="field">
+      <label for="pollinations-enabled">Provider state</label>
+      <select id="pollinations-enabled"><option value="true">Enabled</option><option value="false">Disabled</option></select>
+    </div>
+    <div class="field">
+      <label for="pollinations-spending-policy">Spending policy</label>
+      <select id="pollinations-spending-policy">
+        <option value="allow_budget_only">Allow budget only (strict budget cap protection)</option>
+        <option value="block">Block all requests</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="pollinations-monthly-cap">Monthly Budget Cap ($ USD)</label>
+      <input id="pollinations-monthly-cap" type="number" min="0.5" max="500" step="0.5" value="5.00">
+    </div>
+  </div>
+  <div class="save-row"><small class="muted">Strict budget protection halts requests when the monthly spending cap is reached.</small><button id="pollinations-save-settings" type="submit">Save Pollinations settings</button></div>
+</form>
+<div class="head" style="margin-top:28px"><div><h2>Pollinations AI models</h2><small>Discovered from GET /image/models. FLUX.1 Schnell, Z-Image Turbo, SD 3.5 Large.</small></div></div>
+<div class="scroll"><table class="subscriptions-table"><thead><tr><th>Model</th><th>Status</th><th>Type</th><th>Actions</th></tr></thead><tbody id="pollinations-models"></tbody></table></div>
+<div class="head" style="margin-top:28px"><div><h2>Recent Pollinations errors</h2><small>Key-free error codes only.</small></div></div>
+<div id="pollinations-errors" class="list"></div>
+
 </section><section id="subscriptions" class="card section page-view"><div class="head"><div><h2>Subscriptions &amp; Purchases</h2><small>Verified payments, actual collected revenue, recurring MRR, refunds, and Cashfree gateway settings.</small></div><div class="actions"><button id="refresh-subs" type="button">Refresh</button></div></div><div class="gw-card" id="cashfree-gateway-card">
 <div class="gw-head">
 <div><h3 style="margin:0;font-size:15px" id="gw-card-title">Razorpay Payments</h3><small class="muted">Credit Card &amp; UPI Checkout · Test Mode requires 0 PAN/KYC · Secrets stay backend-only</small></div>
@@ -1627,7 +1678,7 @@ function setupDashboardAnalyticsFilter(){
   }
 }
 
-async function load(forceSettings=false){if(refreshing)return;refreshing=true;status('Loading admin data...');try{const data=await request('/api/admin/overview');showApp();const m=data.metrics||{};$('logout').hidden=!!data.localAccess;if($('total'))$('total').textContent=fmt(m.totalUsers);if($('login-today'))$('login-today').textContent=fmt(Math.max(Number(m.signInsToday)||0,(data.users||[]).reduce((total,u)=>total+loginsToday(u),0)));if($('tokens'))$('tokens').textContent=fmt(m.tokensToday);renderDashboard(data);setupDashboardAnalyticsFilter();loadUsersAdmin();loadSubscriptionsAdmin();if(data.paymentGateway)renderGatewayConfig(data.paymentGateway);else loadGatewayConfig();renderProviders(data.models);loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();loadCloudflare();loadCohere();if(forceSettings||!settingsDirty){renderPlanFields(data.settings||{});renderTokenRulesTable(data.settings||{});settingsDirty=false}renderPricingAudit(data.pricingAuditLogs||[]);runConfigVerification(true);status('Admin data loaded.')}catch(error){if(error.status===401){showLogin();return}if(error.status===503&&error.code==='admin_not_configured'){showLogin('Admin sign-in is not configured. Set PHOTON_ADMIN_PASSWORD and restart the server.');return}status(error.message||'Could not load admin data.',true)}finally{refreshing=false}}
+async function load(forceSettings=false){if(refreshing)return;refreshing=true;status('Loading admin data...');try{const data=await request('/api/admin/overview');showApp();const m=data.metrics||{};$('logout').hidden=!!data.localAccess;if($('total'))$('total').textContent=fmt(m.totalUsers);if($('login-today'))$('login-today').textContent=fmt(Math.max(Number(m.signInsToday)||0,(data.users||[]).reduce((total,u)=>total+loginsToday(u),0)));if($('tokens'))$('tokens').textContent=fmt(m.tokensToday);renderDashboard(data);setupDashboardAnalyticsFilter();loadUsersAdmin();loadSubscriptionsAdmin();if(data.paymentGateway)renderGatewayConfig(data.paymentGateway);else loadGatewayConfig();renderProviders(data.models);loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();loadCloudflare();loadCohere();loadPollinations();if(forceSettings||!settingsDirty){renderPlanFields(data.settings||{});renderTokenRulesTable(data.settings||{});settingsDirty=false}renderPricingAudit(data.pricingAuditLogs||[]);runConfigVerification(true);status('Admin data loaded.')}catch(error){if(error.status===401){showLogin();return}if(error.status===503&&error.code==='admin_not_configured'){showLogin('Admin sign-in is not configured. Set PHOTON_ADMIN_PASSWORD and restart the server.');return}status(error.message||'Could not load admin data.',true)}finally{refreshing=false}}
  $('login-form').addEventListener('submit',async event=>{event.preventDefault();const button=$('login-button');button.disabled=true;button.textContent='Signing in...';$('login-error').hidden=true;try{await request('/api/admin/login','POST',{email:$('admin-email').value.trim(),password:$('admin-password').value});$('admin-password').value='';await load(true)}catch(error){showLogin(error.message||'Sign-in failed. Check the username and password.')}finally{button.disabled=false;button.textContent='Sign in'}});
  $('logout').addEventListener('click',async()=>{try{await request('/api/admin/logout','POST',{})}finally{showLogin('You have signed out.')}});
  const pageMeta={overview:['Dashboard','Live overview of Photon accounts and usage.'],'users-section':['Users & Sign-ins','Account access, sign-in methods, activity, and plan status.'],subscriptions:['Subscriptions & Purchases','Verified payments, revenue, MRR, and Cashfree gateway configuration.'],settings:['Pricing & Token Rules','Manage plan pricing, daily limits, and AI activity token costs.'],providers:['AI Provider Settings','Check and manage server-side AI provider keys. Secrets are never shown.']};function showPage(){let id=location.hash.slice(1)||'overview';if(!pageMeta[id])id='overview';document.querySelectorAll('.page-view').forEach(page=>page.classList.toggle('active',page.id===id));document.querySelectorAll('.sidebar nav a[href^="#"]').forEach(link=>link.classList.toggle('active',link.getAttribute('href')==='#'+id));$('page-title').textContent=pageMeta[id][0];$('page-description').textContent=pageMeta[id][1];if(id==='overview'){load()}else if(id==='users-section'){loadUsersAdmin()}else if(id==='subscriptions'){loadGatewayConfig();loadSubscriptionsAdmin()}else if(id==='settings'){load(true)}else if(id==='providers'){loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();loadCloudflare();loadCohere();}}window.addEventListener('hashchange',showPage);showPage();
@@ -2371,6 +2422,184 @@ async function load(forceSettings=false){if(refreshing)return;refreshing=true;st
       button.disabled = false;
     }
   });
+
+  bindKeyPasswordEye('pollinations-key-input', 'pollinations-key-eye');
+  bindStandardKeyForm('pollinations', '/api/admin/pollinations/key', loadPollinations);
+
+  function polliUsageText(u, st){
+    u = u || {};
+    return fmt(u.requests || 0) + ' requests, ' + fmt(u.imagesGenerated || 0) + ' images generated | Spent $' + Number(u.monthlySpentUsd || 0).toFixed(2) + ' of $' + Number(st.monthlyBudgetCapUsd || 5).toFixed(2) + ' cap (' + (st.currentMonthKey || 'UTC') + ')';
+  }
+
+  function renderPollinations(view){
+    const st = (view && view.status) || view || {};
+    updateKeyFormUi('pollinations', st.configured, st.maskedApiKey || st.maskedKey, 'Pollinations');
+    const diag = $('pollinations-diag');
+    diag.replaceChildren();
+    rowItem(diag, 'Pollinations AI API', (st.configured ? 'key ' + (st.maskedApiKey || 'configured') : 'POLLINATIONS_API_KEY is not set') + '; ' + (st.modelCount || 0) + ' models discovered, ' + (st.enabledModelCount || 0) + ' enabled', orBadge(st.validation === 'ok' ? 'Connected' : (st.validation || 'Not checked'), st.validation === 'ok'));
+    rowItem(diag, 'Monthly budget cap', '$' + Number(st.usage?.monthlySpentUsd || 0).toFixed(2) + ' spent of $' + Number(st.monthlyBudgetCapUsd || 5).toFixed(2) + ' budget cap (' + (st.currentMonthKey || 'UTC') + ')', orBadge(st.isMonthlyBudgetExhausted ? 'Exhausted' : 'Active', !st.isMonthlyBudgetExhausted));
+    if (st.balanceUsd != null) rowItem(diag, 'Pollinations Account Balance', '$' + Number(st.balanceUsd).toFixed(2) + ' USD', orBadge('Verified', true));
+    if (st.usage && st.usage.lastSuccessAt) rowItem(diag, 'Last successful request', dateTime(st.usage.lastSuccessAt), '');
+    if (st.usage && st.usage.lastError) rowItem(diag, 'Last error', st.usage.lastError, orBadge('Error', false));
+    $('pollinations-usage').textContent = polliUsageText(st.usage, st);
+    $('pollinations-enabled').value = st.enabled === false ? 'false' : 'true';
+    $('pollinations-spending-policy').value = st.spendingPolicy || 'allow_budget_only';
+    $('pollinations-monthly-cap').value = String(st.monthlyBudgetCapUsd || 5.00);
+
+    const root = $('pollinations-models');
+    root.replaceChildren();
+    (st.models || []).forEach(m => {
+      const row = document.createElement('tr');
+      td(row, (m.name || m.id) + (st.defaultModelId === m.id ? ' ★ Default' : ''));
+      const statusCell = td(row, '');
+      statusCell.appendChild(orBadge(m.enabled ? 'Enabled' : 'Disabled', Boolean(m.enabled)));
+      td(row, m.capabilities && m.capabilities.image ? 'Image Generation' : 'Inference');
+      const actions = td(row, '');
+      actions.style.whiteSpace = 'nowrap';
+      const btn = (label, fn) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = label;
+        b.addEventListener('click', fn);
+        return b;
+      };
+      actions.append(
+        btn('Test model', () => polliTestModel(m)),
+        btn(m.enabled ? 'Disable' : 'Enable', () => polliPatchModel(m.id, { enabled: !m.enabled })),
+        btn('Set default', () => polliSetDefault(m.id))
+      );
+      root.appendChild(row);
+    });
+    if (!(st.models || []).length) {
+      const row = document.createElement('tr'),
+        empty = td(row, st.configured ? 'No models discovered yet. Test connection or refresh models.' : 'Set POLLINATIONS_API_KEY to discover models.');
+      empty.colSpan = 4;
+      empty.className = 'empty';
+      root.appendChild(row);
+    }
+    const errors = $('pollinations-errors');
+    errors.replaceChildren();
+    (st.recentErrors || []).slice(0, 10).forEach(e => rowItem(errors, (e.code || 'error') + (e.model ? ' (' + e.model + ')' : ''), (e.message || '') + ' ' + (e.at || ''), orBadge('Failed', false)));
+    if (!(st.recentErrors || []).length) rowItem(errors, 'No recent Pollinations errors', 'Successful requests and failures are tracked here.', orBadge('Clear', true));
+  }
+
+  async function polliTestModel(m){
+    try {
+      const data = await request('/api/admin/pollinations/test-model', 'POST', { model: m.id, prompt: 'A futuristic glowing photon crystal cube' });
+      const r = data.result || {};
+      showTestResultModal({
+        title: 'Pollinations Model Test: ' + (m.name || m.id),
+        provider: 'Pollinations AI',
+        model: m.id,
+        ok: r.ok,
+        status: r.status,
+        code: r.code,
+        message: r.message,
+        responseTimeMs: r.responseTimeMs,
+        testedAt: r.testedAt
+      });
+      loadPollinations();
+    } catch(err) {
+      showTestResultModal({
+        title: 'Pollinations Model Test: ' + (m.name || m.id),
+        provider: 'Pollinations AI',
+        model: m.id,
+        ok: false,
+        status: 'test_failed',
+        message: err.message || 'Model test failed.'
+      });
+    }
+  }
+
+  async function polliPatchModel(modelId, patch){
+    try {
+      const data = await request('/api/admin/pollinations/model/' + encodeURIComponent(modelId), 'PATCH', patch);
+      renderPollinations(data);
+    } catch(err) {
+      alert(err.message || 'Could not update model state.');
+    }
+  }
+
+  async function polliSetDefault(modelId){
+    try {
+      const data = await request('/api/admin/pollinations', 'PUT', { defaultModelId: modelId });
+      renderPollinations(data);
+    } catch(err) {
+      alert(err.message || 'Could not set default model.');
+    }
+  }
+
+  async function loadPollinations(){
+    try {
+      renderPollinations(await request('/api/admin/pollinations'));
+    } catch(error) {
+      status(error.message || 'Could not load Pollinations status.', true);
+    }
+  }
+
+  $('pollinations-settings-form')?.addEventListener('submit', async event => {
+    event.preventDefault();
+    const button = $('pollinations-save-settings');
+    button.disabled = true;
+    try {
+      renderPollinations(await request('/api/admin/pollinations', 'PUT', {
+        enabled: $('pollinations-enabled').value === 'true',
+        spendingPolicy: $('pollinations-spending-policy').value,
+        monthlyBudgetCapUsd: Number($('pollinations-monthly-cap').value) || 5.00
+      }));
+    } catch (error) {
+      alert(error.message || 'Could not save Pollinations settings.');
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  $('pollinations-test-connection')?.addEventListener('click', async () => {
+    const button = $('pollinations-test-connection');
+    button.disabled = true;
+    button.textContent = 'Testing...';
+    try {
+      const data = await request('/api/admin/pollinations/connection', 'POST', {});
+      renderPollinations(data);
+      const r = data.result || {};
+      showTestResultModal({
+        title: 'Pollinations Connection Test',
+        provider: 'Pollinations AI',
+        ok: r.ok,
+        status: r.status,
+        code: r.code,
+        message: r.message,
+        responseTimeMs: r.responseTimeMs,
+        testedAt: r.testedAt,
+        modelCount: r.modelCount
+      });
+    } catch (error) {
+      showTestResultModal({
+        title: 'Pollinations Connection Test',
+        provider: 'Pollinations AI',
+        ok: false,
+        status: 'connection_failed',
+        message: error.message || 'Could not test Pollinations connection.'
+      });
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Test connection';
+    }
+  });
+
+  $('pollinations-refresh')?.addEventListener('click', async () => {
+    const button = $('pollinations-refresh');
+    button.disabled = true;
+    try {
+      renderPollinations(await request('/api/admin/pollinations/refresh', 'POST', {}));
+    } catch (error) {
+      alert(error.message || 'Could not refresh Pollinations models.');
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+
 
   function nvUsageText(u){u=u||{};return fmt(u.requests)+' requests, '+fmt(u.failures)+' failed, '+fmt(u.inputTokens)+' in / '+fmt(u.outputTokens)+' out tokens ('+fmt(u.totalTokens)+' total)'}
   function renderNvidia(view){const st=(view&&view.status)||view||{};updateKeyFormUi('nvidia',st.configured,st.maskedKey,'NVIDIA');const diag=$('nvidia-diag');diag.replaceChildren();rowItem(diag,'NVIDIA NIM API',(st.configured?'key '+(st.maskedKey||'configured'):'NVIDIA_API_KEY is not set')+'; '+(st.modelCount||0)+' discovered, '+(st.enabledModelCount||0)+' enabled',orBadge(st.validation==='ok'?'Connected':(st.validation||'Not checked'),st.validation==='ok'));if(st.keyFormatWarning)rowItem(diag,'Key format warning',st.keyFormatWarning,orBadge('Check key',false));rowItem(diag,'Spending policy',st.spendingPolicy==='block'?'Block all requests':'Allow free credits only (zero-billing safe)',orBadge(st.spendingPolicy==='block'?'Blocked':'Free only',st.spendingPolicy!=='block'));if(st.usage&&st.usage.lastSuccessAt)rowItem(diag,'Last successful request',dateTime(st.usage.lastSuccessAt),'');if(st.usage&&st.usage.lastError)rowItem(diag,'Last error',st.usage.lastError,orBadge('Error',false));$('nvidia-usage').textContent=nvUsageText(st.usage);$('nvidia-enabled').value=st.enabled===false?'false':'true';$('nvidia-spending-policy').value=st.spendingPolicy||'allow_free_only';const root=$('nvidia-models');root.replaceChildren();(st.models||[]).forEach(m=>{const row=document.createElement('tr');td(row,(m.name||m.id)+(st.defaultModelId===m.id?' ★ Default':''));const statusCell=td(row,'');statusCell.appendChild(orBadge(m.enabled?'Enabled':'Disabled',Boolean(m.enabled)));const ctxCell=td(row,'');ctxCell.textContent=m.contextWindow?(m.contextWindow.toLocaleString()+' tokens'):'131,072 tokens';const actions=td(row,'');actions.style.whiteSpace='nowrap';const btn=(label,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.addEventListener('click',fn);return b};actions.append(btn('Test model',()=>nvTestModel(m)),btn(m.enabled?'Disable':'Enable',()=>nvPatchModel(m.id,{enabled:!m.enabled})),btn('Set default',()=>nvSetDefault(m.id)));root.appendChild(row)});if(!(st.models||[]).length){const row=document.createElement('tr'),empty=td(row,st.configured?'No models discovered yet. Test connection or refresh models.':'Set NVIDIA_API_KEY to discover models.');empty.colSpan=4;empty.className='empty';root.appendChild(row)}const errors=$('nvidia-errors');errors.replaceChildren();(st.recentErrors||[]).slice(0,10).forEach(e=>rowItem(errors,(e.code||'error')+(e.model?' ('+e.model+')':''),(e.message||'')+' '+(e.at||''),orBadge('Failed',false)));if(!(st.recentErrors||[]).length)rowItem(errors,'No recent NVIDIA errors','Successful requests and failures are tracked here.',orBadge('Clear',true))}

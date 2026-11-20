@@ -17,3 +17,5 @@ photon-profile-data.json.lock
 .photon-cloudflare-config.json
 .photon-cohere-config.json
 *.log
+.photon-pollinations-config.json
+scratch/

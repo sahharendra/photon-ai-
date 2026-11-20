@@ -27,6 +27,8 @@ const { createCloudflareConfig } = require('./cloudflare-config');
 const { createCloudflareProvider } = require('./cloudflare-provider');
 const { createCohereConfig } = require('./cohere-config');
 const { createCohereProvider } = require('./cohere-provider');
+const { createPollinationsConfig } = require('./pollinations-config');
+const { createPollinationsProvider } = require('./pollinations-provider');
 // Anthropic provider is disabled (no key configured).
 // File is kept on disk for future re-enablement. To re-enable, restore the imports
 // and provider instance below, and add ANTHROPIC_API_KEY to API.env.
@@ -155,6 +157,8 @@ const cloudflareConfig = createCloudflareConfig({ dir: ROOT, env: process.env })
 const cloudflare = createCloudflareProvider({ HttpError, env: process.env, config: cloudflareConfig });
 const cohereConfig = createCohereConfig({ dir: ROOT, env: process.env });
 const cohere = createCohereProvider({ HttpError, env: process.env, config: cohereConfig });
+const pollinationsConfig = createPollinationsConfig({ dir: ROOT, env: process.env });
+const pollinations = createPollinationsProvider({ HttpError, env: process.env, config: pollinationsConfig });
 
 function getActiveGatewayName(data) {
   if (process.env.RAZORPAY_KEY_ID && !process.env.CASHFREE_CLIENT_ID) return 'razorpay';
@@ -563,6 +567,7 @@ const providerCreditStatus = {
   llmtr: { exhausted: false },
   cloudflare: { exhausted: false },
   cohere: { exhausted: false },
+  pollinations: { exhausted: false },
 };
 
 function normalizeProviderKey(name) {
@@ -577,6 +582,7 @@ function normalizeProviderKey(name) {
   if (s.includes('llmtr') || s.includes('freellmapi')) return 'llmtr';
   if (s.includes('cloudflare')) return 'cloudflare';
   if (s.includes('cohere')) return 'cohere';
+  if (s.includes('pollinations')) return 'pollinations';
   return s;
 }
 
@@ -638,7 +644,8 @@ function availableModels() {
   const olm = ollama.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: Boolean(m.free), pricingVerified: Boolean(m.available), contextLength: m.contextLength, capabilities: m.capabilities || { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
   const cf = cloudflare.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: true, pricingVerified: Boolean(m.available), contextLength: m.contextLength, capabilities: m.capabilities || { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
   const coh = cohere.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: false, pricingVerified: Boolean(m.available), contextLength: m.contextLength, capabilities: m.capabilities || { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
-  const merged = [...base, ...google, ...claude, ...free, ...gpt, ...cc, ...gq, ...nv, ...ltr, ...olm, ...cf, ...coh];
+  const polli = pollinations.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: false, pricingVerified: true, capabilities: { text: false, image: true, vision: false, pdf: false }, reason: m.reason || '' }));
+  const merged = [...base, ...google, ...claude, ...free, ...gpt, ...cc, ...gq, ...nv, ...ltr, ...olm, ...cf, ...coh, ...polli];
   const seen = new Set();
   const out = [];
   for (const item of merged) {
@@ -807,7 +814,7 @@ async function callGemini(model, contents, systemInstruction) {
   return gemini.generate({ model, contents, systemInstruction });
 }
 async function resolveModel(id) {
-  await Promise.allSettled([gemini.refreshModels(), openrouter.refreshModels(), codecraft.refreshModels(), groq.refreshModels(), nvidia.refreshModels(), openai.refreshModels(), llmtr.refreshModels(), ollama.refreshModels(), cloudflare.refreshModels(), cohere.refreshModels()]);
+  await Promise.allSettled([gemini.refreshModels(), openrouter.refreshModels(), codecraft.refreshModels(), groq.refreshModels(), nvidia.refreshModels(), openai.refreshModels(), llmtr.refreshModels(), ollama.refreshModels(), cloudflare.refreshModels(), cohere.refreshModels(), pollinations.refreshModels()]);
   let option = availableModels().find(m => m.id === id);
   if (!option && PHOTON_MODEL_ALIASES[id]) {
     for (const cand of PHOTON_MODEL_ALIASES[id]) {
@@ -832,6 +839,7 @@ function providerKey(option) {
   if (option.provider === 'Ollama') return 'ollama';
   if (option.provider === 'Cloudflare Workers AI' || option.provider === 'Cloudflare' || option.providerId === 'cloudflare_workers_ai') return 'cloudflare';
   if (option.provider === 'Cohere' || option.providerId === 'cohere') return 'cohere';
+  if (option.provider === 'Pollinations AI' || option.provider === 'Pollinations' || option.providerId === 'pollinations') return 'pollinations';
   return 'gemini';
 }
 async function generateProvider({ providerName, modelId, system, history, text, attachments, contents, maxTokens }) {
@@ -1522,6 +1530,66 @@ const server = http.createServer(async (req, res) => {
         return reply(res, 200, { success: true, data: cohere.status() });
       }
       if (pathname.startsWith('/api/admin/cohere')) return fail(res, new HttpError(404, 'not_found', 'Cohere admin route not found.'), requestId);
+      if (pathname === '/api/admin/pollinations' && req.method === 'GET') {
+        await pollinations.refreshModels();
+        return reply(res, 200, { success: true, data: pollinations.status() });
+      }
+      if (pathname === '/api/admin/pollinations' && req.method === 'PUT') {
+        const body = await readBody(req);
+        try {
+          if (typeof body.enabled === 'boolean') pollinationsConfig.setEnabled(body.enabled);
+          if (typeof body.spendingPolicy === 'string') pollinationsConfig.setSpendingPolicy(body.spendingPolicy);
+          if (body.monthlyBudgetCapUsd !== undefined) pollinationsConfig.setMonthlyBudgetCapUsd(body.monthlyBudgetCapUsd);
+          if (body.defaultModelId !== undefined) pollinationsConfig.setDefaultModelId(body.defaultModelId || null);
+        } catch (error) {
+          if (error instanceof HttpError) throw error;
+          throw new HttpError(400, error?.code || 'invalid_settings', error?.message || 'Invalid Pollinations settings.');
+        }
+        await pollinations.refreshModels();
+        return reply(res, 200, { success: true, data: pollinations.status() });
+      }
+      if (pathname === '/api/admin/pollinations/connection' && req.method === 'POST') {
+        const result = await pollinations.testConnection();
+        if (result.ok) clearProviderCreditsExhausted('pollinations');
+        else if (result.code === 'budget_exhausted') markProviderCreditsExhausted('pollinations', result.message);
+        return reply(res, 200, { success: true, data: { result, status: pollinations.status(), creditsExhausted: isProviderCreditsExhausted('pollinations') } });
+      }
+      if (pathname === '/api/admin/pollinations/refresh' && req.method === 'POST') {
+        await pollinations.refreshModels(true);
+        return reply(res, 200, { success: true, data: pollinations.status() });
+      }
+      if (pathname === '/api/admin/pollinations/test-model' && req.method === 'POST') {
+        const body = await readBody(req);
+        const result = await pollinations.testModel(String(body.model || ''));
+        await pollinations.refreshModels();
+        return reply(res, 200, { success: true, data: { result, status: pollinations.status() } });
+      }
+      const polliModelRoute = /^\/api\/admin\/pollinations\/models?\/([A-Za-z0-9@_.:/-]{1,160})$/.exec(pathname);
+      if (polliModelRoute) {
+        if (req.method !== 'PUT' && req.method !== 'PATCH') return fail(res, new HttpError(405, 'method_not_allowed', 'Method not allowed.'), requestId);
+        const modelId = decodeURIComponent(polliModelRoute[1]);
+        const body = await readBody(req);
+        try {
+          if (typeof body.enabled === 'boolean') pollinationsConfig.setModelEnabled(modelId, body.enabled);
+        } catch (error) {
+          throw new HttpError(400, error?.code || 'invalid_model', error?.message || 'Invalid model ID.');
+        }
+        return reply(res, 200, { success: true, data: pollinations.status() });
+      }
+      if (pathname === '/api/admin/pollinations/key' && req.method === 'POST') {
+        const body = await readBody(req);
+        const key = typeof body.apiKey === 'string' ? body.apiKey.trim() : (typeof body.key === 'string' ? body.key.trim() : '');
+        if (!key) throw new HttpError(400, 'invalid_key', 'Pollinations API key cannot be empty.');
+        setEnvKey('POLLINATIONS_API_KEY', key);
+        await pollinations.refreshModels(true);
+        return reply(res, 200, { success: true, data: pollinations.status() });
+      }
+      if (pathname === '/api/admin/pollinations/key' && req.method === 'DELETE') {
+        clearEnvKey('POLLINATIONS_API_KEY');
+        await pollinations.refreshModels(true);
+        return reply(res, 200, { success: true, data: pollinations.status() });
+      }
+      if (pathname.startsWith('/api/admin/pollinations')) return fail(res, new HttpError(404, 'not_found', 'Pollinations admin route not found.'), requestId);
       if (pathname === '/api/admin/llmtr' && req.method === 'GET') { await llmtr.refreshModels(); return reply(res, 200, { success: true, data: llmtr.status() }); }
       if (pathname === '/api/admin/llmtr' && req.method === 'PUT') {
         const body = await readBody(req);
@@ -1571,7 +1639,7 @@ const server = http.createServer(async (req, res) => {
       }
       if (pathname.startsWith('/api/admin/llmtr')) return fail(res, new HttpError(404, 'not_found', 'LLMTR admin route not found.'), requestId);
       if (pathname === '/api/admin/provider-status' && req.method === 'GET') {
-        await Promise.allSettled([gemini.refreshModels(true), openrouter.refreshModels(true), codecraft.refreshModels(true), groq.refreshModels(true), nvidia.refreshModels(true), openai.refreshModels(true), llmtr.refreshModels(true), ollama.refreshModels(true), cloudflare.refreshModels(true), cohere.refreshModels(true)]);
+        await Promise.allSettled([gemini.refreshModels(true), openrouter.refreshModels(true), codecraft.refreshModels(true), groq.refreshModels(true), nvidia.refreshModels(true), openai.refreshModels(true), llmtr.refreshModels(true), ollama.refreshModels(true), cloudflare.refreshModels(true), cohere.refreshModels(true), pollinations.refreshModels(true)]);
         return reply(res, 200, {
           success: true,
           data: {
@@ -1586,6 +1654,7 @@ const server = http.createServer(async (req, res) => {
             ollama: ollama.status(),
             cloudflare: cloudflare.status(),
             cohere: cohere.status(),
+            pollinations: pollinations.status(),
             creditsExhausted: { ...providerCreditStatus },
           },
         });
@@ -1993,7 +2062,18 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === 'GET' && pathname === '/api/profile/config') {
       const forceRefresh = parsedUrl.searchParams.get('refresh') === '1';
-      await Promise.allSettled([gemini.refreshModels(forceRefresh), openrouter.refreshModels(forceRefresh), codecraft.refreshModels(forceRefresh), groq.refreshModels(forceRefresh), nvidia.refreshModels(forceRefresh), llmtr.refreshModels(forceRefresh), ollama.refreshModels(forceRefresh)]);
+      await Promise.allSettled([
+        gemini.refreshModels(forceRefresh),
+        openrouter.refreshModels(forceRefresh),
+        codecraft.refreshModels(forceRefresh),
+        groq.refreshModels(forceRefresh),
+        nvidia.refreshModels(forceRefresh),
+        llmtr.refreshModels(forceRefresh),
+        ollama.refreshModels(forceRefresh),
+        cohere.refreshModels(forceRefresh),
+        cloudflare.refreshModels(forceRefresh),
+        pollinations.refreshModels(forceRefresh),
+      ]);
       const data = loadStore();
       const gwStatus = getActiveGatewayService(data).getGatewayStatus(data);
 
@@ -2339,10 +2419,80 @@ const server = http.createServer(async (req, res) => {
           }
           return;
         }
-        if (req.method === 'POST' && pathname === '/api/generate') {
-          const body = await readBody(req); const prompt = String(body.prompt || '').trim(); const kind = String(body.kind || 'image').trim().toLowerCase();
-          if (!['image', 'video'].includes(kind)) throw new HttpError(400, 'invalid_kind', 'Unsupported generation kind.');
-          if (!prompt || prompt.length > 20000) throw new HttpError(400, 'invalid_prompt', 'Enter a prompt up to 20,000 characters.');
+        if (req.method === 'GET' && pathname === '/api/images/models') {
+          return reply(res, 200, { success: true, data: pollinations.catalogEntries() });
+        }
+        if (req.method === 'POST' && (pathname === '/api/images/generate' || pathname === '/api/generate')) {
+          const body = await readBody(req);
+          const prompt = String(body.prompt || '').trim();
+          const kind = String(body.kind || 'image').trim().toLowerCase();
+          if (pathname === '/api/generate' && !['image', 'video'].includes(kind)) throw new HttpError(400, 'invalid_kind', 'Unsupported generation kind.');
+          if (!prompt || prompt.length > 32000) throw new HttpError(400, 'invalid_prompt', 'Enter a prompt up to 32,000 characters.');
+
+          // If this is an image request and Pollinations AI is configured, enabled, and within budget:
+          const isPollinationsSelected = body.provider === 'pollinations' || (body.model && String(body.model).includes('/'));
+          if (kind === 'image' && (isPollinationsSelected || (pollinations.configured() && pollinationsConfig.isEnabled() && !pollinationsConfig.isBudgetExhausted()))) {
+            if (!pollinations.configured()) throw new HttpError(503, 'pollinations_not_configured', 'Pollinations AI is not configured on this server.');
+            if (!pollinationsConfig.isEnabled()) throw new HttpError(403, 'pollinations_disabled', 'Pollinations AI is currently disabled in admin settings.');
+            if (pollinationsConfig.isBudgetExhausted()) throw new HttpError(402, 'budget_exhausted', 'Pollinations AI spending cap has been reached. Generation blocked by spending policy.');
+
+            const polliModel = (body.model && String(body.model).includes('/')) ? String(body.model).trim() : pollinationsConfig.getDefaultModelId();
+            const reserved = await withStoreLock(() => {
+              const freshStore = loadStore();
+              const resTx = reserveTokenSpend(freshStore, {
+                uid: claims.sub,
+                activityKey: 'image',
+                requestId: body.request_id || requestId,
+                profile,
+                provider: 'pollinations',
+                model: polliModel,
+              });
+              saveStore();
+              return resTx;
+            });
+
+            let imgRes;
+            try {
+              imgRes = await pollinations.generateImage({
+                prompt,
+                model: polliModel,
+                size: body.size || '1024x1024',
+                aspect_ratio: body.aspect_ratio || null,
+                seed: body.seed != null ? body.seed : null,
+                user: claims.sub
+              });
+            } catch (error) {
+              if (error?.status === 402 || error?.code === 'budget_exhausted') {
+                markProviderCreditsExhausted('pollinations', error.message);
+              }
+              refundTokenTransaction(loadStore(), reserved.transaction.id, error?.code || 'provider_error');
+              saveStore();
+              throw error;
+            }
+
+            commitTokenTransaction(loadStore(), reserved.transaction.id, { provider: 'Pollinations AI', model: imgRes.model });
+            addActivity(claims.sub, 'image', cleanDescription(prompt), reserved.transaction.tokensCharged, {
+              provider: 'Pollinations AI',
+              model: imgRes.model,
+              imageUrl: imgRes.url || null,
+              costUsd: imgRes.costUsd
+            });
+
+            const data = {
+              url: imgRes.url,
+              b64_json: imgRes.b64_json,
+              image: imgRes.url || (imgRes.b64_json ? `data:image/png;base64,${imgRes.b64_json}` : null),
+              text: imgRes.url ? `![Generated Image](${imgRes.url})` : (imgRes.b64_json ? `<img src="data:image/png;base64,${imgRes.b64_json}" alt="${escHtml(prompt)}" />` : ''),
+              provider: 'Pollinations AI',
+              model: imgRes.model,
+              latencyMs: imgRes.latencyMs,
+              tokensCharged: reserved.transaction.tokensCharged,
+              profileUsage: profileResponse(profile, claims.sub).usage,
+              request_id: requestId
+            };
+            return reply(res, 200, { success: true, data });
+          }
+
           let chosenModel = requireModelId(profile, body.model);
           let modelOption = await resolveModel(chosenModel);
           if (!modelOption || !modelOption.available || modelOption.creditsExhausted) {

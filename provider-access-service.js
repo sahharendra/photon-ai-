@@ -12,10 +12,10 @@
  */
 
 const PLAN_ALLOWED_PROVIDERS = Object.freeze({
-  basic: Object.freeze(['openrouter', 'codecraft', 'ollama', 'llmtr']),
-  free: Object.freeze(['openrouter', 'codecraft', 'ollama', 'llmtr']),
-  pro: Object.freeze(['openrouter', 'codecraft', 'groq', 'ollama', 'llmtr']),
-  premium: Object.freeze(['openrouter', 'codecraft', 'groq', 'nvidia', 'openai', 'google', 'ollama', 'llmtr', '*']),
+  basic: Object.freeze(['openrouter', 'codecraft', 'ollama', 'llmtr', 'cohere', 'cloudflare', 'pollinations']),
+  free: Object.freeze(['openrouter', 'codecraft', 'ollama', 'llmtr', 'cohere', 'cloudflare', 'pollinations']),
+  pro: Object.freeze(['openrouter', 'codecraft', 'groq', 'ollama', 'llmtr', 'cohere', 'cloudflare', 'pollinations']),
+  premium: Object.freeze(['openrouter', 'codecraft', 'groq', 'nvidia', 'openai', 'google', 'ollama', 'llmtr', 'cohere', 'cloudflare', 'pollinations', '*']),
 });
 
 const PROVIDER_ALIASES = Object.freeze({
@@ -40,6 +40,15 @@ const PROVIDER_ALIASES = Object.freeze({
   'ollama': 'ollama',
   'ollama cloud': 'ollama',
   'ollamacloud': 'ollama',
+  'cohere': 'cohere',
+  'cohere ai': 'cohere',
+  'cohereai': 'cohere',
+  'cloudflare': 'cloudflare',
+  'cloudflare ai': 'cloudflare',
+  'cloudflare workers ai': 'cloudflare',
+  'cloudflare_workers_ai': 'cloudflare',
+  'pollinations': 'pollinations',
+  'pollinations ai': 'pollinations',
 });
 
 function normalizePlanId(planId) {
