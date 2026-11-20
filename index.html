@@ -4267,10 +4267,10 @@ function kindOf(t){if(mode==="image"||mode==="video"||mode==="code")return mode;
   if(/\b(write|generate|create|build|implement|develop)\b[^.?!]{0,30}\b(code|function|script|program|snippet|algorithm|component|class|endpoint|api)\b/i.test(t)||/\bcode (me |up )?(a|an|the)\b/i.test(t))return"code";
   return"text"}
 function dayKey(){var t=new Date();return t.getFullYear()+"-"+(t.getMonth()+1)+"-"+t.getDate()}
-function tokState(){var o=null;try{o=JSON.parse(localStorage.getItem("photon-tok-"+user.email)||localStorage.getItem("orca-tok-"+user.email)||"null")}catch(e){}
+function tokState(){var o=null;var _em=user&&user.email?user.email:"guest";try{o=JSON.parse(localStorage.getItem("photon-tok-"+_em)||localStorage.getItem("orca-tok-"+_em)||"null")}catch(e){}
   if(!o||o.d!==dayKey())o={d:dayKey(),u:0,by:{text:0,voice:0,image:0,video:0,code:0}};if(!o.by)o.by={text:0,voice:0,image:0,video:0,code:0};return o}
-function tokSave(o){try{localStorage.setItem("photon-tok-"+user.email,JSON.stringify(o))}catch(e){}}
-function limit(){var p=PLANS.filter(function(x){return x.id===user.plan})[0];return p?p.tok:500}
+function tokSave(o){var _em=user&&user.email?user.email:"guest";try{localStorage.setItem("photon-tok-"+_em,JSON.stringify(o))}catch(e){}}
+function limit(){var _plan=user&&user.plan?user.plan:"basic";var p=PLANS.filter(function(x){return x.id===_plan})[0];return p?p.tok:500}
 function left(){return Math.max(0,limit()-tokState().u)}
 function spend(k){var o=tokState();o.u+=COST[k];o.by[k]=(o.by[k]||0)+1;tokSave(o);tokUI()}
 function untilReset(){var n=new Date(),m=new Date(n.getFullYear(),n.getMonth(),n.getDate()+1),ms=m-n;return Math.floor(ms/36e5)+"h "+Math.floor(ms%36e5/6e4)+"m"}
@@ -4737,6 +4737,7 @@ async function switchToFreeModelAndRetry(){
 }
 async function send(retry){
   if(busy)return;
+  if(!user){showAuth("login");return;}
   var inp=$("in"),text=retry&&cur.msgs.length?cur.msgs[cur.msgs.length-1].content:inp.value.trim();
   if(!text&&pendingChatFiles.length)text="Please review the attached file(s).";
   if(!text)return;
