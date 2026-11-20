@@ -348,4 +348,88 @@ describe('cloudflare-provider', () => {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
   });
+
+  it('imageCatalogEntries() returns text-to-image models', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cf-img1-'));
+    try {
+      const env = {
+        CLOUDFLARE_ACCOUNT_ID: 'a1b2c3d4e5f60718293a4b5c6d7e8f90',
+        CLOUDFLARE_API_TOKEN: 'cf_token_valid',
+      };
+      const cfg = createCloudflareConfig({ dir: tmpDir, env });
+      const provider = createCloudflareProvider({ HttpError, env, config: cfg });
+      const catalog = provider.imageCatalogEntries();
+      assert.ok(Array.isArray(catalog));
+      assert.ok(catalog.length >= 4);
+      const flux = catalog.find(m => m.id === '@cf/black-forest-labs/flux-1-schnell');
+      assert.ok(flux);
+      assert.equal(flux.available, true);
+      assert.equal(flux.category, 'Image Generation');
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('generateImage() returns image data url from binary stream', async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cf-img2-'));
+    const env = {
+      CLOUDFLARE_ACCOUNT_ID: 'a1b2c3d4e5f60718293a4b5c6d7e8f90',
+      CLOUDFLARE_API_TOKEN: 'cf_token_valid',
+    };
+    try {
+      const cfg = createCloudflareConfig({ dir: tmpDir, env });
+      const samplePngBytes = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+      const fetchImpl = async (url, opts) => {
+        assert.ok(url.includes('/ai/run/@cf/black-forest-labs/flux-1-schnell'));
+        assert.equal(opts.headers['Authorization'], 'Bearer cf_token_valid');
+        const body = JSON.parse(opts.body);
+        assert.equal(body.prompt, 'a futuristic city at sunset');
+        return {
+          ok: true,
+          status: 200,
+          headers: { get: k => (k.toLowerCase() === 'content-type' ? 'image/png' : null) },
+          arrayBuffer: async () => samplePngBytes.buffer.slice(samplePngBytes.byteOffset, samplePngBytes.byteOffset + samplePngBytes.byteLength),
+        };
+      };
+
+      const provider = createCloudflareProvider({ HttpError, env, config: cfg, fetchImpl });
+      const res = await provider.generateImage({
+        prompt: 'a futuristic city at sunset',
+        model: '@cf/black-forest-labs/flux-1-schnell',
+      });
+
+      assert.equal(res.success, true);
+      assert.equal(res.mimeType, 'image/png');
+      assert.ok(res.dataUrl.startsWith('data:image/png;base64,'));
+      assert.equal(res.model, '@cf/black-forest-labs/flux-1-schnell');
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('testImageModel() executes quick test and returns working status', async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cf-img3-'));
+    const env = {
+      CLOUDFLARE_ACCOUNT_ID: 'a1b2c3d4e5f60718293a4b5c6d7e8f90',
+      CLOUDFLARE_API_TOKEN: 'cf_token_valid',
+    };
+    try {
+      const cfg = createCloudflareConfig({ dir: tmpDir, env });
+      const fakeBytes = Buffer.from('fake-image-bytes');
+      const fetchImpl = async () => ({
+        ok: true,
+        status: 200,
+        headers: { get: () => 'image/jpeg' },
+        arrayBuffer: async () => fakeBytes.buffer.slice(fakeBytes.byteOffset, fakeBytes.byteOffset + fakeBytes.byteLength),
+      });
+
+      const provider = createCloudflareProvider({ HttpError, env, config: cfg, fetchImpl });
+      const res = await provider.testImageModel('@cf/black-forest-labs/flux-1-schnell');
+      assert.equal(res.ok, true);
+      assert.equal(res.status, 'working');
+      assert.equal(res.model, '@cf/black-forest-labs/flux-1-schnell');
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
 });

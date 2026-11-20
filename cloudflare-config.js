@@ -73,6 +73,61 @@ const DEFAULT_CLOUDFLARE_MODELS = Object.freeze({
   },
 });
 
+// Curated default free-tier eligible Workers AI text-to-image models
+const CLOUDFLARE_DEFAULT_IMAGE_MODEL = '@cf/black-forest-labs/flux-1-schnell';
+const CLOUDFLARE_IMAGE_MODELS = Object.freeze({
+  '@cf/black-forest-labs/flux-1-schnell': {
+    id: '@cf/black-forest-labs/flux-1-schnell',
+    name: 'FLUX.1 Schnell (Cloudflare Workers AI)',
+    provider: 'Cloudflare Workers AI',
+    task: 'text-to-image',
+    category: 'Image Generation',
+    enabled: true,
+    freeTierEligible: true,
+    steps: 4,
+    description: 'High-speed 12B parameter state-of-the-art text-to-image generator',
+  },
+  '@cf/stabilityai/stable-diffusion-xl-base-1.0': {
+    id: '@cf/stabilityai/stable-diffusion-xl-base-1.0',
+    name: 'Stable Diffusion XL Base 1.0 (Cloudflare Workers AI)',
+    provider: 'Cloudflare Workers AI',
+    task: 'text-to-image',
+    category: 'Image Generation',
+    enabled: true,
+    freeTierEligible: true,
+    steps: 20,
+    description: 'High-resolution photo and vector generation with SDXL Base 1.0',
+  },
+  '@cf/bytedance/stable-diffusion-xl-lightning': {
+    id: '@cf/bytedance/stable-diffusion-xl-lightning',
+    name: 'SDXL Lightning (Cloudflare Workers AI)',
+    provider: 'Cloudflare Workers AI',
+    task: 'text-to-image',
+    category: 'Image Generation',
+    enabled: true,
+    freeTierEligible: true,
+    steps: 4,
+    description: 'Sub-second lightning-fast text-to-image inference',
+  },
+  '@cf/runwayml/stable-diffusion-v1-5': {
+    id: '@cf/runwayml/stable-diffusion-v1-5',
+    name: 'Stable Diffusion v1.5 (Cloudflare Workers AI)',
+    provider: 'Cloudflare Workers AI',
+    task: 'text-to-image',
+    category: 'Image Generation',
+    enabled: true,
+    freeTierEligible: true,
+    steps: 20,
+    description: 'Classic Stable Diffusion 1.5 text-to-image generation',
+  },
+});
+
+function isCloudflareImageModel(id) {
+  const value = String(id || '').trim();
+  if (!MODEL_ID.test(value)) return false;
+  return Boolean(CLOUDFLARE_IMAGE_MODELS[value]) || /(sdxl|stable-diffusion|flux)/i.test(value);
+}
+
 function readEnvCredentials(env) {
   const accountId = String(env.CLOUDFLARE_ACCOUNT_ID || '').trim();
   const apiToken = String(env.CLOUDFLARE_API_TOKEN || env.CLOUDFLARE_API_KEY || '').trim();
@@ -460,6 +515,9 @@ module.exports = {
   maskAccountId,
   maskToken,
   isCloudflareChatModel,
+  isCloudflareImageModel,
+  CLOUDFLARE_IMAGE_MODELS,
+  CLOUDFLARE_DEFAULT_IMAGE_MODEL,
   prettyName,
   getUtcDayKey,
   DEFAULT_DAILY_NEURONS_LIMIT,

@@ -16,6 +16,9 @@ const {
   maskToken,
   MODEL_ID,
   isCloudflareChatModel,
+  isCloudflareImageModel,
+  CLOUDFLARE_IMAGE_MODELS,
+  CLOUDFLARE_DEFAULT_IMAGE_MODEL,
 } = require('./cloudflare-config');
 const { parseRetryAfter, backoffDelay } = require('./gemini-provider');
 
@@ -672,10 +675,188 @@ function createCloudflareProvider({
     }
   }
 
+  function imageCatalogEntries() {
+    const isAvail = configured() && enabled() && !cfg.isDailyQuotaExhausted();
+    return Object.values(CLOUDFLARE_IMAGE_MODELS).map(m => ({
+      id: m.id,
+      name: m.name,
+      provider: 'Cloudflare Workers AI',
+      providerKey: 'cloudflare',
+      category: 'Image Generation',
+      task: 'text-to-image',
+      available: isAvail,
+      configured: configured(),
+      enabled: enabled(),
+      free: true,
+      freeTierEligible: true,
+      pricingVerified: true,
+      description: m.description,
+      steps: m.steps,
+    }));
+  }
+
+  async function generateImage({
+    prompt,
+    model = CLOUDFLARE_DEFAULT_IMAGE_MODEL,
+    steps,
+    signal,
+  } = {}) {
+    const creds = credentials();
+    if (!creds.accountId || !creds.apiToken) {
+      throw new HttpError(503, 'not_configured', validationMessage('not_configured'));
+    }
+    if (!enabled()) {
+      throw new HttpError(403, 'provider_disabled', validationMessage('provider_disabled'));
+    }
+    const cleanPrompt = String(prompt || '').trim();
+    if (!cleanPrompt) {
+      throw new HttpError(400, 'invalid_prompt', 'Prompt is required for image generation.');
+    }
+
+    const targetModel = CLOUDFLARE_IMAGE_MODELS[model] ? model : CLOUDFLARE_DEFAULT_IMAGE_MODEL;
+    const meta = CLOUDFLARE_IMAGE_MODELS[targetModel] || { name: targetModel, steps: 4 };
+
+    // Check spending policy / quota
+    const policy = cfg.getSpendingPolicy();
+    if (policy === 'block') {
+      throw new HttpError(403, 'billing_blocked', validationMessage('billing_blocked'));
+    }
+    if (cfg.isDailyQuotaExhausted()) {
+      throw new HttpError(402, 'quota_exhausted', validationMessage('quota_exhausted'));
+    }
+
+    const numSteps = Number.isInteger(steps) && steps > 0 ? steps : meta.steps;
+    const runUrl = `https://api.cloudflare.com/client/v4/accounts/${creds.accountId}/ai/run/${targetModel}`;
+
+    const headers = {
+      'Authorization': `Bearer ${creds.apiToken}`,
+      'Content-Type': 'application/json',
+      'Accept': 'image/*, application/json',
+    };
+
+    const combined = combinedSignal(signal, REQUEST_TIMEOUT_MS);
+    let res;
+    try {
+      res = await fetchImpl(runUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ prompt: cleanPrompt, steps: numSteps }),
+        signal: combined,
+      });
+    } catch (err) {
+      const mapped = mapError(err);
+      throw new HttpError(mapped.status || 502, mapped.code, mapped.message);
+    }
+
+    if (!res.ok) {
+      const status = res.status;
+      let errBody = '';
+      try {
+        errBody = await res.text();
+      } catch (_) {}
+      let parsedErr = null;
+      try {
+        parsedErr = JSON.parse(errBody);
+      } catch (_) {}
+
+      const msg = (parsedErr && parsedErr.errors && parsedErr.errors[0] && parsedErr.errors[0].message) || errBody || res.statusText;
+      let code = 'provider_error';
+      if (status === 401 || status === 403) code = 'invalid_api_token';
+      else if (status === 429) code = 'quota_or_rate_limit';
+      else if (status >= 500) code = 'provider_unavailable';
+
+      cfg.recordUsage({
+        success: false,
+        tokens: 0,
+        neurons: 0,
+        model: targetModel,
+        errorCode: code,
+        message: msg,
+      });
+      throw new HttpError(status, code, `Cloudflare image generation failed (${status}): ${msg}`);
+    }
+
+    const contentType = (res.headers.get('content-type') || '').toLowerCase();
+    let b64 = '';
+    let mime = 'image/png';
+
+    if (contentType.includes('application/json')) {
+      const json = await res.json();
+      if (json && json.result && json.result.image) {
+        b64 = json.result.image;
+        mime = 'image/jpeg';
+      } else {
+        throw new HttpError(502, 'empty_response', 'Cloudflare Workers AI did not return an image payload.');
+      }
+    } else {
+      const arrayBuffer = await res.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      if (!buffer.length) {
+        throw new HttpError(502, 'empty_response', 'Cloudflare Workers AI returned empty image bytes.');
+      }
+      b64 = buffer.toString('base64');
+      mime = contentType.startsWith('image/') ? contentType.split(';')[0] : 'image/png';
+    }
+
+    cfg.recordUsage({
+      success: true,
+      tokens: 0,
+      neurons: 50,
+      model: targetModel,
+    });
+
+    const dataUrl = `data:${mime};base64,${b64}`;
+    return {
+      success: true,
+      image: dataUrl,
+      dataUrl,
+      b64_json: b64,
+      mimeType: mime,
+      model: targetModel,
+      modelName: meta.name,
+      provider: 'Cloudflare Workers AI',
+      prompt: cleanPrompt,
+    };
+  }
+
+  async function testImageModel(modelId = CLOUDFLARE_DEFAULT_IMAGE_MODEL) {
+    const started = Date.now();
+    try {
+      const res = await generateImage({
+        prompt: 'a minimalist glowing photon sphere',
+        model: modelId,
+        steps: 4,
+      });
+      return {
+        ok: true,
+        model: res.model,
+        modelName: res.modelName,
+        provider: 'Cloudflare Workers AI',
+        status: 'working',
+        responseTimeMs: Date.now() - started,
+        testedAt: new Date().toISOString(),
+      };
+    } catch (err) {
+      const mapped = mapError(err);
+      return {
+        ok: false,
+        model: modelId,
+        modelName: (CLOUDFLARE_IMAGE_MODELS[modelId] && CLOUDFLARE_IMAGE_MODELS[modelId].name) || modelId,
+        provider: 'Cloudflare Workers AI',
+        code: mapped.code,
+        status: 'failed',
+        message: mapped.message,
+        responseTimeMs: Date.now() - started,
+        testedAt: new Date().toISOString(),
+      };
+    }
+  }
+
   function status() {
     const snap = cfg.snapshot();
     const creds = credentials();
     const modelList = Object.values(snap.models || {});
+    const imageList = Object.values(CLOUDFLARE_IMAGE_MODELS);
 
     const validation = !configured()
       ? 'not_configured'
@@ -691,8 +872,8 @@ function createCloudflareProvider({
       provider: 'Cloudflare Workers AI',
       id: 'cloudflare_workers_ai',
       identifier: 'cloudflare_workers_ai',
-      category: 'LLM / AI Inference',
-      protocol: 'OpenAI-compatible Chat Completions',
+      category: 'LLM & Image Inference',
+      protocol: 'OpenAI-compatible Chat & REST Image Run',
       apiBase: configured() ? getBaseUrl() : 'https://api.cloudflare.com/client/v4/accounts/{ACCOUNT_ID}/ai/v1',
       chatEndpoint: '/chat/completions',
       modelsEndpoint: '/models',
@@ -710,8 +891,10 @@ function createCloudflareProvider({
       defaultModelId: snap.defaultModelId,
       modelCount: modelList.length,
       enabledModelCount: modelList.filter(m => m.enabled).length,
+      imageModelCount: imageList.length,
       checkedAt: modelsAt ? new Date(modelsAt).toISOString() : null,
       models: modelList,
+      imageModels: imageList,
       usage: snap.usage,
       rateLimits: snap.rateLimits,
       recentErrors: snap.recentErrors,
@@ -724,10 +907,13 @@ function createCloudflareProvider({
     status,
     refreshModels,
     catalogEntries,
+    imageCatalogEntries,
     generate,
+    generateImage,
     streamGenerate,
     testConnection,
     testModel,
+    testImageModel,
     mapError,
     cfg,
   };

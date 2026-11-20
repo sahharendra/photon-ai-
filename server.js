@@ -1434,6 +1434,11 @@ const server = http.createServer(async (req, res) => {
         await cloudflare.refreshModels();
         return reply(res, 200, { success: true, data: { result, status: cloudflare.status() } });
       }
+      if (cfNormPath === '/api/admin/cloudflare/test-image' && req.method === 'POST') {
+        const body = await readBody(req);
+        const result = await cloudflare.testImageModel(body.model ? String(body.model) : undefined);
+        return reply(res, 200, { success: true, data: { result, status: cloudflare.status() } });
+      }
       const cfModelRoute = /^\/api\/admin\/cloudflare\/models\/([A-Za-z0-9@_.:/-]{1,160})$/.exec(cfNormPath);
       if (cfModelRoute) {
         if (req.method !== 'PUT') return fail(res, new HttpError(405, 'method_not_allowed', 'Method not allowed.'), requestId);
@@ -1997,6 +2002,9 @@ const server = http.createServer(async (req, res) => {
         },
       });
     }
+    if (req.method === 'GET' && pathname === '/api/images/models') {
+      return reply(res, 200, { success: true, data: cloudflare.imageCatalogEntries() });
+    }
     if (req.method === 'POST' && pathname === '/api/private-access/verify') {
       const body = await readBody(req);
       const data = loadStore();
@@ -2007,7 +2015,7 @@ const server = http.createServer(async (req, res) => {
       }
       return reply(res, 200, { success: true, data: { authorized: true } });
     }
-    if (req.method.startsWith('POST') || req.method === 'PUT' || req.method === 'DELETE' || pathname.startsWith('/api/profile') || pathname.startsWith('/api/payments') || pathname.startsWith('/api/chat') || pathname.startsWith('/api/generate')) {
+    if (req.method.startsWith('POST') || req.method === 'PUT' || req.method === 'DELETE' || pathname.startsWith('/api/profile') || pathname.startsWith('/api/payments') || pathname.startsWith('/api/chat') || pathname.startsWith('/api/generate') || pathname.startsWith('/api/images')) {
       if (pathname.startsWith('/api/')) {
         const { claims, profile } = await authenticated(req); rateLimit(claims.sub);
         if (req.method === 'GET' && pathname === '/api/profile') return reply(res, 200, { success: true, data: profileResponse(profile, claims.sub) });
@@ -2310,7 +2318,7 @@ const server = http.createServer(async (req, res) => {
           return;
         }
         if (req.method === 'GET' && pathname === '/api/images/models') {
-          return reply(res, 200, { success: true, data: [] });
+          return reply(res, 200, { success: true, data: cloudflare.imageCatalogEntries() });
         }
         if (req.method === 'POST' && (pathname === '/api/images/generate' || pathname === '/api/generate')) {
           const body = await readBody(req);
@@ -2318,6 +2326,64 @@ const server = http.createServer(async (req, res) => {
           const kind = String(body.kind || 'image').trim().toLowerCase();
           if (pathname === '/api/generate' && !['image', 'video'].includes(kind)) throw new HttpError(400, 'invalid_kind', 'Unsupported generation kind.');
           if (!prompt || prompt.length > 32000) throw new HttpError(400, 'invalid_prompt', 'Enter a prompt up to 32,000 characters.');
+
+          if (kind === 'image') {
+            if (!cloudflare.configured()) {
+              throw new HttpError(
+                503,
+                'not_configured',
+                'Cloudflare Workers AI credentials (CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN) are required for Image Generation. Please configure them in the Admin Panel or environment variables.'
+              );
+            }
+            const reserved = await withStoreLock(() => {
+              const freshStore = loadStore();
+              const resTx = reserveTokenSpend(freshStore, {
+                uid: claims.sub,
+                activityKey: 'image',
+                requestId: body.request_id || requestId,
+                profile,
+                provider: 'Cloudflare Workers AI',
+                model: body.model || '@cf/black-forest-labs/flux-1-schnell',
+              });
+              saveStore();
+              return resTx;
+            });
+            let imgRes;
+            try {
+              imgRes = await cloudflare.generateImage({
+                prompt,
+                model: body.model,
+                steps: body.steps,
+                signal: req.signal,
+              });
+            } catch (err) {
+              refundTokenTransaction(loadStore(), reserved.transaction.id, err?.code || 'provider_error');
+              saveStore();
+              throw err;
+            }
+            commitTokenTransaction(loadStore(), reserved.transaction.id, {
+              provider: 'Cloudflare Workers AI',
+              model: imgRes.model,
+            });
+            addActivity(claims.sub, 'image', cleanDescription(prompt), reserved.transaction.tokensCharged, {
+              provider: 'Cloudflare Workers AI',
+              model: imgRes.model,
+            });
+            const data = {
+              image: imgRes.dataUrl,
+              dataUrl: imgRes.dataUrl,
+              b64_json: imgRes.b64_json,
+              mimeType: imgRes.mimeType,
+              text: `![${prompt}](${imgRes.dataUrl})`,
+              provider: 'Cloudflare Workers AI',
+              model: imgRes.model,
+              modelName: imgRes.modelName,
+              tokensCharged: reserved.transaction.tokensCharged,
+              profileUsage: profileResponse(profile, claims.sub).usage,
+              request_id: requestId,
+            };
+            return reply(res, 200, { success: true, data });
+          }
 
           
 

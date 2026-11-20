@@ -228,7 +228,7 @@
   </div>
 </form>
 <div class="settings-grid" style="margin-top:18px"><div class="field"><label>Request &amp; token usage</label><div id="nvidia-usage" class="muted">Not loaded.</div></div></div><form id="nvidia-settings-form" style="margin-top:14px"><div class="settings-grid"><div class="field"><label for="nvidia-enabled">Provider state</label><select id="nvidia-enabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div><div class="field"><label for="nvidia-spending-policy">Spending policy</label><select id="nvidia-spending-policy"><option value="allow_free_only">Allow free credits only (zero-billing safe)</option><option value="block">Block all requests</option></select></div></div><div class="save-row"><small class="muted">NVIDIA NIM free trial credits only. API key is never stored or shown.</small><button id="nvidia-save-settings" type="submit">Save NVIDIA settings</button></div></form><div class="head" style="margin-top:28px"><div><h2>NVIDIA NIM models</h2><small>Discovered from GET /v1/models. High-speed open models.</small></div></div><div class="scroll"><table class="subscriptions-table"><thead><tr><th>Model</th><th>Status</th><th>Context window</th><th>Actions</th></tr></thead><tbody id="nvidia-models"></tbody></table></div><div class="head" style="margin-top:28px"><div><h2>Recent NVIDIA errors</h2><small>Key-free error codes only.</small></div></div><div id="nvidia-errors" class="list"></div>
-<div class="head" style="margin-top:34px"><div><h2>Cloudflare Workers AI</h2><small>CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN are read only from the backend environment. High-speed AI inference at the edge (10,000 Free Neurons/day with 00:00 UTC reset).</small></div><div class="actions"><button id="cloudflare-test-connection" type="button">Test connection</button><button id="cloudflare-refresh" type="button">Refresh models</button></div></div><div id="cloudflare-diag" class="list"></div>
+<div class="head" style="margin-top:34px"><div><h2>Cloudflare Workers AI</h2><small>CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN are read only from the backend environment. High-speed AI inference at the edge (10,000 Free Neurons/day with 00:00 UTC reset). Powers both Text Generation &amp; Image Generation (FLUX.1 Schnell &amp; SDXL).</small></div><div class="actions"><button id="cloudflare-test-connection" type="button">Test connection</button><button id="cloudflare-test-image" type="button">Test image (FLUX)</button><button id="cloudflare-refresh" type="button">Refresh models</button></div></div><div id="cloudflare-diag" class="list"></div>
 <form id="cloudflare-key-form" class="inline-add-box" style="margin-top:14px">
   <div class="settings-grid">
     <div class="field">
@@ -2072,6 +2072,37 @@ async function load(forceSettings=false){if(refreshing)return;refreshing=true;st
     } finally {
       button.disabled = false;
       button.textContent = 'Test connection';
+    }
+  });
+
+  $('cloudflare-test-image')?.addEventListener('click', async () => {
+    const button = $('cloudflare-test-image');
+    button.disabled = true;
+    button.textContent = 'Generating...';
+    try {
+      const data = await request('/api/admin/cloudflare/test-image', 'POST', {});
+      const r = data.result || {};
+      showTestResultModal({
+        title: 'Cloudflare Image Generation Test (FLUX.1 Schnell)',
+        provider: 'Cloudflare Workers AI',
+        ok: r.ok,
+        status: r.status,
+        code: r.code,
+        message: r.message || (r.ok ? 'Successfully generated image with @cf/black-forest-labs/flux-1-schnell.' : 'Failed to generate image.'),
+        responseTimeMs: r.responseTimeMs,
+        testedAt: r.testedAt,
+      });
+    } catch (error) {
+      showTestResultModal({
+        title: 'Cloudflare Image Generation Test',
+        provider: 'Cloudflare Workers AI',
+        ok: false,
+        status: 'test_failed',
+        message: error.message || 'Could not test image generation.',
+      });
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Test image (FLUX)';
     }
   });
 
