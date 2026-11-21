@@ -239,7 +239,16 @@ class ModelCapabilityService {
     const normCat = normalizeCategory(category);
     let list = Array.from(this.models.values()).filter(m => m.category === normCat);
     if (availableOnly) {
-      list = list.filter(m => m.available && !m.creditsExhausted);
+      list = list.filter(m => {
+        if (!m.available || m.creditsExhausted) return false;
+        if (this.quotaMonitor) {
+          const provAvail = this.quotaMonitor.getProviderAvailability(m.provider);
+          if (!provAvail.available) return false;
+          const modelAvail = this.quotaMonitor.getModelAvailability(m.provider, m.id);
+          if (!modelAvail.available) return false;
+        }
+        return true;
+      });
     }
     if (typeof planFilter === 'function') {
       list = list.filter(planFilter);
@@ -260,14 +269,20 @@ class ModelCapabilityService {
       const cat = m.category;
       if (stats[cat]) {
         stats[cat].total += 1;
-        if (m.available && !m.creditsExhausted) {
+        let isAvail = Boolean(m.available && !m.creditsExhausted);
+        if (isAvail && this.quotaMonitor) {
+          const provAvail = this.quotaMonitor.getProviderAvailability(m.provider);
+          const modelAvail = this.quotaMonitor.getModelAvailability(m.provider, m.id);
+          if (!provAvail.available || !modelAvail.available) isAvail = false;
+        }
+        if (isAvail) {
           stats[cat].available += 1;
         }
         stats[cat].models.push({
           id: m.id,
           name: m.name,
           provider: m.provider,
-          available: m.available,
+          available: isAvail,
           free: m.free,
         });
       }

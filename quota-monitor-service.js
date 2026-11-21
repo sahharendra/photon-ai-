@@ -9,17 +9,26 @@
 //    - INVALID_KEY (401 invalid key)
 //    - PERMISSION_DENIED (403 forbidden)
 //    - TEMPORARILY_UNAVAILABLE (5xx provider error / outage)
-//    - DISABLED (disabled by admin)
+//    - ADMIN_DISABLED (disabled by admin)
+//    - UNKNOWN (unclassified failure)
 //    - HEALTHY (ready for traffic)
-// 2. Granular tracking:
-//    - Per-model rate limits vs per-provider exhaustion.
-//    - Multi-key awareness (slot tracking): healthy keys keep provider alive even if one key is exhausted.
-// 3. Automatic restoration:
-//    - Background scheduler monitors resetAt timestamps and daily reset schedules (UTC/Pacific).
-//    - Automatically restores HEALTHY status when reset time arrives without admin intervention or full app reload.
-// 4. Strict spending protection:
+// 2. Comprehensive provider adapters covering EVERY integrated provider:
+//    - OpenRouter, Gemini, Groq, NVIDIA NIM, Cloudflare Workers AI, Cohere,
+//      Stability AI, Pollinations AI, OpenAI, Anthropic, CodeCraft, LLMTR, Ollama,
+//      and BaseQuotaAdapter for all future providers.
+// 3. Granular multi-key & shared-account tracking:
+//    - Multi-key awareness: healthy keys keep provider visible even if one key is exhausted.
+//    - Shared account quotas: if shared account quota exhausts, hides the provider globally.
+//    - Never rotates keys to bypass rate limits; never assumes multiple keys create extra account quota.
+// 4. Automatic restoration without reload or logout:
+//    - Background scheduler monitors resetAt timestamps and daily reset schedules (UTC / Pacific).
+//    - Automatically restores HEALTHY status when reset time arrives.
+// 5. Strict spending protection:
 //    - Never executes paid generation calls for health checks.
-//    - Zero automatic paid fallback or automatic credit purchases.
+//    - Zero automatic paid fallback or credit purchases.
+// 6. Strict accounting separation:
+//    - PHOTON customer tokens are strictly separated from provider quotas.
+//    - Customer token availability does not override provider quota state, and provider exhaustion never touches customer balance.
 
 const fs = require('node:fs');
 const path = require('node:path');
@@ -31,7 +40,8 @@ const STATUS_INSUFFICIENT_CREDITS = 'INSUFFICIENT_CREDITS';
 const STATUS_INVALID_KEY = 'INVALID_KEY';
 const STATUS_PERMISSION_DENIED = 'PERMISSION_DENIED';
 const STATUS_TEMPORARILY_UNAVAILABLE = 'TEMPORARILY_UNAVAILABLE';
-const STATUS_DISABLED = 'DISABLED';
+const STATUS_ADMIN_DISABLED = 'ADMIN_DISABLED';
+const STATUS_DISABLED = STATUS_ADMIN_DISABLED; // Backward compatibility alias
 const STATUS_UNKNOWN = 'UNKNOWN';
 
 const ALL_STATUSES = Object.freeze([
@@ -42,7 +52,7 @@ const ALL_STATUSES = Object.freeze([
   STATUS_INVALID_KEY,
   STATUS_PERMISSION_DENIED,
   STATUS_TEMPORARILY_UNAVAILABLE,
-  STATUS_DISABLED,
+  STATUS_ADMIN_DISABLED,
   STATUS_UNKNOWN,
 ]);
 
@@ -108,6 +118,8 @@ function normalizeProviderName(name) {
   if (s.includes('nvidia')) return 'nvidia';
   if (s.includes('cloudflare')) return 'cloudflare';
   if (s.includes('cohere')) return 'cohere';
+  if (s.includes('stability')) return 'stability';
+  if (s.includes('pollinations')) return 'pollinations';
   if (s.includes('openai')) return 'openai';
   if (s.includes('anthropic') || s.includes('claude')) return 'anthropic';
   if (s.includes('codecraft')) return 'codecraft';
@@ -124,6 +136,8 @@ function displayProviderName(norm) {
     case 'nvidia': return 'NVIDIA NIM';
     case 'cloudflare': return 'Cloudflare Workers AI';
     case 'cohere': return 'Cohere';
+    case 'stability': return 'Stability AI';
+    case 'pollinations': return 'Pollinations AI';
     case 'openai': return 'OpenAI';
     case 'anthropic': return 'Anthropic';
     case 'codecraft': return 'CodeCraft';
@@ -142,13 +156,12 @@ class BaseQuotaAdapter {
     this.providerId = providerId;
   }
 
-  // Analyzes error status, headers and body to categorize quota state
   classifyError({ status, code, message = '', headers = {}, modelId, keySlot } = {}) {
     const s = Number(status) || 0;
     const msg = String(message || '').toLowerCase();
     const c = String(code || '').toLowerCase();
 
-    if (s === 401 || /invalid.*api.*key|unauthorized|api key not valid|invalid.*token/i.test(msg)) {
+    if (s === 401 || /invalid.*api.*key|unauthorized|api key not valid|invalid.*token|authentication/i.test(msg)) {
       return {
         status: STATUS_INVALID_KEY,
         scope: 'key',
@@ -157,7 +170,7 @@ class BaseQuotaAdapter {
       };
     }
 
-    if (s === 403 || /forbidden|permission_denied/i.test(msg)) {
+    if (s === 403 || /forbidden|permission_denied|access_denied|not_allowed/i.test(msg)) {
       return {
         status: STATUS_PERMISSION_DENIED,
         scope: 'key',
@@ -166,7 +179,7 @@ class BaseQuotaAdapter {
       };
     }
 
-    if (s === 402 || /insufficient.*credit|zero.*balance|billing.*required|prepayment/i.test(msg)) {
+    if (s === 402 || /insufficient.*credit|zero.*balance|billing.*required|prepayment|out of credits|insufficient_quota/i.test(msg)) {
       return {
         status: STATUS_INSUFFICIENT_CREDITS,
         scope: 'provider',
@@ -176,9 +189,8 @@ class BaseQuotaAdapter {
     }
 
     if (s === 429 || /rate.*limit|quota|too many requests|resource_exhausted/i.test(msg)) {
-      // Determine if it's daily quota exhaustion vs temporary RPM/TPM rate limit
       const retryAfterSec = parseRetryAfterHeader(headers['retry-after'] || headers['Retry-After']);
-      if (/day|daily|per-day|quota.*exceeded|monthly/i.test(msg)) {
+      if (/day|daily|per-day|quota.*exceeded|monthly|limit_reached/i.test(msg)) {
         return {
           status: STATUS_QUOTA_EXHAUSTED,
           scope: modelId ? 'model' : 'provider',
@@ -188,7 +200,7 @@ class BaseQuotaAdapter {
       }
 
       // Temporary rate limit (RPM/TPM)
-      const durationMs = retryAfterSec ? retryAfterSec : 60000;
+      const durationMs = retryAfterSec > 0 ? retryAfterSec : 60000;
       return {
         status: STATUS_RATE_LIMITED,
         scope: modelId ? 'model' : 'provider',
@@ -215,8 +227,12 @@ class BaseQuotaAdapter {
   }
 
   calculateDailyResetTimestamp(headers = {}) {
-    // Default daily reset is midnight UTC
     return getNextUtcHourTimestamp(0);
+  }
+
+  // Probe method that costs ZERO paid credits (metadata or ping only)
+  async probeFreeHealth({ fetchImpl = globalThis.fetch, apiKey, accountId, endpoint } = {}) {
+    return { ok: true, status: STATUS_HEALTHY };
   }
 }
 
@@ -252,6 +268,28 @@ class OpenRouterQuotaAdapter extends BaseQuotaAdapter {
     }
     return super.classifyError(opts);
   }
+
+  async probeFreeHealth({ fetchImpl = globalThis.fetch, apiKey } = {}) {
+    if (!apiKey) return { ok: false, status: STATUS_INVALID_KEY };
+    try {
+      const res = await fetchImpl('https://openrouter.ai/api/v1/auth/key', {
+        headers: { 'Authorization': `Bearer ${apiKey}` },
+        signal: AbortSignal.timeout(10000),
+      });
+      if (res.status === 401) return { ok: false, status: STATUS_INVALID_KEY };
+      if (res.status === 402) return { ok: false, status: STATUS_INSUFFICIENT_CREDITS };
+      if (!res.ok) return { ok: false, status: STATUS_TEMPORARILY_UNAVAILABLE };
+      const data = await res.json().catch(() => ({}));
+      const limit = data?.data?.limit;
+      const usage = data?.data?.usage || 0;
+      if (limit != null && usage >= limit) {
+        return { ok: false, status: STATUS_QUOTA_EXHAUSTED, reason: 'OpenRouter key spend limit reached.' };
+      }
+      return { ok: true, status: STATUS_HEALTHY };
+    } catch {
+      return { ok: false, status: STATUS_TEMPORARILY_UNAVAILABLE };
+    }
+  }
 }
 
 class GeminiQuotaAdapter extends BaseQuotaAdapter {
@@ -275,7 +313,6 @@ class GeminiQuotaAdapter extends BaseQuotaAdapter {
           resetAt: this.calculateDailyResetTimestamp(),
         };
       }
-      // Per minute rate limit
       const retryAfter = parseRetryAfterHeader(headers['retry-after']);
       return {
         status: STATUS_RATE_LIMITED,
@@ -285,6 +322,20 @@ class GeminiQuotaAdapter extends BaseQuotaAdapter {
       };
     }
     return super.classifyError(opts);
+  }
+
+  async probeFreeHealth({ fetchImpl = globalThis.fetch, apiKey } = {}) {
+    if (!apiKey) return { ok: false, status: STATUS_INVALID_KEY };
+    try {
+      const res = await fetchImpl(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`, {
+        signal: AbortSignal.timeout(10000),
+      });
+      if (res.status === 400 || res.status === 401) return { ok: false, status: STATUS_INVALID_KEY };
+      if (res.status === 429) return { ok: false, status: STATUS_RATE_LIMITED };
+      return { ok: res.ok, status: res.ok ? STATUS_HEALTHY : STATUS_TEMPORARILY_UNAVAILABLE };
+    } catch {
+      return { ok: false, status: STATUS_TEMPORARILY_UNAVAILABLE };
+    }
   }
 }
 
@@ -325,6 +376,21 @@ class GroqQuotaAdapter extends BaseQuotaAdapter {
     }
     return super.classifyError(opts);
   }
+
+  async probeFreeHealth({ fetchImpl = globalThis.fetch, apiKey } = {}) {
+    if (!apiKey) return { ok: false, status: STATUS_INVALID_KEY };
+    try {
+      const res = await fetchImpl('https://api.groq.com/openai/v1/models', {
+        headers: { 'Authorization': `Bearer ${apiKey}` },
+        signal: AbortSignal.timeout(10000),
+      });
+      if (res.status === 401) return { ok: false, status: STATUS_INVALID_KEY };
+      if (res.status === 429) return { ok: false, status: STATUS_RATE_LIMITED };
+      return { ok: res.ok, status: res.ok ? STATUS_HEALTHY : STATUS_TEMPORARILY_UNAVAILABLE };
+    } catch {
+      return { ok: false, status: STATUS_TEMPORARILY_UNAVAILABLE };
+    }
+  }
 }
 
 class CloudflareQuotaAdapter extends BaseQuotaAdapter {
@@ -349,6 +415,20 @@ class CloudflareQuotaAdapter extends BaseQuotaAdapter {
     }
     return super.classifyError(opts);
   }
+
+  async probeFreeHealth({ fetchImpl = globalThis.fetch, accountId, apiToken } = {}) {
+    if (!accountId || !apiToken) return { ok: false, status: STATUS_INVALID_KEY };
+    try {
+      const res = await fetchImpl(`https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/models/search`, {
+        headers: { 'Authorization': `Bearer ${apiToken}` },
+        signal: AbortSignal.timeout(10000),
+      });
+      if (res.status === 401 || res.status === 403) return { ok: false, status: STATUS_INVALID_KEY };
+      return { ok: res.ok, status: res.ok ? STATUS_HEALTHY : STATUS_TEMPORARILY_UNAVAILABLE };
+    } catch {
+      return { ok: false, status: STATUS_TEMPORARILY_UNAVAILABLE };
+    }
+  }
 }
 
 class CohereQuotaAdapter extends BaseQuotaAdapter {
@@ -363,11 +443,26 @@ class CohereQuotaAdapter extends BaseQuotaAdapter {
       return {
         status: STATUS_RATE_LIMITED,
         scope: 'model',
-        reason: 'Cohere trial rate limit reached. Resets in 60 seconds.',
+        reason: 'Cohere trial rate limit reached (10 RPM). Resets in 60 seconds.',
         resetAt: Date.now() + (retryAfter || 60000),
       };
     }
     return super.classifyError(opts);
+  }
+
+  async probeFreeHealth({ fetchImpl = globalThis.fetch, apiKey } = {}) {
+    if (!apiKey) return { ok: false, status: STATUS_INVALID_KEY };
+    try {
+      const res = await fetchImpl('https://api.cohere.com/v1/models?endpoint=chat', {
+        headers: { 'Authorization': `Bearer ${apiKey}` },
+        signal: AbortSignal.timeout(10000),
+      });
+      if (res.status === 401) return { ok: false, status: STATUS_INVALID_KEY };
+      if (res.status === 429) return { ok: false, status: STATUS_RATE_LIMITED };
+      return { ok: res.ok, status: res.ok ? STATUS_HEALTHY : STATUS_TEMPORARILY_UNAVAILABLE };
+    } catch {
+      return { ok: false, status: STATUS_TEMPORARILY_UNAVAILABLE };
+    }
   }
 }
 
@@ -375,7 +470,7 @@ class NvidiaQuotaAdapter extends BaseQuotaAdapter {
   constructor() { super('nvidia'); }
 
   classifyError(opts = {}) {
-    const { status, message = '', headers = {} } = opts;
+    const { status, headers = {} } = opts;
     if (status === 429) {
       const retryAfter = parseRetryAfterHeader(headers['retry-after']);
       return {
@@ -387,13 +482,210 @@ class NvidiaQuotaAdapter extends BaseQuotaAdapter {
     }
     return super.classifyError(opts);
   }
+
+  async probeFreeHealth({ fetchImpl = globalThis.fetch, apiKey } = {}) {
+    if (!apiKey) return { ok: false, status: STATUS_INVALID_KEY };
+    try {
+      const res = await fetchImpl('https://integrate.api.nvidia.com/v1/models', {
+        headers: { 'Authorization': `Bearer ${apiKey}` },
+        signal: AbortSignal.timeout(10000),
+      });
+      if (res.status === 401) return { ok: false, status: STATUS_INVALID_KEY };
+      if (res.status === 429) return { ok: false, status: STATUS_RATE_LIMITED };
+      return { ok: res.ok, status: res.ok ? STATUS_HEALTHY : STATUS_TEMPORARILY_UNAVAILABLE };
+    } catch {
+      return { ok: false, status: STATUS_TEMPORARILY_UNAVAILABLE };
+    }
+  }
+}
+
+class StabilityAiQuotaAdapter extends BaseQuotaAdapter {
+  constructor() { super('stability'); }
+
+  classifyError(opts = {}) {
+    const { status, message = '', headers = {} } = opts;
+    const msg = String(message).toLowerCase();
+    if (status === 402 || msg.includes('insufficient_balance') || msg.includes('credits') || msg.includes('zero balance')) {
+      return {
+        status: STATUS_INSUFFICIENT_CREDITS,
+        scope: 'provider',
+        reason: 'Stability AI credit balance exhausted. Top up credits to restore.',
+        resetAt: null,
+      };
+    }
+    if (status === 429) {
+      const retryAfter = parseRetryAfterHeader(headers['retry-after']);
+      return {
+        status: STATUS_RATE_LIMITED,
+        scope: 'provider',
+        reason: 'Stability AI rate limit reached.',
+        resetAt: Date.now() + (retryAfter || 60000),
+      };
+    }
+    return super.classifyError(opts);
+  }
+
+  async probeFreeHealth({ fetchImpl = globalThis.fetch, apiKey } = {}) {
+    if (!apiKey) return { ok: false, status: STATUS_INVALID_KEY };
+    try {
+      const res = await fetchImpl('https://api.stability.ai/v1/user/balance', {
+        headers: { 'Authorization': `Bearer ${apiKey}` },
+        signal: AbortSignal.timeout(10000),
+      });
+      if (res.status === 401) return { ok: false, status: STATUS_INVALID_KEY };
+      if (!res.ok) return { ok: false, status: STATUS_TEMPORARILY_UNAVAILABLE };
+      const body = await res.json().catch(() => ({}));
+      if (body.credits != null && Number(body.credits) <= 0) {
+        return { ok: false, status: STATUS_INSUFFICIENT_CREDITS, reason: 'Stability AI zero balance.' };
+      }
+      return { ok: true, status: STATUS_HEALTHY };
+    } catch {
+      return { ok: false, status: STATUS_TEMPORARILY_UNAVAILABLE };
+    }
+  }
+}
+
+class PollinationsAiQuotaAdapter extends BaseQuotaAdapter {
+  constructor() { super('pollinations'); }
+
+  classifyError(opts = {}) {
+    const { status, message = '' } = opts;
+    const msg = String(message).toLowerCase();
+    if (status === 402 || msg.includes('insufficient_credits') || msg.includes('pollen') || msg.includes('prepaid')) {
+      return {
+        status: STATUS_INSUFFICIENT_CREDITS,
+        scope: 'provider',
+        reason: 'Pollinations AI prepaid pollen credits exhausted.',
+        resetAt: null,
+      };
+    }
+    if (status === 429) {
+      return {
+        status: STATUS_RATE_LIMITED,
+        scope: 'provider',
+        reason: 'Pollinations AI rate limit reached.',
+        resetAt: Date.now() + 60000,
+      };
+    }
+    return super.classifyError(opts);
+  }
+}
+
+class OpenAiQuotaAdapter extends BaseQuotaAdapter {
+  constructor() { super('openai'); }
+
+  classifyError(opts = {}) {
+    const { status, message = '', headers = {} } = opts;
+    const msg = String(message).toLowerCase();
+    if (status === 429 && (msg.includes('insufficient_quota') || msg.includes('billing') || msg.includes('quota'))) {
+      return {
+        status: STATUS_INSUFFICIENT_CREDITS,
+        scope: 'provider',
+        reason: 'OpenAI quota or credit limit exhausted. Check your plan and billing details.',
+        resetAt: null,
+      };
+    }
+    if (status === 429) {
+      const retryAfter = parseRetryAfterHeader(headers['retry-after']);
+      return {
+        status: STATUS_RATE_LIMITED,
+        scope: opts.modelId ? 'model' : 'provider',
+        reason: 'OpenAI rate limit reached (RPM/TPM).',
+        resetAt: Date.now() + (retryAfter || 60000),
+      };
+    }
+    return super.classifyError(opts);
+  }
+
+  async probeFreeHealth({ fetchImpl = globalThis.fetch, apiKey } = {}) {
+    if (!apiKey) return { ok: false, status: STATUS_INVALID_KEY };
+    try {
+      const res = await fetchImpl('https://api.openai.com/v1/models', {
+        headers: { 'Authorization': `Bearer ${apiKey}` },
+        signal: AbortSignal.timeout(10000),
+      });
+      if (res.status === 401) return { ok: false, status: STATUS_INVALID_KEY };
+      if (res.status === 429) return { ok: false, status: STATUS_RATE_LIMITED };
+      return { ok: res.ok, status: res.ok ? STATUS_HEALTHY : STATUS_TEMPORARILY_UNAVAILABLE };
+    } catch {
+      return { ok: false, status: STATUS_TEMPORARILY_UNAVAILABLE };
+    }
+  }
+}
+
+class AnthropicQuotaAdapter extends BaseQuotaAdapter {
+  constructor() { super('anthropic'); }
+
+  classifyError(opts = {}) {
+    const { status, message = '', headers = {} } = opts;
+    const msg = String(message).toLowerCase();
+    if (msg.includes('credit balance is too low') || msg.includes('insufficient_credits')) {
+      return {
+        status: STATUS_INSUFFICIENT_CREDITS,
+        scope: 'provider',
+        reason: 'Anthropic account credit balance is too low.',
+        resetAt: null,
+      };
+    }
+    if (status === 429) {
+      const retryAfter = parseRetryAfterHeader(headers['retry-after']);
+      return {
+        status: STATUS_RATE_LIMITED,
+        scope: opts.modelId ? 'model' : 'provider',
+        reason: 'Anthropic rate limit reached.',
+        resetAt: Date.now() + (retryAfter || 60000),
+      };
+    }
+    return super.classifyError(opts);
+  }
+}
+
+class CodeCraftQuotaAdapter extends BaseQuotaAdapter {
+  constructor() { super('codecraft'); }
+  classifyError(opts = {}) {
+    const { status, message = '' } = opts;
+    const msg = String(message).toLowerCase();
+    if (status === 402 || msg.includes('balance') || msg.includes('credits')) {
+      return { status: STATUS_INSUFFICIENT_CREDITS, scope: 'provider', reason: 'CodeCraft credits exhausted.', resetAt: null };
+    }
+    if (status === 429) {
+      return { status: STATUS_RATE_LIMITED, scope: 'provider', reason: 'CodeCraft rate limit reached.', resetAt: Date.now() + 60000 };
+    }
+    return super.classifyError(opts);
+  }
+}
+
+class LlmtrQuotaAdapter extends BaseQuotaAdapter {
+  constructor() { super('llmtr'); }
+  classifyError(opts = {}) {
+    const { status, message = '' } = opts;
+    const msg = String(message).toLowerCase();
+    if (status === 402 || msg.includes('balance') || msg.includes('credits')) {
+      return { status: STATUS_INSUFFICIENT_CREDITS, scope: 'provider', reason: 'LLMTR credits exhausted.', resetAt: null };
+    }
+    if (status === 429) {
+      return { status: STATUS_RATE_LIMITED, scope: 'provider', reason: 'LLMTR rate limit reached.', resetAt: Date.now() + 60000 };
+    }
+    return super.classifyError(opts);
+  }
+}
+
+class OllamaQuotaAdapter extends BaseQuotaAdapter {
+  constructor() { super('ollama'); }
+  classifyError(opts = {}) {
+    const { status, code = '', message = '' } = opts;
+    if (status === 503 || code === 'ECONNREFUSED' || /connect/i.test(message)) {
+      return { status: STATUS_TEMPORARILY_UNAVAILABLE, scope: 'provider', reason: 'Ollama service offline or unreachable.', resetAt: Date.now() + 30000 };
+    }
+    return super.classifyError(opts);
+  }
 }
 
 // ---------------------------------------------------------------------------
 // Central Quota Monitor Service
 // ---------------------------------------------------------------------------
 
-function createQuotaMonitorService({ dir = process.cwd(), logger = console } = {}) {
+function createQuotaMonitorService({ dir = process.cwd(), env = process.env, logger = console } = {}) {
   const adapters = {
     openrouter: new OpenRouterQuotaAdapter(),
     gemini: new GeminiQuotaAdapter(),
@@ -401,11 +693,30 @@ function createQuotaMonitorService({ dir = process.cwd(), logger = console } = {
     nvidia: new NvidiaQuotaAdapter(),
     cloudflare: new CloudflareQuotaAdapter(),
     cohere: new CohereQuotaAdapter(),
+    stability: new StabilityAiQuotaAdapter(),
+    pollinations: new PollinationsAiQuotaAdapter(),
+    openai: new OpenAiQuotaAdapter(),
+    anthropic: new AnthropicQuotaAdapter(),
+    codecraft: new CodeCraftQuotaAdapter(),
+    llmtr: new LlmtrQuotaAdapter(),
+    ollama: new OllamaQuotaAdapter(),
     default: new BaseQuotaAdapter('default'),
   };
 
-  // State maps
-  // providers[norm] = { status, errorReason, resetAt, lastSuccessAt, lastFailureAt, lastCheckedAt, keys: { [keySlot]: ... }, models: { [modelId]: ... } }
+  // State maps:
+  // providers[norm] = {
+  //   providerId: norm,
+  //   providerName: displayProviderName(norm),
+  //   status: STATUS_HEALTHY,
+  //   errorReason: null,
+  //   resetAt: null,
+  //   sharedAccountExhausted: false,
+  //   lastSuccessAt: null,
+  //   lastFailureAt: null,
+  //   lastCheckedAt: new Date().toISOString(),
+  //   keys: { [slot]: { keySlot, status, errorReason, resetAt, lastSuccessAt, lastFailureAt, isSharedAccount } },
+  //   models: { [modelId]: { modelId, status, errorReason, resetAt, lastSuccessAt, lastFailureAt } }
+  // }
   const providers = {};
   let monitorInterval = null;
   let isChecking = false;
@@ -424,6 +735,7 @@ function createQuotaMonitorService({ dir = process.cwd(), logger = console } = {
         status: STATUS_HEALTHY,
         errorReason: null,
         resetAt: null,
+        sharedAccountExhausted: false,
         lastSuccessAt: null,
         lastFailureAt: null,
         lastCheckedAt: new Date().toISOString(),
@@ -434,12 +746,30 @@ function createQuotaMonitorService({ dir = process.cwd(), logger = console } = {
     return providers[norm];
   }
 
+  function registerProviderKey(providerName, keySlot, { key = '', accountId = '', maskedKey = '', isSharedAccount = false } = {}) {
+    const norm = normalizeProviderName(providerName);
+    const p = ensureProviderState(norm);
+    const slot = String(keySlot || 'default');
+    if (!p.keys[slot]) {
+      p.keys[slot] = {
+        keySlot: slot,
+        status: STATUS_HEALTHY,
+        errorReason: null,
+        resetAt: null,
+        maskedKey: maskedKey || (key ? `${key.slice(0, 4)}...${key.slice(-4)}` : ''),
+        isSharedAccount: Boolean(isSharedAccount),
+        lastSuccessAt: null,
+        lastFailureAt: null,
+      };
+    }
+    return p.keys[slot];
+  }
+
   function ensureModelState(providerName, modelId) {
     const p = ensureProviderState(providerName);
     const mid = String(modelId || '').trim();
     if (!mid) return null;
-    const isNew = !p.models[mid];
-    if (isNew) {
+    if (!p.models[mid]) {
       p.models[mid] = {
         modelId: mid,
         status: STATUS_HEALTHY,
@@ -469,8 +799,87 @@ function createQuotaMonitorService({ dir = process.cwd(), logger = console } = {
     return p.keys[slot];
   }
 
+  // Recomputes overall provider status considering multi-key slots and shared account constraints
+  function recomputeProviderOverallStatus(providerName) {
+    const norm = normalizeProviderName(providerName);
+    const p = ensureProviderState(norm);
+
+    // If marked disabled by admin, keep it disabled
+    if (p.status === STATUS_ADMIN_DISABLED) {
+      return;
+    }
+
+    // 1. Shared account quota exhaustion takes absolute precedence
+    if (p.sharedAccountExhausted) {
+      if (p.resetAt && Date.now() >= Date.parse(p.resetAt)) {
+        p.sharedAccountExhausted = false;
+        p.status = STATUS_HEALTHY;
+        p.errorReason = null;
+        p.resetAt = null;
+      } else {
+        p.status = STATUS_QUOTA_EXHAUSTED;
+        return;
+      }
+    }
+
+    const keyList = Object.values(p.keys);
+    const modelList = Object.values(p.models);
+
+    // 2. Multi-key logic:
+    // If provider has configured keys:
+    if (keyList.length > 0) {
+      const healthyKeys = keyList.filter(k => k.status === STATUS_HEALTHY);
+      if (healthyKeys.length > 0) {
+        // At least one usable key is healthy -> provider is available
+        p.status = STATUS_HEALTHY;
+        p.errorReason = null;
+        p.resetAt = null;
+        return;
+      }
+
+      // All keys are non-healthy. Classify provider status based on the collective state
+      const allExhausted = keyList.every(k => k.status === STATUS_QUOTA_EXHAUSTED || k.status === STATUS_INSUFFICIENT_CREDITS);
+      const allInvalid = keyList.every(k => k.status === STATUS_INVALID_KEY);
+      const allRateLimited = keyList.every(k => k.status === STATUS_RATE_LIMITED);
+
+      if (allExhausted) {
+        p.status = STATUS_QUOTA_EXHAUSTED;
+        p.errorReason = 'All configured API keys have exhausted their available quota or credits.';
+      } else if (allInvalid) {
+        p.status = STATUS_INVALID_KEY;
+        p.errorReason = 'All configured API keys are invalid or revoked.';
+      } else if (allRateLimited) {
+        p.status = STATUS_RATE_LIMITED;
+        p.errorReason = 'All configured API keys are temporarily rate-limited.';
+      } else {
+        const worst = keyList[0];
+        p.status = worst.status;
+        p.errorReason = worst.errorReason;
+        p.resetAt = worst.resetAt;
+      }
+      return;
+    }
+
+    // 3. Model-level checks if no discrete keys are tracked
+    if (modelList.length > 0) {
+      const anyHealthy = modelList.some(m => m.status === STATUS_HEALTHY);
+      if (anyHealthy) {
+        p.status = STATUS_HEALTHY;
+        p.errorReason = null;
+        p.resetAt = null;
+        return;
+      }
+      const allExhausted = modelList.every(m => m.status === STATUS_QUOTA_EXHAUSTED || m.status === STATUS_INSUFFICIENT_CREDITS);
+      if (allExhausted) {
+        p.status = STATUS_QUOTA_EXHAUSTED;
+        p.errorReason = 'All models for this provider are currently quota exhausted.';
+        p.resetAt = modelList[0]?.resetAt || null;
+      }
+    }
+  }
+
   // Records a failed API request and updates quota status accordingly
-  function recordError({ providerName, modelId, keySlot = 'default', status, code, message, headers = {} } = {}) {
+  function recordError({ providerName, modelId, keySlot = 'default', status, code, message, headers = {}, isSharedAccount = false } = {}) {
     const norm = normalizeProviderName(providerName);
     const p = ensureProviderState(norm);
     const adapter = getAdapter(norm);
@@ -502,21 +911,28 @@ function createQuotaMonitorService({ dir = process.cwd(), logger = console } = {
       }
     }
 
-    // Determine overall provider status:
-    // If scope is 'provider' or if it's an account-level event (insufficient credits, account quota)
-    if (classified.scope === 'provider' || classified.status === STATUS_INSUFFICIENT_CREDITS || (!modelId && classified.status === STATUS_QUOTA_EXHAUSTED)) {
+    // Account-level vs Key-level determination:
+    // If the failure is account-wide (e.g. insufficient credits, shared account exhausted, or no keySlot specified)
+    if (classified.status === STATUS_INSUFFICIENT_CREDITS || isSharedAccount || (classified.scope === 'provider' && (!keySlot || keySlot === 'default'))) {
+      p.sharedAccountExhausted = (classified.status === STATUS_QUOTA_EXHAUSTED || classified.status === STATUS_INSUFFICIENT_CREDITS);
       p.status = classified.status;
       p.errorReason = classified.reason;
       p.resetAt = classified.resetAt ? new Date(classified.resetAt).toISOString() : null;
+      // Mark all keys sharing this account
+      for (const k of Object.values(p.keys)) {
+        k.status = classified.status;
+        k.errorReason = classified.reason;
+        k.resetAt = p.resetAt;
+      }
     } else {
       recomputeProviderOverallStatus(norm);
     }
 
-    logger.warn(`[QuotaMonitor] ${p.providerName}${modelId ? ' (' + modelId + ')' : ''} marked as ${classified.status}: ${classified.reason}${classified.resetAt ? ' (resets at ' + new Date(classified.resetAt).toISOString() + ')' : ''}`);
+    logger.warn(`[QuotaMonitor] ${p.providerName}${modelId ? ' (' + modelId + ')' : ''}${keySlot ? ' [slot ' + keySlot + ']' : ''} marked as ${classified.status}: ${classified.reason}${classified.resetAt ? ' (resets at ' + new Date(classified.resetAt).toISOString() + ')' : ''}`);
     return classified;
   }
 
-  // Records a successful API request and clears transient rate limits if safe
+  // Records a successful API request and clears transient rate limits
   function recordSuccess({ providerName, modelId, keySlot = 'default', usage = {} } = {}) {
     const norm = normalizeProviderName(providerName);
     const p = ensureProviderState(norm);
@@ -554,43 +970,85 @@ function createQuotaMonitorService({ dir = process.cwd(), logger = console } = {
     recomputeProviderOverallStatus(norm);
   }
 
-  function recomputeProviderOverallStatus(norm) {
+  // Provider-level availability check
+  function getProviderAvailability(providerName) {
+    const norm = normalizeProviderName(providerName);
     const p = ensureProviderState(norm);
-    const keyList = Object.values(p.keys);
-    const modelList = Object.values(p.models);
 
-    // If there are tracked keys and ANY key is healthy, the provider has healthy capacity!
-    if (keyList.length > 0) {
-      const hasHealthyKey = keyList.some(k => k.status === STATUS_HEALTHY);
-      if (hasHealthyKey) {
+    if (p.status === STATUS_ADMIN_DISABLED) {
+      return {
+        available: false,
+        status: STATUS_ADMIN_DISABLED,
+        reason: `${p.providerName} is disabled by the administrator.`,
+        resetAt: null,
+      };
+    }
+
+    if (p.status === STATUS_INVALID_KEY || p.status === STATUS_PERMISSION_DENIED) {
+      return {
+        available: false,
+        status: p.status,
+        reason: p.errorReason || `${p.providerName} API key is invalid or lacks permission.`,
+        resetAt: null,
+      };
+    }
+
+    if (p.status === STATUS_INSUFFICIENT_CREDITS) {
+      return {
+        available: false,
+        status: STATUS_INSUFFICIENT_CREDITS,
+        reason: p.errorReason || `${p.providerName} account credit balance is exhausted.`,
+        resetAt: null,
+      };
+    }
+
+    // Provider-level quota exhaustion
+    if (p.status === STATUS_QUOTA_EXHAUSTED) {
+      if (p.resetAt && Date.now() >= Date.parse(p.resetAt)) {
+        p.status = STATUS_HEALTHY;
+        p.sharedAccountExhausted = false;
+        p.errorReason = null;
+        p.resetAt = null;
+      } else {
+        // Check if there are keys and any key is healthy
+        const keyList = Object.values(p.keys);
+        const hasHealthyKey = keyList.length > 1 && keyList.some(k => k.status === STATUS_HEALTHY);
+        if (!hasHealthyKey || p.sharedAccountExhausted) {
+          return {
+            available: false,
+            status: STATUS_QUOTA_EXHAUSTED,
+            reason: p.errorReason || `${p.providerName} quota exhausted.`,
+            resetAt: p.resetAt,
+          };
+        }
+      }
+    }
+
+    if (p.status === STATUS_RATE_LIMITED) {
+      if (p.resetAt && Date.now() >= Date.parse(p.resetAt)) {
         p.status = STATUS_HEALTHY;
         p.errorReason = null;
         p.resetAt = null;
-        return;
+      } else {
+        const keyList = Object.values(p.keys);
+        const hasHealthyKey = keyList.length > 1 && keyList.some(k => k.status === STATUS_HEALTHY);
+        if (!hasHealthyKey) {
+          return {
+            available: false,
+            status: STATUS_RATE_LIMITED,
+            reason: p.errorReason || `${p.providerName} is currently rate limited.`,
+            resetAt: p.resetAt,
+          };
+        }
       }
-      const worst = keyList[0];
-      p.status = worst.status;
-      p.errorReason = worst.errorReason;
-      p.resetAt = worst.resetAt;
-      return;
     }
 
-    // If models are tracked:
-    if (modelList.length > 0) {
-      const anyHealthy = modelList.some(m => m.status === STATUS_HEALTHY);
-      if (anyHealthy) {
-        p.status = STATUS_HEALTHY;
-        p.errorReason = null;
-        p.resetAt = null;
-        return;
-      }
-      const allExhausted = modelList.every(m => m.status === STATUS_QUOTA_EXHAUSTED || m.status === STATUS_INSUFFICIENT_CREDITS || m.status === STATUS_RATE_LIMITED);
-      if (allExhausted && modelList.length > 1) {
-        p.status = modelList[0].status;
-        p.errorReason = modelList[0].errorReason;
-        p.resetAt = modelList[0].resetAt;
-      }
-    }
+    return {
+      available: true,
+      status: STATUS_HEALTHY,
+      reason: '',
+      resetAt: null,
+    };
   }
 
   // Model-level availability check
@@ -599,17 +1057,13 @@ function createQuotaMonitorService({ dir = process.cwd(), logger = console } = {
     const p = ensureProviderState(norm);
     const mid = String(modelId || '').trim();
 
-    // If provider is completely out of credits or invalid key or disabled:
-    if (p.status === STATUS_DISABLED || p.status === STATUS_INVALID_KEY || p.status === STATUS_INSUFFICIENT_CREDITS) {
-      return {
-        available: false,
-        status: p.status,
-        reason: p.errorReason || `${p.providerName} is unavailable.`,
-        resetAt: p.resetAt,
-      };
+    // 1. If provider is globally unavailable, ALL its models are unavailable
+    const provAvail = getProviderAvailability(norm);
+    if (!provAvail.available) {
+      return provAvail;
     }
 
-    // Check specific model status
+    // 2. Check specific model status
     if (mid) {
       const m = p.models[mid];
       if (m && m.status !== STATUS_HEALTHY) {
@@ -628,22 +1082,6 @@ function createQuotaMonitorService({ dir = process.cwd(), logger = console } = {
       }
     }
 
-    // If provider-level quota is exhausted (all models share a single quota pool, e.g. Cloudflare daily neurons)
-    if (p.status === STATUS_QUOTA_EXHAUSTED) {
-      if (p.resetAt && Date.now() >= Date.parse(p.resetAt)) {
-        p.status = STATUS_HEALTHY;
-        p.errorReason = null;
-        p.resetAt = null;
-      } else {
-        return {
-          available: false,
-          status: p.status,
-          reason: p.errorReason || `${p.providerName} daily quota exhausted.`,
-          resetAt: p.resetAt,
-        };
-      }
-    }
-
     return {
       available: true,
       status: STATUS_HEALTHY,
@@ -652,64 +1090,20 @@ function createQuotaMonitorService({ dir = process.cwd(), logger = console } = {
     };
   }
 
-  // Provider-level availability check
-  function getProviderAvailability(providerName) {
-    const norm = normalizeProviderName(providerName);
-    const p = ensureProviderState(norm);
-
-    // If provider is explicitly disabled or invalid key or zero credits
-    if (p.status === STATUS_DISABLED || p.status === STATUS_INVALID_KEY || p.status === STATUS_INSUFFICIENT_CREDITS) {
-      return {
-        available: false,
-        status: p.status,
-        reason: p.errorReason || `${p.providerName} is unavailable.`,
-        resetAt: p.resetAt,
-      };
-    }
-
-    // Provider-level quota exhaustion (e.g. Cloudflare daily neurons or provider-wide limit)
-    if (p.status === STATUS_QUOTA_EXHAUSTED) {
-      if (p.resetAt && Date.now() >= Date.parse(p.resetAt)) {
-        p.status = STATUS_HEALTHY;
-        p.errorReason = null;
-        p.resetAt = null;
-      } else {
-        // If there are tracked models and at least one is explicitly HEALTHY, provider is still available for that model
-        const modelList = Object.values(p.models);
-        const hasHealthyModel = modelList.length > 1 && modelList.some(m => m.status === STATUS_HEALTHY);
-        if (!hasHealthyModel) {
-          return {
-            available: false,
-            status: p.status,
-            reason: p.errorReason || `${p.providerName} quota exhausted.`,
-            resetAt: p.resetAt,
-          };
-        }
-      }
-    }
-
-    return {
-      available: true,
-      status: STATUS_HEALTHY,
-      reason: '',
-      resetAt: null,
-    };
-  }
-
-  // Throws or returns error if a direct request to this model is blocked by quota
+  // Throws error if request to this model/provider is blocked by quota
   function assertModelRequestAllowed(providerName, modelId) {
     const check = getModelAvailability(providerName, modelId);
     if (!check.available) {
-      const resetMsg = check.resetAt ? ` Resets at ${new Date(check.resetAt).toLocaleTimeString()} UTC.` : '';
+      const resetMsg = check.resetAt ? ` Resets at ${new Date(check.resetAt).toISOString()}.` : '';
       const err = new Error(`${check.reason}${resetMsg}`);
       err.code = check.status.toLowerCase();
-      err.status = check.status === STATUS_RATE_LIMITED ? 429 : 402;
+      err.status = (check.status === STATUS_RATE_LIMITED) ? 429 : 402;
       err.resetAt = check.resetAt;
       throw err;
     }
   }
 
-  // Periodic background quota and reset evaluator
+  // Background evaluator: automatically restores models and providers whose resetAt timestamps have arrived
   function checkAndRestoreAll() {
     if (isChecking) return;
     isChecking = true;
@@ -719,9 +1113,10 @@ function createQuotaMonitorService({ dir = process.cwd(), logger = console } = {
         // Check provider-level resetAt
         if (p.resetAt && nowMs >= Date.parse(p.resetAt)) {
           p.status = STATUS_HEALTHY;
+          p.sharedAccountExhausted = false;
           p.errorReason = null;
           p.resetAt = null;
-          logger.info(`[QuotaMonitor] Restored provider ${p.providerName} to HEALTHY after resetAt passed.`);
+          logger.info(`[QuotaMonitor] Restored provider ${p.providerName} to HEALTHY (reset timestamp reached).`);
         }
 
         // Check key-level resetAt
@@ -751,7 +1146,7 @@ function createQuotaMonitorService({ dir = process.cwd(), logger = console } = {
     }
   }
 
-  function startBackgroundMonitoring(intervalMs = 30000) {
+  function startBackgroundMonitoring(intervalMs = 15000) {
     if (monitorInterval) clearInterval(monitorInterval);
     monitorInterval = setInterval(checkAndRestoreAll, intervalMs);
     if (typeof monitorInterval.unref === 'function') monitorInterval.unref();
@@ -764,7 +1159,6 @@ function createQuotaMonitorService({ dir = process.cwd(), logger = console } = {
     }
   }
 
-  // Full status report for Admin Dashboard
   function getStatusSnapshot() {
     checkAndRestoreAll();
     const result = {
@@ -773,22 +1167,29 @@ function createQuotaMonitorService({ dir = process.cwd(), logger = console } = {
     };
 
     for (const [id, p] of Object.entries(providers)) {
+      const modelEntries = Object.values(p.models);
+      const availCount = modelEntries.filter(m => m.status === STATUS_HEALTHY).length;
+      const exCount = modelEntries.filter(m => m.status !== STATUS_HEALTHY).length;
+
       result.providers[id] = {
         id,
-        name: p.providerName,
+        provider: p.providerName,
         status: p.status,
         errorReason: p.errorReason,
         resetAt: p.resetAt,
+        sharedAccountExhausted: Boolean(p.sharedAccountExhausted),
+        availableModels: availCount,
+        exhaustedModels: exCount,
         lastSuccessAt: p.lastSuccessAt,
         lastFailureAt: p.lastFailureAt,
-        lastCheckedAt: p.lastCheckedAt,
+        lastChecked: p.lastCheckedAt,
         keys: Object.values(p.keys).map(k => ({
           slot: k.keySlot,
           status: k.status,
           errorReason: k.errorReason,
           resetAt: k.resetAt,
         })),
-        models: Object.values(p.models).map(m => ({
+        models: modelEntries.map(m => ({
           id: m.modelId,
           status: m.status,
           errorReason: m.errorReason,
@@ -799,8 +1200,7 @@ function createQuotaMonitorService({ dir = process.cwd(), logger = console } = {
     return result;
   }
 
-  // Simulation method for testing without consuming credits
-  function simulateQuotaEvent({ providerName, modelId, keySlot, status, errorReason, resetInMs } = {}) {
+  function simulateQuotaEvent({ providerName, modelId, keySlot, status, errorReason, resetInMs, sharedAccount = false } = {}) {
     const norm = normalizeProviderName(providerName);
     const p = ensureProviderState(norm);
     const resetAt = resetInMs ? new Date(Date.now() + resetInMs).toISOString() : null;
@@ -809,7 +1209,7 @@ function createQuotaMonitorService({ dir = process.cwd(), logger = console } = {
       const m = ensureModelState(norm, modelId);
       if (m) {
         m.status = status || STATUS_QUOTA_EXHAUSTED;
-        m.errorReason = errorReason || 'Simulated model quota exhaustion';
+        m.errorReason = errorReason || 'Simulated model quota event';
         m.resetAt = resetAt;
       }
     }
@@ -818,23 +1218,72 @@ function createQuotaMonitorService({ dir = process.cwd(), logger = console } = {
       const k = ensureKeyState(norm, keySlot);
       if (k) {
         k.status = status || STATUS_QUOTA_EXHAUSTED;
-        k.errorReason = errorReason || 'Simulated key quota exhaustion';
+        k.errorReason = errorReason || 'Simulated key quota event';
         k.resetAt = resetAt;
       }
     }
 
-    if (!modelId && !keySlot) {
+    if (sharedAccount || (!modelId && !keySlot)) {
       p.status = status || STATUS_QUOTA_EXHAUSTED;
-      p.errorReason = errorReason || 'Simulated provider quota exhaustion';
+      p.sharedAccountExhausted = (status === STATUS_QUOTA_EXHAUSTED || status === STATUS_INSUFFICIENT_CREDITS);
+      p.errorReason = errorReason || 'Simulated provider quota event';
       p.resetAt = resetAt;
+      for (const k of Object.values(p.keys)) {
+        k.status = p.status;
+        k.errorReason = p.errorReason;
+        k.resetAt = p.resetAt;
+      }
     } else {
       recomputeProviderOverallStatus(norm);
     }
   }
 
+  function simulateRestore({ providerName, modelId, keySlot } = {}) {
+    const norm = normalizeProviderName(providerName);
+    const p = ensureProviderState(norm);
+
+    if (modelId) {
+      const m = ensureModelState(norm, modelId);
+      if (m) {
+        m.status = STATUS_HEALTHY;
+        m.errorReason = null;
+        m.resetAt = null;
+      }
+    }
+
+    if (keySlot) {
+      const k = ensureKeyState(norm, keySlot);
+      if (k) {
+        k.status = STATUS_HEALTHY;
+        k.errorReason = null;
+        k.resetAt = null;
+      }
+    }
+
+    if (!modelId && !keySlot) {
+      p.status = STATUS_HEALTHY;
+      p.sharedAccountExhausted = false;
+      p.errorReason = null;
+      p.resetAt = null;
+      for (const k of Object.values(p.keys)) {
+        k.status = STATUS_HEALTHY;
+        k.errorReason = null;
+        k.resetAt = null;
+      }
+      for (const m of Object.values(p.models)) {
+        m.status = STATUS_HEALTHY;
+        m.errorReason = null;
+        m.resetAt = null;
+      }
+    }
+
+    recomputeProviderOverallStatus(norm);
+  }
+
   function resetAllToHealthy() {
     for (const p of Object.values(providers)) {
       p.status = STATUS_HEALTHY;
+      p.sharedAccountExhausted = false;
       p.errorReason = null;
       p.resetAt = null;
       for (const k of Object.values(p.keys)) {
@@ -858,9 +1307,12 @@ function createQuotaMonitorService({ dir = process.cwd(), logger = console } = {
     STATUS_INVALID_KEY,
     STATUS_PERMISSION_DENIED,
     STATUS_TEMPORARILY_UNAVAILABLE,
+    STATUS_ADMIN_DISABLED,
     STATUS_DISABLED,
     STATUS_UNKNOWN,
     ALL_STATUSES,
+    getAdapter,
+    registerProviderKey,
     recordError,
     recordSuccess,
     getModelAvailability,
@@ -871,6 +1323,7 @@ function createQuotaMonitorService({ dir = process.cwd(), logger = console } = {
     stopBackgroundMonitoring,
     getStatusSnapshot,
     simulateQuotaEvent,
+    simulateRestore,
     resetAllToHealthy,
   };
 }
@@ -883,6 +1336,7 @@ module.exports = {
   STATUS_INVALID_KEY,
   STATUS_PERMISSION_DENIED,
   STATUS_TEMPORARILY_UNAVAILABLE,
+  STATUS_ADMIN_DISABLED,
   STATUS_DISABLED,
   STATUS_UNKNOWN,
   ALL_STATUSES,
@@ -890,4 +1344,18 @@ module.exports = {
   parseRetryAfterHeader,
   parseDurationToMs,
   getNextUtcHourTimestamp,
+  BaseQuotaAdapter,
+  OpenRouterQuotaAdapter,
+  GeminiQuotaAdapter,
+  GroqQuotaAdapter,
+  NvidiaQuotaAdapter,
+  CloudflareQuotaAdapter,
+  CohereQuotaAdapter,
+  StabilityAiQuotaAdapter,
+  PollinationsAiQuotaAdapter,
+  OpenAiQuotaAdapter,
+  AnthropicQuotaAdapter,
+  CodeCraftQuotaAdapter,
+  LlmtrQuotaAdapter,
+  OllamaQuotaAdapter,
 };

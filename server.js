@@ -681,18 +681,20 @@ function availableModels() {
     const normProv = normalizeProviderKey(item.provider);
     const provExhausted = isProviderCreditsExhausted(item.provider);
     const qmModel = typeof quotaMonitor !== 'undefined' && quotaMonitor ? quotaMonitor.getModelAvailability(normProv, item.id) : { available: true, status: 'HEALTHY' };
-    const exhausted = Boolean(provExhausted || !qmModel.available);
+    const qmProv = typeof quotaMonitor !== 'undefined' && quotaMonitor ? quotaMonitor.getProviderAvailability(normProv) : { available: true, status: 'HEALTHY' };
+    const exhausted = Boolean(provExhausted || !qmModel.available || !qmProv.available);
     const available = Boolean(item.available && !exhausted);
     const reason = exhausted
-      ? (qmModel.reason || providerCreditStatus[normProv]?.reason || `${item.provider} quota exhausted.`)
+      ? (!qmProv.available ? (qmProv.reason || `${item.provider} quota exhausted.`) : (qmModel.reason || providerCreditStatus[normProv]?.reason || `${item.provider} quota exhausted.`))
       : (item.reason || '');
+    const quotaStatus = !qmProv.available ? qmProv.status : (qmModel.status || (exhausted ? 'QUOTA_EXHAUSTED' : 'HEALTHY'));
     const caps = classifyModelCapabilities(item);
     out.push({
       ...item,
       available,
       creditsExhausted: exhausted,
-      quotaStatus: qmModel.status || (exhausted ? 'QUOTA_EXHAUSTED' : 'HEALTHY'),
-      resetAt: qmModel.resetAt || null,
+      quotaStatus,
+      resetAt: qmModel.resetAt || qmProv.resetAt || null,
       category: caps.category,
       text_input: caps.text_input,
       text_output: caps.text_output,
@@ -2482,6 +2484,9 @@ const server = http.createServer(async (req, res) => {
             if (capabilityService) {
               capabilityService.assertModelCapability(targetModel, 'image');
             }
+            if (typeof quotaMonitor !== 'undefined' && quotaMonitor) {
+              quotaMonitor.assertModelRequestAllowed('cloudflare', targetModel);
+            }
             if (!cloudflare.configured()) {
               throw new HttpError(
                 503,
@@ -2510,7 +2515,13 @@ const server = http.createServer(async (req, res) => {
                 steps: body.steps,
                 signal: req.signal,
               });
+              if (typeof quotaMonitor !== 'undefined' && quotaMonitor) {
+                quotaMonitor.recordSuccess({ providerName: 'cloudflare', modelId: imgRes.model });
+              }
             } catch (err) {
+              if (typeof quotaMonitor !== 'undefined' && quotaMonitor) {
+                quotaMonitor.recordError({ providerName: 'cloudflare', modelId: targetModel, error: err });
+              }
               refundTokenTransaction(loadStore(), reserved.transaction.id, err?.code || 'provider_error');
               saveStore();
               throw err;
