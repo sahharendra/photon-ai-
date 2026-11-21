@@ -147,6 +147,40 @@ class HttpError extends Error { constructor(status, code, message) { super(messa
 class AuthError extends HttpError { constructor(code, status = 401) { super(status, code, code === 'verification_unavailable' ? 'Authentication verification is temporarily unavailable.' : 'Sign in again to continue.'); } }
 const openrouterKeys = createOpenRouterKeyStore({ dir: ROOT, env: process.env });
 const openrouter = createOpenRouterProvider({ HttpError, keys: openrouterKeys });
+
+async function savePrimaryOpenRouterKey(secretKey, label = 'Primary Key') {
+  const secret = String(secretKey || '').trim();
+  if (!secret) throw new HttpError(400, 'invalid_key', 'OpenRouter API key is required.');
+  if (!secret.startsWith('sk-or-')) throw new HttpError(400, 'invalid_key', 'That does not look like an OpenRouter API key (expected sk-or-...).');
+
+  upsertEnvValue(path.join(ROOT, 'API.env'), 'OPENROUTER_API_KEY', secret);
+  process.env.OPENROUTER_API_KEY = secret;
+
+  const allKeys = openrouterKeys.all();
+  const slot1 = allKeys.find(k => k.slot === 1 || k.envName === 'OPENROUTER_API_KEY');
+  if (slot1) {
+    openrouterKeys.update(slot1.id, { key: secret, label, enabled: true });
+  } else {
+    try {
+      openrouterKeys.add({ label, key: secret });
+    } catch (e) {
+      if (e.code === 'key_limit' && allKeys.length) {
+        openrouterKeys.remove(allKeys[0].id);
+        openrouterKeys.add({ label, key: secret });
+      } else {
+        throw e;
+      }
+    }
+  }
+  openrouter.resetCache();
+  try {
+    await openrouter.refreshModels(true);
+  } catch (_) {}
+  try {
+    allModels();
+  } catch (_) {}
+  return { success: true };
+}
 const geminiKeys = createGeminiKeyStore({ dir: ROOT });
 const gemini = createGeminiProvider({ HttpError, keys: geminiKeys, env: process.env });
 const ollamaConfig = createOllamaConfig({ dir: ROOT, env: process.env, logger: console });
@@ -912,10 +946,19 @@ async function resolveModel(id) {
     }
   }
   if (!option || !option.available || option.creditsExhausted) {
-    const anyAvailable = availableModels().find(m => m.available && !m.creditsExhausted);
-    if (anyAvailable) option = anyAvailable;
+    if (id && (id.startsWith('openrouter') || id.includes('/'))) {
+      const orModel = availableModels().find(m => (m.provider === 'OpenRouter' || m.providerId === 'openrouter') && m.available && !m.creditsExhausted);
+      if (orModel) option = orModel;
+    }
+    if (!option || !option.available || option.creditsExhausted) {
+      const anyAvailable = availableModels().find(m => m.available && !m.creditsExhausted);
+      if (anyAvailable) option = anyAvailable;
+    }
   }
-  if (!option || !option.available) throw new HttpError(503, 'model_unavailable', 'No working AI provider key is configured on the server. Please add an API key (Groq, Gemini, or OpenRouter) in the Admin panel or Render environment.');
+  if (!option && (process.env.OPENROUTER_API_KEY || openrouterKeys.all().some(k => k.enabled))) {
+    option = { id: id || 'openrouter/free', name: 'OpenRouter Auto (Free Tier)', provider: 'OpenRouter', providerId: 'openrouter', available: true };
+  }
+  if (!option || !option.available) throw new HttpError(503, 'model_unavailable', 'No working AI provider key is configured on the server. Please connect an OpenRouter API key in Artifacts Studio or Admin Settings.');
   return option;
 }
 function providerKey(option) {
@@ -2605,6 +2648,41 @@ const server = http.createServer(async (req, res) => {
           return reply(res, 200, { success: true, data: { deleted: true } });
         }
         if (pathname.startsWith('/api/artifacts')) {
+          if (pathname === '/api/artifacts/openrouter-key') {
+            if (req.method === 'GET') {
+              const allKeys = openrouterKeys.all();
+              const hasKey = Boolean(process.env.OPENROUTER_API_KEY) || allKeys.some(k => k.enabled && k.lastValidation?.status === 'ok');
+              const keyObj = allKeys.find(k => k.enabled);
+              const maskedKey = process.env.OPENROUTER_API_KEY ? `${process.env.OPENROUTER_API_KEY.slice(0, 8)}••••••••${process.env.OPENROUTER_API_KEY.slice(-4)}` : (keyObj?.masked || 'None');
+              const models = (openrouter.catalogEntries() || []).map(m => ({ id: m.id, name: m.name, provider: m.provider }));
+              return reply(res, 200, {
+                success: true,
+                data: {
+                  configured: hasKey,
+                  hasKey,
+                  maskedKey,
+                  defaultModel: 'openrouter/free',
+                  models: models.length ? models : [{ id: 'openrouter/free', name: 'OpenRouter Auto (Free Tier)' }]
+                }
+              });
+            }
+            if (req.method === 'POST') {
+              const body = await readBody(req);
+              const keyVal = String(body.key || '').trim();
+              if (!keyVal) throw new HttpError(400, 'invalid_key', 'OpenRouter API key is required.');
+              await savePrimaryOpenRouterKey(keyVal, 'Artifacts Primary Key');
+              const models = (openrouter.catalogEntries() || []).map(m => ({ id: m.id, name: m.name, provider: m.provider }));
+              return reply(res, 200, {
+                success: true,
+                data: {
+                  configured: true,
+                  hasKey: true,
+                  maskedKey: `${keyVal.slice(0, 8)}••••••••${keyVal.slice(-4)}`,
+                  models: models.length ? models : [{ id: 'openrouter/free', name: 'OpenRouter Auto (Free Tier)' }]
+                }
+              });
+            }
+          }
           if (req.method === 'GET' && pathname === '/api/artifacts') {
             return reply(res, 200, { success: true, data: artifactsService.listArtifacts(claims.sub) });
           }

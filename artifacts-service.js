@@ -394,6 +394,10 @@ function createArtifactsService({
     const estimatedInputTokens = Math.max(1, Math.ceil(cleanPrompt.length / 4));
     const tokenCharge = calculateArtifactTokenCost(estimatedInputTokens, artifactPricing);
 
+    const targetModelId = modelId || (profile && profile.defaultModel) || 'openrouter/free';
+    const option = await resolveModel(targetModelId);
+    const pKey = providerKey(option);
+
     // 1. Reserve tokens atomically
     const reserved = await withStoreLock(() => {
       const resTx = reserveTokenSpend(store, {
@@ -401,16 +405,13 @@ function createArtifactsService({
         activityKey: 'code',
         requestId: requestId || `art_gen_${Date.now()}`,
         profile,
-        provider: 'AI Provider',
-        model: modelId || 'gemini-2.0-flash',
+        provider: option.provider || 'OpenRouter',
+        model: option.id,
         overrideCost: tokenCharge,
       });
       saveStore();
       return resTx;
     });
-
-    const option = await resolveModel(modelId || 'gemini-2.0-flash');
-    const pKey = providerKey(option);
 
     const systemPrompt = `You are an elite full-stack engineer and UI/UX designer generating production-quality deliverables for PHOTON AI Artifacts.
 Deliver complete, fully functional, beautifully styled, bug-free project files.
@@ -447,7 +448,7 @@ RULES:
       throw err;
     }
 
-    const responseText = String(aiResult?.text || '').trim();
+    const responseText = String(aiResult?.result?.text || aiResult?.text || '').trim();
     if (!responseText) {
       refundTokenTransaction(store, reserved.transaction.id, 'empty_response');
       saveStore();
@@ -541,22 +542,23 @@ RULES:
     const estimatedInputTokens = Math.max(1, Math.ceil((cleanInstruction.length + currentFilesSummary.length) / 4));
     const tokenCharge = calculateArtifactTokenCost(estimatedInputTokens, artifactPricing);
 
+    const targetModelId = modelId || art.model || (profile && profile.defaultModel) || 'openrouter/free';
+    const option = await resolveModel(targetModelId);
+    const pKey = providerKey(option);
+
     const reserved = await withStoreLock(() => {
       const resTx = reserveTokenSpend(store, {
         uid,
         activityKey: 'code',
         requestId: requestId || `art_edit_${Date.now()}`,
         profile,
-        provider: 'AI Provider',
-        model: modelId || art.model || 'gemini-2.0-flash',
+        provider: option.provider || 'OpenRouter',
+        model: option.id,
         overrideCost: tokenCharge,
       });
       saveStore();
       return resTx;
     });
-
-    const option = await resolveModel(modelId || art.model || 'gemini-2.0-flash');
-    const pKey = providerKey(option);
 
     const systemPrompt = `You are an expert software engineer updating an existing project deliverable.
 Targeted edit instruction from user: "${cleanInstruction}"
@@ -580,7 +582,7 @@ RULES:
       throw err;
     }
 
-    const responseText = String(aiResult?.text || '').trim();
+    const responseText = String(aiResult?.result?.text || aiResult?.text || '').trim();
     if (!responseText) {
       refundTokenTransaction(store, reserved.transaction.id, 'empty_response');
       saveStore();
