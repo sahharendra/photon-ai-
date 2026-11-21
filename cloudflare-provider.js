@@ -308,7 +308,26 @@ function createCloudflareProvider({
     const modelList = Object.values(snap.models || {});
     const active = modelList.filter(m => m.enabled && m.freeTierEligible);
 
-    if (!active.length) {
+    const chatEntries = active.map(m => ({
+      id: m.id,
+      name: m.name,
+      provider: 'Cloudflare Workers AI',
+      providerId: 'cloudflare_workers_ai',
+      configured: true,
+      supported: true,
+      available: !snap.isDailyQuotaExhausted,
+      free: true,
+      category: 'Text Generation',
+      contextLength: m.contextWindow || 32768,
+      capabilities: { text: true, vision: false, pdf: false },
+      description: m.description || `General chat & reasoning · ${Math.round((m.contextWindow || 32768) / 1024)}k context`,
+      reason: snap.isDailyQuotaExhausted ? validationMessage('quota_exhausted') : '',
+    }));
+
+    const imageEntries = imageCatalogEntries();
+    const all = [...chatEntries, ...imageEntries];
+
+    if (!all.length) {
       return [{
         id: 'cloudflare',
         name: 'Cloudflare Workers AI',
@@ -322,19 +341,7 @@ function createCloudflareProvider({
       }];
     }
 
-    return active.map(m => ({
-      id: m.id,
-      name: m.name,
-      provider: 'Cloudflare Workers AI',
-      providerId: 'cloudflare_workers_ai',
-      configured: true,
-      supported: true,
-      available: !snap.isDailyQuotaExhausted,
-      free: true,
-      contextLength: m.contextWindow || 32768,
-      capabilities: { text: true, vision: false, pdf: false },
-      reason: snap.isDailyQuotaExhausted ? validationMessage('quota_exhausted') : '',
-    }));
+    return all;
   }
 
   function buildMessages({ system, history = [], text, attachments = [] } = {}) {
@@ -392,6 +399,18 @@ function createCloudflareProvider({
     if (!configured()) throw new HttpError(503, 'not_configured', validationMessage('not_configured'));
     if (!enabled()) throw new HttpError(503, 'provider_disabled', validationMessage('provider_disabled'));
     assertFreeUsagePolicy();
+
+    if (isCloudflareImageModel(model)) {
+      const prompt = text || system || 'a beautiful illustration';
+      const imgRes = await generateImage({ prompt, model, signal });
+      return {
+        text: `![${prompt}](${imgRes.dataUrl})`,
+        image: imgRes.dataUrl,
+        model: imgRes.model,
+        usage: { inputTokens: 10, outputTokens: 50, totalTokens: 60 },
+        key: { id: 'cloudflare-env', slot: 1 },
+      };
+    }
 
     const chosenModel = model || cfg.getDefaultModelId() || '@cf/meta/llama-3.1-8b-instruct';
     const apiBase = getBaseUrl();
@@ -466,6 +485,21 @@ function createCloudflareProvider({
     if (!configured()) throw new HttpError(503, 'not_configured', validationMessage('not_configured'));
     if (!enabled()) throw new HttpError(503, 'provider_disabled', validationMessage('provider_disabled'));
     assertFreeUsagePolicy();
+
+    if (isCloudflareImageModel(model)) {
+      const prompt = text || system || 'a beautiful illustration';
+      const imgRes = await generateImage({ prompt, model, signal });
+      yield { type: 'delta', text: `![${prompt}](${imgRes.dataUrl})` };
+      yield {
+        type: 'done',
+        text: `![${prompt}](${imgRes.dataUrl})`,
+        message: `![${prompt}](${imgRes.dataUrl})`,
+        image: imgRes.dataUrl,
+        model: imgRes.model,
+        usage: { inputTokens: 10, outputTokens: 50, totalTokens: 60 },
+      };
+      return;
+    }
 
     const chosenModel = model || cfg.getDefaultModelId() || '@cf/meta/llama-3.1-8b-instruct';
     const apiBase = getBaseUrl();

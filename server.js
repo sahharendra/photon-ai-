@@ -631,7 +631,23 @@ function availableModels() {
   const nv = nvidia.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: true, pricingVerified: Boolean(m.available), contextLength: m.contextLength, capabilities: m.capabilities || { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
   const ltr = llmtr.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: Boolean(m.free), pricingVerified: Boolean(m.available), contextLength: m.contextLength, capabilities: m.capabilities || { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
   const olm = ollama.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: Boolean(m.free), pricingVerified: Boolean(m.available), contextLength: m.contextLength, capabilities: m.capabilities || { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
-  const cf = cloudflare.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: true, pricingVerified: Boolean(m.available), contextLength: m.contextLength, capabilities: m.capabilities || { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
+  const cf = cloudflare.catalogEntries().map(m => ({
+    id: m.id,
+    name: m.name,
+    provider: m.provider,
+    providerId: 'cloudflare_workers_ai',
+    configured: m.configured,
+    supported: m.supported,
+    available: Boolean(m.available),
+    free: true,
+    pricingVerified: Boolean(m.available),
+    category: m.category || (m.task === 'text-to-image' ? 'Image Generation' : 'Text Generation'),
+    task: m.task || 'text-generation',
+    contextLength: m.contextLength || 0,
+    capabilities: m.capabilities || { text: true, vision: false, pdf: false },
+    description: m.description || '',
+    reason: m.reason || '',
+  }));
   const merged = [...base, ...google, ...claude, ...free, ...gpt, ...cc, ...gq, ...nv, ...ltr, ...olm, ...cf];
   const seen = new Set();
   const out = [];

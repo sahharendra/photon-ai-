@@ -1932,13 +1932,16 @@ async function load(forceSettings=false){if(refreshing)return;refreshing=true;st
     const root = $('cloudflare-models');
     if (root) {
       root.replaceChildren();
-      (st.models || []).forEach(m => {
+      const allCf = [...(st.models || []), ...(st.imageModels || [])];
+      allCf.forEach(m => {
         const row = document.createElement('tr');
-        td(row, (m.name || m.id) + (st.defaultModelId === m.id ? ' ★ Default' : ''));
+        const isImg = m.task === 'text-to-image' || (m.category === 'Image Generation');
+        const badge = isImg ? ' [Image]' : '';
+        td(row, (m.name || m.id) + badge + (st.defaultModelId === m.id ? ' ★ Default' : ''));
         const statusCell = td(row, '');
-        statusCell.appendChild(orBadge(m.enabled ? 'Enabled' : 'Disabled', Boolean(m.enabled)));
+        statusCell.appendChild(orBadge(m.enabled !== false ? 'Enabled' : 'Disabled', m.enabled !== false));
         const ctxCell = td(row, '');
-        ctxCell.textContent = m.contextWindow ? (m.contextWindow.toLocaleString() + ' tokens') : '32,768 tokens';
+        ctxCell.textContent = isImg ? 'Image synthesis (4-20 steps)' : (m.contextWindow ? (m.contextWindow.toLocaleString() + ' tokens') : '32,768 tokens');
         const actions = td(row, '');
         actions.style.whiteSpace = 'nowrap';
         const btn = (label, fn) => {
@@ -1948,23 +1951,43 @@ async function load(forceSettings=false){if(refreshing)return;refreshing=true;st
           b.addEventListener('click', fn);
           return b;
         };
-        actions.append(
-          btn('Test model', () => cfTestModel(m)),
-          btn(m.enabled ? 'Disable' : 'Enable', async () => {
-            try {
-              await request('/api/admin/cloudflare/models/' + encodeURIComponent(m.id), 'PUT', { enabled: !m.enabled });
-              await loadCloudflare();
-            } catch (err) { alert(err.message || 'Could not toggle model.'); }
-          }),
-          btn('Set default', async () => {
-            try {
-              renderCloudflare(await request('/api/admin/cloudflare', 'PUT', { defaultModelId: m.id }));
-            } catch (err) { alert(err.message || 'Could not set default model.'); await loadCloudflare(); }
-          })
-        );
+        if (isImg) {
+          actions.append(
+            btn('Test image', async () => {
+              try {
+                const res = await request('/api/admin/cloudflare/test-image', 'POST', { model: m.id });
+                const r = res.result || {};
+                showTestResultModal({
+                  title: 'Test ' + (m.name || m.id),
+                  provider: 'Cloudflare Workers AI',
+                  ok: r.ok,
+                  status: r.status,
+                  message: r.message || (r.ok ? 'Image generated successfully with ' + (m.name || m.id) + '.' : 'Generation failed.'),
+                  responseTimeMs: r.responseTimeMs,
+                  testedAt: r.testedAt,
+                });
+              } catch (err) { alert(err.message || 'Image test failed.'); }
+            })
+          );
+        } else {
+          actions.append(
+            btn('Test model', () => cfTestModel(m)),
+            btn(m.enabled ? 'Disable' : 'Enable', async () => {
+              try {
+                await request('/api/admin/cloudflare/models/' + encodeURIComponent(m.id), 'PUT', { enabled: !m.enabled });
+                await loadCloudflare();
+              } catch (err) { alert(err.message || 'Could not toggle model.'); }
+            }),
+            btn('Set default', async () => {
+              try {
+                renderCloudflare(await request('/api/admin/cloudflare', 'PUT', { defaultModelId: m.id }));
+              } catch (err) { alert(err.message || 'Could not set default model.'); await loadCloudflare(); }
+            })
+          );
+        }
         root.appendChild(row);
       });
-      if (!(st.models || []).length) {
+      if (!allCf.length) {
         const row = document.createElement('tr');
         const empty = td(row, configured ? 'No models discovered yet. Click Test connection or Refresh models.' : 'Set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN to discover models.');
         empty.colSpan = 4;
