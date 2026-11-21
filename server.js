@@ -1657,7 +1657,18 @@ const server = http.createServer(async (req, res) => {
       if (pathname === '/api/admin/pollinations' && req.method === 'PUT') {
         const body = await readBody(req);
         if (typeof body.enabled === 'boolean') pollinations.setEnabled(body.enabled);
-        if (body.apiKey !== undefined) pollinations.setApiKey(body.apiKey);
+        if (body.apiKey !== undefined) {
+          const cleanKey = String(body.apiKey || '').trim();
+          pollinations.setApiKey(cleanKey);
+          try {
+            const envFile = typeof resolveEnvFile === 'function' ? resolveEnvFile(ROOT) : path.join(ROOT, 'API.env');
+            if (cleanKey) {
+              upsertEnvValue(envFile, 'POLLINATIONS_API_KEY', cleanKey);
+            } else {
+              removeEnvValue(envFile, 'POLLINATIONS_API_KEY');
+            }
+          } catch (_) {}
+        }
         return reply(res, 200, { success: true, data: pollinations.status() });
       }
       if (pathname === '/api/admin/pollinations/connection' && req.method === 'POST') {
