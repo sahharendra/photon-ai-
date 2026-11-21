@@ -2731,10 +2731,14 @@ const server = http.createServer(async (req, res) => {
           if (kind === 'image') {
             const requestedModel = String(body.model || '').trim();
             const cfConfigured = Boolean(cloudflare && cloudflare.configured());
-            const cfExhausted = !cfConfigured || isProviderCreditsExhausted('cloudflare') || (typeof quotaMonitor !== 'undefined' && quotaMonitor && !quotaMonitor.getProviderAvailability('cloudflare').available);
-
             const isCfRequested = requestedModel.startsWith('@cf/');
             const isPollinationsRequested = requestedModel === 'flux' || requestedModel === 'sana' || requestedModel === 'turbo' || requestedModel.toLowerCase().includes('pollinations');
+
+            const cfModelCheck = (typeof quotaMonitor !== 'undefined' && quotaMonitor)
+              ? quotaMonitor.getModelAvailability('cloudflare', requestedModel || '@cf/black-forest-labs/flux-1-schnell')
+              : { available: true };
+            const cfModelExhausted = !cfModelCheck.available;
+            const cfExhausted = !cfConfigured || isProviderCreditsExhausted('cloudflare') || cfModelExhausted || (typeof quotaMonitor !== 'undefined' && quotaMonitor && !quotaMonitor.getProviderAvailability('cloudflare').available);
 
             let usePollinations = false;
             let targetModel = requestedModel;
@@ -2782,15 +2786,22 @@ const server = http.createServer(async (req, res) => {
             }
 
             if (!usePollinations) {
-              if (typeof quotaMonitor !== 'undefined' && quotaMonitor) {
-                quotaMonitor.assertModelRequestAllowed('cloudflare', targetModel);
+              try {
+                if (typeof quotaMonitor !== 'undefined' && quotaMonitor) {
+                  quotaMonitor.assertModelRequestAllowed('cloudflare', targetModel);
+                }
+              } catch (qmErr) {
+                console.warn(`[ImageGen] Cloudflare model quota check failed (${qmErr.message}), falling back to Pollinations AI (flux)...`);
+                usePollinations = true;
+                providerDisplayName = 'Pollinations AI';
+                provShort = 'pollinations';
+                targetModel = 'flux';
               }
-              if (!cloudflare.configured()) {
-                throw new HttpError(
-                  503,
-                  'not_configured',
-                  'Cloudflare Workers AI credentials (CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN) are required for Image Generation. Please configure them in the Admin Panel or environment variables.'
-                );
+              if (!usePollinations && !cloudflare.configured()) {
+                usePollinations = true;
+                providerDisplayName = 'Pollinations AI';
+                provShort = 'pollinations';
+                targetModel = 'flux';
               }
             }
 

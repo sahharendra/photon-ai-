@@ -17,10 +17,24 @@ const DEFAULT_IMAGE_MODELS = [
   { id: 'turbo', name: 'SDXL Turbo (Pollinations Free)', provider: 'Pollinations AI', free: true, category: 'Image Generation', task: 'text-to-image' },
 ];
 
+function sleep(ms, signal) {
+  return new Promise((resolve, reject) => {
+    if (signal && signal.aborted) return reject(signal.reason || new Error('Aborted'));
+    const timer = setTimeout(resolve, ms);
+    if (signal) {
+      signal.addEventListener('abort', () => {
+        clearTimeout(timer);
+        reject(signal.reason || new Error('Aborted'));
+      }, { once: true });
+    }
+  });
+}
+
 function createPollinationsProvider({ HttpError, env = process.env, fetchImpl = globalThis.fetch, logger = console } = {}) {
   let isEnabled = true;
   let customApiKey = env.POLLINATIONS_API_KEY || '';
   let lastTestResult = null;
+  let lastFreeRequestTime = 0;
 
   function configured() {
     // Pollinations free image generation works with or without an API key
@@ -80,7 +94,7 @@ function createPollinationsProvider({ HttpError, env = process.env, fetchImpl = 
     }));
   }
 
-  async function generateImage({ prompt, model = 'flux', width = 1024, height = 1024, seed = null, signal, _isRetry = false } = {}) {
+  async function generateImage({ prompt, model = 'flux', width = 1024, height = 1024, seed = null, signal, _isRetry = false, autoWait = true } = {}) {
     if (!isEnabled) {
       throw new HttpError(503, 'provider_disabled', 'Pollinations AI is currently disabled.');
     }
@@ -101,6 +115,17 @@ function createPollinationsProvider({ HttpError, env = process.env, fetchImpl = 
     const timeoutSignal = AbortSignal.timeout(60000);
     const combined = signal ? (typeof AbortSignal.any === 'function' ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal) : timeoutSignal;
 
+    // In free tier (no API key configured), enforce IP cooldown before sending request to prevent 402 errors
+    if (!customApiKey && !_isRetry && autoWait && lastFreeRequestTime > 0) {
+      const elapsed = Date.now() - lastFreeRequestTime;
+      const cooldownMs = 45000;
+      if (elapsed < cooldownMs) {
+        const waitMs = cooldownMs - elapsed + 1000;
+        logger.log(`[Pollinations] Free tier cooldown active. Auto-waiting ${Math.ceil(waitMs / 1000)}s before sending request...`);
+        await sleep(waitMs, signal);
+      }
+    }
+
     const started = Date.now();
     let res;
     try {
@@ -120,44 +145,51 @@ function createPollinationsProvider({ HttpError, env = process.env, fetchImpl = 
     const contentType = res.headers.get('content-type') || 'image/jpeg';
     const rawBuffer = Buffer.from(await res.arrayBuffer());
 
-    // Check if the response contains valid image binary data (even if HTTP 402/200 was sent)
     const isJpeg = rawBuffer.length > 100 && rawBuffer[0] === 0xFF && rawBuffer[1] === 0xD8;
     const isPng = rawBuffer.length > 100 && rawBuffer[0] === 0x89 && rawBuffer[1] === 0x50 && rawBuffer[2] === 0x4E;
-    const isValidImage = isJpeg || isPng;
+    const hasPaymentRequired = Boolean(res.headers.get('payment-required'));
+    const isRateLimitStatus = res.status === 402 || res.status === 429;
+    const isErrorResponse = !res.ok || hasPaymentRequired || isRateLimitStatus;
 
-    if (!res.ok && !isValidImage) {
-      let errorMsg = '';
+    if (isErrorResponse) {
       let retryAfter = Number(res.headers.get('retry-after')) || 0;
-      try {
-        const json = JSON.parse(rawBuffer.toString('utf8'));
-        if (json && json.error && json.error.message) {
-          errorMsg = json.error.message;
-        } else if (json && json.message) {
-          errorMsg = json.message;
+      let errorMsg = '';
+
+      if (!isJpeg && !isPng) {
+        try {
+          const json = JSON.parse(rawBuffer.toString('utf8'));
+          if (json && json.error && json.error.message) {
+            errorMsg = json.error.message;
+          } else if (json && json.message) {
+            errorMsg = json.message;
+          }
+        } catch (_) {
+          const textSlice = rawBuffer.toString('utf8', 0, 300).replace(/[\x00-\x1F\x7F-\x9F]/g, ' ').replace(/\s+/g, ' ').trim();
+          errorMsg = textSlice;
         }
-      } catch (_) {
-        // Strip non-printable and binary characters to avoid displaying garbage
-        const textSlice = rawBuffer.toString('utf8', 0, 300).replace(/[\x00-\x1F\x7F-\x9F]/g, ' ').replace(/\s+/g, ' ').trim();
-        errorMsg = textSlice;
+
+        if (!retryAfter && errorMsg) {
+          const match = errorMsg.match(/retry\s+after\s+(\d+)s?/i) || errorMsg.match(/wait\s+(\d+)\s*s/i);
+          if (match) retryAfter = Number(match[1]);
+        }
+      } else {
+        // The response body is binary JPEG/PNG data of Pollinations' yellow rate-limit placeholder
+        errorMsg = 'Pollinations free limit reached: 1 image every 45 seconds per IP.';
+        if (!retryAfter) retryAfter = 45;
       }
 
-      // Check for retry count inside the error text if header was absent (e.g. "Retry after 20s")
-      if (!retryAfter && errorMsg) {
-        const match = errorMsg.match(/retry\s+after\s+(\d+)s?/i) || errorMsg.match(/wait\s+(\d+)\s*s/i);
-        if (match) retryAfter = Number(match[1]);
-      }
-
-      const isRateLimit = res.status === 402 || res.status === 429 || /FREE_LIMIT|Free limit|every 45 seconds/i.test(errorMsg);
+      const isRateLimit = isRateLimitStatus || hasPaymentRequired || /FREE_LIMIT|Free limit|every 45 seconds/i.test(errorMsg);
 
       if (isRateLimit) {
-        // If retry-after is reasonably short (<= 25 seconds) and we haven't already retried, wait and retry once
-        if (!_isRetry && retryAfter > 0 && retryAfter <= 25 && (!signal || !signal.aborted)) {
-          logger.log(`[Pollinations] Free rate-limit reached. Waiting ${retryAfter + 1}s before automatic retry...`);
-          await new Promise(r => setTimeout(r, (retryAfter + 1) * 1000));
-          return generateImage({ prompt, model, width, height, seed, signal, _isRetry: true });
+        const waitTime = retryAfter > 0 ? retryAfter : 45;
+        // If wait time is reasonable (<= 45 seconds) and we haven't already retried, auto-wait and retry
+        if (autoWait && !_isRetry && waitTime <= 45 && (!signal || !signal.aborted)) {
+          logger.log(`[Pollinations] Free rate-limit reached. Auto-waiting ${waitTime + 1}s before retry...`);
+          await sleep((waitTime + 1) * 1000, signal);
+          return generateImage({ prompt, model, width, height, seed, signal, _isRetry: true, autoWait });
         }
 
-        const waitNotice = retryAfter > 0 ? ` Please retry in ${retryAfter} seconds.` : ' Please wait 45 seconds between free generations.';
+        const waitNotice = waitTime > 0 ? ` Please wait ${waitTime} seconds before generating another free image.` : ' Please wait 45 seconds between free generations.';
         throw new HttpError(
           429,
           'rate_limit_exceeded',
@@ -165,12 +197,14 @@ function createPollinationsProvider({ HttpError, env = process.env, fetchImpl = 
         );
       }
 
-      throw new HttpError(res.status, 'provider_error', `Pollinations service error (${res.status}): ${errorMsg || 'Generation failed.'}`);
+      throw new HttpError(res.status || 500, 'provider_error', `Pollinations service error (${res.status}): ${errorMsg || 'Generation failed.'}`);
     }
 
     if (rawBuffer.length < 100) {
       throw new HttpError(502, 'empty_response', 'Pollinations returned an invalid or empty image.');
     }
+
+    lastFreeRequestTime = Date.now();
 
     const effectiveContentType = isPng ? 'image/png' : (isJpeg ? 'image/jpeg' : contentType);
     const base64 = rawBuffer.toString('base64');

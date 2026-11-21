@@ -273,7 +273,7 @@ test('Artifacts Service: CRUD operations and user ownership isolation', () => {
 // 4. POLLINATIONS AI ROBUST BINARY DETECTION & RATE-LIMIT TESTS
 // -----------------------------------------------------------------------------
 
-test('Pollinations: recognizes valid JPEG binary even if HTTP 402 is returned', async () => {
+test('Pollinations: rejects HTTP 402 rate limit placeholder even if JPEG binary is returned', async () => {
   class HttpError extends Error {
     constructor(status, code, message) {
       super(message);
@@ -282,24 +282,40 @@ test('Pollinations: recognizes valid JPEG binary even if HTTP 402 is returned', 
     }
   }
 
-  // Create a fake JPEG buffer (SOI marker 0xFF 0xD8)
-  const fakeJpeg = Buffer.alloc(5000);
-  fakeJpeg[0] = 0xff;
-  fakeJpeg[1] = 0xd8;
-  fakeJpeg[2] = 0xff;
-  fakeJpeg[3] = 0xe0;
+  // Create a fake JPEG buffer (simulating Pollinations' yellow rate-limit placeholder image)
+  const fakeRateLimitJpeg = Buffer.alloc(5000);
+  fakeRateLimitJpeg[0] = 0xff;
+  fakeRateLimitJpeg[1] = 0xd8;
+  fakeRateLimitJpeg[2] = 0xff;
+  fakeRateLimitJpeg[3] = 0xe0;
 
   const mockFetch = async () => ({
     ok: false,
     status: 402,
-    headers: { get: () => 'image/jpeg' },
-    arrayBuffer: async () => fakeJpeg.buffer,
+    headers: {
+      get: name => {
+        if (name === 'content-type') return 'image/jpeg';
+        if (name === 'retry-after') return '50'; // > 45 to skip long auto-wait in unit test
+        return null;
+      },
+    },
+    arrayBuffer: async () => fakeRateLimitJpeg.buffer,
   });
 
   const pol = createPollinationsProvider({ HttpError, fetchImpl: mockFetch });
-  const result = await pol.generateImage({ prompt: 'test' });
-  assert.strictEqual(result.success, true);
-  assert.ok(result.dataUrl.startsWith('data:image/jpeg;base64,'));
+  await assert.rejects(
+    async () => {
+      await pol.generateImage({ prompt: 'test', autoWait: false });
+    },
+    err => {
+      // Must be rejected as rate_limit_exceeded (429), NEVER returned as a valid user image
+      assert.strictEqual(err.status, 429);
+      assert.strictEqual(err.code, 'rate_limit_exceeded');
+      assert.ok(err.message.includes('1 image every 45 seconds per IP'));
+      assert.ok(!err.message.includes('JFIF')); // Must NEVER expose raw binary garbage
+      return true;
+    }
+  );
 });
 
 test('Pollinations: parses 45-second rate limit text and throws friendly error with remaining seconds', async () => {
@@ -330,7 +346,7 @@ test('Pollinations: parses 45-second rate limit text and throws friendly error w
   const pol = createPollinationsProvider({ HttpError, fetchImpl: mockFetch });
   await assert.rejects(
     async () => {
-      await pol.generateImage({ prompt: 'test' });
+      await pol.generateImage({ prompt: 'test', autoWait: false });
     },
     err => {
       assert.strictEqual(err.status, 429);
