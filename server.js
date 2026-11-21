@@ -247,6 +247,7 @@ function modelAllowedForPlan(option, planId) {
 }
 function assertPlanModel(option, planId) {
   if (!option) throw new HttpError(404, 'model_not_found', 'Requested model was not found.');
+  if (option.free === true) return;
   try {
     validateProviderAccess(planId, option);
   } catch (err) {
@@ -645,7 +646,7 @@ function getFastestAvailableModel(planId = 'basic') {
 
 function availableModels() {
   const base = MODEL_CATALOG.map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: Boolean(m.configured()), supported: m.supported, available: Boolean(m.configured() && m.supported), pricingVerified: false, reason: m.configured() && !m.supported ? 'Provider integration is not enabled on this server.' : !m.configured() ? `${m.provider} is not configured on this server.` : '' }));
-  const google = gemini.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), pricingVerified: false, capabilities: { text: true, vision: true, pdf: true }, reason: m.reason || '' }));
+  const google = gemini.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: m.free !== undefined ? Boolean(m.free) : true, pricingVerified: Boolean(m.available), capabilities: { text: true, vision: true, pdf: true }, reason: m.reason || '' }));
   const free = openrouter.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: Boolean(m.free), pricingVerified: Boolean(m.available && (m.pricing != null || m.free === true)), contextLength: m.contextLength, capabilities: { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
   const claude = [{ id: 'claude', name: 'Claude', provider: 'Anthropic', configured: Boolean(process.env.ANTHROPIC_API_KEY), supported: true, available: false, free: false, pricingVerified: false, reason: 'Anthropic is not configured on this server.' }];
   const gpt = openai.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: Boolean(m.configured), supported: true, available: Boolean(m.available), free: Boolean(m.free), pricingVerified: Boolean(m.pricingVerified), contextLength: m.contextLength, capabilities: { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
@@ -1011,7 +1012,7 @@ async function prepareChat(body, claims, profile) {
   });
 
   const savedUserText = userText + (attachments.length ? ' [Attached: ' + attachments.map(file => file.name).join(', ') + ']' : '');
-  return { uid: claims.sub, timezone: profile.timezone, profile, description: body.message, attachments, activityType: prep.activityType, tokens: prep.tokens, tokenTx: prep.tokenTx, chosenModel, modelOption, providerName, conversation: prep.conversation, requestIdClient, history, userText, currentParts, systemInstruction, priorHistory: prep.priorHistory, contents: prep.contents, savedUserText };
+  return { uid: claims.sub, timezone: profile.timezone, profile, description: body.message, attachments, activityType: prep.activityType, tokens: prep.tokens, tokenTx: prep.tokenTx, chosenModel: modelOption.id, modelOption, providerName, conversation: prep.conversation, requestIdClient, history, userText, currentParts, systemInstruction, priorHistory: prep.priorHistory, contents: prep.contents, savedUserText };
 }
 function saveChatResult(ctx, text, providerUsage, providerKey, meta = {}) {
   ctx.conversation.messages.push({ role: 'user', content: ctx.savedUserText }, { role: 'model', content: text });

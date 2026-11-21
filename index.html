@@ -1773,15 +1773,16 @@ if(p==="nvidia"||s.indexOf("nvidia/")===0||s.indexOf("nemotron")>-1)return'<svg 
 var FEATURED_NVIDIA_IDS=["nvidia/llama-3.1-nemotron-70b-instruct","nvidia/llama-3.1-nemotron-ultra-253b-v1","meta/llama-3.2-90b-vision-instruct","mistralai/mistral-large-2-instruct","deepseek-ai/deepseek-v4.1-flash"];
 function profileModelTierAllowed(m,planId){
   if(!m)return false;
+  if(m.free===true)return true;
   var pid=planId||(typeof photonProfile!=="undefined"&&photonProfile&&photonProfile.plan&&photonProfile.plan.id)||(typeof user!=="undefined"&&user&&user.plan)||"";
   if(!pid)return true;
   pid=String(pid).toLowerCase();
   var prov=String(m.provider||"").toLowerCase().replace(/[\s_-]+/g,"");
   if(pid==="basic"||pid==="free"){
-    return prov==="openrouter"||prov==="codecraft"||prov==="ollama"||prov==="llmtr"||prov==="cloudflare"||prov==="cloudflareworkersai";
+    return prov==="openrouter"||prov==="codecraft"||prov==="ollama"||prov==="llmtr"||prov==="cloudflare"||prov==="cloudflareworkersai"||prov==="google"||prov==="gemini"||prov==="groq"||prov==="nvidia"||prov==="nvidianim";
   }
   if(pid==="pro"){
-    return prov==="openrouter"||prov==="codecraft"||prov==="groq"||prov==="ollama"||prov==="llmtr"||prov==="cloudflare"||prov==="cloudflareworkersai";
+    return prov==="openrouter"||prov==="codecraft"||prov==="groq"||prov==="ollama"||prov==="llmtr"||prov==="cloudflare"||prov==="cloudflareworkersai"||prov==="google"||prov==="gemini"||prov==="nvidia"||prov==="nvidianim";
   }
   return true;
 }
@@ -1841,7 +1842,40 @@ function drawProfile(){if(!photonProfile||!profileConfig)return;var p=photonProf
 async function openProfile(push){if(!user){showAuth("login");return}startPresenceTracking();if(push!==false&&location.pathname!=="/profile")history.pushState({photonProfile:true},"","/profile");closePv();ov('<div class="profile-page"><div class="profile-loading" role="status">Loading your profile...</div></div>',true);$("ov").scrollTop=0;try{var results=await Promise.all([profileApi("/api/profile"),loadProfileConfigData(false),profileApi("/api/profile/activity")]);photonProfile=results[0];profileConfig=results[1];applyPublicConfig(profileConfig);profileActivities=results[2].items||[];user.name=photonProfile.fullName;user.email=photonProfile.email;var localAccount=users()[user.email]||{};user.plan=(photonProfile.plan&&photonProfile.plan.id)||"basic";user.planInterval=photonProfile.subscriptionInterval||(user.plan==="basic"?"none":"monthly");var savedModel=photonProfile.defaultModel||localAccount.defaultModel||"";var savedOption=(profileConfig.models||[]).filter(function(m){return m.id===savedModel})[0];var savedAllowed=profileModelTierAllowed(savedOption,user.plan);if(!savedAllowed){var savedFallback=(profileConfig.models||[]).filter(function(m){return m.available&&profileModelTierAllowed(m,user.plan)})[0];savedModel=savedFallback?savedFallback.id:""}user.defaultModel=savedModel;photonProfile.defaultModel=savedModel;var U=users();if(U[user.email]){U[user.email].name=user.name;U[user.email].planInterval=user.planInterval;U[user.email].plan=user.plan;U[user.email].defaultModel=user.defaultModel;putUsers(U)}if(photonProfile.usage)tokSave({d:dayKey(),u:photonProfile.usage.used,by:photonProfile.usage.by||{}});$("un").textContent=user.name;renderUserAvatar(user);$("upl").parentNode.firstChild.textContent=planName()+" plan - ";tokUI();drawProfile()}catch(e){if(e.status===401){showAuth("login");return}ov('<main class="profile-page"><button class="profile-action secondary" data-home>← Back</button><div class="profile-state error" style="margin-top:20px">'+profileEscape(profileApiError(e))+'</div></main>',true);document.querySelectorAll("[data-home]").forEach(function(b){b.onclick=goProfileHome})}}
 function goProfileHome(){if(location.pathname==="/profile")history.pushState({},"", "/");closeOv();if(user){if(!cur)newChat();else render()}}
 function showProfileEdit(){var p=photonProfile,d=document.createElement("div");d.className="profile-dialog-bg";d.innerHTML='<section class="profile-dialog" role="dialog" aria-modal="true" aria-labelledby="profile-edit-title"><h2 id="profile-edit-title">Edit Profile</h2><p class="profile-sub">Your email and account ID cannot be changed here.</p><form id="profile-edit-form"><label for="profile-name">Full Name</label><input id="profile-name" name="fullName" required minlength="2" maxlength="80" value="'+profileEscape(p.fullName)+'"><label for="profile-username">Username</label><input id="profile-username" name="username" required minlength="3" maxlength="30" pattern="[A-Za-z0-9._-]{3,30}" value="'+profileEscape(p.username)+'"><label for="profile-phone">Phone</label><input id="profile-phone" name="phone" type="tel" maxlength="24" pattern="\\+?[0-9() .-]{7,24}" value="'+profileEscape(p.phone)+'" placeholder="Optional"><label for="profile-timezone">Timezone</label><select id="profile-timezone" name="timezone">'+[p.timezone,Intl.DateTimeFormat().resolvedOptions().timeZone||"Asia/Kolkata","UTC"].filter(function(v,i,a){return v&&a.indexOf(v)===i}).map(function(v){return'<option value="'+profileEscape(v)+'">'+profileEscape(v)+'</option>'}).join("")+'</select><div class="profile-dialog-actions"><button class="profile-action secondary" type="button" id="profile-edit-cancel">Cancel</button><button class="profile-action" type="submit" id="profile-edit-save">Save Profile</button></div></form></section>';$("ovc").appendChild(d);$("profile-edit-cancel").onclick=function(){d.remove()};$("profile-edit-form").onsubmit=async function(e){e.preventDefault();var button=$("profile-edit-save"),fields=new FormData(e.currentTarget);if(!e.currentTarget.reportValidity())return;button.disabled=true;button.textContent="Saving...";var payload={fullName:String(fields.get("fullName")).trim(),username:String(fields.get("username")).trim().toLowerCase(),phone:String(fields.get("phone")).trim(),timezone:String(fields.get("timezone"))};function applyProfile(saved){photonProfile=Object.assign({},photonProfile,saved);user.name=photonProfile.fullName;var U=users();if(U[user.email]){U[user.email].name=user.name;putUsers(U)}d.remove();drawProfile();ensureFirebaseAuth().then(function(auth){if(auth&&auth.currentUser&&auth.currentUser.updateProfile)return auth.currentUser.updateProfile({displayName:user.name})}).catch(function(){})}try{applyProfile(await profileApi("/api/profile",{method:"PUT",body:payload}))}catch(ex){try{var latest=await profileApi("/api/profile");if(latest.fullName===payload.fullName&&latest.username===payload.username&&latest.phone===payload.phone&&latest.timezone===payload.timezone){applyProfile(latest);return}photonProfile=Object.assign({},photonProfile,latest);user.name=latest.fullName;drawProfile()}catch(ignore){}button.disabled=false;button.textContent="Save Profile"}};$("profile-name").focus()}
-async function saveProfileModel(model,afterSave){var option=(profileConfig.models||[]).filter(function(m){return m.id===model})[0];var allowed=profileModelTierAllowed(option,user.plan);if(!allowed){showProfileMessage("Upgrade to Pro or Premium to select this model.",true);return}if(!option){showProfileMessage("That model is not available in the model list.",true);return}try{await profileApi("/api/profile/model",{method:"PUT",body:{model:model}});photonProfile.defaultModel=model;user.defaultModel=model;var U=users();if(U[user.email]){U[user.email].defaultModel=model;putUsers(U)}if(cur&&!cur.msgs.length){cur.model=model;save()}drawProfile();updateModelPickerBtn();if(typeof afterSave==="function")afterSave();showProfileMessage("Default model saved for new conversations.",false)}catch(e){if(e&&e.code==="model_unavailable"){photonProfile.defaultModel=model;user.defaultModel=model;var localUsers=users();if(localUsers[user.email]){localUsers[user.email].defaultModel=model;putUsers(localUsers)}if(cur&&!cur.msgs.length){cur.model=model;save()}drawProfile();updateModelPickerBtn();if(typeof afterSave==="function")afterSave();showProfileMessage("Saved on this device. Add the provider integration and API key on the server before using this model in chats.",false);return}showProfileMessage(profileApiError(e),true)}}
+async function saveProfileModel(model,afterSave){
+  var catalog=(profileConfig&&(profileConfig.allModels||profileConfig.models))||[];
+  var option=catalog.filter(function(m){return m.id===model})[0];
+  var planId=photonProfile&&photonProfile.plan?photonProfile.plan.id:(user&&user.plan||"basic");
+  var allowed=profileModelTierAllowed(option,planId);
+  if(!allowed){showProfileMessage("Upgrade to Pro or Premium to select this model.",true);return}
+  if(!option){showProfileMessage("That model is not available in the model list.",true);return}
+  try{
+    await profileApi("/api/profile/model",{method:"PUT",body:{model:model}});
+    photonProfile.defaultModel=model;
+    user.defaultModel=model;
+    var U=users();
+    if(U[user.email]){U[user.email].defaultModel=model;putUsers(U)}
+    if(cur){cur.model=model;save()}
+    drawProfile();
+    updateModelPickerBtn();
+    if(typeof afterSave==="function")afterSave();
+    showProfileMessage("Default model set to "+(option.name||option.id)+".",false);
+  }catch(e){
+    if(e&&e.code==="model_unavailable"){
+      photonProfile.defaultModel=model;
+      user.defaultModel=model;
+      var localUsers=users();
+      if(localUsers[user.email]){localUsers[user.email].defaultModel=model;putUsers(localUsers)}
+      if(cur){cur.model=model;save()}
+      drawProfile();
+      updateModelPickerBtn();
+      if(typeof afterSave==="function")afterSave();
+      showProfileMessage("Saved on this device. Add the provider integration and API key on the server before using this model in chats.",false);
+      return;
+    }
+    showProfileMessage(profileApiError(e),true);
+  }
+}
 function showAllModels(initialCategory){
   var currentCat = initialCategory || activeGenCat || "text";
   var d=document.createElement("div");
@@ -1887,10 +1921,16 @@ function showAllModels(initialCategory){
   function populateProviders(){
     var catalog=profileModelCatalog((profileConfig&&profileConfig.allModels)||(profileConfig&&profileConfig.models)||[]).filter(function(m){ return getModelCat(m) === currentCat; });
     var counts={};
-    catalog.forEach(function(m){var p=m.provider||"Other";counts[p]=(counts[p]||0)+1});
-    var currentVal=providerEl.value||"all";
-    providerEl.innerHTML='<option value="all">All enabled providers ('+catalog.length+')</option>'+Object.keys(counts).sort().map(function(p){return'<option value="'+profileEscape(p)+'">'+profileEscape(p)+' ('+counts[p]+')</option>'}).join("");
-    if(currentVal!=="all"&&counts[currentVal])providerEl.value=currentVal;
+    catalog.forEach(function(m){var p=String(m.provider||"Other").trim();counts[p]=(counts[p]||0)+1});
+    var currentVal=String(providerEl.value||"all").trim().toLowerCase();
+    providerEl.innerHTML='<option value="all">All enabled providers ('+catalog.length+')</option>'+Object.keys(counts).sort().map(function(p){
+      return '<option value="'+profileEscape(p)+'"'+(p.toLowerCase()===currentVal?' selected':'')+'>'+profileEscape(p)+' ('+counts[p]+')</option>';
+    }).join("");
+    if(currentVal!=="all"){
+      var matchKey=Object.keys(counts).find(function(k){return k.toLowerCase()===currentVal});
+      if(matchKey) providerEl.value=matchKey;
+      else providerEl.value="all";
+    }
   }
 
   function renderModalList(){
@@ -1898,12 +1938,12 @@ function showAllModels(initialCategory){
     var catalog=profileModelCatalog((profileConfig&&profileConfig.allModels)||(profileConfig&&profileConfig.models)||[]);
     var inCat = catalog.filter(function(m){ return getModelCat(m) === currentCat; });
     var q=String(searchEl.value||"").trim().toLowerCase().replace(/cloudfare/g,"cloudflare");
-    var prov=providerEl.value||"all";
+    var prov=String(providerEl.value||"all").trim().toLowerCase();
     var activeId=(cur&&cur.model)||(photonProfile?photonProfile.defaultModel:(user&&user.defaultModel||""));
     var planId=photonProfile&&photonProfile.plan?photonProfile.plan.id:(user&&user.plan||"basic");
 
     var filtered=inCat.filter(function(m){
-      if(prov!=="all"&&m.provider!==prov)return false;
+      if(prov!=="all" && String(m.provider||"").trim().toLowerCase() !== prov) return false;
       if(!q)return true;
       var hay=(String(m.name||"")+" "+String(m.id||"")+" "+String(m.provider||"")+" "+String(m.category||"")+" "+String(m.task||"")+" "+String(m.description||"")).toLowerCase();
       return hay.indexOf(q)>-1;
@@ -1956,6 +1996,7 @@ function showAllModels(initialCategory){
       d.querySelectorAll(".category-tab").forEach(function(t){t.classList.remove("active")});
       tabBtn.classList.add("active");
       currentCat = tabBtn.dataset.modalCat;
+      providerEl.value = "all";
       populateProviders();
       renderModalList();
     };
@@ -1963,8 +2004,10 @@ function showAllModels(initialCategory){
 
   populateProviders();
   renderModalList();
-  searchEl.oninput=renderModalList;
-  providerEl.onchange=renderModalList;
+  searchEl.addEventListener("input", renderModalList);
+  searchEl.addEventListener("change", renderModalList);
+  providerEl.addEventListener("change", renderModalList);
+  providerEl.addEventListener("input", renderModalList);
 
   refreshBtn.onclick=async function(){
     refreshBtn.disabled=true;

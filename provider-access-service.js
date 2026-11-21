@@ -81,6 +81,9 @@ function isModelAllowedForPlan(modelOption, planId) {
   if (modelOption.enabled === false) return false;
   if (modelOption.configured === false) return false;
 
+  // Free models are available to all subscription tiers (Basic/Free, Pro, Premium)
+  if (modelOption.free === true) return true;
+
   const provider = modelOption.provider || '';
   return isProviderAllowedForPlan(provider, planId);
 }
