@@ -709,7 +709,7 @@ function checkPrivateModeGate(){
   }
   btn.onclick=tryUnlock;input.onkeydown=function(e){if(e.key==="Enter")tryUnlock()};input.focus();
 }
-async function loadPublicConfig(){try{var r=await fetch("/api/profile/config",{cache:"no-store"}),j=await r.json();if(r.ok&&j.success){profileConfig=j.data;profileConfigFetchedAt=Date.now();applyPublicConfig(j.data)}}catch(e){}}
+async function loadPublicConfig(){try{var r=await fetch("/api/profile/config",{cache:"no-store"}),j=await r.json();if(r.ok&&j.success){profileConfig=j.data;profileConfigFetchedAt=Date.now();applyPublicConfig(j.data);if(typeof updateModelPickerBtn==="function")updateModelPickerBtn();}}catch(e){}}
 async function syncAuthenticatedAccount(){if(!user)return;try{await loadPublicConfig();var account=await profileApi("/api/profile");if(!account)return;photonProfile=account;user.name=account.fullName||user.name;user.plan=(account.plan&&account.plan.id)||user.plan||"basic";user.planInterval=account.subscriptionInterval||(user.plan==="basic"?"none":"monthly");var U=users();if(U[user.email]){U[user.email].name=user.name;U[user.email].plan=user.plan;U[user.email].planInterval=user.planInterval;putUsers(U)}if(account.usage)syncProfileUsage(account.usage);else tokUI();$("upl").parentNode.firstChild.textContent=planName()+" plan - "}catch(e){}}
 function inr(n){return"₹"+n.toLocaleString("en-IN")}
 function planName(){var p=PLANS.filter(function(x){return x.id===user.plan})[0];return p?p.n:"Basic"}
