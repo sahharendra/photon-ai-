@@ -501,8 +501,30 @@ textarea::placeholder{color:var(--mute)}
 .models-provider-group{margin-bottom:16px}
 .models-provider-header{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:rgba(255,255,255,.02);border:1px solid rgba(227,219,204,.08);border-radius:8px;margin-bottom:6px;font-size:12px;font-weight:600;color:#dfd9ce}
 .models-provider-count{font-size:11px;color:var(--mute);font-weight:normal}
-.model-picker-pill{background:rgba(227,219,204,.08);border:1px solid rgba(227,219,204,.18);border-radius:12px;color:var(--ivory);font-size:11px;font-family:inherit;font-weight:500;padding:2px 8px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:all .2s;vertical-align:middle;height:24px}
-.model-picker-pill:hover{background:rgba(227,219,204,.16);border-color:var(--nude);color:var(--ink)}
+.model-picker-wrap{position:relative;display:inline-flex;align-items:center}
+.model-picker-pill{background:rgba(227,219,204,.08);border:1px solid rgba(227,219,204,.18);border-radius:12px;color:var(--ivory);font-size:11px;font-family:inherit;font-weight:500;padding:2px 8px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:all .2s;vertical-align:middle;height:24px;user-select:none}
+.model-picker-pill:hover,.model-picker-pill.open{background:rgba(227,219,204,.16);border-color:var(--nude);color:var(--ink)}
+.model-picker-arrow{font-size:8px;opacity:.7;transition:transform .2s ease;display:inline-block;line-height:1}
+.model-picker-pill.open .model-picker-arrow{transform:rotate(180deg)}
+.composer-model-pop{position:absolute;bottom:calc(100% + 8px);left:0;width:min(340px,88vw);max-height:420px;background:#161616;border:1px solid rgba(227,219,204,.2);border-radius:6px;box-shadow:0 16px 44px rgba(0,0,0,.85),0 0 0 1px rgba(255,255,255,.05);z-index:100;display:flex;flex-direction:column;overflow:hidden;backdrop-filter:blur(14px);font-family:inherit}
+.composer-model-pop[hidden]{display:none!important}
+.model-pop-head{padding:8px 10px;border-bottom:1px solid rgba(227,219,204,.1);background:rgba(255,255,255,.02);display:flex;flex-direction:column;gap:6px}
+.model-pop-head-title{display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:600;color:var(--ivory);text-transform:uppercase;letter-spacing:.04em}
+.model-pop-search{width:100%;padding:5px 8px;font-size:11.5px;border:1px solid rgba(227,219,204,.18);background:rgba(0,0,0,.35);color:var(--ink);border-radius:4px;outline:none;font-family:inherit;box-sizing:border-box}
+.model-pop-search:focus{border-color:rgba(227,219,204,.45);background:rgba(0,0,0,.55)}
+.model-pop-list{overflow-y:auto;max-height:300px;padding:4px 0;scrollbar-width:thin}
+.model-pop-group{margin-bottom:4px}
+.model-pop-group-header{padding:6px 10px 4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);display:flex;align-items:center;justify-content:space-between}
+.model-pop-item{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;background:none;border:0;border-left:2px solid transparent;color:var(--ivory);text-align:left;cursor:pointer;transition:all .15s ease;font-family:inherit;font-size:12px}
+.model-pop-item:hover,.model-pop-item:focus-visible{background:rgba(227,219,204,.12);color:var(--ink);outline:none}
+.model-pop-item.selected{background:rgba(227,219,204,.16);border-left-color:var(--nude);color:var(--ink);font-weight:500}
+.model-pop-item-main{flex:1;min-width:0}
+.model-pop-item-name{font-size:12px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.model-pop-item-sub{font-size:10px;color:var(--mute);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:5px}
+.model-pop-check{font-size:11px;color:var(--nude);font-weight:bold}
+.model-pop-footer{padding:6px 10px;border-top:1px solid rgba(227,219,204,.1);background:rgba(255,255,255,.02);display:flex;align-items:center;justify-content:space-between}
+.model-pop-all-btn{background:none;border:0;color:var(--mute);font-size:11px;cursor:pointer;padding:3px 0;text-decoration:underline;font-family:inherit}
+.model-pop-all-btn:hover{color:var(--ink)}
 .profile-model-row .model-action-col{display:flex;align-items:center;gap:8px;justify-self:end}
 .model-state-badge{font-size:11px;color:var(--mute);padding:4px 9px;border-radius:99px;border:1px solid rgba(227,219,204,.22)}
 .profile-model-row.selected .model-state-badge{background:var(--nude);color:#161616;border-color:var(--nude);font-weight:700}
@@ -563,7 +585,10 @@ textarea::placeholder{color:var(--mute)}
           <input id="chat-file-input" type="file" multiple hidden accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.md,.markdown,.csv,.tsv,.json,.js,.jsx,.ts,.tsx,.py,.html,.css,.java,.go,.rs,.php,.sql,.yml,.yaml,.xml,.log,.c,.cpp,.h,.cs,.rb,.sh,.ini,.toml,text/*">
           <button class="ib attach" id="attach-files" type="button" aria-label="Attach files" title="Attach files (PDF, images, text and code)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.4 11.1-8.5 8.5a5 5 0 0 1-7.1-7.1l9.2-9.2a3.3 3.3 0 0 1 4.7 4.7l-9.2 9.2a1.7 1.7 0 0 1-2.4-2.4l8.5-8.5"/></svg></button>
           <button class="ib plus" id="plus" aria-label="Modes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
-          <button type="button" id="model-picker-btn" class="model-picker-pill" title="Choose AI Model"><span id="model-picker-name">Model</span> <span style="font-size:9px;opacity:0.7">▾</span></button>
+          <div class="model-picker-wrap" id="model-picker-wrap">
+            <button type="button" id="model-picker-btn" class="model-picker-pill" title="Choose AI Model" aria-haspopup="listbox" aria-expanded="false"><span id="model-picker-name">Model</span> <span class="model-picker-arrow">▾</span></button>
+            <div id="composer-model-pop" class="composer-model-pop" role="listbox" aria-label="Select AI Model" hidden></div>
+          </div>
           <span id="modeTag"></span><span id="costTag"></span><span class="sp"></span>
           <button class="ib" id="mic" aria-label="Dictate"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V22h2v-3.1A7 7 0 0 0 19 12z"/></svg></button>
           <button class="ib" id="go" aria-label="Voice"><svg id="wave" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="10" width="2.5" height="4" rx="1"/><rect x="7.5" y="6" width="2.5" height="12" rx="1"/><rect x="12" y="3" width="2.5" height="18" rx="1"/><rect x="16.5" y="8" width="2.5" height="8" rx="1"/></svg></button>
@@ -583,6 +608,12 @@ var MODES={general:["Chat","General reasoning and writing."],image:["Create imag
 var SYS="You are Photon, an AI assistant for general reasoning, coding and software architecture. Always respond in English unless the user explicitly requests another language. Answer with clean Markdown: headings, bullets, and language-tagged code blocks. When the user asks for a file (a web page, script, config, data file and so on), write the complete file in one code block whose opening fence has the language and then the file name, for example ```html index.html. Never say you cannot create files: the app shows a Download button on every code block and a Preview button for HTML. If a project needs several files, use one code block per file, each with its own file name.";
 var WAVE=document.getElementById("wave").outerHTML;var basePH="How can I help you today?",tokDay="",projs=[],user=null,vm=false,speaking=false,chats=[],cur=null,mode="general",busy=false,ctl=null,rec=null,pendingChatFiles=[],chatSearch="",photonProfile=null,profileConfig=null,profileConfigFetchedAt=0,profileActivities=[],billingAvailable=false,presenceTimer=null,presenceVisibilityHandler=null;
 var activeGenCat="text";
+function getModelCat(m) {
+  if (!m) return "text";
+  if (m.category === "image" || m.task === "text-to-image" || m.category === "Image Generation" || (m.id && m.id.indexOf("@cf/") === 0 && (m.id.indexOf("flux") > -1 || m.id.indexOf("stable-diffusion") > -1))) return "image";
+  if (m.category === "video" || m.task === "text-to-video" || /svd|video/i.test(m.id)) return "video";
+  return "text";
+}
 function setGenCategory(cat){
   activeGenCat=cat;
   document.querySelectorAll(".gen-mode-btn").forEach(function(b){
@@ -597,16 +628,16 @@ function setGenCategory(cat){
   else{inp.placeholder=hasMsgs?"Message Photon...":"How can I help you today?";}
   ensureCompatibleModelForCategory(cat);
   updateModelPickerBtn();
+  if(typeof closeComposerModelPop==="function")closeComposerModelPop();
 }
 function ensureCompatibleModelForCategory(cat){
   var catalog=(profileConfig&&(profileConfig.allModels||profileConfig.models))||[];
   var currentModelId=(cur&&cur.model)||(user&&user.defaultModel)||"";
   var currentModel=catalog.find(function(m){return m.id===currentModelId});
-  var currentCat=currentModel?(currentModel.category||(currentModel.task==='text-to-image'?'image':(currentModel.task==='text-to-video'?'video':'text'))):'text';
+  var currentCat=getModelCat(currentModel);
   if(currentCat!==cat){
     var eligible=catalog.filter(function(m){
-      var mCat=m.category||(m.task==='text-to-image'?'image':(m.task==='text-to-video'?'video':'text'));
-      return mCat===cat&&m.available!==false&&!m.creditsExhausted;
+      return getModelCat(m)===cat&&m.available!==false&&!m.creditsExhausted&&m.configured!==false;
     });
     if(eligible.length>0){
       if(cur)cur.model=eligible[0].id;
@@ -997,6 +1028,170 @@ function updateModelPickerBtn(){
   btn.title="Category: "+activeGenCat.toUpperCase()+" · Model: "+(found?(found.name+" ("+found.id+")"):currentModelId||"Default")+" — click to change";
 }
 
+function positionComposerModelPop(){
+  var pop=$("composer-model-pop"),btn=$("model-picker-btn");
+  if(!pop||!btn)return;
+  var rect=btn.getBoundingClientRect();
+  if(rect.top<380){
+    pop.style.bottom="auto";
+    pop.style.top="calc(100% + 8px)";
+  }else{
+    pop.style.top="auto";
+    pop.style.bottom="calc(100% + 8px)";
+  }
+}
+
+function renderComposerModelPop(){
+  var pop=$("composer-model-pop");
+  if(!pop)return;
+  var catalog=profileModelCatalog((profileConfig&&(profileConfig.allModels||profileConfig.models))||[]);
+  var planId=(photonProfile&&photonProfile.plan?photonProfile.plan.id:(user&&user.plan||"basic"));
+
+  var eligible=catalog.filter(function(m){
+    if(!m||m.configured===false||m.available===false||m.creditsExhausted===true)return false;
+    if(getModelCat(m)!==activeGenCat)return false;
+    if(!profileModelTierAllowed(m,planId))return false;
+    return true;
+  });
+
+  var currentModelId=(cur&&cur.model)||(user&&user.defaultModel)||(photonProfile&&photonProfile.defaultModel)||"";
+  var searchInp=pop.querySelector("#model-pop-search");
+  var searchVal=(searchInp?searchInp.value:"").trim().toLowerCase();
+
+  var filtered=eligible.filter(function(m){
+    if(!searchVal)return true;
+    var text=(String(m.name||"")+" "+String(m.id||"")+" "+String(m.provider||"")).toLowerCase();
+    return text.indexOf(searchVal)>-1;
+  });
+
+  var catLabel=activeGenCat==='image'?'🎨 Image Models':(activeGenCat==='video'?'🎬 Video Models':'💬 Text Models');
+
+  var groups={};
+  filtered.forEach(function(m){
+    var p=m.provider||"Other";
+    if(!groups[p])groups[p]=[];
+    groups[p].push(m);
+  });
+
+  var listHtml="";
+  if(!filtered.length){
+    listHtml='<div style="padding:18px 12px;text-align:center;color:var(--mute);font-size:11.5px">'+
+      (searchVal?'No models match "<b>'+profileEscape(searchVal)+'</b>"':'No eligible '+activeGenCat.toUpperCase()+' models available.')+
+    '</div>';
+  }else{
+    listHtml=Object.keys(groups).sort().map(function(provName){
+      var items=groups[provName];
+      var itemsHtml=items.map(function(m){
+        var isSelected=(m.id===currentModelId);
+        var subInfo=[];
+        if(m.free===true)subInfo.push('Free');
+        if(m.contextLength)subInfo.push(m.contextLength>1024?Math.round(m.contextLength/1024)+'k ctx':m.contextLength+' ctx');
+        if(m.capabilities&&m.capabilities.vision)subInfo.push('Vision');
+        var subText=subInfo.length?subInfo.join(' · '):(m.id.length>28?m.id.slice(0,26)+'…':m.id);
+
+        return '<button type="button" class="model-pop-item'+(isSelected?' selected':'')+'" data-pop-model="'+profileEscape(m.id)+'" role="option" aria-selected="'+(isSelected?'true':'false')+'">'+
+          '<div class="model-pop-item-main">'+
+            '<div class="model-pop-item-name">'+profileEscape(m.name||m.id)+'</div>'+
+            '<div class="model-pop-item-sub"><span>'+profileEscape(subText)+'</span></div>'+
+          '</div>'+
+          (isSelected?'<span class="model-pop-check" aria-hidden="true">✓</span>':'')+
+        '</button>';
+      }).join("");
+
+      return '<div class="model-pop-group">'+
+        '<div class="model-pop-group-header"><span>'+profileEscape(provName)+'</span><span>'+items.length+'</span></div>'+
+        itemsHtml+
+      '</div>';
+    }).join("");
+  }
+
+  pop.innerHTML='<div class="model-pop-head">'+
+    '<div class="model-pop-head-title"><span>'+catLabel+'</span><span style="font-size:10px;color:var(--mute)">'+eligible.length+' available</span></div>'+
+    (eligible.length>6?'<input type="search" class="model-pop-search" id="model-pop-search" placeholder="Search models..." value="'+profileEscape(searchVal)+'" autocomplete="off">':'')+
+  '</div>'+
+  '<div class="model-pop-list" role="listbox">'+listHtml+'</div>'+
+  '<div class="model-pop-footer">'+
+    '<button type="button" class="model-pop-all-btn" id="model-pop-view-all">All models &amp; settings →</button>'+
+  '</div>';
+
+  var newSearchInp=pop.querySelector("#model-pop-search");
+  if(newSearchInp){
+    newSearchInp.oninput=function(){renderComposerModelPop();};
+    if(searchVal){
+      newSearchInp.focus();
+      newSearchInp.setSelectionRange(searchVal.length,searchVal.length);
+    }
+  }
+
+  pop.querySelectorAll("[data-pop-model]").forEach(function(btn){
+    btn.onclick=function(e){
+      e.stopPropagation();
+      var id=btn.dataset.popModel;
+      closeComposerModelPop();
+      saveProfileModel(id,function(){
+        updateModelPickerBtn();
+        var pick=catalog.find(function(m){return m.id===id});
+        toast("Switched to "+(pick?(pick.name||pick.id):id));
+      });
+    };
+  });
+
+  var viewAllBtn=pop.querySelector("#model-pop-view-all");
+  if(viewAllBtn){
+    viewAllBtn.onclick=function(e){
+      e.stopPropagation();
+      closeComposerModelPop();
+      showAllModels(activeGenCat);
+    };
+  }
+}
+
+function openComposerModelPop(){
+  var pop=$("composer-model-pop"),btn=$("model-picker-btn");
+  if(!pop||!btn)return;
+  var modesPop=$("pop");
+  if(modesPop)modesPop.classList.remove("on");
+  if(!profileConfig){
+    loadProfileConfigData(false).then(function(){
+      renderComposerModelPop();
+      positionComposerModelPop();
+      pop.hidden=false;
+      btn.classList.add("open");
+      btn.setAttribute("aria-expanded","true");
+    }).catch(function(){
+      renderComposerModelPop();
+      positionComposerModelPop();
+      pop.hidden=false;
+      btn.classList.add("open");
+      btn.setAttribute("aria-expanded","true");
+    });
+    return;
+  }
+  renderComposerModelPop();
+  positionComposerModelPop();
+  pop.hidden=false;
+  btn.classList.add("open");
+  btn.setAttribute("aria-expanded","true");
+  var searchInp=pop.querySelector("#model-pop-search");
+  if(searchInp)searchInp.focus();
+}
+
+function closeComposerModelPop(){
+  var pop=$("composer-model-pop"),btn=$("model-picker-btn");
+  if(pop)pop.hidden=true;
+  if(btn){
+    btn.classList.remove("open");
+    btn.setAttribute("aria-expanded","false");
+  }
+}
+
+function toggleComposerModelPop(e){
+  if(e)e.stopPropagation();
+  var pop=$("composer-model-pop");
+  if(pop&&!pop.hidden)closeComposerModelPop();
+  else openComposerModelPop();
+}
+
 function updFlow(){
   var bf=$("boxFlow");
   if(!bf)return;
@@ -1207,12 +1402,22 @@ $("art").onclick=showArtifacts;
 $("tog").onclick=function(){var s=$("side");if(window.innerWidth<=720)s.classList.toggle("show");else s.classList.toggle("hide")};
 $("search-chats").onclick=function(){var input=$("chat-search-input"),open=input.hidden;input.hidden=!open;this.setAttribute("aria-expanded",String(open));if(open){input.focus()}else{input.value="";chatSearch="";render()}};
 $("chat-search-input").addEventListener("input",function(){chatSearch=this.value;render()});
-$("plus").onclick=function(e){e.stopPropagation();$("pop").classList.toggle("on")};
-var mpb=$("model-picker-btn");if(mpb)mpb.onclick=function(){if(!profileConfig){loadProfileConfigData(false).then(function(){showAllModels(activeGenCat)}).catch(function(){showAllModels(activeGenCat)})}else{showAllModels(activeGenCat)}};
+$("plus").onclick=function(e){e.stopPropagation();closeComposerModelPop();$("pop").classList.toggle("on")};
+var mpb=$("model-picker-btn");if(mpb)mpb.onclick=toggleComposerModelPop;
 ["text","image","video"].forEach(function(cat){var btn=$("gen-mode-"+cat);if(btn){btn.onclick=function(){setGenCategory(cat)}}});
 $("attach-files").onclick=function(){$("chat-file-input").click()};
 $("chat-file-input").addEventListener("change",handleChatFiles);
-document.addEventListener("click",function(e){if(!$("pop").contains(e.target))$("pop").classList.remove("on")});
+document.addEventListener("click",function(e){
+  if(!$("pop").contains(e.target))$("pop").classList.remove("on");
+  var wrap=$("model-picker-wrap");
+  if(wrap&&!wrap.contains(e.target))closeComposerModelPop();
+});
+document.addEventListener("keydown",function(e){
+  if(e.key==="Escape"){
+    closeComposerModelPop();
+    var p=$("pop");if(p)p.classList.remove("on");
+  }
+});
 $("mic").onclick=function(){
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){toast("Dictation isn't supported here");return}
