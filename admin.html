@@ -324,6 +324,64 @@
 </form>
 <div class="settings-grid" style="margin-top:18px"><div class="field"><label>Request &amp; token usage</label><div id="ollama-usage" class="muted">Not loaded.</div></div></div><form id="ollama-settings-form" style="margin-top:14px"><div class="settings-grid"><div class="field"><label for="ollama-enabled">Provider state</label><select id="ollama-enabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div><div class="field"><label for="ollama-spending-policy">Spending policy</label><select id="ollama-spending-policy"><option value="allow_free_only">Allow free models only (zero-billing safe)</option><option value="allow_all">Allow all models</option><option value="block">Block all requests</option></select></div></div><div class="save-row"><small class="muted">Ollama Cloud / Local open models. API key is never stored in browser.</small><button id="ollama-save-settings" type="submit">Save Ollama settings</button></div></form><div class="head" style="margin-top:28px"><div><h2>Ollama models</h2><small>Discovered from GET /api/tags or GET /v1/models.</small></div></div><div class="scroll"><table class="subscriptions-table"><thead><tr><th>Model</th><th>Status</th><th>Context window</th><th>Actions</th></tr></thead><tbody id="ollama-models"></tbody></table></div><div class="head" style="margin-top:28px"><div><h2>Recent Ollama errors</h2><small>Key-free error codes only.</small></div></div><div id="ollama-errors" class="list"></div>
 
+<div class="head" style="margin-top:34px">
+  <div>
+    <h2>Model Capabilities &amp; Modality Registry</h2>
+    <small>Strict modality detection (text/image/video in &amp; out). Only models with <code>image_output=true</code> are classified as IMAGE; only models with <code>video_output=true</code> are classified as VIDEO.</small>
+  </div>
+  <div class="actions">
+    <button id="capabilities-refresh" type="button">Refresh capabilities</button>
+  </div>
+</div>
+<div class="users-kpis" style="margin:14px 0">
+  <article class="users-kpi"><small>Text Generation Models</small><b id="cap-kpi-text">—</b><span>text_output: true</span></article>
+  <article class="users-kpi"><small>Image Generation Models</small><b id="cap-kpi-image">—</b><span>image_output: true</span></article>
+  <article class="users-kpi"><small>Video Generation Models</small><b id="cap-kpi-video">—</b><span>video_output: true</span></article>
+</div>
+<div class="scroll">
+  <table class="subscriptions-table">
+    <thead>
+      <tr>
+        <th>Provider</th>
+        <th>Model ID</th>
+        <th>Display Name</th>
+        <th>Category</th>
+        <th>Text (In/Out)</th>
+        <th>Image (In/Out)</th>
+        <th>Video (In/Out)</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="capabilities-tbody"></tbody>
+  </table>
+</div>
+
+<div class="head" style="margin-top:34px">
+  <div>
+    <h2>API Quota &amp; Availability Monitor</h2>
+    <small>Real-time quota monitoring across all providers. Tracks RPM, daily/monthly tokens, credit balance, and automatic reset timers.</small>
+  </div>
+  <div class="actions">
+    <button id="quota-refresh" type="button">Refresh quota</button>
+  </div>
+</div>
+<div class="scroll">
+  <table class="subscriptions-table">
+    <thead>
+      <tr>
+        <th>Provider</th>
+        <th>Availability Status</th>
+        <th>Healthy Models</th>
+        <th>Exhausted Models</th>
+        <th>Reset Time (UTC)</th>
+        <th>Last Checked</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="quota-tbody"></tbody>
+  </table>
+</div>
+
 </section><section id="subscriptions" class="card section page-view"><div class="head"><div><h2>Subscriptions &amp; Purchases</h2><small>Verified payments, actual collected revenue, recurring MRR, refunds, and Cashfree gateway settings.</small></div><div class="actions"><button id="refresh-subs" type="button">Refresh</button></div></div><div class="gw-card" id="cashfree-gateway-card">
 <div class="gw-head">
 <div><h3 style="margin:0;font-size:15px" id="gw-card-title">Razorpay Payments</h3><small class="muted">Credit Card &amp; UPI Checkout · Test Mode requires 0 PAN/KYC · Secrets stay backend-only</small></div>
@@ -1528,10 +1586,10 @@ function setupDashboardAnalyticsFilter(){
   }
 }
 
-async function load(forceSettings=false){if(refreshing)return;refreshing=true;status('Loading admin data...');try{const data=await request('/api/admin/overview');showApp();const m=data.metrics||{};$('logout').hidden=!!data.localAccess;if($('total'))$('total').textContent=fmt(m.totalUsers);if($('login-today'))$('login-today').textContent=fmt(Math.max(Number(m.signInsToday)||0,(data.users||[]).reduce((total,u)=>total+loginsToday(u),0)));if($('tokens'))$('tokens').textContent=fmt(m.tokensToday);renderDashboard(data);setupDashboardAnalyticsFilter();loadUsersAdmin();loadSubscriptionsAdmin();if(data.paymentGateway)renderGatewayConfig(data.paymentGateway);else loadGatewayConfig();renderProviders(data.models);loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();loadCloudflare();if(forceSettings||!settingsDirty){renderPlanFields(data.settings||{});renderTokenRulesTable(data.settings||{});settingsDirty=false}renderPricingAudit(data.pricingAuditLogs||[]);runConfigVerification(true);status('Admin data loaded.')}catch(error){if(error.status===401){showLogin();return}if(error.status===503&&error.code==='admin_not_configured'){showLogin('Admin sign-in is not configured. Set PHOTON_ADMIN_PASSWORD and restart the server.');return}status(error.message||'Could not load admin data.',true)}finally{refreshing=false}}
+async function load(forceSettings=false){if(refreshing)return;refreshing=true;status('Loading admin data...');try{const data=await request('/api/admin/overview');showApp();const m=data.metrics||{};$('logout').hidden=!!data.localAccess;if($('total'))$('total').textContent=fmt(m.totalUsers);if($('login-today'))$('login-today').textContent=fmt(Math.max(Number(m.signInsToday)||0,(data.users||[]).reduce((total,u)=>total+loginsToday(u),0)));if($('tokens'))$('tokens').textContent=fmt(m.tokensToday);renderDashboard(data);setupDashboardAnalyticsFilter();loadUsersAdmin();loadSubscriptionsAdmin();if(data.paymentGateway)renderGatewayConfig(data.paymentGateway);else loadGatewayConfig();renderProviders(data.models);loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();loadCloudflare();loadCapabilitiesAdmin();loadQuotaAdmin();if(forceSettings||!settingsDirty){renderPlanFields(data.settings||{});renderTokenRulesTable(data.settings||{});settingsDirty=false}renderPricingAudit(data.pricingAuditLogs||[]);runConfigVerification(true);status('Admin data loaded.')}catch(error){if(error.status===401){showLogin();return}if(error.status===503&&error.code==='admin_not_configured'){showLogin('Admin sign-in is not configured. Set PHOTON_ADMIN_PASSWORD and restart the server.');return}status(error.message||'Could not load admin data.',true)}finally{refreshing=false}}
  $('login-form').addEventListener('submit',async event=>{event.preventDefault();const button=$('login-button');button.disabled=true;button.textContent='Signing in...';$('login-error').hidden=true;try{await request('/api/admin/login','POST',{email:$('admin-email').value.trim(),password:$('admin-password').value});$('admin-password').value='';await load(true)}catch(error){showLogin(error.message||'Sign-in failed. Check the username and password.')}finally{button.disabled=false;button.textContent='Sign in'}});
  $('logout').addEventListener('click',async()=>{try{await request('/api/admin/logout','POST',{})}finally{showLogin('You have signed out.')}});
- const pageMeta={overview:['Dashboard','Live overview of Photon accounts and usage.'],'users-section':['Users & Sign-ins','Account access, sign-in methods, activity, and plan status.'],subscriptions:['Subscriptions & Purchases','Verified payments, revenue, MRR, and Cashfree gateway configuration.'],settings:['Pricing & Token Rules','Manage plan pricing, daily limits, and AI activity token costs.'],providers:['AI Provider Settings','Check and manage server-side AI provider keys. Secrets are never shown.']};function showPage(){let id=location.hash.slice(1)||'overview';if(!pageMeta[id])id='overview';document.querySelectorAll('.page-view').forEach(page=>page.classList.toggle('active',page.id===id));document.querySelectorAll('.sidebar nav a[href^="#"]').forEach(link=>link.classList.toggle('active',link.getAttribute('href')==='#'+id));$('page-title').textContent=pageMeta[id][0];$('page-description').textContent=pageMeta[id][1];if(id==='overview'){load()}else if(id==='users-section'){loadUsersAdmin()}else if(id==='subscriptions'){loadGatewayConfig();loadSubscriptionsAdmin()}else if(id==='settings'){load(true)}else if(id==='providers'){loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();loadCloudflare();}}window.addEventListener('hashchange',showPage);showPage();
+ const pageMeta={overview:['Dashboard','Live overview of Photon accounts and usage.'],'users-section':['Users & Sign-ins','Account access, sign-in methods, activity, and plan status.'],subscriptions:['Subscriptions & Purchases','Verified payments, revenue, MRR, and Cashfree gateway configuration.'],settings:['Pricing & Token Rules','Manage plan pricing, daily limits, and AI activity token costs.'],providers:['AI Provider Settings','Check and manage server-side AI provider keys. Secrets are never shown.']};function showPage(){let id=location.hash.slice(1)||'overview';if(!pageMeta[id])id='overview';document.querySelectorAll('.page-view').forEach(page=>page.classList.toggle('active',page.id===id));document.querySelectorAll('.sidebar nav a[href^="#"]').forEach(link=>link.classList.toggle('active',link.getAttribute('href')==='#'+id));$('page-title').textContent=pageMeta[id][0];$('page-description').textContent=pageMeta[id][1];if(id==='overview'){load()}else if(id==='users-section'){loadUsersAdmin()}else if(id==='subscriptions'){loadGatewayConfig();loadSubscriptionsAdmin()}else if(id==='settings'){load(true)}else if(id==='providers'){loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();loadCloudflare();loadCapabilitiesAdmin();loadQuotaAdmin();}}window.addEventListener('hashchange',showPage);showPage();
  $('settings-form').addEventListener('input',()=>{settingsDirty=true});
  $('settings-form').addEventListener('change',()=>{settingsDirty=true});
  $('verify-token-calc-btn').addEventListener('click',()=>runConfigVerification(false));
@@ -2156,6 +2214,126 @@ async function load(forceSettings=false){if(refreshing)return;refreshing=true;st
   $('llmtr-settings-form').addEventListener('submit',async event=>{event.preventDefault();const button=$('llmtr-save-settings');button.disabled=true;try{renderLlmtr(await request('/api/admin/llmtr','PUT',{enabled:$('llmtr-enabled').value==='true',spendingPolicy:$('llmtr-spending-policy').value}))}catch(error){alert(error.message||'Could not save LLMTR settings.')}finally{button.disabled=false}});
   $('llmtr-test-connection').addEventListener('click',async()=>{const button=$('llmtr-test-connection');button.disabled=true;button.textContent='Testing...';try{const data=await request('/api/admin/llmtr/connection','POST',{});renderLlmtr(data);const r=data.result||{};showTestResultModal({title:'LLMTR Connection Test',provider:'LLMTR',ok:r.ok,status:r.ok?'ok':'failed',code:r.code,message:r.error||'Connection successful',responseTimeMs:r.responseTimeMs,testedAt:new Date().toISOString(),modelCount:r.modelCount});}catch(error){showTestResultModal({title:'LLMTR Connection Test',provider:'LLMTR',ok:false,status:'connection_failed',message:error.message||'Could not test LLMTR connection.'});}finally{button.disabled=false;button.textContent='Test connection'}});
   $('llmtr-refresh').addEventListener('click',async()=>{const button=$('llmtr-refresh');button.disabled=true;try{renderLlmtr(await request('/api/admin/llmtr/refresh','POST',{}))}catch(error){alert(error.message||'Could not refresh LLMTR models.')}finally{button.disabled=false}});
+
+  async function loadCapabilitiesAdmin() {
+    try {
+      const res = await request('/api/admin/capabilities');
+      const data = (res && res.data) || res || {};
+      const stats = data.categoryStats || { text: 0, image: 0, video: 0 };
+      if ($('cap-kpi-text')) $('cap-kpi-text').textContent = (stats.text || 0) + ' models';
+      if ($('cap-kpi-image')) $('cap-kpi-image').textContent = (stats.image || 0) + ' models';
+      if ($('cap-kpi-video')) $('cap-kpi-video').textContent = (stats.video || 0) + ' models';
+
+      const tbody = $('capabilities-tbody');
+      if (!tbody) return;
+      tbody.replaceChildren();
+
+      const models = data.models || [];
+      if (!models.length) {
+        const row = document.createElement('tr');
+        const empty = td(row, 'No models registered in capability service.');
+        empty.colSpan = 8;
+        empty.className = 'empty';
+        tbody.appendChild(row);
+        return;
+      }
+
+      models.forEach(m => {
+        const row = document.createElement('tr');
+        td(row, m.provider || '—');
+        td(row, m.id || '—');
+        td(row, m.name || m.id || '—');
+
+        const catTd = td(row, '');
+        const catBadge = document.createElement('span');
+        catBadge.className = 'pill ' + (m.category === 'text' ? 'ok' : m.category === 'image' ? 'warn' : 'no');
+        catBadge.textContent = String(m.category || 'text').toUpperCase();
+        catTd.appendChild(catBadge);
+
+        td(row, (m.text_input ? '✓ In' : '✗') + ' / ' + (m.text_output ? '✓ Out' : '✗'));
+        td(row, (m.image_input ? '✓ In' : '✗') + ' / ' + (m.image_output ? '✓ Out' : '✗'));
+        td(row, (m.video_input ? '✓ In' : '✗') + ' / ' + (m.video_output ? '✓ Out' : '✗'));
+
+        const availTd = td(row, '');
+        const availBadge = document.createElement('span');
+        availBadge.className = 'pill ' + (m.available ? 'ok' : 'no');
+        availBadge.textContent = m.available ? 'Available' : 'Unavailable';
+        availTd.appendChild(availBadge);
+
+        tbody.appendChild(row);
+      });
+    } catch (err) {
+      console.error('Failed to load capabilities in admin:', err);
+    }
+  }
+
+  async function loadQuotaAdmin() {
+    try {
+      const res = await request('/api/admin/quota/status');
+      const data = (res && res.data) || res || {};
+      const providers = data.providers || {};
+      const tbody = $('quota-tbody');
+      if (!tbody) return;
+      tbody.replaceChildren();
+
+      const provKeys = Object.keys(providers);
+      if (!provKeys.length) {
+        const row = document.createElement('tr');
+        const empty = td(row, 'No provider quota data available.');
+        empty.colSpan = 7;
+        empty.className = 'empty';
+        tbody.appendChild(row);
+        return;
+      }
+
+      provKeys.forEach(pKey => {
+        const p = providers[pKey] || {};
+        const row = document.createElement('tr');
+        td(row, p.provider || pKey);
+
+        const stTd = td(row, '');
+        const stBadge = document.createElement('span');
+        stBadge.className = 'pill ' + (p.status === 'HEALTHY' ? 'ok' : p.status === 'QUOTA_EXHAUSTED' ? 'no' : 'warn');
+        stBadge.textContent = p.status || 'UNKNOWN';
+        stTd.appendChild(stBadge);
+
+        td(row, String(p.availableModels != null ? p.availableModels : '—'));
+        td(row, String(p.exhaustedModels != null ? p.exhaustedModels : 0));
+        td(row, p.resetAt ? dateTime(p.resetAt) : 'Rolling / 00:00 UTC');
+        td(row, p.lastChecked ? dateTime(p.lastChecked) : 'Just now');
+
+        const actTd = td(row, '');
+        const resetBtn = document.createElement('button');
+        resetBtn.type = 'button';
+        resetBtn.textContent = 'Reset Quota';
+        resetBtn.onclick = async () => {
+          try {
+            await request('/api/admin/quota/reset', 'POST', { provider: pKey });
+            await loadQuotaAdmin();
+          } catch (e) {
+            alert(e.message || 'Reset failed');
+          }
+        };
+        actTd.appendChild(resetBtn);
+
+        tbody.appendChild(row);
+      });
+    } catch (err) {
+      console.error('Failed to load quota in admin:', err);
+    }
+  }
+
+  $('capabilities-refresh')?.addEventListener('click', async () => {
+    const btn = $('capabilities-refresh');
+    if (btn) btn.disabled = true;
+    try { await loadCapabilitiesAdmin(); } finally { if (btn) btn.disabled = false; }
+  });
+
+  $('quota-refresh')?.addEventListener('click', async () => {
+    const btn = $('quota-refresh');
+    if (btn) btn.disabled = true;
+    try { await loadQuotaAdmin(); } finally { if (btn) btn.disabled = false; }
+  });
   load();setInterval(function(){if(document.visibilityState==="visible")load()},30000);
 })();</script>
 </body></html>

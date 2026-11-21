@@ -19,9 +19,25 @@ const FALLBACK_CODES = Object.freeze([
   'network_error',
   'provider_timeout',
   'invalid_model',
+  'provider_error',
+  'empty_response',
+  'not_configured',
+  'invalid_api_token',
+  'invalid_api_key',
+  'billing_required',
+  'quota_exhausted',
+  'quota_or_rate_limit',
 ]);
 const FALLBACK_SET = new Set(FALLBACK_CODES);
-const FREE_PROVIDERS = new Set(['OpenRouter', 'Ollama']);
+const FREE_PROVIDERS = new Set([
+  'OpenRouter',
+  'Ollama',
+  'Cloudflare Workers AI',
+  'Groq',
+  'NVIDIA NIM',
+  'CodeCraft',
+  'LLMTR',
+]);
 const PAID_PROVIDERS = new Set(['OpenAI', 'Anthropic', 'Google']);
 
 function fallbackEligible(code) { return FALLBACK_SET.has(String(code || '')); }

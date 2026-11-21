@@ -25,6 +25,15 @@ const { createOllamaConfig } = require('./ollama-config');
 const { createOllamaProvider } = require('./ollama-provider');
 const { createCloudflareConfig } = require('./cloudflare-config');
 const { createCloudflareProvider } = require('./cloudflare-provider');
+const { createQuotaMonitorService } = require('./quota-monitor-service');
+const {
+  CATEGORY_TEXT,
+  CATEGORY_IMAGE,
+  CATEGORY_VIDEO,
+  classifyModelCapabilities,
+  enrichModelWithCapabilities,
+  createModelCapabilityService,
+} = require('./model-capability-service');
 // Anthropic provider is disabled (no key configured).
 // File is kept on disk for future re-enablement. To re-enable, restore the imports
 // and provider instance below, and add ANTHROPIC_API_KEY to API.env.
@@ -131,7 +140,7 @@ const adminSessions = new Map();
 
 class HttpError extends Error { constructor(status, code, message) { super(message); this.status = status; this.code = code; } }
 class AuthError extends HttpError { constructor(code, status = 401) { super(status, code, code === 'verification_unavailable' ? 'Authentication verification is temporarily unavailable.' : 'Sign in again to continue.'); } }
-const openrouterKeys = createOpenRouterKeyStore({ dir: ROOT });
+const openrouterKeys = createOpenRouterKeyStore({ dir: ROOT, env: process.env });
 const openrouter = createOpenRouterProvider({ HttpError, keys: openrouterKeys });
 const geminiKeys = createGeminiKeyStore({ dir: ROOT });
 const gemini = createGeminiProvider({ HttpError, keys: geminiKeys, env: process.env });
@@ -151,6 +160,11 @@ const cashfree = createCashfreeService({ env: process.env });
 const razorpay = createRazorpayService({ env: process.env });
 const cloudflareConfig = createCloudflareConfig({ dir: ROOT, env: process.env });
 const cloudflare = createCloudflareProvider({ HttpError, env: process.env, config: cloudflareConfig });
+
+const quotaMonitor = createQuotaMonitorService({ dir: ROOT, env: process.env, logger: console });
+quotaMonitor.startBackgroundMonitoring(15000);
+
+const capabilityService = createModelCapabilityService({ quotaMonitor, logger: console });
 
 function getActiveGatewayName(data) {
   if (process.env.RAZORPAY_KEY_ID && !process.env.CASHFREE_CLIENT_ID) return 'razorpay';
@@ -272,8 +286,10 @@ async function generateWithFallback({ providerName, modelId, system, history, te
   const context = { text, history, attachments, maxTokens };
   try {
     const result = await generateProvider({ providerName, modelId, system, history, text, attachments, contents, maxTokens, isProductionTraffic });
+    if (quotaMonitor) quotaMonitor.recordSuccess({ providerName, modelId });
     return { result, providerName, modelId, fallback: null };
   } catch (error) {
+    if (quotaMonitor) quotaMonitor.recordError({ providerName, modelId, error });
     if (error?.code === 'trial_restricted') throw error;
     if (error?.status === 402 || error?.code === 'billing_required' || error?.code === 'credit_balance_exhausted' || /insufficient_quota|insufficient_funds/i.test(error?.message || '')) {
       markProviderCreditsExhausted(providerName, error?.message);
@@ -283,6 +299,7 @@ async function generateWithFallback({ providerName, modelId, system, history, te
     if (!choice) throw primaryError;
     const nextProvider = providerKey(choice.option);
     const result = await generateProvider({ providerName: nextProvider, modelId: choice.option.id, system, history, text, attachments, contents, maxTokens });
+    if (quotaMonitor) quotaMonitor.recordSuccess({ providerName: nextProvider, modelId: choice.option.id });
     return { result, providerName: nextProvider, modelId: choice.option.id, fallback: { from: modelId, to: choice.option.id, provider: nextProvider, reason: primaryError.code, paid: choice.paid } };
   }
 }
@@ -586,6 +603,12 @@ function isProviderCreditsExhausted(providerName) {
     const lastErr = snap?.recentErrors?.[0]?.code;
     if (lastErr === 'billing_required' || lastErr === 'quota_or_rate_limit') return true;
   }
+  if (typeof quotaMonitor !== 'undefined' && quotaMonitor) {
+    const qmProv = quotaMonitor.getProviderAvailability(norm);
+    if (!qmProv.available && (qmProv.status === 'QUOTA_EXHAUSTED' || qmProv.status === 'INSUFFICIENT_CREDITS')) {
+      return true;
+    }
+  }
   return Boolean(providerCreditStatus[norm]?.exhausted);
 }
 
@@ -655,18 +678,35 @@ function availableModels() {
     const key = `${item.provider}::${item.id}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    const exhausted = isProviderCreditsExhausted(item.provider);
+    const normProv = normalizeProviderKey(item.provider);
+    const provExhausted = isProviderCreditsExhausted(item.provider);
+    const qmModel = typeof quotaMonitor !== 'undefined' && quotaMonitor ? quotaMonitor.getModelAvailability(normProv, item.id) : { available: true, status: 'HEALTHY' };
+    const exhausted = Boolean(provExhausted || !qmModel.available);
     const available = Boolean(item.available && !exhausted);
     const reason = exhausted
-      ? (providerCreditStatus[normalizeProviderKey(item.provider)]?.reason || `${item.provider} credits exhausted. Add credits to restore.`)
+      ? (qmModel.reason || providerCreditStatus[normProv]?.reason || `${item.provider} quota exhausted.`)
       : (item.reason || '');
+    const caps = classifyModelCapabilities(item);
     out.push({
       ...item,
       available,
       creditsExhausted: exhausted,
+      quotaStatus: qmModel.status || (exhausted ? 'QUOTA_EXHAUSTED' : 'HEALTHY'),
+      resetAt: qmModel.resetAt || null,
+      category: caps.category,
+      text_input: caps.text_input,
+      text_output: caps.text_output,
+      image_input: caps.image_input,
+      image_output: caps.image_output,
+      video_input: caps.video_input,
+      video_output: caps.video_output,
+      supported_tasks: caps.supported_tasks,
       reason,
       description: item.description || describeModelEntry(item)
     });
+  }
+  if (typeof capabilityService !== 'undefined' && capabilityService) {
+    capabilityService.registerModels(out);
   }
   return out;
 }
@@ -926,6 +966,12 @@ async function prepareChat(body, claims, profile) {
   const modelOption = await resolveModel(chosenModel);
   assertPlanModel(modelOption, userEffectivePlanId(profile));
   const providerName = providerKey(modelOption);
+  if (typeof capabilityService !== 'undefined' && capabilityService) {
+    capabilityService.assertModelCapability(chosenModel, 'text');
+  }
+  if (typeof quotaMonitor !== 'undefined' && quotaMonitor) {
+    quotaMonitor.assertModelRequestAllowed(providerName, chosenModel);
+  }
   const requestIdClient = String(body.request_id || '');
   const history = validateHistory(body.history);
   const userText = body.message.trim() || 'Please review the attached file(s).';
@@ -1021,8 +1067,14 @@ async function streamWithFallback({ providerName, modelId, system, history, text
         } else if (event.type === 'done') { full = event.text; usage = resultUsage(event); keyUsed = event.key || null; }
       }
       if (!full) throw new HttpError(502, 'empty_response', 'The AI returned an empty response. Please retry.');
+      if (typeof quotaMonitor !== 'undefined' && quotaMonitor) {
+        quotaMonitor.recordSuccess({ providerName: current.providerName, modelId: current.modelId });
+      }
       return { text: full, usage, key: keyUsed, providerName: current.providerName, modelId: current.modelId, fallback: current.fallback };
     } catch (error) {
+      if (typeof quotaMonitor !== 'undefined' && quotaMonitor) {
+        quotaMonitor.recordError({ providerName: current.providerName, modelId: current.modelId, error });
+      }
       if (error?.status === 402 || error?.code === 'billing_required' || error?.code === 'credit_balance_exhausted' || /insufficient_quota|insufficient_funds/i.test(error?.message || '')) {
         markProviderCreditsExhausted(current.providerName, error?.message);
       }
@@ -1547,6 +1599,45 @@ const server = http.createServer(async (req, res) => {
           },
         });
       }
+      if (pathname === '/api/admin/capabilities' && req.method === 'GET') {
+        availableModels();
+        return reply(res, 200, {
+          success: true,
+          data: {
+            stats: capabilityService ? capabilityService.getCategoryStats() : {},
+            providers: capabilityService ? capabilityService.auditProviderMatrix() : {},
+            totalModels: availableModels().length,
+          },
+        });
+      }
+      if (pathname === '/api/admin/quota/status' && req.method === 'GET') {
+        return reply(res, 200, {
+          success: true,
+          data: quotaMonitor ? quotaMonitor.getStatusSnapshot() : {},
+        });
+      }
+      if (pathname === '/api/admin/quota/check' && req.method === 'POST') {
+        if (quotaMonitor) quotaMonitor.checkAndRestoreAll();
+        return reply(res, 200, {
+          success: true,
+          data: quotaMonitor ? quotaMonitor.getStatusSnapshot() : {},
+        });
+      }
+      if (pathname === '/api/admin/quota/simulate' && req.method === 'POST') {
+        const body = await readBody(req);
+        if (quotaMonitor) quotaMonitor.simulateQuotaEvent(body);
+        return reply(res, 200, {
+          success: true,
+          data: quotaMonitor ? quotaMonitor.getStatusSnapshot() : {},
+        });
+      }
+      if (pathname === '/api/admin/quota/reset' && req.method === 'POST') {
+        if (quotaMonitor) quotaMonitor.resetAllToHealthy();
+        return reply(res, 200, {
+          success: true,
+          data: quotaMonitor ? quotaMonitor.getStatusSnapshot() : {},
+        });
+      }
       if (pathname === '/api/admin/settings' && req.method === 'GET') {
         const data = loadStore();
         const gwStatus = getActiveGatewayService(data).getGatewayStatus(data);
@@ -1991,6 +2082,8 @@ const server = http.createServer(async (req, res) => {
           models: planModels,
           allModels: activeAvail,
           allCatalogModels: allAvail,
+          capabilities: typeof capabilityService !== 'undefined' && capabilityService ? capabilityService.getCategoryStats({ planFilter: m => planModels.some(pm => pm.id === m.id) }) : {},
+          providerMatrix: typeof capabilityService !== 'undefined' && capabilityService ? capabilityService.auditProviderMatrix() : {},
           billingAvailable: Boolean(gwStatus.ready || (data.settings?.directUpi?.enabled !== false)),
           paymentGateway: {
             gateway: getActiveGatewayName(data),
@@ -2333,8 +2426,38 @@ const server = http.createServer(async (req, res) => {
           }
           return;
         }
+        if (req.method === 'GET' && pathname === '/api/models/capabilities') {
+          const stats = capabilityService ? capabilityService.getCategoryStats() : { text: { total: 0 }, image: { total: 0 }, video: { total: 0 } };
+          const matrix = capabilityService ? capabilityService.auditProviderMatrix() : {};
+          return reply(res, 200, { success: true, data: { stats, providers: matrix, totalModels: availableModels().length } });
+        }
         if (req.method === 'GET' && pathname === '/api/images/models') {
-          return reply(res, 200, { success: true, data: cloudflare.imageCatalogEntries() });
+          const imageModels = capabilityService ? capabilityService.getModelsByCategory('image', { availableOnly: true }) : cloudflare.imageCatalogEntries();
+          return reply(res, 200, { success: true, data: imageModels });
+        }
+        if (req.method === 'GET' && pathname === '/api/video/models') {
+          const videoModels = capabilityService ? capabilityService.getModelsByCategory('video', { availableOnly: true }) : [];
+          return reply(res, 200, { success: true, data: videoModels });
+        }
+        const videoJobMatch = /^\/api\/video\/jobs\/([A-Za-z0-9_-]+)$/.exec(pathname);
+        if (req.method === 'GET' && videoJobMatch) {
+          const jobId = videoJobMatch[1];
+          const job = capabilityService ? capabilityService.getVideoJob(jobId) : null;
+          if (!job) throw new HttpError(404, 'job_not_found', 'Video generation job was not found.');
+          return reply(res, 200, { success: true, data: job });
+        }
+        if (req.method === 'POST' && pathname === '/api/video/generate') {
+          const body = await readBody(req);
+          const prompt = String(body.prompt || '').trim();
+          if (!prompt || prompt.length > 32000) throw new HttpError(400, 'invalid_prompt', 'Enter a prompt up to 32,000 characters.');
+          const videoModels = capabilityService ? capabilityService.getModelsByCategory('video', { availableOnly: true }) : [];
+          if (!videoModels.length) {
+            throw new HttpError(503, 'no_video_provider', 'No video generation models are currently available. Please configure a video generation provider API key.');
+          }
+          const targetModel = String(body.model || videoModels[0]?.id).trim();
+          capabilityService.assertModelCapability(targetModel, 'video');
+          const job = capabilityService.createVideoJob({ prompt, modelId: targetModel, uid: claims.sub });
+          return reply(res, 200, { success: true, data: job });
         }
         if (req.method === 'POST' && (pathname === '/api/images/generate' || pathname === '/api/generate')) {
           const body = await readBody(req);
@@ -2343,7 +2466,22 @@ const server = http.createServer(async (req, res) => {
           if (pathname === '/api/generate' && !['image', 'video'].includes(kind)) throw new HttpError(400, 'invalid_kind', 'Unsupported generation kind.');
           if (!prompt || prompt.length > 32000) throw new HttpError(400, 'invalid_prompt', 'Enter a prompt up to 32,000 characters.');
 
+          if (kind === 'video') {
+            const videoModels = capabilityService ? capabilityService.getModelsByCategory('video', { availableOnly: true }) : [];
+            if (!videoModels.length) {
+              throw new HttpError(503, 'no_video_provider', 'No video generation models are currently available. Please configure a video generation provider API key in the admin panel.');
+            }
+            const targetModel = String(body.model || videoModels[0]?.id).trim();
+            capabilityService.assertModelCapability(targetModel, 'video');
+            const job = capabilityService.createVideoJob({ prompt, modelId: targetModel, uid: claims.sub });
+            return reply(res, 200, { success: true, data: job });
+          }
+
           if (kind === 'image') {
+            const targetModel = body.model || '@cf/black-forest-labs/flux-1-schnell';
+            if (capabilityService) {
+              capabilityService.assertModelCapability(targetModel, 'image');
+            }
             if (!cloudflare.configured()) {
               throw new HttpError(
                 503,

@@ -174,12 +174,18 @@ function createCloudflareProvider({
       return new HttpError(502, 'network_error', validationMessage('network_error'));
     }
     if (status === 401 || /unauthorized|invalid.*token|authentication/i.test(detail)) {
+      modelsOk = false;
+      modelsError = 'invalid_api_token';
       return new HttpError(502, 'invalid_api_token', validationMessage('invalid_api_token'));
     }
     if (status === 403 || /forbidden|insufficient.*permission/i.test(detail)) {
+      modelsOk = false;
+      modelsError = 'provider_forbidden';
       return new HttpError(502, 'provider_forbidden', validationMessage('provider_forbidden'));
     }
     if (status === 404 && /account/i.test(detail)) {
+      modelsOk = false;
+      modelsError = 'invalid_account_id';
       return new HttpError(502, 'invalid_account_id', validationMessage('invalid_account_id'));
     }
     if (status === 404) {
@@ -315,13 +321,13 @@ function createCloudflareProvider({
       providerId: 'cloudflare_workers_ai',
       configured: true,
       supported: true,
-      available: !snap.isDailyQuotaExhausted,
+      available: !snap.isDailyQuotaExhausted && modelsOk !== false,
       free: true,
       category: 'Text Generation',
       contextLength: m.contextWindow || 32768,
       capabilities: { text: true, vision: false, pdf: false },
       description: m.description || `General chat & reasoning · ${Math.round((m.contextWindow || 32768) / 1024)}k context`,
-      reason: snap.isDailyQuotaExhausted ? validationMessage('quota_exhausted') : '',
+      reason: modelsOk === false ? validationMessage(modelsError || 'invalid_api_token') : (snap.isDailyQuotaExhausted ? validationMessage('quota_exhausted') : ''),
     }));
 
     const imageEntries = imageCatalogEntries();
@@ -443,6 +449,26 @@ function createCloudflareProvider({
         cfg.updateRateLimits(rl);
 
         if (!res.ok) {
+          const creds = credentials();
+          if ((res.status === 404 || res.status === 400) && creds.accountId) {
+            const runUrl = `https://api.cloudflare.com/client/v4/accounts/${creds.accountId}/ai/run/${chosenModel}`;
+            try {
+              const runRes = await fetchImpl(runUrl, {
+                method: 'POST',
+                headers: authHeaders(),
+                body: JSON.stringify({ messages, max_tokens: payload.max_tokens }),
+                signal: callSignal,
+              });
+              if (runRes.ok) {
+                const runData = await runRes.json();
+                const runText = String(runData?.result?.response || runData?.result?.description || '').trim();
+                return {
+                  choices: [{ message: { content: runText } }],
+                  usage: { prompt_tokens: Math.ceil((text?.length || 10) / 4), completion_tokens: Math.ceil((runText.length || 10) / 4) }
+                };
+              }
+            } catch (_) {}
+          }
           const body = await res.json().catch(() => ({}));
           const errMsg = body?.errors?.[0]?.message || body?.error?.message || `Cloudflare HTTP ${res.status}`;
           const err = new Error(errMsg);
@@ -710,7 +736,7 @@ function createCloudflareProvider({
   }
 
   function imageCatalogEntries() {
-    const isAvail = configured() && enabled() && !cfg.isDailyQuotaExhausted();
+    const isAvail = configured() && enabled() && !cfg.isDailyQuotaExhausted() && modelsOk !== false;
     return Object.values(CLOUDFLARE_IMAGE_MODELS).map(m => ({
       id: m.id,
       name: m.name,

@@ -487,6 +487,20 @@ textarea::placeholder{color:var(--mute)}
 .model-pill.free{color:#e7dfd0;border-color:rgba(227,219,204,.35);background:rgba(227,219,204,.1)}
 .model-pill.paid{color:#f0c27b;border-color:rgba(240,194,123,.35);background:rgba(240,194,123,.08)}
 .model-pill.image{color:#c4b5fd;border-color:rgba(196,181,253,.35);background:rgba(196,181,253,.1)}
+.model-pill.video{color:#f472b6;border-color:rgba(244,114,182,.35);background:rgba(244,114,182,.1)}
+.gen-mode-bar{display:flex;align-items:center;gap:6px;padding:6px 12px 4px;border-bottom:1px solid rgba(227,219,204,.06);margin-bottom:2px}
+.gen-mode-btn{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:6px;font-size:10.5px;font-family:inherit;font-weight:600;letter-spacing:.6px;color:#8a8377;background:transparent;border:1px solid transparent;cursor:pointer;transition:all .18s ease}
+.gen-mode-btn:hover{color:#e7dfd0;background:rgba(227,219,204,.06)}
+.gen-mode-btn.on{color:#fff;background:rgba(227,219,204,.12);border-color:rgba(227,219,204,.22);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.gen-mode-icon{font-size:11px;opacity:.9}
+.category-tabs{display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(227,219,204,.1);padding-bottom:10px;margin-bottom:10px}
+.category-tab{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;color:var(--mute);background:rgba(255,255,255,.03);border:1px solid rgba(227,219,204,.12);cursor:pointer;transition:all .15s}
+.category-tab:hover{color:var(--ivory);background:rgba(227,219,204,.08)}
+.category-tab.active{color:#fff;background:rgba(227,219,204,.15);border-color:var(--nude);box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.category-tab-count{font-size:10.5px;padding:1px 6px;border-radius:99px;background:rgba(255,255,255,.08);color:inherit}
+.models-provider-group{margin-bottom:16px}
+.models-provider-header{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:rgba(255,255,255,.02);border:1px solid rgba(227,219,204,.08);border-radius:8px;margin-bottom:6px;font-size:12px;font-weight:600;color:#dfd9ce}
+.models-provider-count{font-size:11px;color:var(--mute);font-weight:normal}
 .model-picker-pill{background:rgba(227,219,204,.08);border:1px solid rgba(227,219,204,.18);border-radius:12px;color:var(--ivory);font-size:11px;font-family:inherit;font-weight:500;padding:2px 8px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:all .2s;vertical-align:middle;height:24px}
 .model-picker-pill:hover{background:rgba(227,219,204,.16);border-color:var(--nude);color:var(--ink)}
 .profile-model-row .model-action-col{display:flex;align-items:center;gap:8px;justify-self:end}
@@ -538,6 +552,11 @@ textarea::placeholder{color:var(--mute)}
       <div class="flow-glow"></div>
       <div class="flow-beam"></div>
       <div id="box">
+        <div id="gen-mode-bar" class="gen-mode-bar" role="tablist" aria-label="Generation category">
+          <button type="button" class="gen-mode-btn on" id="gen-mode-text" data-gen-cat="text" role="tab" aria-selected="true" title="Text chat, reasoning, coding and document analysis"><span class="gen-mode-icon">💬</span> TEXT</button>
+          <button type="button" class="gen-mode-btn" id="gen-mode-image" data-gen-cat="image" role="tab" aria-selected="false" title="High-speed text-to-image synthesis (FLUX &amp; SDXL)"><span class="gen-mode-icon">🎨</span> IMAGE</button>
+          <button type="button" class="gen-mode-btn" id="gen-mode-video" data-gen-cat="video" role="tab" aria-selected="false" title="Text-to-video synthesis"><span class="gen-mode-icon">🎬</span> VIDEO</button>
+        </div>
         <div id="chat-file-list" class="chat-file-list" hidden></div>
         <textarea id="in" rows="1" placeholder="How can I help you today?"></textarea>
         <div class="tools">
@@ -563,6 +582,38 @@ textarea::placeholder{color:var(--mute)}
 var MODES={general:["Chat","General reasoning and writing."],image:["Create image","image"],video:["Create video","video"],code:["Code","Write clean, production-grade code with language-tagged code blocks and brief explanations."],architecture:["Architecture","Design system architecture: components, data flow, trade-offs, and databases."],srs:["SRS document","Produce an IEEE 830 style Software Requirements Specification."]};
 var SYS="You are Photon, an AI assistant for general reasoning, coding and software architecture. Always respond in English unless the user explicitly requests another language. Answer with clean Markdown: headings, bullets, and language-tagged code blocks. When the user asks for a file (a web page, script, config, data file and so on), write the complete file in one code block whose opening fence has the language and then the file name, for example ```html index.html. Never say you cannot create files: the app shows a Download button on every code block and a Preview button for HTML. If a project needs several files, use one code block per file, each with its own file name.";
 var WAVE=document.getElementById("wave").outerHTML;var basePH="How can I help you today?",tokDay="",projs=[],user=null,vm=false,speaking=false,chats=[],cur=null,mode="general",busy=false,ctl=null,rec=null,pendingChatFiles=[],chatSearch="",photonProfile=null,profileConfig=null,profileConfigFetchedAt=0,profileActivities=[],billingAvailable=false,presenceTimer=null,presenceVisibilityHandler=null;
+var activeGenCat="text";
+function setGenCategory(cat){
+  activeGenCat=cat;
+  document.querySelectorAll(".gen-mode-btn").forEach(function(b){
+    var on=b.dataset.genCat===cat;
+    b.classList.toggle("on",on);
+    b.setAttribute("aria-selected",on?"true":"false");
+  });
+  var inp=$("in");
+  var hasMsgs=cur&&cur.msgs&&cur.msgs.length>0;
+  if(cat==="image"){inp.placeholder="Describe the image you want to generate...";}
+  else if(cat==="video"){inp.placeholder="Describe the video you want to generate...";}
+  else{inp.placeholder=hasMsgs?"Message Photon...":"How can I help you today?";}
+  ensureCompatibleModelForCategory(cat);
+  updateModelPickerBtn();
+}
+function ensureCompatibleModelForCategory(cat){
+  var catalog=(profileConfig&&(profileConfig.allModels||profileConfig.models))||[];
+  var currentModelId=(cur&&cur.model)||(user&&user.defaultModel)||"";
+  var currentModel=catalog.find(function(m){return m.id===currentModelId});
+  var currentCat=currentModel?(currentModel.category||(currentModel.task==='text-to-image'?'image':(currentModel.task==='text-to-video'?'video':'text'))):'text';
+  if(currentCat!==cat){
+    var eligible=catalog.filter(function(m){
+      var mCat=m.category||(m.task==='text-to-image'?'image':(m.task==='text-to-video'?'video':'text'));
+      return mCat===cat&&m.available!==false&&!m.creditsExhausted;
+    });
+    if(eligible.length>0){
+      if(cur)cur.model=eligible[0].id;
+      if(user)user.defaultModel=eligible[0].id;
+    }
+  }
+}
 var $=function(i){return document.getElementById(i)};
 function toast(t){var e=$("toast");e.textContent=t;e.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(function(){e.classList.remove("on")},2200)}
 function CK(){return"photon-chats-"+(user?user.email:"")}
@@ -937,12 +988,13 @@ function updateModelPickerBtn(){
   var btn=$("model-picker-btn"),nameEl=$("model-picker-name");
   if(!btn||!nameEl)return;
   var currentModelId=(cur&&cur.model)||(user&&user.defaultModel)||(photonProfile&&photonProfile.defaultModel)||"";
-  var catalog=(profileConfig&&profileConfig.models)||[];
+  var catalog=(profileConfig&&(profileConfig.allModels||profileConfig.models))||[];
   var found=catalog.find(function(m){return m.id===currentModelId});
-  var label=found?(found.name||found.id):currentModelId||"Model";
+  var icon = activeGenCat === 'image' ? '🎨 ' : (activeGenCat === 'video' ? '🎬 ' : '✨ ');
+  var label=found?(found.name||found.id):currentModelId||(activeGenCat==='image'?'Image Model':activeGenCat==='video'?'Video Model':'Model');
   if(label.length>18)label=label.slice(0,16)+"…";
-  nameEl.textContent=label;
-  btn.title="Model: "+(found?(found.name+" ("+found.id+")"):currentModelId||"Default")+" — click to change";
+  nameEl.textContent=icon + label;
+  btn.title="Category: "+activeGenCat.toUpperCase()+" · Model: "+(found?(found.name+" ("+found.id+")"):currentModelId||"Default")+" — click to change";
 }
 
 function updFlow(){
@@ -1083,23 +1135,29 @@ async function send(retry){
     });
     touchProj();
   }
-  var userMsg=cur.msgs.filter(function(m){return m.role==="user"}).slice(-1)[0],kind=!requestFiles.length&&(k0==="image"||k0==="video")?k0:"";
+  var userMsg=cur.msgs.filter(function(m){return m.role==="user"}).slice(-1)[0],kind=activeGenCat==="image"?"image":(activeGenCat==="video"?"video":(!requestFiles.length&&(k0==="image"||k0==="video")?k0:""));
   cur.updatedAt=Date.now();render();var out=addRow("assistant","");out.innerHTML=kind?'<div class="gen"><div class="gv"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="sh"></i></div><div class="gt">Creating '+kind+'<span class="dots"><u></u><u></u><u></u></span></div></div>':'<span class="think">Thinking...</span>';
   ctl=new AbortController();busy=true;upd();var got="",failure="",failureCode="",serverSynced=false;
   try{
-    if(kind){
-      var q=kind==="video"?"Generate a fast, clean, high-quality looping SVG animation with CSS keyframes for: "+text+"\nOutput ONLY the SVG markup from <svg> to </svg> with viewBox=\"0 0 800 450\". No commentary, no markdown fences.":text;
-      var r=await photonSample(q,{signal:ctl.signal,kind:kind});
+    if(kind==="video"){
+      var allM=(profileConfig&&(profileConfig.allModels||profileConfig.models))||[];
+      var hasVid=allM.some(function(m){return (m.category==="video"||m.task==="text-to-video")&&m.available!==false&&!m.creditsExhausted});
+      if(!hasVid){
+        throw {code:"no_video_provider",message:"No video generation models are currently available. Please configure a video generation provider API key in the admin panel."};
+      }
+      var r=await fetch("/api/video/generate",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+(await getAuthToken())},body:JSON.stringify({prompt:text,model:cur.model||user.defaultModel||""}),signal:ctl.signal}).then(function(res){return res.json()});
+      if(!r.success)throw {code:r.error&&r.error.code||"video_failed",message:r.error&&r.error.message||"Video generation failed."};
+      cur.msgs.push({role:"assistant",content:"[Video generation job created: "+text+" · Job ID: "+r.data.jobId+"]",kind:"video",prompt:text,videoJob:r.data});
+      got="created";
+    }
+    else if(kind==="image"){
+      var r=await photonSample(text,{signal:ctl.signal,kind:"image",model:cur.model||user.defaultModel||"@cf/black-forest-labs/flux-1-schnell"});
       if(r.image){
         if(r.profileUsage)serverSynced=true;
         cur.msgs.push({role:"assistant",content:"["+kind+" created: "+text+"]",image:r.image,kind:kind,prompt:text});
         got="created";
       }else{
-        var mt=(r.text||"").match(/<svg[\s\S]*<\/svg>/i);
-        if(!mt||/<script|onload\s*=|<foreignObject|href\s*=\s*["']\s*https?:/i.test(mt[0]))throw{code:"bad_output"};
-        if(r.profileUsage)serverSynced=true;
-        cur.msgs.push({role:"assistant",content:"["+kind+" created: "+text+"]",svg:mt[0],kind:kind,prompt:text});
-        got="created";
+        throw {code:"empty_response",message:"Cloudflare Workers AI did not return an image."};
       }
     }
     else{var history=cur.msgs.slice(0,-1).slice(-20).filter(function(m){return (m.role==="user"||m.role==="assistant")&&typeof m.content==="string"&&m.content.trim().length>0}).map(function(m){return{role:m.role,content:m.content.trim()}});var answer=await photonStream({conversation_id:cur.id,message:text,history:history,system_instruction:SYS+projCtx()+"\nMode: "+MODES[mode][1],request_id:userMsg.request_id,attachments:requestFiles.map(function(f){return f.kind==="text"?{name:f.name,mimeType:f.mimeType,kind:"text",text:f.text}:{name:f.name,mimeType:f.mimeType,kind:"inline",data:f.data||(f.dataUrl?String(f.dataUrl).split(",")[1]:"")}}),model:cur.model||user.defaultModel||null,activity_type:vm?"voice":k0==="code"?"code":"chat",token_cost_type:billKind},{signal:ctl.signal},function(delta,full){if(out.isConnected){out.innerHTML=md(full);$("msgs").scrollTop=$("msgs").scrollHeight}});got=answer.text;if(answer.profileUsage)serverSynced=true;cur.msgs.push({role:"assistant",content:got});if(answer.fallback){var fb=answer.fallback;toast("Your selected model was temporarily unavailable, so this reply used "+fb.provider+" ("+fb.to+")"+(fb.paid?". Estimated provider cost applies.":"."))}}
@@ -1150,7 +1208,8 @@ $("tog").onclick=function(){var s=$("side");if(window.innerWidth<=720)s.classLis
 $("search-chats").onclick=function(){var input=$("chat-search-input"),open=input.hidden;input.hidden=!open;this.setAttribute("aria-expanded",String(open));if(open){input.focus()}else{input.value="";chatSearch="";render()}};
 $("chat-search-input").addEventListener("input",function(){chatSearch=this.value;render()});
 $("plus").onclick=function(e){e.stopPropagation();$("pop").classList.toggle("on")};
-var mpb=$("model-picker-btn");if(mpb)mpb.onclick=function(){if(!profileConfig){loadProfileConfigData(false).then(function(){showAllModels()}).catch(function(){showAllModels()})}else{showAllModels()}};
+var mpb=$("model-picker-btn");if(mpb)mpb.onclick=function(){if(!profileConfig){loadProfileConfigData(false).then(function(){showAllModels(activeGenCat)}).catch(function(){showAllModels(activeGenCat)})}else{showAllModels(activeGenCat)}};
+["text","image","video"].forEach(function(cat){var btn=$("gen-mode-"+cat);if(btn){btn.onclick=function(){setGenCategory(cat)}}});
 $("attach-files").onclick=function(){$("chat-file-input").click()};
 $("chat-file-input").addEventListener("change",handleChatFiles);
 document.addEventListener("click",function(e){if(!$("pop").contains(e.target))$("pop").classList.remove("on")});
@@ -1749,7 +1808,19 @@ function featuredProfileModels(models,optPlanId){
   });
   return out.slice(0,5);
 }
-function profileModelRowMarkup(m,activeModelId,planId){var active=activeModelId===m.id,tierAllowed=profileModelTierAllowed(m,planId),isImg=m.task==='text-to-image'||m.category==='Image Generation'||(m.id&&m.id.indexOf('@cf/')===0&&(m.id.indexOf('flux')>-1||m.id.indexOf('stable-diffusion')>-1)),desc=m.description||(isImg?"Text-to-image synthesis":(m.capabilities&&m.capabilities.vision?"Vision & chat":"General chat & reasoning")),catBadge=isImg?'<span class="model-pill image">Image</span>':'',pricingBadge=m.pricingVerified===true?(m.free?'<span class="model-pill free">Free</span>':'<span class="model-pill paid">Paid</span>'):"",availBadge=m.available?'<span class="model-pill ok">Available</span>':'<span class="model-pill">Unavailable</span>',stateText=active?"Default":(!tierAllowed?"Upgrade required":"Select"),tip=active?"Current default model":(!tierAllowed?"Upgrade to Pro or Premium to select this model":"Select "+m.name+" ("+m.id+") as default");return'<li><button type="button" class="profile-model-row'+(active?" selected":"")+'" data-model="'+profileEscape(m.id)+'" '+(!tierAllowed?"disabled":"")+' title="'+profileEscape(tip)+'" aria-pressed="'+active+'"><span class="model-icon" aria-hidden="true">'+profileModelIcon(m.id,m.provider)+'</span><span class="model-main"><span class="model-title-row"><strong>'+profileEscape(m.name)+'</strong><code class="model-id">'+profileEscape(m.id)+'</code></span><span class="model-desc">'+profileEscape(desc)+'</span><span class="model-meta"><span class="model-pill">'+profileEscape(m.provider||"AI")+'</span>'+catBadge+availBadge+pricingBadge+'</span></span><span class="model-action-col"><span class="model-state-badge">'+profileEscape(stateText)+'</span></span></button></li>'}
+function profileModelRowMarkup(m,activeModelId,planId){
+  var active=activeModelId===m.id;
+  var tierAllowed=profileModelTierAllowed(m,planId);
+  var cat=m.category||(m.task==='text-to-image'||m.category==='Image Generation'||(m.id&&m.id.indexOf('@cf/')===0&&(m.id.indexOf('flux')>-1||m.id.indexOf('stable-diffusion')>-1))?'image':(m.task==='text-to-video'||/svd|video/i.test(m.id)?'video':'text'));
+  var catBadge=cat==='image'?'<span class="model-pill image">Image</span>':(cat==='video'?'<span class="model-pill video">Video</span>':'<span class="model-pill">Text</span>');
+  var desc=m.description||(cat==='image'?"Text-to-image synthesis":(cat==='video'?"Text-to-video synthesis":(m.capabilities&&m.capabilities.vision?"Vision & chat":"General chat & reasoning")));
+  var pricingBadge=m.pricingVerified===true?(m.free?'<span class="model-pill free">Free</span>':'<span class="model-pill paid">Paid</span>'):(m.free?'<span class="model-pill free">Free</span>':'');
+  var availBadge=m.available?'<span class="model-pill ok">Available</span>':(m.creditsExhausted?'<span class="model-pill" style="color:#f87171;border-color:rgba(248,113,113,.35)">Quota Exhausted</span>':'<span class="model-pill">Unavailable</span>');
+  var limitBadge=m.contextLength?'<span class="model-pill">'+(m.contextLength>1024?Math.round(m.contextLength/1024)+'k ctx':m.contextLength+' ctx')+'</span>':'';
+  var stateText=active?"Default":(!tierAllowed?"Upgrade required":"Select");
+  var tip=active?"Current default model":(!tierAllowed?"Upgrade to Pro or Premium to select this model":"Select "+m.name+" ("+m.id+") as default");
+  return'<li><button type="button" class="profile-model-row'+(active?" selected":"")+'" data-model="'+profileEscape(m.id)+'" '+(!tierAllowed?"disabled":"")+' title="'+profileEscape(tip)+'" aria-pressed="'+active+'"><span class="model-icon" aria-hidden="true">'+profileModelIcon(m.id,m.provider)+'</span><span class="model-main"><span class="model-title-row"><strong>'+profileEscape(m.name)+'</strong><code class="model-id">'+profileEscape(m.id)+'</code></span><span class="model-desc">'+profileEscape(desc)+'</span><span class="model-meta"><span class="model-pill">'+profileEscape(m.provider||"AI")+'</span>'+catBadge+availBadge+pricingBadge+limitBadge+'</span></span><span class="model-action-col"><span class="model-state-badge">'+profileEscape(stateText)+'</span></span></button></li>';
+}
 async function loadProfileConfigData(forceRefresh){var now=Date.now();var url=forceRefresh?"/api/profile/config?refresh=1":"/api/profile/config";var r=await fetch(url,{cache:"no-store"}),x=await r.json();if(!r.ok||!x.success)throw new Error("Could not load plan and model settings.");profileConfig=x.data;profileConfigFetchedAt=now;applyPublicConfig(profileConfig);return profileConfig}
 function profileTimeAgo(value){var time=Date.parse(value);if(!Number.isFinite(time))return"";var seconds=Math.max(0,Math.floor((Date.now()-time)/1000));if(seconds<60)return"Just now";var minutes=Math.floor(seconds/60);if(minutes<60)return minutes+" minute"+(minutes===1?"":"s")+" ago";var hours=Math.floor(minutes/60);if(hours<24)return hours+" hour"+(hours===1?"":"s")+" ago";var days=Math.floor(hours/24);return days===1?"Yesterday":days+" days ago"}
 function combinedProfileActivities(){var conversationItems=chats.filter(function(c){return c&&Array.isArray(c.msgs)&&c.msgs.some(function(m){return m&&m.role==="user"&&String(m.content||"").trim()})}).map(function(c){var first=c.msgs.find(function(m){return m&&m.role==="user"&&String(m.content||"").trim()}),stamp=Number(c.updatedAt||c.createdAt||String(c.id||"").replace(/^c/,""));if(!Number.isFinite(stamp)||stamp<=0)stamp=Date.now();var title=c.title&&c.title!=="New chat"?c.title:first.content;return{id:"conversation-"+c.id,type:"conversation",chatId:c.id,description:String(title||"Conversation").trim(),at:new Date(stamp).toISOString()}}),otherItems=(profileActivities||[]).filter(function(a){return a&&a.type!=="chat"&&a.type!=="code"});return conversationItems.concat(otherItems).sort(function(a,b){return Date.parse(b.at)-Date.parse(a.at)})}
@@ -1771,7 +1842,153 @@ async function openProfile(push){if(!user){showAuth("login");return}startPresenc
 function goProfileHome(){if(location.pathname==="/profile")history.pushState({},"", "/");closeOv();if(user){if(!cur)newChat();else render()}}
 function showProfileEdit(){var p=photonProfile,d=document.createElement("div");d.className="profile-dialog-bg";d.innerHTML='<section class="profile-dialog" role="dialog" aria-modal="true" aria-labelledby="profile-edit-title"><h2 id="profile-edit-title">Edit Profile</h2><p class="profile-sub">Your email and account ID cannot be changed here.</p><form id="profile-edit-form"><label for="profile-name">Full Name</label><input id="profile-name" name="fullName" required minlength="2" maxlength="80" value="'+profileEscape(p.fullName)+'"><label for="profile-username">Username</label><input id="profile-username" name="username" required minlength="3" maxlength="30" pattern="[A-Za-z0-9._-]{3,30}" value="'+profileEscape(p.username)+'"><label for="profile-phone">Phone</label><input id="profile-phone" name="phone" type="tel" maxlength="24" pattern="\\+?[0-9() .-]{7,24}" value="'+profileEscape(p.phone)+'" placeholder="Optional"><label for="profile-timezone">Timezone</label><select id="profile-timezone" name="timezone">'+[p.timezone,Intl.DateTimeFormat().resolvedOptions().timeZone||"Asia/Kolkata","UTC"].filter(function(v,i,a){return v&&a.indexOf(v)===i}).map(function(v){return'<option value="'+profileEscape(v)+'">'+profileEscape(v)+'</option>'}).join("")+'</select><div class="profile-dialog-actions"><button class="profile-action secondary" type="button" id="profile-edit-cancel">Cancel</button><button class="profile-action" type="submit" id="profile-edit-save">Save Profile</button></div></form></section>';$("ovc").appendChild(d);$("profile-edit-cancel").onclick=function(){d.remove()};$("profile-edit-form").onsubmit=async function(e){e.preventDefault();var button=$("profile-edit-save"),fields=new FormData(e.currentTarget);if(!e.currentTarget.reportValidity())return;button.disabled=true;button.textContent="Saving...";var payload={fullName:String(fields.get("fullName")).trim(),username:String(fields.get("username")).trim().toLowerCase(),phone:String(fields.get("phone")).trim(),timezone:String(fields.get("timezone"))};function applyProfile(saved){photonProfile=Object.assign({},photonProfile,saved);user.name=photonProfile.fullName;var U=users();if(U[user.email]){U[user.email].name=user.name;putUsers(U)}d.remove();drawProfile();ensureFirebaseAuth().then(function(auth){if(auth&&auth.currentUser&&auth.currentUser.updateProfile)return auth.currentUser.updateProfile({displayName:user.name})}).catch(function(){})}try{applyProfile(await profileApi("/api/profile",{method:"PUT",body:payload}))}catch(ex){try{var latest=await profileApi("/api/profile");if(latest.fullName===payload.fullName&&latest.username===payload.username&&latest.phone===payload.phone&&latest.timezone===payload.timezone){applyProfile(latest);return}photonProfile=Object.assign({},photonProfile,latest);user.name=latest.fullName;drawProfile()}catch(ignore){}button.disabled=false;button.textContent="Save Profile"}};$("profile-name").focus()}
 async function saveProfileModel(model,afterSave){var option=(profileConfig.models||[]).filter(function(m){return m.id===model})[0];var allowed=profileModelTierAllowed(option,user.plan);if(!allowed){showProfileMessage("Upgrade to Pro or Premium to select this model.",true);return}if(!option){showProfileMessage("That model is not available in the model list.",true);return}try{await profileApi("/api/profile/model",{method:"PUT",body:{model:model}});photonProfile.defaultModel=model;user.defaultModel=model;var U=users();if(U[user.email]){U[user.email].defaultModel=model;putUsers(U)}if(cur&&!cur.msgs.length){cur.model=model;save()}drawProfile();updateModelPickerBtn();if(typeof afterSave==="function")afterSave();showProfileMessage("Default model saved for new conversations.",false)}catch(e){if(e&&e.code==="model_unavailable"){photonProfile.defaultModel=model;user.defaultModel=model;var localUsers=users();if(localUsers[user.email]){localUsers[user.email].defaultModel=model;putUsers(localUsers)}if(cur&&!cur.msgs.length){cur.model=model;save()}drawProfile();updateModelPickerBtn();if(typeof afterSave==="function")afterSave();showProfileMessage("Saved on this device. Add the provider integration and API key on the server before using this model in chats.",false);return}showProfileMessage(profileApiError(e),true)}}
-function showAllModels(){var d=document.createElement("div");d.className="profile-dialog-bg";d.innerHTML='<section class="profile-dialog models-modal" role="dialog" aria-modal="true" aria-labelledby="all-models-title"><div class="profile-card-head"><div><h2 id="all-models-title"><span class="profile-heading-icon">'+profileIconText("model")+'</span>All Available Models</h2><p class="profile-sub" id="models-modal-summary"></p></div><div class="models-modal-head-actions"><button type="button" class="profile-action secondary" id="models-refresh">↻ Refresh</button><button type="button" class="profile-action secondary" id="models-close" aria-label="Close">✕</button></div></div><div class="profile-model-toolbar"><input id="models-search" type="search" placeholder="Search by model name, ID, provider, or capability..." aria-label="Search models"><select id="models-provider-filter" aria-label="Filter by provider"><option value="all">All providers</option></select></div><div class="models-modal-list-wrap" id="models-modal-list"></div></section>';$("ovc").appendChild(d);var searchEl=d.querySelector("#models-search"),providerEl=d.querySelector("#models-provider-filter"),listEl=d.querySelector("#models-modal-list"),summaryEl=d.querySelector("#models-modal-summary"),refreshBtn=d.querySelector("#models-refresh");function populateProviders(){var catalog=profileModelCatalog((profileConfig&&profileConfig.allModels)||(profileConfig&&profileConfig.models)||[]),counts={};catalog.forEach(function(m){var p=m.provider||"Other";counts[p]=(counts[p]||0)+1});var currentVal=providerEl.value||"all";providerEl.innerHTML='<option value="all">All enabled providers ('+catalog.length+')</option>'+Object.keys(counts).sort().map(function(p){return'<option value="'+profileEscape(p)+'">'+profileEscape(p)+' ('+counts[p]+')</option>'}).join("");if(currentVal!=="all"&&counts[currentVal])providerEl.value=currentVal}function renderModalList(){var catalog=profileModelCatalog((profileConfig&&profileConfig.allModels)||(profileConfig&&profileConfig.models)||[]),q=String(searchEl.value||"").trim().toLowerCase().replace(/cloudfare/g,"cloudflare"),prov=providerEl.value||"all",activeId=(cur&&cur.model)||(photonProfile?photonProfile.defaultModel:(user&&user.defaultModel||"")),planId=photonProfile&&photonProfile.plan?photonProfile.plan.id:(user&&user.plan||"basic");var filtered=catalog.filter(function(m){if(prov!=="all"&&m.provider!==prov)return false;if(!q)return true;var hay=(String(m.name||"")+" "+String(m.id||"")+" "+String(m.provider||"")+" "+String(m.category||"")+" "+String(m.task||"")+" "+String(m.description||"")).toLowerCase();return hay.indexOf(q)>-1});summaryEl.textContent=filtered.length+" of "+catalog.length+" enabled models";listEl.innerHTML=filtered.length?'<ul class="profile-model-list">'+filtered.map(function(m){return profileModelRowMarkup(m,activeId,planId)}).join("")+'</ul>':'<div class="profile-empty">No matching models found. Try clearing your search or provider filter.</div>';listEl.querySelectorAll("[data-model]").forEach(function(btn){btn.onclick=function(){saveProfileModel(btn.dataset.model,function(){renderModalList();updateModelPickerBtn();})}})}populateProviders();renderModalList();searchEl.oninput=renderModalList;providerEl.onchange=renderModalList;refreshBtn.onclick=async function(){refreshBtn.disabled=true;refreshBtn.textContent="Refreshing...";try{await loadProfileConfigData(true);populateProviders();renderModalList();drawProfile();updateModelPickerBtn();}catch(err){showProfileMessage(profileApiError(err),true)}finally{if(refreshBtn.isConnected){refreshBtn.disabled=false;refreshBtn.textContent="↻ Refresh"}}};d.querySelector("#models-close").onclick=function(){d.remove()};d.onclick=function(e){if(e.target===d)d.remove()};searchEl.focus()}
+function showAllModels(initialCategory){
+  var currentCat = initialCategory || activeGenCat || "text";
+  var d=document.createElement("div");
+  d.className="profile-dialog-bg";
+  d.innerHTML='<section class="profile-dialog models-modal" role="dialog" aria-modal="true" aria-labelledby="all-models-title">'+
+    '<div class="profile-card-head"><div><h2 id="all-models-title"><span class="profile-heading-icon">'+profileIconText("model")+'</span>All Available Models</h2><p class="profile-sub" id="models-modal-summary"></p></div>'+
+    '<div class="models-modal-head-actions"><button type="button" class="profile-action secondary" id="models-refresh">↻ Refresh</button><button type="button" class="profile-action secondary" id="models-close" aria-label="Close">✕</button></div></div>'+
+    '<div class="category-tabs" id="modal-category-tabs">'+
+      '<button type="button" class="category-tab'+(currentCat==="text"?" active":"")+'" data-modal-cat="text">💬 TEXT <span class="category-tab-count" id="count-text">0</span></button>'+
+      '<button type="button" class="category-tab'+(currentCat==="image"?" active":"")+'" data-modal-cat="image">🎨 IMAGE <span class="category-tab-count" id="count-image">0</span></button>'+
+      '<button type="button" class="category-tab'+(currentCat==="video"?" active":"")+'" data-modal-cat="video">🎬 VIDEO <span class="category-tab-count" id="count-video">0</span></button>'+
+    '</div>'+
+    '<div class="profile-model-toolbar"><input id="models-search" type="search" placeholder="Search by model name, ID, provider, or capability..." aria-label="Search models"><select id="models-provider-filter" aria-label="Filter by provider"><option value="all">All providers</option></select></div>'+
+    '<div class="models-modal-list-wrap" id="models-modal-list"></div>'+
+  '</section>';
+  $("ovc").appendChild(d);
+
+  var searchEl=d.querySelector("#models-search");
+  var providerEl=d.querySelector("#models-provider-filter");
+  var listEl=d.querySelector("#models-modal-list");
+  var summaryEl=d.querySelector("#models-modal-summary");
+  var refreshBtn=d.querySelector("#models-refresh");
+
+  function getModelCat(m) {
+    if (m.category === "image" || m.task === "text-to-image" || m.category === "Image Generation" || (m.id && m.id.indexOf("@cf/") === 0 && (m.id.indexOf("flux") > -1 || m.id.indexOf("stable-diffusion") > -1))) return "image";
+    if (m.category === "video" || m.task === "text-to-video" || /svd|video/i.test(m.id)) return "video";
+    return "text";
+  }
+
+  function updateCategoryCounts() {
+    var catalog=profileModelCatalog((profileConfig&&profileConfig.allModels)||(profileConfig&&profileConfig.models)||[]);
+    var counts={text:0, image:0, video:0};
+    catalog.forEach(function(m){
+      var c=getModelCat(m);
+      if(counts[c]!==undefined) counts[c]++;
+    });
+    var elT=d.querySelector("#count-text"), elI=d.querySelector("#count-image"), elV=d.querySelector("#count-video");
+    if(elT) elT.textContent=counts.text;
+    if(elI) elI.textContent=counts.image;
+    if(elV) elV.textContent=counts.video;
+  }
+
+  function populateProviders(){
+    var catalog=profileModelCatalog((profileConfig&&profileConfig.allModels)||(profileConfig&&profileConfig.models)||[]).filter(function(m){ return getModelCat(m) === currentCat; });
+    var counts={};
+    catalog.forEach(function(m){var p=m.provider||"Other";counts[p]=(counts[p]||0)+1});
+    var currentVal=providerEl.value||"all";
+    providerEl.innerHTML='<option value="all">All enabled providers ('+catalog.length+')</option>'+Object.keys(counts).sort().map(function(p){return'<option value="'+profileEscape(p)+'">'+profileEscape(p)+' ('+counts[p]+')</option>'}).join("");
+    if(currentVal!=="all"&&counts[currentVal])providerEl.value=currentVal;
+  }
+
+  function renderModalList(){
+    updateCategoryCounts();
+    var catalog=profileModelCatalog((profileConfig&&profileConfig.allModels)||(profileConfig&&profileConfig.models)||[]);
+    var inCat = catalog.filter(function(m){ return getModelCat(m) === currentCat; });
+    var q=String(searchEl.value||"").trim().toLowerCase().replace(/cloudfare/g,"cloudflare");
+    var prov=providerEl.value||"all";
+    var activeId=(cur&&cur.model)||(photonProfile?photonProfile.defaultModel:(user&&user.defaultModel||""));
+    var planId=photonProfile&&photonProfile.plan?photonProfile.plan.id:(user&&user.plan||"basic");
+
+    var filtered=inCat.filter(function(m){
+      if(prov!=="all"&&m.provider!==prov)return false;
+      if(!q)return true;
+      var hay=(String(m.name||"")+" "+String(m.id||"")+" "+String(m.provider||"")+" "+String(m.category||"")+" "+String(m.task||"")+" "+String(m.description||"")).toLowerCase();
+      return hay.indexOf(q)>-1;
+    });
+
+    summaryEl.textContent=filtered.length+" of "+inCat.length+" enabled "+currentCat.toUpperCase()+" models";
+
+    if (currentCat === "video" && inCat.length === 0) {
+      listEl.innerHTML='<div class="profile-empty" style="text-align:center;padding:48px 20px;"><div style="font-size:32px;margin-bottom:12px">🎬</div><strong style="color:#fff;font-size:15px;display:block;margin-bottom:6px">No video generation models are currently available.</strong><p style="color:#888;font-size:13px;max-width:380px;margin:0 auto">Configure a verified video generation provider API key in the admin panel to enable video generation.</p></div>';
+      return;
+    }
+
+    if (!filtered.length) {
+      listEl.innerHTML='<div class="profile-empty">No matching '+currentCat.toUpperCase()+' models found. Try clearing your search or provider filter.</div>';
+      return;
+    }
+
+    // Group models by provider inside category
+    var groups={};
+    filtered.forEach(function(m){
+      var p=m.provider||"AI Provider";
+      if(!groups[p])groups[p]=[];
+      groups[p].push(m);
+    });
+
+    var groupHtml=Object.keys(groups).sort().map(function(provName){
+      var items=groups[provName];
+      return '<div class="models-provider-group">'+
+        '<div class="models-provider-header"><span>'+profileEscape(provName)+'</span><span class="models-provider-count">'+items.length+' model'+(items.length===1?'':'s')+'</span></div>'+
+        '<ul class="profile-model-list">'+items.map(function(m){return profileModelRowMarkup(m,activeId,planId)}).join("")+'</ul>'+
+      '</div>';
+    }).join("");
+
+    listEl.innerHTML=groupHtml;
+
+    listEl.querySelectorAll("[data-model]").forEach(function(btn){
+      btn.onclick=function(){
+        saveProfileModel(btn.dataset.model,function(){
+          setGenCategory(currentCat);
+          renderModalList();
+          updateModelPickerBtn();
+        });
+      };
+    });
+  }
+
+  // Category Tab Clicks
+  d.querySelectorAll(".category-tab").forEach(function(tabBtn){
+    tabBtn.onclick=function(){
+      d.querySelectorAll(".category-tab").forEach(function(t){t.classList.remove("active")});
+      tabBtn.classList.add("active");
+      currentCat = tabBtn.dataset.modalCat;
+      populateProviders();
+      renderModalList();
+    };
+  });
+
+  populateProviders();
+  renderModalList();
+  searchEl.oninput=renderModalList;
+  providerEl.onchange=renderModalList;
+
+  refreshBtn.onclick=async function(){
+    refreshBtn.disabled=true;
+    refreshBtn.textContent="Refreshing...";
+    try{
+      await loadProfileConfigData(true);
+      populateProviders();
+      renderModalList();
+      drawProfile();
+      updateModelPickerBtn();
+    }catch(err){
+      showProfileMessage(profileApiError(err),true);
+    }finally{
+      if(refreshBtn.isConnected){
+        refreshBtn.disabled=false;
+        refreshBtn.textContent="↻ Refresh";
+      }
+    }
+  };
+
+  d.querySelector("#models-close").onclick=function(){d.remove()};
+  d.onclick=function(e){if(e.target===d)d.remove()};
+  searchEl.focus();
+}
 function showAllActivity(){var d=document.createElement("div");d.className="profile-dialog-bg";d.innerHTML='<section class="profile-dialog" role="dialog" aria-modal="true"><div class="profile-card-head"><h2>All Conversations</h2><button type="button" class="profile-action secondary" id="activity-close" aria-label="Close">✕</button></div>'+profileActivityMarkup(profileConversationActivities())+'</section>';$("ovc").appendChild(d);$("activity-close").onclick=function(){d.remove()};bindProfileConversationRows(d);d.onclick=function(e){if(e.target===d)d.remove()}}
 async function deletePhotonAccount(){
   if(!confirm("Permanently delete your Photon profile, activity, conversations and Firebase account? This cannot be undone."))return;
