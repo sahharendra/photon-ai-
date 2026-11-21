@@ -2902,7 +2902,7 @@ const server = http.createServer(async (req, res) => {
             return reply(res, 200, { success: true, data: { jobId: edenJob.jobId, model: targetModel, status: edenJob.status, prompt } });
           }
           if (!videoModels.length) {
-            throw new HttpError(503, 'no_video_provider', 'No video generation models are currently available. Please configure a video generation provider API key.');
+            throw new HttpError(503, 'no_video_provider', 'No verified free video-generation model is currently available.');
           }
           capabilityService.assertModelCapability(targetModel, 'video');
           const job = capabilityService.createVideoJob({ prompt, modelId: targetModel, uid: claims.sub });
@@ -2924,7 +2924,7 @@ const server = http.createServer(async (req, res) => {
               return reply(res, 200, { success: true, data: { jobId: edenJob.jobId, model: targetModel, status: edenJob.status, prompt } });
             }
             if (!videoModels.length) {
-              throw new HttpError(503, 'no_video_provider', 'No video generation models are currently available. Please configure a video generation provider API key in the admin panel.');
+              throw new HttpError(503, 'no_video_provider', 'No verified free video-generation model is currently available.');
             }
             capabilityService.assertModelCapability(targetModel, 'video');
             const job = capabilityService.createVideoJob({ prompt, modelId: targetModel, uid: claims.sub });
