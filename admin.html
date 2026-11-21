@@ -324,6 +324,30 @@
 </form>
 <div class="settings-grid" style="margin-top:18px"><div class="field"><label>Request &amp; token usage</label><div id="ollama-usage" class="muted">Not loaded.</div></div></div><form id="ollama-settings-form" style="margin-top:14px"><div class="settings-grid"><div class="field"><label for="ollama-enabled">Provider state</label><select id="ollama-enabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div><div class="field"><label for="ollama-spending-policy">Spending policy</label><select id="ollama-spending-policy"><option value="allow_free_only">Allow free models only (zero-billing safe)</option><option value="allow_all">Allow all models</option><option value="block">Block all requests</option></select></div></div><div class="save-row"><small class="muted">Ollama Cloud / Local open models. API key is never stored in browser.</small><button id="ollama-save-settings" type="submit">Save Ollama settings</button></div></form><div class="head" style="margin-top:28px"><div><h2>Ollama models</h2><small>Discovered from GET /api/tags or GET /v1/models.</small></div></div><div class="scroll"><table class="subscriptions-table"><thead><tr><th>Model</th><th>Status</th><th>Context window</th><th>Actions</th></tr></thead><tbody id="ollama-models"></tbody></table></div><div class="head" style="margin-top:28px"><div><h2>Recent Ollama errors</h2><small>Key-free error codes only.</small></div></div><div id="ollama-errors" class="list"></div>
 
+<div class="head" style="margin-top:34px"><div><h2>Pollinations AI (Free Text-to-Image)</h2><small>100% Free recurring AI image generation with zero credit card requirement. High-speed FLUX.1 Schnell, Sana Ultra-Fast, and SDXL Turbo.</small></div><div class="actions"><button id="pollinations-test-connection" type="button">Test connection</button><button id="pollinations-test-image" type="button">Test image (FLUX)</button></div></div><div id="pollinations-diag" class="list"></div>
+<form id="pollinations-key-form" class="inline-add-box" style="margin-top:14px">
+  <div class="settings-grid">
+    <div class="field">
+      <label for="pollinations-key-input">Custom API Key (Optional — Free tier works without key)</label>
+      <div style="display:flex;gap:6px">
+        <input id="pollinations-key-input" type="password" autocomplete="new-password" placeholder="Optional Pollinations key (sk-...)">
+        <button type="button" id="pollinations-key-eye" style="padding:0 12px;background:#17213a;border:1px solid #2e4063;border-radius:7px;color:#c4ccdc;cursor:pointer" title="Show/Hide key">👁</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Configured Status</label>
+      <div style="display:flex;align-items:center;gap:8px;height:40px;padding:0 4px">
+        <span id="pollinations-key-badge" class="pill ok">Active (Free Tier)</span>
+        <code id="pollinations-masked-key" style="color:#b4c0d4">Free Public Tier</code>
+      </div>
+    </div>
+  </div>
+  <div class="save-row" style="margin-top:10px">
+    <button id="pollinations-save-key" type="submit">Save Pollinations Settings</button>
+  </div>
+</form>
+<div class="head" style="margin-top:28px"><div><h2>Pollinations AI Image Models</h2><small>Free unlimited high-speed AI image models.</small></div></div><div class="scroll"><table class="subscriptions-table"><thead><tr><th>Model</th><th>Capability</th><th>Pricing</th><th>Status</th></tr></thead><tbody id="pollinations-models"></tbody></table></div>
+
 <div class="head" style="margin-top:34px">
   <div>
     <h2>Model Capabilities &amp; Modality Registry</h2>
@@ -346,10 +370,11 @@
         <th>Model ID</th>
         <th>Display Name</th>
         <th>Category</th>
-        <th>Text (In/Out)</th>
-        <th>Image (In/Out)</th>
-        <th>Video (In/Out)</th>
-        <th>Status</th>
+        <th>Text Test</th>
+        <th>Image Test</th>
+        <th>Video Test</th>
+        <th>Quota Status</th>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody id="capabilities-tbody"></tbody>
@@ -1586,10 +1611,10 @@ function setupDashboardAnalyticsFilter(){
   }
 }
 
-async function load(forceSettings=false){if(refreshing)return;refreshing=true;status('Loading admin data...');try{const data=await request('/api/admin/overview');showApp();const m=data.metrics||{};$('logout').hidden=!!data.localAccess;if($('total'))$('total').textContent=fmt(m.totalUsers);if($('login-today'))$('login-today').textContent=fmt(Math.max(Number(m.signInsToday)||0,(data.users||[]).reduce((total,u)=>total+loginsToday(u),0)));if($('tokens'))$('tokens').textContent=fmt(m.tokensToday);renderDashboard(data);setupDashboardAnalyticsFilter();loadUsersAdmin();loadSubscriptionsAdmin();if(data.paymentGateway)renderGatewayConfig(data.paymentGateway);else loadGatewayConfig();renderProviders(data.models);loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();loadCloudflare();loadCapabilitiesAdmin();loadQuotaAdmin();if(forceSettings||!settingsDirty){renderPlanFields(data.settings||{});renderTokenRulesTable(data.settings||{});settingsDirty=false}renderPricingAudit(data.pricingAuditLogs||[]);runConfigVerification(true);status('Admin data loaded.')}catch(error){if(error.status===401){showLogin();return}if(error.status===503&&error.code==='admin_not_configured'){showLogin('Admin sign-in is not configured. Set PHOTON_ADMIN_PASSWORD and restart the server.');return}status(error.message||'Could not load admin data.',true)}finally{refreshing=false}}
+async function load(forceSettings=false){if(refreshing)return;refreshing=true;status('Loading admin data...');try{const data=await request('/api/admin/overview');showApp();const m=data.metrics||{};$('logout').hidden=!!data.localAccess;if($('total'))$('total').textContent=fmt(m.totalUsers);if($('login-today'))$('login-today').textContent=fmt(Math.max(Number(m.signInsToday)||0,(data.users||[]).reduce((total,u)=>total+loginsToday(u),0)));if($('tokens'))$('tokens').textContent=fmt(m.tokensToday);renderDashboard(data);setupDashboardAnalyticsFilter();loadUsersAdmin();loadSubscriptionsAdmin();if(data.paymentGateway)renderGatewayConfig(data.paymentGateway);else loadGatewayConfig();renderProviders(data.models);loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();loadCloudflare();loadPollinations();loadCapabilitiesAdmin();loadQuotaAdmin();if(forceSettings||!settingsDirty){renderPlanFields(data.settings||{});renderTokenRulesTable(data.settings||{});settingsDirty=false}renderPricingAudit(data.pricingAuditLogs||[]);runConfigVerification(true);status('Admin data loaded.')}catch(error){if(error.status===401){showLogin();return}if(error.status===503&&error.code==='admin_not_configured'){showLogin('Admin sign-in is not configured. Set PHOTON_ADMIN_PASSWORD and restart the server.');return}status(error.message||'Could not load admin data.',true)}finally{refreshing=false}}
  $('login-form').addEventListener('submit',async event=>{event.preventDefault();const button=$('login-button');button.disabled=true;button.textContent='Signing in...';$('login-error').hidden=true;try{await request('/api/admin/login','POST',{email:$('admin-email').value.trim(),password:$('admin-password').value});$('admin-password').value='';await load(true)}catch(error){showLogin(error.message||'Sign-in failed. Check the username and password.')}finally{button.disabled=false;button.textContent='Sign in'}});
  $('logout').addEventListener('click',async()=>{try{await request('/api/admin/logout','POST',{})}finally{showLogin('You have signed out.')}});
- const pageMeta={overview:['Dashboard','Live overview of Photon accounts and usage.'],'users-section':['Users & Sign-ins','Account access, sign-in methods, activity, and plan status.'],subscriptions:['Subscriptions & Purchases','Verified payments, revenue, MRR, and Cashfree gateway configuration.'],settings:['Pricing & Token Rules','Manage plan pricing, daily limits, and AI activity token costs.'],providers:['AI Provider Settings','Check and manage server-side AI provider keys. Secrets are never shown.']};function showPage(){let id=location.hash.slice(1)||'overview';if(!pageMeta[id])id='overview';document.querySelectorAll('.page-view').forEach(page=>page.classList.toggle('active',page.id===id));document.querySelectorAll('.sidebar nav a[href^="#"]').forEach(link=>link.classList.toggle('active',link.getAttribute('href')==='#'+id));$('page-title').textContent=pageMeta[id][0];$('page-description').textContent=pageMeta[id][1];if(id==='overview'){load()}else if(id==='users-section'){loadUsersAdmin()}else if(id==='subscriptions'){loadGatewayConfig();loadSubscriptionsAdmin()}else if(id==='settings'){load(true)}else if(id==='providers'){loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();loadCloudflare();loadCapabilitiesAdmin();loadQuotaAdmin();}}window.addEventListener('hashchange',showPage);showPage();
+ const pageMeta={overview:['Dashboard','Live overview of Photon accounts and usage.'],'users-section':['Users & Sign-ins','Account access, sign-in methods, activity, and plan status.'],subscriptions:['Subscriptions & Purchases','Verified payments, revenue, MRR, and Cashfree gateway configuration.'],settings:['Pricing & Token Rules','Manage plan pricing, daily limits, and AI activity token costs.'],providers:['AI Provider Settings','Check and manage server-side AI provider keys. Secrets are never shown.']};function showPage(){let id=location.hash.slice(1)||'overview';if(!pageMeta[id])id='overview';document.querySelectorAll('.page-view').forEach(page=>page.classList.toggle('active',page.id===id));document.querySelectorAll('.sidebar nav a[href^="#"]').forEach(link=>link.classList.toggle('active',link.getAttribute('href')==='#'+id));$('page-title').textContent=pageMeta[id][0];$('page-description').textContent=pageMeta[id][1];if(id==='overview'){load()}else if(id==='users-section'){loadUsersAdmin()}else if(id==='subscriptions'){loadGatewayConfig();loadSubscriptionsAdmin()}else if(id==='settings'){load(true)}else if(id==='providers'){loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();loadCloudflare();loadPollinations();loadCapabilitiesAdmin();loadQuotaAdmin();}}window.addEventListener('hashchange',showPage);showPage();
  $('settings-form').addEventListener('input',()=>{settingsDirty=true});
  $('settings-form').addEventListener('change',()=>{settingsDirty=true});
  $('verify-token-calc-btn').addEventListener('click',()=>runConfigVerification(false));
@@ -2217,32 +2242,45 @@ async function load(forceSettings=false){if(refreshing)return;refreshing=true;st
 
   async function loadCapabilitiesAdmin() {
     try {
-      const res = await request('/api/admin/capabilities');
+      const res = await request('/api/admin/models/capabilities');
       const data = (res && res.data) || res || {};
-      const stats = data.categoryStats || { text: 0, image: 0, video: 0 };
-      if ($('cap-kpi-text')) $('cap-kpi-text').textContent = (stats.text || 0) + ' models';
-      if ($('cap-kpi-image')) $('cap-kpi-image').textContent = (stats.image || 0) + ' models';
-      if ($('cap-kpi-video')) $('cap-kpi-video').textContent = (stats.video || 0) + ' models';
+      const stats = data.stats || { text: { total: 0 }, image: { total: 0 }, video: { total: 0 } };
+      if ($('cap-kpi-text')) $('cap-kpi-text').textContent = (stats.text?.total || 0) + ' models';
+      if ($('cap-kpi-image')) $('cap-kpi-image').textContent = (stats.image?.total || 0) + ' models';
+      if ($('cap-kpi-video')) $('cap-kpi-video').textContent = (stats.video?.total || 0) + ' models';
 
       const tbody = $('capabilities-tbody');
       if (!tbody) return;
       tbody.replaceChildren();
 
-      const models = data.models || [];
-      if (!models.length) {
+      const report = data.report || [];
+      if (!report.length) {
         const row = document.createElement('tr');
         const empty = td(row, 'No models registered in capability service.');
-        empty.colSpan = 8;
+        empty.colSpan = 9;
         empty.className = 'empty';
         tbody.appendChild(row);
         return;
       }
 
-      models.forEach(m => {
+      function badgeForStatus(status) {
+        const s = String(status || 'NOT_TESTED').toUpperCase();
+        const span = document.createElement('span');
+        if (s === 'PASSED') { span.className = 'pill ok'; span.textContent = 'PASSED'; }
+        else if (s === 'FAILED') { span.className = 'pill no'; span.textContent = 'FAILED'; }
+        else if (s === 'TESTING') { span.className = 'pill'; span.style.background = '#3b82f6'; span.textContent = 'TESTING...'; }
+        else if (s === 'QUOTA_EXHAUSTED') { span.className = 'pill warn'; span.textContent = 'QUOTA_EXHAUSTED'; }
+        else if (s === 'UNSUPPORTED') { span.className = 'pill'; span.style.opacity = '0.6'; span.textContent = 'UNSUPPORTED'; }
+        else if (s === 'PAID_ONLY') { span.className = 'pill warn'; span.textContent = 'PAID_ONLY'; }
+        else { span.className = 'pill'; span.textContent = s; }
+        return span;
+      }
+
+      report.forEach(m => {
         const row = document.createElement('tr');
-        td(row, m.provider || '—');
-        td(row, m.id || '—');
-        td(row, m.name || m.id || '—');
+        td(row, m.provider_name || '—');
+        td(row, m.model_id || '—');
+        td(row, m.model_name || m.model_id || '—');
 
         const catTd = td(row, '');
         const catBadge = document.createElement('span');
@@ -2250,15 +2288,64 @@ async function load(forceSettings=false){if(refreshing)return;refreshing=true;st
         catBadge.textContent = String(m.category || 'text').toUpperCase();
         catTd.appendChild(catBadge);
 
-        td(row, (m.text_input ? '✓ In' : '✗') + ' / ' + (m.text_output ? '✓ Out' : '✗'));
-        td(row, (m.image_input ? '✓ In' : '✗') + ' / ' + (m.image_output ? '✓ Out' : '✗'));
-        td(row, (m.video_input ? '✓ In' : '✗') + ' / ' + (m.video_output ? '✓ Out' : '✗'));
+        const textTestTd = td(row, '');
+        const textBadge = badgeForStatus(m.text_test_status);
+        textTestTd.appendChild(textBadge);
 
-        const availTd = td(row, '');
-        const availBadge = document.createElement('span');
-        availBadge.className = 'pill ' + (m.available ? 'ok' : 'no');
-        availBadge.textContent = m.available ? 'Available' : 'Unavailable';
-        availTd.appendChild(availBadge);
+        const imgTestTd = td(row, '');
+        const imgBadge = badgeForStatus(m.image_test_status);
+        imgTestTd.appendChild(imgBadge);
+
+        const vidTestTd = td(row, '');
+        const vidBadge = badgeForStatus(m.video_test_status);
+        vidTestTd.appendChild(vidBadge);
+
+        const qTd = td(row, '');
+        const qBadge = document.createElement('span');
+        qBadge.className = 'pill ' + (m.quota_status === 'HEALTHY' ? 'ok' : 'warn');
+        qBadge.textContent = m.quota_status || 'HEALTHY';
+        qTd.appendChild(qBadge);
+
+        const actTd = td(row, '');
+        actTd.style.whiteSpace = 'nowrap';
+        const makeBtn = (label, cap, badgeTarget) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.textContent = label;
+          btn.style.marginRight = '4px';
+          btn.style.padding = '3px 8px';
+          btn.style.fontSize = '11px';
+          btn.addEventListener('click', async () => {
+            btn.disabled = true;
+            btn.textContent = 'Testing...';
+            try {
+              const testRes = await request('/api/admin/models/test', 'POST', { modelId: m.model_id, capability: cap });
+              const resData = (testRes && testRes.data) || testRes;
+              badgeTarget.replaceWith(badgeForStatus(resData.status));
+              if (resData.ok) {
+                alert(`✓ ${m.model_name} ${cap.toUpperCase()} test PASSED in ${resData.durationMs || 0}ms.`);
+              } else {
+                alert(`✗ ${m.model_name} ${cap.toUpperCase()} test FAILED: ${resData.error || resData.status}`);
+              }
+            } catch (err) {
+              alert(`Test error: ${err.message}`);
+            } finally {
+              btn.disabled = false;
+              btn.textContent = label;
+            }
+          });
+          return btn;
+        };
+
+        if (m.text_supported) {
+          actTd.appendChild(makeBtn('Test Text', 'text', textBadge));
+        }
+        if (m.image_supported) {
+          actTd.appendChild(makeBtn('Test Image', 'image', imgBadge));
+        }
+        if (m.video_supported) {
+          actTd.appendChild(makeBtn('Test Video', 'video', vidBadge));
+        }
 
         tbody.appendChild(row);
       });
@@ -2266,6 +2353,92 @@ async function load(forceSettings=false){if(refreshing)return;refreshing=true;st
       console.error('Failed to load capabilities in admin:', err);
     }
   }
+
+  async function loadPollinations() {
+    try {
+      const res = await request('/api/admin/pollinations');
+      const st = (res && res.data) || res || {};
+      const diag = $('pollinations-diag');
+      if (diag) {
+        diag.replaceChildren();
+        rowItem(diag, 'Pollinations AI (Text-to-Image)', '100% Free recurring AI image generation with zero credit card requirement.', orBadge('Active (Free)', true));
+        rowItem(diag, 'API Key', st.hasCustomKey ? 'Custom key configured (' + (st.maskedKey || 'sk-••••') + ')' : 'None (Using Free Public Tier)', orBadge(st.hasCustomKey ? 'Custom Key' : 'Free Tier', true));
+        rowItem(diag, 'Spending Policy', 'Strict free-only (zero billing guaranteed)', orBadge('Free Only', true));
+      }
+      const tbody = $('pollinations-models');
+      if (tbody) {
+        tbody.replaceChildren();
+        (st.models || []).forEach(m => {
+          const row = document.createElement('tr');
+          td(row, m.name || m.id);
+          td(row, m.task || 'text-to-image');
+          const pTd = td(row, '');
+          const pBadge = document.createElement('span');
+          pBadge.className = 'pill ok';
+          pBadge.textContent = 'FREE';
+          pTd.appendChild(pBadge);
+          const sTd = td(row, '');
+          const sBadge = document.createElement('span');
+          sBadge.className = 'pill ok';
+          sBadge.textContent = 'Ready';
+          sTd.appendChild(sBadge);
+          tbody.appendChild(row);
+        });
+      }
+    } catch (err) {
+      console.error('Failed to load pollinations status:', err);
+    }
+  }
+
+  $('pollinations-test-connection').addEventListener('click', async () => {
+    const btn = $('pollinations-test-connection');
+    btn.disabled = true;
+    btn.textContent = 'Testing...';
+    try {
+      const res = await request('/api/admin/pollinations/connection', 'POST', {});
+      const r = (res && res.data && res.data.result) || res.result || {};
+      alert(r.ok ? `✓ Pollinations AI connection successful (${r.durationMs || 0}ms)` : `✗ Connection failed: ${r.error || r.message}`);
+      loadPollinations();
+    } catch (err) {
+      alert(`Pollinations test failed: ${err.message}`);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Test connection';
+    }
+  });
+
+  $('pollinations-test-image').addEventListener('click', async () => {
+    const btn = $('pollinations-test-image');
+    btn.disabled = true;
+    btn.textContent = 'Generating...';
+    try {
+      const res = await request('/api/admin/pollinations/test-image', 'POST', { prompt: 'a simple red apple on a clean white background', model: 'flux' });
+      const r = (res && res.data && res.data.result) || res.result || {};
+      if (r.success || r.dataUrl) {
+        alert(`✓ Test image generated successfully! (Bytes: ${r.bytes || 0}, Model: ${r.model})`);
+      } else {
+        alert(`✗ Failed: ${r.error || 'No image'}`);
+      }
+    } catch (err) {
+      alert(`Pollinations image test failed: ${err.message}`);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Test image (FLUX)';
+    }
+  });
+
+  $('pollinations-key-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const key = $('pollinations-key-input').value.trim();
+    try {
+      await request('/api/admin/pollinations', 'PUT', { apiKey: key });
+      alert('Pollinations settings saved.');
+      $('pollinations-key-input').value = '';
+      loadPollinations();
+    } catch (err) {
+      alert(`Could not save Pollinations settings: ${err.message}`);
+    }
+  });
 
   async function loadQuotaAdmin() {
     try {

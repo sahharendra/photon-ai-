@@ -26,14 +26,14 @@ const {
 const { summarizeUsage } = require('../photon-usage');
 
 const ROOT = path.join(__dirname, '..');
-const FILES = ['server.js', 'anthropic-provider.js', 'openrouter-provider.js', 'openrouter-keys.js', 'gemini-keys.js', 'gemini-provider.js', 'openai-config.js', 'openai-provider.js', 'ollama-config.js', 'ollama-provider.js', 'codecraft-config.js', 'codecraft-provider.js', 'groq-config.js', 'groq-provider.js', 'nvidia-config.js', 'nvidia-provider.js', 'llmtr-config.js', 'llmtr-provider.js', 'provider-fallback.js', 'provider-access-service.js', 'dashboard-analytics.js', 'photon-limits.js', 'photon-usage.js', 'photon-admin-users.js', 'photon-admin-subscriptions.js', 'pricing-rules-service.js', 'cashfree-service.js', 'cloudflare-config.js', 'cloudflare-provider.js', 'razorpay-service.js', 'index.html', 'admin.html'];
+const FILES = ['server.js', 'anthropic-provider.js', 'openrouter-provider.js', 'openrouter-keys.js', 'gemini-keys.js', 'gemini-provider.js', 'openai-config.js', 'openai-provider.js', 'ollama-config.js', 'ollama-provider.js', 'codecraft-config.js', 'codecraft-provider.js', 'groq-config.js', 'groq-provider.js', 'nvidia-config.js', 'nvidia-provider.js', 'llmtr-config.js', 'llmtr-provider.js', 'provider-fallback.js', 'provider-access-service.js', 'dashboard-analytics.js', 'photon-limits.js', 'photon-usage.js', 'photon-admin-users.js', 'photon-admin-subscriptions.js', 'pricing-rules-service.js', 'cashfree-service.js', 'cloudflare-config.js', 'cloudflare-provider.js', 'pollinations-provider.js', 'quota-monitor-service.js', 'model-capability-service.js', 'razorpay-service.js', 'index.html', 'admin.html'];
 
 describe('Pricing & Token Rules Service Unit Tests', () => {
   it('1: seeds initial v3 plans & AI activity token rules and migrates legacy v2 defaults cleanly', () => {
     const fresh = normalizeSettings(null);
     assert.equal(fresh.rulesVersion, RULES_VERSION);
     assert.deepEqual(fresh.plans.map(p => [p.id, p.name, p.price, p.dailyTokens]), [
-      ['basic', 'Free', 0, 50],
+      ['basic', 'Free', 0, 500],
       ['pro', 'Pro', 399, 200],
       ['premium', 'Premium', 1499, 2000],
     ]);
@@ -119,20 +119,20 @@ describe('Pricing & Token Rules Service Unit Tests', () => {
   it('4: enforces atomic token reservation, idempotent requestId, daily exhaustion, and failure refund', () => {
     const store = { settings: normalizeSettings(null), activities: { u1: [] }, tokenTransactions: [] };
     const profile = { uid: 'u1', plan: 'basic', timezone: 'UTC' };
-    // Make code cost 30 so 1 fits in 50 daily tokens, 2nd exceeds 50
-    upsertTokenRule(store, { id: 'code', name: 'Code Generation', tokenCost: 30, enabled: true });
+    // Make code cost 300 so 1 fits in 500 daily tokens, 2nd exceeds 500
+    upsertTokenRule(store, { id: 'code', name: 'Code Generation', tokenCost: 300, enabled: true });
 
     const r1 = reserveTokenSpend(store, { uid: 'u1', activityKey: 'code', requestId: 'req-code-1', profile });
-    assert.equal(r1.transaction.tokensCharged, 30);
-    assert.equal(r1.transaction.balanceBefore, 50);
-    assert.equal(r1.transaction.balanceAfter, 20);
+    assert.equal(r1.transaction.tokensCharged, 300);
+    assert.equal(r1.transaction.balanceBefore, 500);
+    assert.equal(r1.transaction.balanceAfter, 200);
 
     // Same requestId is idempotent (no double-deduction)
     const r1Dup = reserveTokenSpend(store, { uid: 'u1', activityKey: 'code', requestId: 'req-code-1', profile });
     assert.equal(r1Dup.idempotent, true);
     assert.equal(r1Dup.transaction.id, r1.transaction.id);
 
-    // Next distinct request requiring 30 fails with 429 daily_limit because 20 remaining < 30
+    // Next distinct request requiring 300 fails with 429 daily_limit because 200 remaining < 300
     assert.throws(
       () => reserveTokenSpend(store, { uid: 'u1', activityKey: 'code', requestId: 'req-code-2', profile }),
       err => err.status === 429 && err.code === 'daily_limit',

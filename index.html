@@ -610,8 +610,8 @@ var WAVE=document.getElementById("wave").outerHTML;var basePH="How can I help yo
 var activeGenCat="text";
 function getModelCat(m) {
   if (!m) return "text";
-  if (m.category === "image" || m.task === "text-to-image" || m.category === "Image Generation" || (m.id && m.id.indexOf("@cf/") === 0 && (m.id.indexOf("flux") > -1 || m.id.indexOf("stable-diffusion") > -1))) return "image";
-  if (m.category === "video" || m.task === "text-to-video" || /svd|video/i.test(m.id)) return "video";
+  if (m.category === "image" || m.task === "text-to-image" || m.category === "Image Generation" || m.image_output || (m.id && m.id.indexOf("@cf/") === 0 && (m.id.indexOf("flux") > -1 || m.id.indexOf("stable-diffusion") > -1)) || m.id === "flux" || m.id === "sana" || m.id === "turbo" || (m.provider && m.provider.toLowerCase().indexOf("pollinations") > -1)) return "image";
+  if (m.category === "video" && m.video_output && m.video_test_status === "PASSED") return "video";
   return "text";
 }
 function setGenCategory(cat){
@@ -1984,10 +1984,10 @@ function profileModelTierAllowed(m,planId){
   pid=String(pid).toLowerCase();
   var prov=String(m.provider||"").toLowerCase().replace(/[\s_-]+/g,"");
   if(pid==="basic"||pid==="free"){
-    return prov==="openrouter"||prov==="codecraft"||prov==="ollama"||prov==="llmtr"||prov==="cloudflare"||prov==="cloudflareworkersai"||prov==="google"||prov==="gemini"||prov==="groq"||prov==="nvidia"||prov==="nvidianim";
+    return prov==="openrouter"||prov==="codecraft"||prov==="ollama"||prov==="llmtr"||prov==="cloudflare"||prov==="cloudflareworkersai"||prov==="google"||prov==="gemini"||prov==="groq"||prov==="nvidia"||prov==="nvidianim"||prov==="pollinations"||prov==="pollinationsai";
   }
   if(pid==="pro"){
-    return prov==="openrouter"||prov==="codecraft"||prov==="groq"||prov==="ollama"||prov==="llmtr"||prov==="cloudflare"||prov==="cloudflareworkersai"||prov==="google"||prov==="gemini"||prov==="nvidia"||prov==="nvidianim";
+    return prov==="openrouter"||prov==="codecraft"||prov==="groq"||prov==="ollama"||prov==="llmtr"||prov==="cloudflare"||prov==="cloudflareworkersai"||prov==="google"||prov==="gemini"||prov==="nvidia"||prov==="nvidianim"||prov==="pollinations"||prov==="pollinationsai";
   }
   return true;
 }
@@ -2105,8 +2105,9 @@ function showAllModels(initialCategory){
   var refreshBtn=d.querySelector("#models-refresh");
 
   function getModelCat(m) {
-    if (m.category === "image" || m.task === "text-to-image" || m.category === "Image Generation" || (m.id && m.id.indexOf("@cf/") === 0 && (m.id.indexOf("flux") > -1 || m.id.indexOf("stable-diffusion") > -1))) return "image";
-    if (m.category === "video" || m.task === "text-to-video" || /svd|video/i.test(m.id)) return "video";
+    if (!m) return "text";
+    if (m.category === "image" || m.task === "text-to-image" || m.category === "Image Generation" || m.image_output || (m.id && m.id.indexOf("@cf/") === 0 && (m.id.indexOf("flux") > -1 || m.id.indexOf("stable-diffusion") > -1)) || m.id === "flux" || m.id === "sana" || m.id === "turbo" || (m.provider && m.provider.toLowerCase().indexOf("pollinations") > -1)) return "image";
+    if (m.category === "video" && m.video_output && m.video_test_status === "PASSED") return "video";
     return "text";
   }
 
@@ -2127,12 +2128,12 @@ function showAllModels(initialCategory){
     var catalog=profileModelCatalog((profileConfig&&profileConfig.allModels)||(profileConfig&&profileConfig.models)||[]).filter(function(m){ return getModelCat(m) === currentCat; });
     var counts={};
     catalog.forEach(function(m){var p=String(m.provider||"Other").trim();counts[p]=(counts[p]||0)+1});
-    var currentVal=String(providerEl.value||"all").trim().toLowerCase();
+    var currentVal=String(providerEl.value||"all").trim();
     providerEl.innerHTML='<option value="all">All enabled providers ('+catalog.length+')</option>'+Object.keys(counts).sort().map(function(p){
-      return '<option value="'+profileEscape(p)+'"'+(p.toLowerCase()===currentVal?' selected':'')+'>'+profileEscape(p)+' ('+counts[p]+')</option>';
+      return '<option value="'+profileEscape(p)+'"'+(p.toLowerCase()===currentVal.toLowerCase()?' selected':'')+'>'+profileEscape(p)+' ('+counts[p]+')</option>';
     }).join("");
     if(currentVal!=="all"){
-      var matchKey=Object.keys(counts).find(function(k){return k.toLowerCase()===currentVal});
+      var matchKey=Object.keys(counts).find(function(k){return k.toLowerCase()===currentVal.toLowerCase()});
       if(matchKey) providerEl.value=matchKey;
       else providerEl.value="all";
     }
@@ -2148,7 +2149,7 @@ function showAllModels(initialCategory){
     var planId=photonProfile&&photonProfile.plan?photonProfile.plan.id:(user&&user.plan||"basic");
 
     var filtered=inCat.filter(function(m){
-      if(prov!=="all" && String(m.provider||"").trim().toLowerCase() !== prov) return false;
+      if(prov!=="all" && String(m.provider||"").trim().toLowerCase() !== prov && String(m.providerId||"").toLowerCase() !== prov) return false;
       if(!q)return true;
       var hay=(String(m.name||"")+" "+String(m.id||"")+" "+String(m.provider||"")+" "+String(m.category||"")+" "+String(m.task||"")+" "+String(m.description||"")).toLowerCase();
       return hay.indexOf(q)>-1;

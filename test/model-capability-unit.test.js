@@ -157,3 +157,123 @@ test('Scenario 8: Provider matrix shows capabilities per provider without creden
   assert.equal(matrix.cloudflare_workers_ai.text_models_count, 1);
   assert.equal(matrix.cloudflare_workers_ai.image_models_count, 1);
 });
+
+test('Scenario 9: Pollinations AI models are automatically classified as IMAGE with free-tier access', () => {
+  const { createPollinationsProvider } = require('../pollinations-provider');
+  class HttpError extends Error { constructor(status, code, message) { super(message); this.status = status; this.code = code; } }
+  const pol = createPollinationsProvider({ HttpError });
+
+  const entries = pol.catalogEntries();
+  assert.equal(entries.length, 3);
+  assert(entries.every(m => m.free === true));
+  assert(entries.every(m => m.category === 'Image Generation'));
+
+  const svc = createModelCapabilityService();
+  svc.registerModels(entries);
+
+  const imageModels = svc.getModelsByCategory('image');
+  assert.equal(imageModels.length, 3);
+  assert(imageModels.some(m => m.id === 'flux'));
+  assert(imageModels.some(m => m.id === 'sana'));
+  assert(imageModels.some(m => m.id === 'turbo'));
+});
+
+test('Scenario 10: Model-by-model real text test verification', async () => {
+  const svc = createModelCapabilityService();
+  svc.registerModels([
+    { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3', provider: 'Groq', available: true },
+  ]);
+
+  const mockRunner = async ({ modelId, text, category }) => {
+    assert.equal(category, 'text');
+    assert.equal(text, 'Reply with exactly: PHOTON TEXT TEST SUCCESSFUL');
+    return { text: 'PHOTON TEXT TEST SUCCESSFUL', usage: { inputTokens: 8, outputTokens: 6 } };
+  };
+
+  const res = await svc.testModelText('llama-3.3-70b-versatile', mockRunner);
+  assert.equal(res.ok, true);
+  assert.equal(res.status, 'PASSED');
+  assert(res.durationMs >= 0);
+
+  const model = svc.getModel('llama-3.3-70b-versatile');
+  assert.equal(model.text_test_status, 'PASSED');
+  assert(model.text_tested_at);
+});
+
+test('Scenario 11: Model-by-model real image test verification', async () => {
+  const svc = createModelCapabilityService();
+  svc.registerModels([
+    { id: 'flux', name: 'FLUX.1 Schnell', provider: 'Pollinations AI', free: true, task: 'text-to-image', available: true },
+  ]);
+
+  const mockRunner = async ({ modelId, text, category }) => {
+    assert.equal(category, 'image');
+    assert.equal(text, 'Generate a simple red apple on a clean white background.');
+    return {
+      success: true,
+      dataUrl: 'data:image/jpeg;base64,/9j/4AAQSkZJRg...',
+      bytes: 19269,
+      contentType: 'image/jpeg',
+    };
+  };
+
+  const res = await svc.testModelImage('flux', mockRunner);
+  assert.equal(res.ok, true);
+  assert.equal(res.status, 'PASSED');
+  assert.equal(res.hasImageBytes, true);
+
+  const model = svc.getModel('flux');
+  assert.equal(model.image_test_status, 'PASSED');
+  assert(model.image_tested_at);
+});
+
+test('Scenario 12: Video test marks model UNSUPPORTED when no video endpoint exists', async () => {
+  const svc = createModelCapabilityService();
+  svc.registerModels([
+    { id: 'gemini-2.0-flash', name: 'Gemini Flash', provider: 'Google', available: true },
+  ]);
+
+  const mockRunner = async () => {};
+  const res = await svc.testModelVideo('gemini-2.0-flash', mockRunner);
+  assert.equal(res.ok, false);
+  assert.equal(res.status, 'UNSUPPORTED');
+
+  const model = svc.getModel('gemini-2.0-flash');
+  assert.equal(model.video_test_status, 'UNSUPPORTED');
+});
+
+test('Scenario 13: Zero fake video models - VIDEO category is strictly 0 when no models passed', () => {
+  const svc = createModelCapabilityService();
+  svc.registerModels([
+    { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3', provider: 'Groq', available: true },
+    { id: 'flux', name: 'FLUX.1 Schnell', provider: 'Pollinations AI', free: true, task: 'text-to-image', available: true },
+    { id: 'some-model-with-video-tag', name: 'Tagged Video Model', provider: 'Unknown', task: 'text-to-video', available: true },
+  ]);
+
+  // Model hasn't passed video testing
+  const videoModels = svc.getModelsByCategory('video');
+  assert.equal(videoModels.length, 0, 'No unverified model should be in VIDEO selector');
+
+  const stats = svc.getCategoryStats();
+  assert.equal(stats.video.total, 0, 'Category stats video count must be 0');
+});
+
+test('Scenario 14: Comprehensive model capability report generates full matrix without leaks', () => {
+  const svc = createModelCapabilityService();
+  svc.registerModels([
+    { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3', provider: 'Groq', available: true, free: true },
+    { id: 'flux', name: 'FLUX.1', provider: 'Pollinations AI', available: true, free: true, task: 'text-to-image' },
+  ]);
+
+  const report = svc.getModelCapabilityReport();
+  assert.equal(report.length, 2);
+  const groqReport = report.find(r => r.model_id === 'llama-3.3-70b-versatile');
+  assert.equal(groqReport.text_supported, true);
+  assert.equal(groqReport.image_supported, false);
+  assert.equal(groqReport.pricing_status, 'FREE');
+
+  const fluxReport = report.find(r => r.model_id === 'flux');
+  assert.equal(fluxReport.text_supported, false);
+  assert.equal(fluxReport.image_supported, true);
+  assert.equal(fluxReport.pricing_status, 'FREE');
+});

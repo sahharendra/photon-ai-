@@ -25,6 +25,7 @@ const { createOllamaConfig } = require('./ollama-config');
 const { createOllamaProvider } = require('./ollama-provider');
 const { createCloudflareConfig } = require('./cloudflare-config');
 const { createCloudflareProvider } = require('./cloudflare-provider');
+const { createPollinationsProvider } = require('./pollinations-provider');
 const { createQuotaMonitorService } = require('./quota-monitor-service');
 const {
   CATEGORY_TEXT,
@@ -160,6 +161,7 @@ const cashfree = createCashfreeService({ env: process.env });
 const razorpay = createRazorpayService({ env: process.env });
 const cloudflareConfig = createCloudflareConfig({ dir: ROOT, env: process.env });
 const cloudflare = createCloudflareProvider({ HttpError, env: process.env, config: cloudflareConfig });
+const pollinations = createPollinationsProvider({ HttpError, env: process.env, logger: console });
 
 const quotaMonitor = createQuotaMonitorService({ dir: ROOT, env: process.env, logger: console });
 quotaMonitor.startBackgroundMonitoring(15000);
@@ -672,7 +674,24 @@ function availableModels() {
     description: m.description || '',
     reason: m.reason || '',
   }));
-  const merged = [...base, ...google, ...claude, ...free, ...gpt, ...cc, ...gq, ...nv, ...ltr, ...olm, ...cf];
+  const pol = pollinations.catalogEntries().map(m => ({
+    id: m.id,
+    name: m.name,
+    provider: m.provider,
+    providerId: 'pollinations',
+    configured: true,
+    supported: true,
+    available: Boolean(m.available),
+    free: true,
+    pricingVerified: true,
+    category: 'Image Generation',
+    task: 'text-to-image',
+    contextLength: 0,
+    capabilities: { text: false, image_output: true, vision: false },
+    description: m.description || 'Free high-speed AI image generation',
+    reason: m.reason || '',
+  }));
+  const merged = [...base, ...google, ...claude, ...free, ...gpt, ...cc, ...gq, ...nv, ...ltr, ...olm, ...cf, ...pol];
   const seen = new Set();
   const out = [];
   for (const item of merged) {
@@ -884,9 +903,22 @@ function providerKey(option) {
   if (option.provider === 'LLMTR') return 'llmtr';
   if (option.provider === 'Ollama') return 'ollama';
   if (option.provider === 'Cloudflare Workers AI' || option.provider === 'Cloudflare' || option.providerId === 'cloudflare_workers_ai') return 'cloudflare';
+  if (option.provider === 'Pollinations AI' || option.provider === 'Pollinations' || option.providerId === 'pollinations') return 'pollinations';
   return 'gemini';
 }
 async function generateProvider({ providerName, modelId, system, history, text, attachments, contents, maxTokens, isProductionTraffic = false }) {
+  if (providerName === 'pollinations') {
+    const prompt = text || system || 'a beautiful illustration';
+    const imgRes = await pollinations.generateImage({ prompt, model: modelId });
+    return {
+      text: `![${prompt}](${imgRes.dataUrl})`,
+      image: imgRes.dataUrl,
+      imageUrl: imgRes.imageUrl,
+      model: imgRes.model,
+      usage: { inputTokens: 10, outputTokens: 50, totalTokens: 60 },
+      key: { id: 'pollinations-free', slot: 1 },
+    };
+  }
   if (providerName === 'openrouter') return openrouter.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
   if (providerName === 'codecraft') return codecraft.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
   if (providerName === 'groq') return groq.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
@@ -898,6 +930,22 @@ async function generateProvider({ providerName, modelId, system, history, text, 
   return callGemini(modelId, contents || [{ role: 'user', parts: [{ text }] }], system);
 }
 async function* streamProvider({ providerName, modelId, system, history, text, attachments, contents, maxTokens, signal, isProductionTraffic = false }) {
+  if (providerName === 'pollinations') {
+    const prompt = text || system || 'a beautiful illustration';
+    const imgRes = await pollinations.generateImage({ prompt, model: modelId, signal });
+    const md = `![${prompt}](${imgRes.dataUrl})`;
+    yield { type: 'delta', text: md };
+    yield {
+      type: 'done',
+      text: md,
+      message: md,
+      image: imgRes.dataUrl,
+      imageUrl: imgRes.imageUrl,
+      model: imgRes.model,
+      usage: { inputTokens: 10, outputTokens: 50, totalTokens: 60 },
+    };
+    return;
+  }
   if (providerName === 'openrouter') {
     yield* openrouter.streamGenerate({ model: modelId, system, history, text, attachments, maxTokens, signal });
     return;
@@ -1598,9 +1646,61 @@ const server = http.createServer(async (req, res) => {
             llmtr: llmtr.status(),
             ollama: ollama.status(),
             cloudflare: cloudflare.status(),
+            pollinations: pollinations.status(),
             creditsExhausted: { ...providerCreditStatus },
           },
         });
+      }
+      if (pathname === '/api/admin/pollinations' && req.method === 'GET') {
+        return reply(res, 200, { success: true, data: pollinations.status() });
+      }
+      if (pathname === '/api/admin/pollinations' && req.method === 'PUT') {
+        const body = await readBody(req);
+        if (typeof body.enabled === 'boolean') pollinations.setEnabled(body.enabled);
+        if (body.apiKey !== undefined) pollinations.setApiKey(body.apiKey);
+        return reply(res, 200, { success: true, data: pollinations.status() });
+      }
+      if (pathname === '/api/admin/pollinations/connection' && req.method === 'POST') {
+        const result = await pollinations.testConnection();
+        return reply(res, 200, { success: true, data: { result, status: pollinations.status() } });
+      }
+      if (pathname === '/api/admin/pollinations/test-image' && req.method === 'POST') {
+        const body = await readBody(req);
+        const result = await pollinations.generateImage({ prompt: body.prompt || 'a simple red apple on a clean white background', model: body.model || 'flux' });
+        return reply(res, 200, { success: true, data: { result, status: pollinations.status() } });
+      }
+      if (pathname === '/api/admin/models/capabilities' && req.method === 'GET') {
+        availableModels();
+        return reply(res, 200, {
+          success: true,
+          data: {
+            stats: capabilityService ? capabilityService.getCategoryStats() : {},
+            report: capabilityService ? capabilityService.getModelCapabilityReport() : [],
+            providers: capabilityService ? capabilityService.auditProviderMatrix() : {},
+            totalModels: availableModels().length,
+          },
+        });
+      }
+      if (pathname === '/api/admin/models/test' && req.method === 'POST') {
+        const body = await readBody(req);
+        const modelId = String(body.modelId || '').trim();
+        const capability = String(body.capability || 'text').trim().toLowerCase();
+        if (!modelId) throw new HttpError(400, 'missing_model_id', 'modelId is required.');
+        availableModels();
+        const runner = async ({ providerName, modelId, text, category }) => {
+          if (category === 'image') {
+            if (providerName === 'pollinations' || modelId === 'flux' || modelId === 'sana' || modelId === 'turbo') {
+              return pollinations.generateImage({ prompt: text, model: modelId });
+            }
+            return cloudflare.generateImage({ prompt: text, model: modelId });
+          }
+          if (category === 'video') {
+            throw new HttpError(501, 'unsupported', 'No active free video generation endpoint configured for this model.');
+          }
+          return generateProvider({ providerName, modelId, text, system: 'Reply with exact test string' });
+        };
+        const testRes = await capabilityService.testModel(modelId, capability, runner);
+        return reply(res, 200, { success: true, data: testRes });
       }
       if (pathname === '/api/admin/capabilities' && req.method === 'GET') {
         availableModels();
@@ -1608,6 +1708,7 @@ const server = http.createServer(async (req, res) => {
           success: true,
           data: {
             stats: capabilityService ? capabilityService.getCategoryStats() : {},
+            report: capabilityService ? capabilityService.getModelCapabilityReport() : [],
             providers: capabilityService ? capabilityService.auditProviderMatrix() : {},
             totalModels: availableModels().length,
           },
@@ -2481,20 +2582,28 @@ const server = http.createServer(async (req, res) => {
           }
 
           if (kind === 'image') {
-            const targetModel = body.model || '@cf/black-forest-labs/flux-1-schnell';
+            const isPollinationsModel = body.model === 'flux' || body.model === 'sana' || body.model === 'turbo' || String(body.model || '').includes('pollinations');
+            const targetModel = body.model || (isPollinationsModel || !cloudflare.configured() ? 'flux' : '@cf/black-forest-labs/flux-1-schnell');
             if (capabilityService) {
               capabilityService.assertModelCapability(targetModel, 'image');
             }
-            if (typeof quotaMonitor !== 'undefined' && quotaMonitor) {
-              quotaMonitor.assertModelRequestAllowed('cloudflare', targetModel);
+            const usePollinations = isPollinationsModel || !cloudflare.configured();
+            const providerDisplayName = usePollinations ? 'Pollinations AI' : 'Cloudflare Workers AI';
+            const provShort = usePollinations ? 'pollinations' : 'cloudflare';
+
+            if (!usePollinations) {
+              if (typeof quotaMonitor !== 'undefined' && quotaMonitor) {
+                quotaMonitor.assertModelRequestAllowed('cloudflare', targetModel);
+              }
+              if (!cloudflare.configured()) {
+                throw new HttpError(
+                  503,
+                  'not_configured',
+                  'Cloudflare Workers AI credentials (CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN) are required for Image Generation. Please configure them in the Admin Panel or environment variables.'
+                );
+              }
             }
-            if (!cloudflare.configured()) {
-              throw new HttpError(
-                503,
-                'not_configured',
-                'Cloudflare Workers AI credentials (CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN) are required for Image Generation. Please configure them in the Admin Panel or environment variables.'
-              );
-            }
+
             const reserved = await withStoreLock(() => {
               const freshStore = loadStore();
               const resTx = reserveTokenSpend(freshStore, {
@@ -2502,48 +2611,57 @@ const server = http.createServer(async (req, res) => {
                 activityKey: 'image',
                 requestId: body.request_id || requestId,
                 profile,
-                provider: 'Cloudflare Workers AI',
-                model: body.model || '@cf/black-forest-labs/flux-1-schnell',
+                provider: providerDisplayName,
+                model: targetModel,
               });
               saveStore();
               return resTx;
             });
             let imgRes;
             try {
-              imgRes = await cloudflare.generateImage({
-                prompt,
-                model: body.model,
-                steps: body.steps,
-                signal: req.signal,
-              });
+              if (usePollinations) {
+                imgRes = await pollinations.generateImage({
+                  prompt,
+                  model: targetModel,
+                  signal: req.signal,
+                });
+              } else {
+                imgRes = await cloudflare.generateImage({
+                  prompt,
+                  model: targetModel,
+                  steps: body.steps,
+                  signal: req.signal,
+                });
+              }
               if (typeof quotaMonitor !== 'undefined' && quotaMonitor) {
-                quotaMonitor.recordSuccess({ providerName: 'cloudflare', modelId: imgRes.model });
+                quotaMonitor.recordSuccess({ providerName: provShort, modelId: imgRes.model });
               }
             } catch (err) {
               if (typeof quotaMonitor !== 'undefined' && quotaMonitor) {
-                quotaMonitor.recordError({ providerName: 'cloudflare', modelId: targetModel, error: err });
+                quotaMonitor.recordError({ providerName: provShort, modelId: targetModel, error: err });
               }
               refundTokenTransaction(loadStore(), reserved.transaction.id, err?.code || 'provider_error');
               saveStore();
               throw err;
             }
             commitTokenTransaction(loadStore(), reserved.transaction.id, {
-              provider: 'Cloudflare Workers AI',
+              provider: providerDisplayName,
               model: imgRes.model,
             });
             addActivity(claims.sub, 'image', cleanDescription(prompt), reserved.transaction.tokensCharged, {
-              provider: 'Cloudflare Workers AI',
+              provider: providerDisplayName,
               model: imgRes.model,
             });
             const data = {
               image: imgRes.dataUrl,
               dataUrl: imgRes.dataUrl,
+              imageUrl: imgRes.imageUrl,
               b64_json: imgRes.b64_json,
-              mimeType: imgRes.mimeType,
+              mimeType: imgRes.contentType || imgRes.mimeType || 'image/jpeg',
               text: `![${prompt}](${imgRes.dataUrl})`,
-              provider: 'Cloudflare Workers AI',
+              provider: providerDisplayName,
               model: imgRes.model,
-              modelName: imgRes.modelName,
+              modelName: imgRes.modelName || imgRes.model,
               tokensCharged: reserved.transaction.tokensCharged,
               profileUsage: profileResponse(profile, claims.sub).usage,
               request_id: requestId,

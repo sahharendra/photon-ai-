@@ -46,7 +46,7 @@ const FILES = [
   'photon-admin-users.js',
   'photon-admin-subscriptions.js',
   'pricing-rules-service.js',
-  'cashfree-service.js', 'cloudflare-config.js', 'cloudflare-provider.js',
+  'cashfree-service.js', 'cloudflare-config.js', 'cloudflare-provider.js', 'pollinations-provider.js', 'quota-monitor-service.js', 'model-capability-service.js',
   'razorpay-service.js',
   'index.html',
   'admin.html',
