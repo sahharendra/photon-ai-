@@ -535,66 +535,85 @@ textarea::placeholder{color:var(--mute)}
 .models-modal-list-wrap{overflow:auto;max-height:60vh;padding-right:2px}
 @media(max-width:980px){.profile-overview{grid-template-columns:1fr}.profile-tabs{flex-direction:row;overflow-x:auto;scrollbar-width:thin}.profile-tabs button{min-height:44px}.profile-content{max-width:none}}
 @media(max-width:600px){.profile-page{padding:14px 12px 32px}.profile-top{padding-bottom:12px;margin-bottom:14px}.profile-wave{min-height:108px;padding:19px 17px;margin-bottom:14px}.profile-wave p{font-size:12px}.profile-card{padding:16px}.profile-card-head{gap:10px}.profile-info-grid{column-gap:0}.profile-info{min-height:40px}.profile-columns,.profile-lower{gap:12px;margin-bottom:12px}.profile-activity li{padding:9px 0}.profile-delete .profile-card-head{flex-direction:column}.profile-model-row{grid-template-columns:34px minmax(0,1fr);gap:10px;padding:10px 6px}.profile-model-row .model-action-col{grid-column:2;justify-self:start;margin-top:4px}.profile-model-toolbar{grid-template-columns:1fr}}
-/* PHOTON AI Dedicated Artifacts Workspace */
-.art-ws{position:fixed;inset:0;z-index:99;background:#0e0e12;color:#e2e2ec;display:flex;flex-direction:column;overflow:hidden;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
-.art-ws-hd{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;background:#14141a;border-bottom:1px solid #23232d;gap:12px;flex-shrink:0;z-index:10}
-.art-ws-hd-l,.art-ws-hd-c,.art-ws-hd-r{display:flex;align-items:center;gap:10px}
-.art-ws-back{background:none;border:1px solid #2e2e3d;color:#bbb;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s}
-.art-ws-back:hover{background:#1e1e28;color:#fff;border-color:#48485e}
-.art-ws-title{background:none;border:1px solid transparent;border-radius:4px;color:#fff;font-size:15px;font-weight:600;padding:4px 8px;outline:0;transition:all .2s;max-width:280px}
-.art-ws-title:focus,.art-ws-title:hover{background:#1a1a24;border-color:#36364a}
-.art-badge{font-size:10px;text-transform:uppercase;font-weight:700;letter-spacing:.5px;padding:3px 8px;border-radius:99px;background:#20212d;color:#9192aa;border:1px solid #2f3042}
-.art-grp{display:inline-flex;border-radius:6px;background:#181822;border:1px solid #292938;padding:2px;gap:2px}
-.art-grp button{background:none;border:0;color:#88899f;padding:5px 11px;font-size:12px;font-weight:500;border-radius:4px;cursor:pointer;transition:all .15s}
-.art-grp button.on{background:#272838;color:#fff;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.3)}
-.art-grp button:hover:not(.on){color:#ddd}
-.art-btn{background:#1a1a24;border:1px solid #2a2a3a;color:#ccc;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;font-weight:500}
-.art-btn:hover{background:#242533;color:#fff;border-color:#414258}
-.art-btn.pri{background:linear-gradient(135deg,#3b82f6,#2563eb);border-color:#2563eb;color:#fff;font-weight:600}
-.art-btn.pri:hover{filter:brightness(1.1)}
-.art-btn.pri:disabled{opacity:.5;cursor:default}
+/* PHOTON AI Dedicated Artifacts Workspace — Lovable.dev Grade Studio */
+#pv{position:absolute;inset:0;z-index:50;background:#09090d;overflow-y:auto}
+.art-ws{position:fixed;inset:0;z-index:99;background:#09090d;color:#e2e2ec;display:flex;flex-direction:column;overflow:hidden;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+.art-ws-hd{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:rgba(13,13,18,0.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.07);gap:12px;flex-shrink:0;z-index:20}
+.art-ws-hd-l,.art-ws-hd-c,.art-ws-hd-r{display:flex;align-items:center;gap:12px}
+.art-ws-back{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:#c5c7d8;border-radius:8px;padding:7px 14px;font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:all .18s;font-weight:500}
+.art-ws-back:hover{background:rgba(255,255,255,0.08);color:#fff;border-color:rgba(255,255,255,0.2);transform:translateX(-1px)}
+.art-brand-badge{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:#fff;letter-spacing:-.2px}
+.art-brand-logo{background:linear-gradient(135deg,#6366f1,#8b5cf6,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:16px}
+.art-brand-pill{font-size:10px;text-transform:uppercase;font-weight:700;letter-spacing:.6px;padding:3px 8px;border-radius:99px;background:rgba(99,102,241,0.15);color:#a5b4fc;border:1px solid rgba(99,102,241,0.3)}
+.art-ws-title{background:transparent;border:1px solid transparent;border-radius:6px;color:#fff;font-size:14px;font-weight:600;padding:5px 10px;outline:0;transition:all .2s;max-width:280px}
+.art-ws-title:focus,.art-ws-title:hover{background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.15)}
+.art-badge{font-size:10.5px;text-transform:uppercase;font-weight:700;letter-spacing:.6px;padding:3px 9px;border-radius:99px;background:rgba(255,255,255,0.06);color:#a0a2b8;border:1px solid rgba(255,255,255,0.1)}
+.art-grp{display:inline-flex;border-radius:8px;background:rgba(18,18,26,0.9);border:1px solid rgba(255,255,255,0.08);padding:3px;gap:2px}
+.art-grp button{background:none;border:0;color:#8f91a8;padding:6px 13px;font-size:12px;font-weight:500;border-radius:6px;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:6px}
+.art-grp button.on{background:rgba(255,255,255,0.1);color:#fff;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.4)}
+.art-grp button:hover:not(.on){color:#e2e2ec;background:rgba(255,255,255,0.04)}
+.art-btn{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#cfd1e3;border-radius:8px;padding:7px 14px;font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:all .18s;font-weight:500}
+.art-btn:hover{background:rgba(255,255,255,0.09);color:#fff;border-color:rgba(255,255,255,0.2)}
+.art-btn.pri{background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 50%,#ec4899 100%);border:none;color:#fff;font-weight:600;box-shadow:0 4px 18px rgba(99,102,241,0.35);position:relative;overflow:hidden}
+.art-btn.pri:hover{filter:brightness(1.1);box-shadow:0 6px 24px rgba(99,102,241,0.5);transform:translateY(-1px)}
+.art-btn.pri:disabled{opacity:.5;cursor:default;transform:none;box-shadow:none}
 .art-ws-body{display:flex;flex:1;min-height:0;position:relative}
-.art-ws-side{width:240px;background:#111116;border-right:1px solid #20202a;display:flex;flex-direction:column;flex-shrink:0}
-.art-ws-side-hd{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid #1c1c24;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#787994}
-.art-files{flex:1;overflow-y:auto;padding:8px}
-.art-file{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:6px;cursor:pointer;font-size:13px;color:#9b9cb5;margin-bottom:2px;transition:all .15s}
-.art-file:hover{background:#171822;color:#fff}
-.art-file.on{background:#1f2030;color:#fff;font-weight:600}
-.art-file-name{display:flex;align-items:center;gap:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
-.art-file-acts{display:flex;align-items:center;gap:3px;opacity:0;transition:opacity .15s}
+.art-ws-side{width:250px;background:#0d0d12;border-right:1px solid rgba(255,255,255,0.06);display:flex;flex-direction:column;flex-shrink:0}
+.art-ws-side-hd{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.06);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#787994}
+.art-files{flex:1;overflow-y:auto;padding:10px}
+.art-file{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:13px;color:#a0a2b8;margin-bottom:3px;transition:all .15s}
+.art-file:hover{background:rgba(255,255,255,0.05);color:#fff}
+.art-file.on{background:rgba(99,102,241,0.15);color:#fff;font-weight:600;border:1px solid rgba(99,102,241,0.3)}
+.art-file-name{display:flex;align-items:center;gap:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.art-file-acts{display:flex;align-items:center;gap:4px;opacity:0;transition:opacity .15s}
 .art-file:hover .art-file-acts{opacity:1}
-.art-file-acts button{background:none;border:0;color:#666;padding:2px 5px;font-size:11px;cursor:pointer;border-radius:3px}
-.art-file-acts button:hover{background:#2b2c3d;color:#fff}
-.art-ws-main{flex:1;display:flex;min-width:0;position:relative;background:#0c0c10}
-.art-code-pane{flex:1;display:flex;flex-direction:column;min-height:0;min-width:0;background:#0f0f14}
-.art-editor-wrap{flex:1;display:flex;min-height:0;position:relative;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:13px;line-height:1.6}
-.art-gutter{width:46px;background:#121217;border-right:1px solid #1e1e26;color:#505166;padding:12px 6px;text-align:right;user-select:none;font-size:12px;overflow:hidden;flex-shrink:0}
-.art-textarea{flex:1;background:#0f0f14;color:#e1e1e8;border:0;padding:12px 14px;outline:0;resize:none;font-family:inherit;font-size:13px;line-height:1.6;tab-size:2;white-space:pre;overflow:auto}
-.art-preview-pane{flex:1;display:flex;flex-direction:column;min-height:0;min-width:0;background:#09090c;align-items:center;justify-content:flex-start;overflow:auto;padding:16px}
-.art-frame-wrap{width:100%;height:100%;max-width:100%;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.6);display:flex;flex-direction:column;transition:max-width .25s ease}
-.art-frame-wrap.tablet{max-width:768px}
-.art-frame-wrap.mobile{max-width:375px}
-.art-frame{width:100%;height:100%;border:0;display:block;background:#fff}
-.art-ws-copilot{width:320px;background:#111116;border-left:1px solid #20202a;display:flex;flex-direction:column;flex-shrink:0}
-.art-copilot-tabs{display:flex;border-bottom:1px solid #1c1c24;background:#14141a}
-.art-copilot-tab{flex:1;text-align:center;padding:11px;font-size:12px;font-weight:600;color:#787994;cursor:pointer;border-bottom:2px solid transparent;background:none;border-left:0;border-right:0;border-top:0}
-.art-copilot-tab.on{color:#fff;border-bottom-color:#3b82f6}
-.art-copilot-body{flex:1;padding:14px;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
-.art-prompt{width:100%;background:#171720;border:1px solid #282838;border-radius:8px;padding:12px;color:#fff;font-family:inherit;font-size:13px;resize:vertical;min-height:86px;outline:0}
-.art-prompt:focus{border-color:#3b82f6}
+.art-file-acts button{background:none;border:0;color:#888;padding:3px 6px;font-size:11px;cursor:pointer;border-radius:4px}
+.art-file-acts button:hover{background:rgba(255,255,255,0.1);color:#fff}
+.art-ws-main{flex:1;display:flex;min-width:0;position:relative;background:#09090d}
+.art-code-pane{flex:1;display:flex;flex-direction:column;min-height:0;min-width:0;background:#0d0d13}
+.art-editor-wrap{flex:1;display:flex;min-height:0;position:relative;font-family:ui-monospace,"SF Mono",Menlo,Monaco,Consolas,monospace;font-size:13px;line-height:1.65}
+.art-gutter{width:50px;background:#0a0a0f;border-right:1px solid rgba(255,255,255,0.06);color:#4a4b5f;padding:14px 8px;text-align:right;user-select:none;font-size:12px;overflow:hidden;flex-shrink:0}
+.art-textarea{flex:1;background:#0d0d13;color:#e6e6f0;border:0;padding:14px 16px;outline:0;resize:none;font-family:inherit;font-size:13px;line-height:1.65;tab-size:2;white-space:pre;overflow:auto}
+.art-preview-pane{flex:1;display:flex;flex-direction:column;min-height:0;min-width:0;background:#08080b;align-items:center;justify-content:flex-start;overflow:auto;padding:18px}
+.art-browser-chrome{width:100%;height:100%;max-width:100%;background:#181822;border:1px solid rgba(255,255,255,0.08);border-radius:12px;overflow:hidden;box-shadow:0 25px 65px -10px rgba(0,0,0,0.85);display:flex;flex-direction:column;transition:max-width .28s cubic-bezier(0.16,1,0.3,1)}
+.art-browser-chrome.tablet{max-width:768px}
+.art-browser-chrome.mobile{max-width:375px}
+.art-browser-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:#13131c;border-bottom:1px solid rgba(255,255,255,0.07);gap:10px}
+.art-traffic-lights{display:flex;gap:6px;align-items:center}
+.art-traffic-light{width:10px;height:10px;border-radius:50%}
+.art-traffic-light.red{background:#ef4444}
+.art-traffic-light.yellow{background:#f59e0b}
+.art-traffic-light.green{background:#10b981}
+.art-browser-url{flex:1;max-width:440px;background:#0b0b10;border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:3px 10px;font-size:11.5px;color:#8f91a8;display:flex;align-items:center;gap:6px;font-family:ui-monospace,monospace}
+.art-frame{width:100%;flex:1;border:0;display:block;background:#fff}
+.art-ws-copilot{width:330px;background:#0d0d12;border-left:1px solid rgba(255,255,255,0.06);display:flex;flex-direction:column;flex-shrink:0}
+.art-copilot-tabs{display:flex;border-bottom:1px solid rgba(255,255,255,0.06);background:rgba(18,18,26,0.9)}
+.art-copilot-tab{flex:1;text-align:center;padding:12px;font-size:12px;font-weight:600;color:#787994;cursor:pointer;border-bottom:2px solid transparent;background:none;border-left:0;border-right:0;border-top:0}
+.art-copilot-tab.on{color:#fff;border-bottom-color:#6366f1}
+.art-copilot-body{flex:1;padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
+.art-prompt{width:100%;background:#13131c;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:14px;color:#fff;font-family:inherit;font-size:13.5px;resize:vertical;min-height:92px;outline:0;transition:all .2s;box-shadow:inset 0 2px 6px rgba(0,0,0,0.3)}
+.art-prompt:focus{border-color:#6366f1;box-shadow:0 0 0 1px #6366f1,0 0 20px rgba(99,102,241,0.25)}
 .art-pills{display:flex;flex-wrap:wrap;gap:6px}
-.art-pill{background:#181822;border:1px solid #262738;color:#9b9cb5;font-size:11px;padding:4px 9px;border-radius:99px;cursor:pointer;transition:all .15s}
-.art-pill:hover{background:#232433;color:#fff;border-color:#3a3c54}
-.art-versions{flex:1;overflow-y:auto;padding:10px}
-.art-ver-card{background:#15151e;border:1px solid #232332;border-radius:8px;padding:11px;margin-bottom:8px}
-.art-ver-card:hover{border-color:#34354c}
-.art-ver-meta{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#777;margin-bottom:6px}
-.art-ver-prompt{font-size:12px;color:#ddd;margin-bottom:8px;line-height:1.4}
-.art-dash{max-width:1100px;margin:0 auto;padding:40px 24px;width:100%;overflow-y:auto}
-.art-dash-hero{background:linear-gradient(135deg,#13131c,#0f0f15);border:1px solid #232332;border-radius:12px;padding:28px;margin-bottom:34px;box-shadow:0 8px 30px rgba(0,0,0,.5)}
-.art-dash-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
-.art-dash-card{background:#13131a;border:1px solid #21212e;border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:10px;transition:all .2s;cursor:pointer;text-align:left}
-.art-dash-card:hover{border-color:#3b82f6;background:#181822;transform:translateY(-2px)}
+.art-pill{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#a0a2b8;font-size:11.5px;padding:5px 11px;border-radius:99px;cursor:pointer;transition:all .18s;display:inline-flex;align-items:center;gap:5px}
+.art-pill:hover{background:rgba(99,102,241,0.15);color:#fff;border-color:rgba(99,102,241,0.35);transform:translateY(-1px)}
+.art-pill.on{background:rgba(99,102,241,0.2);color:#fff;border-color:#6366f1;font-weight:600;box-shadow:0 2px 10px rgba(99,102,241,0.3)}
+.art-versions{flex:1;overflow-y:auto;padding:12px}
+.art-ver-card{background:#13131c;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:12px;margin-bottom:10px;transition:all .18s}
+.art-ver-card:hover{border-color:rgba(99,102,241,0.35);transform:translateY(-1px)}
+.art-ver-meta{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:#888;margin-bottom:6px}
+.art-ver-prompt{font-size:12.5px;color:#ddd;margin-bottom:10px;line-height:1.4}
+/* Lovable Dashboard Studio */
+.art-dash{max-width:1160px;margin:0 auto;padding:44px 28px;width:100%;overflow-y:auto}
+.art-dash-hero{background:radial-gradient(ellipse at 15% 15%,rgba(99,102,241,0.12),transparent 55%),radial-gradient(ellipse at 85% 85%,rgba(236,72,153,0.08),transparent 55%),linear-gradient(180deg,#14141e 0%,#0e0e15 100%);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:36px;margin-bottom:44px;box-shadow:0 30px 80px -15px rgba(0,0,0,0.8),0 0 50px -10px rgba(99,102,241,0.15);position:relative;overflow:hidden}
+.art-hero-badge{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;padding:5px 12px;border-radius:99px;background:rgba(99,102,241,0.15);color:#a5b4fc;border:1px solid rgba(99,102,241,0.3);margin-bottom:14px}
+.art-hero-h1{font-size:28px;font-weight:800;letter-spacing:-.6px;margin:0 0 8px;background:linear-gradient(135deg,#ffffff 40%,#a5b4fc 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.art-hero-sub{font-size:14px;color:#9496ac;margin:0 0 22px;line-height:1.55;max-width:720px}
+.art-dash-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:20px}
+.art-dash-card{background:rgba(18,18,26,0.75);border:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(16px);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:12px;transition:all .22s cubic-bezier(0.16,1,0.3,1);cursor:pointer;text-align:left;position:relative;overflow:hidden}
+.art-dash-card:hover{border-color:rgba(99,102,241,0.45);background:rgba(24,24,36,0.9);transform:translateY(-3px);box-shadow:0 20px 40px -10px rgba(0,0,0,0.7),0 0 30px -5px rgba(99,102,241,0.2)}
+.art-starter-card{background:linear-gradient(145deg,rgba(22,23,34,0.85),rgba(14,15,22,0.95));border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:12px;transition:all .22s;text-align:left}
+.art-starter-card:hover{border-color:rgba(99,102,241,0.4);transform:translateY(-2px);box-shadow:0 16px 36px -8px rgba(0,0,0,0.6)}
+.art-starter-icon{font-size:28px;margin-bottom:4px}
 @media(max-width:960px){.art-ws-side{display:none}.art-ws-copilot{display:none}}
 </style>
 </head>
@@ -613,7 +632,7 @@ textarea::placeholder{color:var(--mute)}
   <input class="chat-search-input" id="chat-search-input" type="search" placeholder="Search conversations..." aria-label="Search conversations" hidden>
   <button class="sb" id="upg">Upgrade</button>
   <button class="sb" id="proj">Projects</button>
-  <button class="sb" id="art">Artifacts</button>
+  <button class="sb" id="art" style="display:flex;align-items:center;justify-content:space-between"><span>✨ Artifacts</span><span style="font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:99px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;letter-spacing:.3px">STUDIO</span></button>
   <div class="lbl" id="rl">Recent Conversation</div>
   <div id="list"></div>
   <button class="tk" id="tk" title="View usage" aria-label="View token usage"><div class="tkr"><span>Tokens today</span><b id="tkt">0 / 0 tokens</b></div><div class="tkbar"><i id="tkb"></i></div></button>
@@ -913,8 +932,22 @@ function projCtx(){var p=curProj();if(!p)return"";
   return o}
 function ago(t){var m=Math.floor((Date.now()-t)/6e4);if(m<1)return"just now";if(m<60)return m+" min ago";var h=Math.floor(m/60);if(h<24)return h+(h===1?" hour ago":" hours ago");var d=Math.floor(h/24);return d===1?"yesterday":d+" days ago"}
 function projChats(id){return chats.filter(function(c){return c.pid===id&&c.msgs.length}).sort(function(a,b){return(b.t||+a.id.slice(1)||0)-(a.t||+b.id.slice(1)||0)})}
-function pvOpen(h){var v=$("pv");v.hidden=false;v.innerHTML=h;v.scrollTop=0;$("side").classList.remove("show")}
-function closePv(){var v=$("pv");v.hidden=true;v.innerHTML=""}
+function pvOpen(h){
+  var v=$("pv");
+  v.hidden=false;
+  v.innerHTML=h;
+  v.scrollTop=0;
+  $("side").classList.remove("show");
+  var t=$("top");
+  if(t)t.style.display="none";
+}
+function closePv(){
+  var v=$("pv");
+  v.hidden=true;
+  v.innerHTML="";
+  var t=$("top");
+  if(t)t.style.display="";
+}
 function projChat(pr,prompt){closePv();var c=cur&&!cur.msgs.length?cur:null;if(!c){c={id:"c"+Date.now(),title:"New chat",msgs:[]};chats.unshift(c)}c.pid=pr.id;cur=c;save();render();if(prompt){$("in").value=prompt;send()}}
 function modal(h,wire){var old=$("sm");if(old)old.remove();var g=document.createElement("div");g.id="sm";g.innerHTML='<div class="card" style="max-width:480px"><button class="xx" id="smx">✕</button>'+h+'</div>';if(h.indexOf('artifact-viewer-head')>-1)g.querySelector('.card').classList.add('artifact-viewer');document.body.append(g);var x=function(){g.remove()};$("smx").onclick=x;g.onclick=function(e){if(e.target===g)x()};wire(x);return x}
 function showProjects(){
@@ -977,6 +1010,75 @@ function renderArtifactDashboard(artifacts){
     {id:'python',label:'Python Script',desc:'Automation, data processing & utility scripts',icon:'🐍'},
     {id:'markdown',label:'Markdown Document',desc:'Reports, documentation, proposals & specs',icon:'📝'}
   ];
+  var starterChips=[
+    {label:'📊 Crypto & Analytics Dashboard',type:'html',prompt:'Build a responsive cryptocurrency portfolio dashboard with live mock ticker prices, candlestick chart visualization, portfolio allocation donut chart, and transaction history table with dark mode.'},
+    {label:'🛍️ Modern E-Commerce Store',type:'html',prompt:'Create a modern minimalist e-commerce store with product cards, category filters, slide-out shopping cart sidebar, total price calculation, and checkout modal.'},
+    {label:'🎨 SaaS Landing Page with Pricing',type:'html',prompt:'Create a high-converting SaaS product landing page with glowing gradient hero, interactive monthly/annual pricing toggle, customer testimonials carousel, and FAQ accordion.'},
+    {label:'🎮 Retro Neon Canvas Game',type:'html',prompt:'Build a smooth 60fps retro cyberpunk canvas arcade game with player ship, shooting mechanics, falling asteroid obstacles, high score counter, and particle explosion effects.'},
+    {label:'📋 Kanban Drag & Drop Board',type:'react',prompt:'Build an interactive React 18 Kanban board with To Do, In Progress, and Completed columns. Allow users to add new cards, edit task descriptions, and move cards between columns.'}
+  ];
+  var starterTemplates=[
+    {
+      id:'starter-saas',
+      title:'SaaS Product Landing Page',
+      type:'html',
+      icon:'🎨',
+      desc:'High-converting dark theme landing page with glowing gradient hero, feature grid, interactive pricing toggle, and testimonials.',
+      files:[
+        {
+          name:'index.html',path:'index.html',language:'html',
+          content:'<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>Nexus AI — Next-Gen Intelligence</title>\n  <link rel="stylesheet" href="style.css">\n</head>\n<body>\n  <nav class="nav">\n    <div class="logo">✨ Nexus AI</div>\n    <div class="links">\n      <a href="#features">Features</a>\n      <a href="#pricing">Pricing</a>\n      <a href="#reviews">Reviews</a>\n    </div>\n    <button class="cta-nav" onclick="alert(\'Get started clicked!\')">Get Started Free</button>\n  </nav>\n\n  <header class="hero">\n    <div class="badge">🚀 Powered by Photon Engine v2.0</div>\n    <h1>Build Intelligent Software<br><span class="grad-text">At The Speed of Thought</span></h1>\n    <p>Automate workflows, generate full-stack applications, and deploy scalable architectures with conversational AI.</p>\n    <div class="hero-btns">\n      <button class="btn-primary" onclick="alert(\'Welcome to Nexus AI!\')">Start Building Free →</button>\n      <button class="btn-secondary" onclick="alert(\'Documentation opening...\')">View Docs</button>\n    </div>\n  </header>\n\n  <section class="features" id="features">\n    <div class="card">\n      <div class="card-icon">⚡</div>\n      <h3>Instant Generation</h3>\n      <p>Transform natural language prompts into working multi-file code in seconds.</p>\n    </div>\n    <div class="card">\n      <div class="card-icon">🔒</div>\n      <h3>Zero-Leak Sandbox</h3>\n      <p>Run untrusted code safely in isolated client-side execution environments.</p>\n    </div>\n    <div class="card">\n      <div class="card-icon">📦</div>\n      <h3>1-Click Export</h3>\n      <p>Download standard production ZIP archives ready to deploy to Vercel or Render.</p>\n    </div>\n  </section>\n  <script src="script.js"><\/script>\n</body>\n</html>'
+        },
+        {
+          name:'style.css',path:'style.css',language:'css',
+          content:'* { box-sizing: border-box; margin: 0; padding: 0; }\nbody { font-family: system-ui, -apple-system, sans-serif; background: #09090e; color: #e2e8f0; min-height: 100vh; line-height: 1.6; }\n.nav { display: flex; justify-content: space-between; align-items: center; padding: 18px 40px; background: rgba(14, 14, 22, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, 0.08); }\n.logo { font-size: 18px; font-weight: 800; color: #fff; }\n.links a { color: #94a3b8; text-decoration: none; margin: 0 16px; font-size: 14px; transition: color .2s; }\n.links a:hover { color: #fff; }\n.cta-nav { background: #6366f1; color: #fff; border: 0; border-radius: 99px; padding: 8px 18px; font-weight: 600; cursor: pointer; transition: filter .2s; }\n.cta-nav:hover { filter: brightness(1.15); }\n.hero { text-align: center; padding: 70px 20px 50px; max-width: 900px; margin: 0 auto; }\n.badge { display: inline-block; background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.35); color: #a5b4fc; font-size: 12px; font-weight: 600; padding: 5px 14px; border-radius: 99px; margin-bottom: 24px; }\n.hero h1 { font-size: 50px; font-weight: 900; line-height: 1.15; letter-spacing: -1.2px; margin-bottom: 20px; color: #fff; }\n.grad-text { background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }\n.hero p { font-size: 17px; color: #94a3b8; max-width: 650px; margin: 0 auto 36px; }\n.hero-btns { display: flex; gap: 14px; justify-content: center; }\n.btn-primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); border: 0; color: #fff; font-size: 15px; font-weight: 600; padding: 12px 28px; border-radius: 10px; cursor: pointer; transition: transform .18s; box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4); }\n.btn-primary:hover { transform: translateY(-2px); }\n.btn-secondary { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); color: #fff; font-size: 15px; font-weight: 600; padding: 12px 28px; border-radius: 10px; cursor: pointer; }\n.btn-secondary:hover { background: rgba(255, 255, 255, 0.1); }\n.features { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; max-width: 1000px; margin: 40px auto; padding: 0 20px; }\n.card { background: rgba(18, 18, 28, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 26px; transition: all .2s; }\n.card:hover { border-color: rgba(99, 102, 241, 0.4); transform: translateY(-3px); }\n.card-icon { font-size: 28px; margin-bottom: 14px; }\n.card h3 { font-size: 18px; color: #fff; margin-bottom: 8px; }\n.card p { font-size: 14px; color: #94a3b8; }'
+        },
+        {
+          name:'script.js',path:'script.js',language:'javascript',
+          content:'console.log("Nexus AI Template Initialized.");'
+        }
+      ]
+    },
+    {
+      id:'starter-crypto',
+      title:'Crypto & Analytics Dashboard',
+      type:'html',
+      icon:'📊',
+      desc:'Interactive cryptocurrency portfolio dashboard with live ticker, KPI statistics, SVG candlestick chart, and transaction history.',
+      files:[
+        {
+          name:'index.html',path:'index.html',language:'html',
+          content:'<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>Apex Analytics Dashboard</title>\n  <link rel="stylesheet" href="style.css">\n</head>\n<body>\n  <div class="dash">\n    <header class="dash-hd">\n      <h2>⚡ Apex Crypto Portfolio</h2>\n      <div class="user-pill">🟢 Live Market Connected</div>\n    </header>\n    <div class="kpi-grid">\n      <div class="kpi-card">\n        <small>Total Balance</small>\n        <h3 id="bal">$124,590.20</h3>\n        <span class="tag pos">+14.2% this week</span>\n      </div>\n      <div class="kpi-card">\n        <small>24h Profit / Loss</small>\n        <h3 class="pos-text">+$3,412.80</h3>\n        <span class="tag pos">▲ Bullish</span>\n      </div>\n      <div class="kpi-card">\n        <small>Active Positions</small>\n        <h3>7 Assets</h3>\n        <span class="tag">BTC, ETH, SOL...</span>\n      </div>\n    </div>\n    <div class="chart-box">\n      <div class="chart-hd"><span>BTC/USD 7-Day Performance</span><b class="pos-text">$92,450.00</b></div>\n      <svg class="chart-svg" viewBox="0 0 500 120" preserveAspectRatio="none">\n        <polyline fill="none" stroke="#10b981" stroke-width="3" points="0,90 60,80 120,85 180,60 240,65 300,40 360,50 420,25 500,10"/>\n      </svg>\n    </div>\n    <div class="tx-table-box">\n      <h4>Recent Activity</h4>\n      <table class="tx-table">\n        <tr><th>Asset</th><th>Type</th><th>Amount</th><th>Status</th></tr>\n        <tr><td>Bitcoin</td><td>Buy</td><td>0.45 BTC</td><td class="pos-text">Completed</td></tr>\n        <tr><td>Ethereum</td><td>Staked</td><td>3.20 ETH</td><td class="pos-text">Active</td></tr>\n        <tr><td>Solana</td><td>Trade</td><td>42.0 SOL</td><td class="pos-text">Completed</td></tr>\n      </table>\n    </div>\n  </div>\n  <script src="script.js"><\/script>\n</body>\n</html>'
+        },
+        {
+          name:'style.css',path:'style.css',language:'css',
+          content:'body { margin: 0; background: #0a0b10; color: #e2e8f0; font-family: system-ui, sans-serif; }\n.dash { max-width: 900px; margin: 30px auto; padding: 24px; }\n.dash-hd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }\n.user-pill { font-size: 12px; background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 5px 12px; border-radius: 99px; border: 1px solid rgba(16, 185, 129, 0.3); }\n.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }\n.kpi-card { background: #13141f; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 18px; }\n.kpi-card small { color: #94a3b8; font-size: 12px; }\n.kpi-card h3 { font-size: 24px; margin: 6px 0; color: #fff; }\n.tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.06); color: #94a3b8; }\n.tag.pos { background: rgba(16, 185, 129, 0.15); color: #34d399; }\n.pos-text { color: #34d399; }\n.chart-box { background: #13141f; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 20px; margin-bottom: 24px; }\n.chart-hd { display: flex; justify-content: space-between; margin-bottom: 12px; font-weight: 600; }\n.chart-svg { width: 100%; height: 120px; }\n.tx-table-box { background: #13141f; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 20px; }\n.tx-table-box h4 { margin: 0 0 14px; font-size: 15px; color: #fff; }\n.tx-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }\n.tx-table th, .tx-table td { text-align: left; padding: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }\n.tx-table th { color: #94a3b8; font-weight: 500; }'
+        },
+        {
+          name:'script.js',path:'script.js',language:'javascript',
+          content:'console.log("Apex Analytics Dashboard Loaded.");'
+        }
+      ]
+    },
+    {
+      id:'starter-kanban',
+      title:'React 18 Kanban Task Board',
+      type:'react',
+      icon:'⚛️',
+      desc:'Interactive React 18 component application with state management, column boards (To Do, In Progress, Done), and task creation.',
+      files:[
+        {
+          name:'App.jsx',path:'App.jsx',language:'jsx',
+          content:'function App() {\n  const [tasks, setTasks] = React.useState([\n    { id: 1, title: "Design Lovable Artifacts UI", status: "done" },\n    { id: 2, title: "Live React Preview Compiler", status: "done" },\n    { id: 3, title: "Build Export ZIP System", status: "in_progress" },\n    { id: 4, title: "Deploy to Production Cloud", status: "todo" }\n  ]);\n  const [input, setInput] = React.useState("");\n\n  const addTask = (e) => {\n    e.preventDefault();\n    if (!input.trim()) return;\n    setTasks([...tasks, { id: Date.now(), title: input.trim(), status: "todo" }]);\n    setInput("");\n  };\n\n  const move = (id, newStatus) => {\n    setTasks(tasks.map(t => t.id === id ? { ...t, status: newStatus } : t));\n  };\n\n  return (\n    <div className="kanban-app">\n      <header className="kanban-hd">\n        <h2>📋 React 18 Task Board</h2>\n        <form onSubmit={addTask} className="kanban-add">\n          <input value={input} onChange={e => setInput(e.target.value)} placeholder="New task title..." />\n          <button type="submit">+ Add</button>\n        </form>\n      </header>\n      <div className="cols">\n        {["todo", "in_progress", "done"].map(st => (\n          <div key={st} className="col">\n            <div className="col-hd">{st.replace("_", " ").toUpperCase()} ({tasks.filter(t => t.status === st).length})</div>\n            {tasks.filter(t => t.status === st).map(t => (\n              <div key={t.id} className="task-card">\n                <p>{t.title}</p>\n                <div className="task-acts">\n                  {st !== "todo" && <button onClick={() => move(t.id, "todo")}>← Todo</button>}\n                  {st !== "in_progress" && <button onClick={() => move(t.id, "in_progress")}>Progress</button>}\n                  {st !== "done" && <button onClick={() => move(t.id, "done")}>Done ✓</button>}\n                </div>\n              </div>\n            ))}\n          </div>\n        ))}\n      </div>\n    </div>\n  );\n}'
+        },
+        {
+          name:'style.css',path:'style.css',language:'css',
+          content:'body { margin: 0; background: #0c0d14; color: #f1f5f9; font-family: system-ui, sans-serif; }\n.kanban-app { max-width: 1000px; margin: 30px auto; padding: 24px; }\n.kanban-hd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }\n.kanban-add input { background: #171824; border: 1px solid #28293d; color: #fff; padding: 8px 14px; border-radius: 6px; outline: 0; margin-right: 8px; }\n.kanban-add button { background: #6366f1; border: 0; color: #fff; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; }\n.cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }\n.col { background: #13141e; border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 16px; min-height: 380px; }\n.col-hd { font-size: 12px; font-weight: 700; color: #94a3b8; letter-spacing: .6px; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.06); }\n.task-card { background: #1a1b2a; border: 1px solid #28293e; border-radius: 8px; padding: 12px; margin-bottom: 10px; }\n.task-card p { margin: 0 0 10px; font-size: 13.5px; }\n.task-acts { display: flex; gap: 6px; }\n.task-acts button { background: #24263a; border: 0; color: #cbd5e1; font-size: 11px; padding: 3px 8px; border-radius: 4px; cursor: pointer; }\n.task-acts button:hover { background: #6366f1; color: #fff; }'
+        }
+      ]
+    }
+  ];
+
   var chosenType='html';
   var cardsHtml=(artifacts||[]).map(function(art){
     var typeBadge=(art.type||'html').toUpperCase();
@@ -985,50 +1087,86 @@ function renderArtifactDashboard(artifacts){
     return '<div class="art-dash-card" data-open-art="'+esc(art.id)+'">' +
       '<div style="display:flex;align-items:center;justify-content:space-between">' +
         '<span class="art-badge">'+esc(typeBadge)+'</span>' +
-        '<small style="color:#777">'+esc(updated)+'</small>' +
+        '<small style="color:#8889a6;font-size:11.5px">'+esc(updated)+'</small>' +
       '</div>' +
-      '<h3 style="margin:0;font-size:15px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(art.title||'Untitled')+'</h3>' +
-      '<p style="margin:0;font-size:12px;color:#8f90a6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">'+esc(art.description||'Multi-file project with '+fCount+' file(s)')+'</p>' +
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:8px;border-top:1px solid #1f202b">' +
-        '<small style="color:#888">'+fCount+' file'+(fCount>1?'s':'')+'</small>' +
+      '<h3 style="margin:0;font-size:16px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700">'+esc(art.title||'Untitled')+'</h3>' +
+      '<p style="margin:0;font-size:12.5px;color:#9496ac;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.45">'+esc(art.description||'Multi-file project with '+fCount+' file(s)')+'</p>' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06)">' +
+        '<span style="color:#787994;font-size:11.5px;font-family:ui-monospace,monospace">📄 '+fCount+' file'+(fCount>1?'s':'')+'</span>' +
         '<div style="display:flex;gap:6px">' +
-          '<button class="art-btn" data-dl-zip="'+esc(art.id)+'" title="Download project ZIP" style="padding:4px 8px;font-size:11px">📦 ZIP</button>' +
-          '<button class="art-btn pri" data-open-art="'+esc(art.id)+'" style="padding:4px 10px;font-size:11px">Open →</button>' +
+          '<button class="art-btn" data-dl-zip="'+esc(art.id)+'" title="Download project ZIP" style="padding:4px 9px;font-size:11px">📦 ZIP</button>' +
+          '<button class="art-btn pri" data-open-art="'+esc(art.id)+'" style="padding:4px 12px;font-size:11px">Open →</button>' +
         '</div>' +
       '</div>' +
     '</div>';
   }).join('');
 
+  var starterTemplatesHtml=starterTemplates.map(function(st){
+    return '<div class="art-starter-card">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between">' +
+        '<span class="art-starter-icon">'+st.icon+'</span>' +
+        '<span class="art-badge">'+esc(st.type.toUpperCase())+'</span>' +
+      '</div>' +
+      '<h4 style="margin:0;font-size:15px;color:#fff;font-weight:700">'+esc(st.title)+'</h4>' +
+      '<p style="margin:0;font-size:12px;color:#8f91a8;line-height:1.45">'+esc(st.desc)+'</p>' +
+      '<div style="margin-top:auto;padding-top:10px">' +
+        '<button class="art-btn pri" data-launch-starter="'+st.id+'" style="width:100%;justify-content:center;padding:7px 12px;font-size:12px">🚀 Launch Template</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  var chipsHtml=starterChips.map(function(sc,i){
+    return '<button class="art-pill" data-chip-idx="'+i+'">'+sc.label+'</button>';
+  }).join('');
+
   var html='<div class="art-ws">' +
     '<div class="art-ws-hd">' +
       '<div class="art-ws-hd-l">' +
-        '<button class="art-ws-back" id="aw-bk">← Back to Chat</button>' +
-        '<h2 style="margin:0;font-size:16px;color:#fff">Artifacts Workspace</h2>' +
+        '<button class="art-ws-back" id="aw-bk">' +
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>' +
+          'Back to Chat' +
+        '</button>' +
+        '<div class="art-brand-badge">' +
+          '<span class="art-brand-logo">✨</span>' +
+          '<span>Artifacts Studio</span>' +
+          '<span class="art-brand-pill">Lovable Engine</span>' +
+        '</div>' +
       '</div>' +
       '<div class="art-ws-hd-r">' +
-        '<span class="art-badge" style="background:#1d1d28;color:#9b9cb5">Base Charge: 50 Tokens</span>' +
+        '<span class="art-badge" style="background:rgba(99,102,241,0.12);color:#a5b4fc;border-color:rgba(99,102,241,0.3)">⚡ 50 Tokens / build · Sandbox Preview</span>' +
       '</div>' +
     '</div>' +
     '<div class="art-dash">' +
       '<div class="art-dash-hero">' +
-        '<h2 style="margin:0 0 6px;font-size:22px;color:#fff">Create New Artifact with AI</h2>' +
-        '<p style="margin:0 0 16px;font-size:13px;color:#8f90a6">Describe what you want to build in natural language. Photon AI will generate full multi-file source code, responsive styling, and interactive preview.</p>' +
+        '<div class="art-hero-badge"><span style="color:#f59e0b">✨</span> Lovable AI App Engine <span style="opacity:.6">· v2.0</span></div>' +
+        '<h1 class="art-hero-h1">What do you want to build today?</h1>' +
+        '<p class="art-hero-sub">Describe your application in plain English. Photon crafts production-grade multi-file code, responsive styling, and instant interactive preview.</p>' +
         '<textarea id="ad-prompt" class="art-prompt" placeholder="For example: Build a responsive cryptocurrency dashboard with portfolio cards, live mock prices, and interactive dark/light theme switcher..."></textarea>' +
-        '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;flex-wrap:wrap;gap:10px">' +
+        '<div style="display:flex;align-items:center;gap:6px;margin-top:10px;flex-wrap:wrap">' +
+          '<span style="font-size:11px;color:#787994;font-weight:600;margin-right:4px">Try these:</span>' +
+          chipsHtml +
+        '</div>' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;flex-wrap:wrap;gap:12px">' +
           '<div style="display:flex;gap:6px;flex-wrap:wrap" id="ad-types">' +
-            types.map(function(t){return '<button class="art-pill'+(t.id==='html'?' on':'')+'" data-type="'+t.id+'" style="padding:6px 12px;font-size:12px">'+t.icon+' '+t.label+'</button>';}).join('') +
+            types.map(function(t){return '<button class="art-pill'+(t.id==='html'?' on':'')+'" data-type="'+t.id+'" style="padding:6px 14px;font-size:12px">'+t.icon+' '+t.label+'</button>';}).join('') +
           '</div>' +
           '<div style="display:flex;gap:8px">' +
             '<button class="art-btn" id="ad-blank">📁 Start Blank</button>' +
-            '<button class="art-btn pri" id="ad-generate">✨ Generate with AI (50 tokens)</button>' +
+            '<button class="art-btn pri" id="ad-generate">✨ Build with AI (50 tokens)</button>' +
           '</div>' +
         '</div>' +
-        '<div class="ferr" id="ad-err" style="margin-top:8px;font-size:12px;color:#f87171"></div>' +
+        '<div class="ferr" id="ad-err" style="margin-top:10px;font-size:12.5px;color:#f87171"></div>' +
       '</div>' +
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">' +
-        '<h3 style="margin:0;font-size:17px;color:#fff">Your Artifacts ('+artifacts.length+')</h3>' +
+      (artifacts.length ? '' :
+        '<div style="margin-bottom:34px">' +
+          '<h3 style="margin:0 0 14px;font-size:16px;color:#fff;font-weight:700">🚀 Featured Starter Templates</h3>' +
+          '<div class="art-dash-grid">' + starterTemplatesHtml + '</div>' +
+        '</div>'
+      ) +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">' +
+        '<h3 style="margin:0;font-size:17px;color:#fff;font-weight:700">Your Artifacts ('+artifacts.length+')</h3>' +
       '</div>' +
-      (artifacts.length?'<div class="art-dash-grid">'+cardsHtml+'</div>':'<div style="text-align:center;padding:48px 0;color:#787994;background:#121218;border-radius:10px;border:1px dashed #242533"><p style="font-size:15px;margin:0 0 8px">No artifacts created yet</p><small>Type a prompt above to generate your first live code artifact.</small></div>') +
+      (artifacts.length?'<div class="art-dash-grid">'+cardsHtml+'</div>':'<div style="text-align:center;padding:36px 0;color:#787994;background:rgba(18,18,26,0.5);border-radius:14px;border:1px dashed rgba(255,255,255,0.1)"><p style="font-size:14px;margin:0 0 6px;color:#aaa">No custom artifacts created yet</p><small>Pick a starter template above or describe your project in the AI prompt box to launch your first artifact.</small></div>') +
     '</div>' +
   '</div>';
 
@@ -1040,6 +1178,40 @@ function renderArtifactDashboard(artifacts){
     btn.onclick=function(){
       chosenType=btn.dataset.type;
       q.querySelectorAll("#ad-types button").forEach(function(b){b.classList.toggle("on",b===btn);});
+    };
+  });
+
+  q.querySelectorAll("[data-chip-idx]").forEach(function(btn){
+    btn.onclick=function(){
+      var sc=starterChips[Number(btn.dataset.chipIdx)];
+      if(!sc)return;
+      $("ad-prompt").value=sc.prompt;
+      chosenType=sc.type;
+      q.querySelectorAll("#ad-types button").forEach(function(b){b.classList.toggle("on",b.dataset.type===sc.type);});
+      $("ad-prompt").focus();
+    };
+  });
+
+  q.querySelectorAll("[data-launch-starter]").forEach(function(btn){
+    btn.onclick=async function(){
+      var stId=btn.dataset.launchStarter;
+      var st=starterTemplates.find(function(t){return t.id===stId;});
+      if(!st)return;
+      try{
+        btn.disabled=true;
+        btn.textContent="Launching...";
+        var newArt=await profileApi('/api/artifacts',{
+          method:'POST',
+          body:{title:st.title,type:st.type,files:st.files}
+        });
+        toast("✓ Starter template launched!");
+        openArtifactEditor(newArt);
+      }catch(err){
+        toast("Could not launch template: "+err.message);
+      }finally{
+        btn.disabled=false;
+        btn.textContent="🚀 Launch Template";
+      }
     };
   });
 
@@ -1195,12 +1367,24 @@ function openArtifactEditor(art){
     return nums.join('\n');
   }
 
+  function getFileIcon(filename){
+    var ext=(filename.split('.').pop()||'').toLowerCase();
+    if(ext==='html'||ext==='htm')return '<span style="color:#f97316">📄</span>';
+    if(ext==='css')return '<span style="color:#38bdf8">🎨</span>';
+    if(ext==='js')return '<span style="color:#facc15">⚡</span>';
+    if(ext==='jsx'||ext==='tsx')return '<span style="color:#06b6d4">⚛️</span>';
+    if(ext==='py')return '<span style="color:#4ade80">🐍</span>';
+    if(ext==='json')return '<span style="color:#fbbf24">⚙️</span>';
+    if(ext==='md')return '<span style="color:#c084fc">📝</span>';
+    return '<span style="color:#94a3b8">📄</span>';
+  }
+
   function drawWorkspace(){
     var activeF=getActiveFile();
     var fileTabsHtml=currentFiles.map(function(f,idx){
       var isAct=idx===activeFileIdx;
       return '<div class="art-file'+(isAct?' on':'')+'" data-fidx="'+idx+'">' +
-        '<span class="art-file-name">📄 '+esc(f.name)+'</span>' +
+        '<span class="art-file-name">'+getFileIcon(f.name)+' '+esc(f.name)+'</span>' +
         '<div class="art-file-acts">' +
           '<button data-rename-f="'+idx+'" title="Rename file">✎</button>' +
           (currentFiles.length>1?'<button data-del-f="'+idx+'" title="Delete file">✕</button>':'') +
@@ -1255,17 +1439,44 @@ function openArtifactEditor(art){
         '</div>' +
         '<div class="art-ws-main">' +
           (viewMode!=='preview'?'<div class="art-code-pane">' +
-            '<div style="display:flex;align-items:center;background:#14141a;border-bottom:1px solid #23232e;padding:0 8px;gap:2px">' +
-              '<div style="padding:8px 14px;font-size:12px;color:#fff;border-bottom:2px solid #3b82f6;background:#0f0f14;font-weight:500">📄 '+esc(activeF.name)+'</div>' +
+            '<div style="display:flex;align-items:center;background:#0d0d14;border-bottom:1px solid rgba(255,255,255,0.06);padding:0 8px;gap:2px">' +
+              '<div style="padding:8px 14px;font-size:12px;color:#fff;border-bottom:2px solid #6366f1;background:#09090d;font-weight:600;display:flex;align-items:center;gap:6px">' +
+                getFileIcon(activeF.name) + ' <span>' + esc(activeF.name) + '</span>' +
+              '</div>' +
             '</div>' +
             '<div class="art-editor-wrap">' +
               '<div class="art-gutter" id="awe-gutter">'+renderGutter(activeF.content)+'</div>' +
               '<textarea id="awe-editor" class="art-textarea" spellcheck="false" autocomplete="off" wrap="off">'+esc(activeF.content||'')+'</textarea>' +
             '</div>' +
+            '<div class="art-editor-status" style="display:flex;align-items:center;justify-content:space-between;padding:4px 14px;background:#09090d;border-top:1px solid rgba(255,255,255,0.06);font-size:11px;color:#6b6c82;font-family:ui-monospace,monospace">' +
+              '<div style="display:flex;align-items:center;gap:12px">' +
+                '<span><span style="color:#10b981">●</span> Live Sync</span>' +
+                '<span>' + ((activeF.content||'').split('\n').length) + ' lines</span>' +
+                '<span>' + ((activeF.content||'').length) + ' chars</span>' +
+              '</div>' +
+              '<div style="display:flex;align-items:center;gap:12px">' +
+                '<span>UTF-8</span>' +
+                '<span style="color:#818cf8;font-weight:600">' + esc((art.type||'html').toUpperCase()) + '</span>' +
+              '</div>' +
+            '</div>' +
           '</div>':'') +
           (viewMode!=='code'?'<div class="art-preview-pane">' +
-            '<div class="art-frame-wrap '+deviceMode+'">' +
-              '<iframe id="awe-iframe" class="art-frame" sandbox="allow-scripts allow-modals"></iframe>' +
+            '<div class="art-browser-chrome '+deviceMode+'">' +
+              '<div class="art-browser-bar">' +
+                '<div class="art-traffic-lights">' +
+                  '<span class="art-traffic-light red"></span>' +
+                  '<span class="art-traffic-light yellow"></span>' +
+                  '<span class="art-traffic-light green"></span>' +
+                '</div>' +
+                '<div class="art-browser-url">' +
+                  '<span style="font-size:10px;opacity:.7">🔒</span>' +
+                  '<span>https://preview.photon.app/' + esc(activeF.name||'app') + '</span>' +
+                '</div>' +
+                '<div style="display:flex;align-items:center;gap:6px">' +
+                  '<button id="awe-chrome-reload" class="art-btn" style="padding:2px 8px;font-size:11px" title="Reload live preview">↻</button>' +
+                '</div>' +
+              '</div>' +
+              '<iframe id="awe-iframe" class="art-frame" sandbox="allow-scripts allow-modals allow-forms"></iframe>' +
             '</div>' +
           '</div>':'') +
         '</div>' +
@@ -1314,6 +1525,7 @@ function openArtifactEditor(art){
     if($("dev-mob"))$("dev-mob").onclick=function(){deviceMode='mobile';drawWorkspace();};
 
     $("awe-refresh").onclick=updateLivePreview;
+    if($("awe-chrome-reload"))$("awe-chrome-reload").onclick=updateLivePreview;
 
     $("awe-save").onclick=async function(){
       var btn=$("awe-save");

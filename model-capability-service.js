@@ -356,6 +356,9 @@ class ModelCapabilityService {
   assertModelCapability(modelId, requestedCategory) {
     const normReq = normalizeCategory(requestedCategory);
     const m = this.getModel(modelId);
+    if (!m && normReq === CATEGORY_IMAGE && (modelId === 'flux' || modelId === 'sana' || modelId === 'turbo')) {
+      return true;
+    }
     if (!m) {
       const err = new Error(`Model '${modelId}' is not registered.`);
       err.code = 'model_not_found';
@@ -384,6 +387,10 @@ class ModelCapabilityService {
         err.status = 400;
         throw err;
       }
+    }
+
+    if (m.provider === 'Pollinations AI' || m.providerId === 'pollinations' || modelId === 'flux' || modelId === 'sana' || modelId === 'turbo') {
+      return true;
     }
 
     if (!m.available || m.creditsExhausted) {

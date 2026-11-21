@@ -755,6 +755,7 @@ function availableModels() {
   }
   return out;
 }
+try { allModels(); } catch (_) {}
 function usageSummary(uid, timezone) {
   return summarizeUsage(loadStore().activities[uid] || [], timezone);
 }
@@ -2947,13 +2948,16 @@ const server = http.createServer(async (req, res) => {
                 capabilityService.assertModelCapability(targetModel, 'image');
               } catch (capErr) {
                 if (!usePollinations) {
+                  console.warn(`[ImageGen] Capability check failed for ${targetModel} (${capErr.message}), falling back to Pollinations AI (flux)...`);
                   usePollinations = true;
                   targetModel = 'flux';
                   providerDisplayName = 'Pollinations AI';
                   provShort = 'pollinations';
-                  capabilityService.assertModelCapability(targetModel, 'image');
+                  try {
+                    capabilityService.assertModelCapability(targetModel, 'image');
+                  } catch (_) {}
                 } else {
-                  throw capErr;
+                  console.warn(`[ImageGen] Bypassing capability check for ${targetModel}:`, capErr.message);
                 }
               }
             }
