@@ -1,0 +1,321 @@
+{
+  "version": 1,
+  "provider": "Eden AI",
+  "providerSlug": "edenai",
+  "website": "https://www.edenai.co/",
+  "documentation": "https://docs.edenai.co/",
+  "enabled": true,
+  "spendingPolicy": "allow_all",
+  "encryptedKey": "d1d83d1a87ecf483028bd3bd:15f993cdec2af03da00b96b4a0b8187a:50bf6d8a88c6ed654434eee67b",
+  "maskedKey": "eden••••••••-key",
+  "keyFingerprint": "f87cee10b1c55e9f",
+  "models": {
+    "openai/gpt-4o-mini": {
+      "id": "openai/gpt-4o-mini",
+      "name": "GPT-4o Mini (Eden AI - OpenAI)",
+      "provider": "Eden AI",
+      "subprovider": "openai",
+      "category": "Text Generation",
+      "task": "text-generation",
+      "contextWindow": 128000,
+      "enabled": true,
+      "pricing": "$0.00000015 / in · $0.0000006 / out",
+      "capabilities": {
+        "text": true,
+        "vision": true,
+        "pdf": true,
+        "image_output": false,
+        "video_output": false
+      },
+      "supportedParameters": [
+        "temperature",
+        "max_tokens",
+        "top_p",
+        "stream"
+      ],
+      "lastTestedAt": null,
+      "testResult": null
+    },
+    "anthropic/claude-3-5-haiku": {
+      "id": "anthropic/claude-3-5-haiku",
+      "name": "Claude 3.5 Haiku (Eden AI - Anthropic)",
+      "provider": "Eden AI",
+      "subprovider": "anthropic",
+      "category": "Text Generation",
+      "task": "text-generation",
+      "contextWindow": 200000,
+      "enabled": true,
+      "pricing": "$0.000001 / in · $0.000005 / out",
+      "capabilities": {
+        "text": true,
+        "vision": true,
+        "pdf": false,
+        "image_output": false,
+        "video_output": false
+      },
+      "supportedParameters": [
+        "temperature",
+        "max_tokens",
+        "top_p",
+        "stream"
+      ],
+      "lastTestedAt": null,
+      "testResult": null
+    },
+    "meta/llama-3.1-70b-instruct": {
+      "id": "meta/llama-3.1-70b-instruct",
+      "name": "Llama 3.1 70B Instruct (Eden AI - Meta)",
+      "provider": "Eden AI",
+      "subprovider": "meta",
+      "category": "Text Generation",
+      "task": "text-generation",
+      "contextWindow": 131072,
+      "enabled": true,
+      "pricing": "$0.0000004 / in · $0.0000009 / out",
+      "capabilities": {
+        "text": true,
+        "vision": false,
+        "pdf": false,
+        "image_output": false,
+        "video_output": false
+      },
+      "supportedParameters": [
+        "temperature",
+        "max_tokens",
+        "top_p",
+        "stream"
+      ],
+      "lastTestedAt": null,
+      "testResult": null
+    },
+    "stabilityai/sd3.5-medium": {
+      "id": "stabilityai/sd3.5-medium",
+      "name": "Stable Diffusion 3.5 Medium (Eden AI)",
+      "provider": "Eden AI",
+      "subprovider": "stabilityai",
+      "category": "Image Generation",
+      "task": "text-to-image",
+      "contextWindow": 4096,
+      "enabled": true,
+      "pricing": "$0.035 / image",
+      "capabilities": {
+        "text": false,
+        "vision": false,
+        "pdf": false,
+        "image_output": true,
+        "video_output": false
+      },
+      "supportedParameters": [
+        "size",
+        "n",
+        "prompt"
+      ],
+      "lastTestedAt": null,
+      "testResult": null
+    },
+    "stabilityai/sd3.5-large": {
+      "id": "stabilityai/sd3.5-large",
+      "name": "Stable Diffusion 3.5 Large (Eden AI)",
+      "provider": "Eden AI",
+      "subprovider": "stabilityai",
+      "category": "Image Generation",
+      "task": "text-to-image",
+      "contextWindow": 4096,
+      "enabled": true,
+      "pricing": "$0.065 / image",
+      "capabilities": {
+        "text": false,
+        "vision": false,
+        "pdf": false,
+        "image_output": true,
+        "video_output": false
+      },
+      "supportedParameters": [
+        "size",
+        "n",
+        "prompt"
+      ],
+      "lastTestedAt": null,
+      "testResult": null
+    },
+    "bytedance/dreamina-seedance-2-0-fast-260128": {
+      "id": "bytedance/dreamina-seedance-2-0-fast-260128",
+      "name": "bytedance/dreamina-seedance-2-0-fast-260128 (Eden AI Video - bytedance)",
+      "provider": "Eden AI",
+      "subprovider": "bytedance",
+      "category": "Video Generation",
+      "task": "text-to-video",
+      "contextWindow": 4096,
+      "enabled": true,
+      "pricing": "$5.6 / unit",
+      "capabilities": {
+        "text": false,
+        "vision": false,
+        "pdf": false,
+        "image_output": false,
+        "video_output": true
+      },
+      "supportedParameters": [
+        "prompt",
+        "seconds",
+        "size"
+      ],
+      "lastTestedAt": null,
+      "testResult": null
+    },
+    "pruna/p-video": {
+      "id": "pruna/p-video",
+      "name": "pruna/p-video (Eden AI Video - pruna)",
+      "provider": "Eden AI",
+      "subprovider": "pruna",
+      "category": "Video Generation",
+      "task": "text-to-video",
+      "contextWindow": 4096,
+      "enabled": true,
+      "pricing": "$0.02 / unit",
+      "capabilities": {
+        "text": false,
+        "vision": false,
+        "pdf": false,
+        "image_output": false,
+        "video_output": true
+      },
+      "supportedParameters": [
+        "prompt",
+        "seconds",
+        "size"
+      ],
+      "lastTestedAt": null,
+      "testResult": null
+    },
+    "openai/gpt-4o": {
+      "id": "openai/gpt-4o",
+      "name": "gpt-4o (Eden AI - openai)",
+      "provider": "Eden AI",
+      "subprovider": "openai",
+      "category": "Text Generation",
+      "task": "text-generation",
+      "contextWindow": 128000,
+      "enabled": true,
+      "pricing": "Standard rate",
+      "capabilities": {
+        "text": true,
+        "vision": true,
+        "pdf": false,
+        "image_output": false,
+        "video_output": false
+      },
+      "supportedParameters": [
+        "temperature",
+        "max_tokens",
+        "top_p"
+      ],
+      "lastTestedAt": null,
+      "testResult": null
+    }
+  },
+  "usage": {
+    "requests": 24,
+    "failures": 0,
+    "inputTokens": 120,
+    "outputTokens": 80,
+    "totalTokens": 200,
+    "lastSuccessAt": "2026-11-21T16:11:33.351Z",
+    "lastError": {
+      "timestamp": "2026-11-21T16:11:33.163Z",
+      "code": "invalid_api_key",
+      "message": "Invalid API Key provided",
+      "status": 401
+    },
+    "byCapability": {
+      "text": {
+        "requests": 8,
+        "failures": 0,
+        "tokens": 200
+      },
+      "image": {
+        "requests": 8,
+        "failures": 0,
+        "images": 8
+      },
+      "video": {
+        "requests": 8,
+        "failures": 0,
+        "jobs": 8
+      }
+    }
+  },
+  "lastTestResults": {
+    "connection": {
+      "ok": false,
+      "durationMs": 1,
+      "testedAt": "2026-11-21T16:11:33.154Z",
+      "error": "Invalid API Key provided",
+      "code": "invalid_api_key",
+      "message": "Eden AI connection test failed: Invalid API Key provided",
+      "recordedAt": "2026-11-21T16:11:33.154Z"
+    },
+    "text": {
+      "ok": true,
+      "model": "openai/gpt-4o-mini",
+      "durationMs": 2,
+      "testedAt": "2026-11-21T16:11:33.276Z",
+      "output": "Greetings! How can I assist you today?",
+      "usage": {
+        "inputTokens": 15,
+        "outputTokens": 10,
+        "totalTokens": 25
+      },
+      "message": "✓ Text generation successful (2ms, 25 tokens)",
+      "recordedAt": "2026-11-21T16:11:33.276Z"
+    },
+    "image": {
+      "ok": true,
+      "model": "stabilityai/sd3.5-medium",
+      "durationMs": 3,
+      "testedAt": "2026-11-21T16:11:33.317Z",
+      "dataUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+      "imageUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+      "message": "✓ Image generation successful (3ms)",
+      "recordedAt": "2026-11-21T16:11:33.317Z"
+    },
+    "video": {
+      "ok": true,
+      "supported": true,
+      "model": "bytedance/dreamina-seedance-2-0-fast-260128",
+      "jobId": "vid_job_98765",
+      "status": "queued",
+      "durationMs": 3,
+      "testedAt": "2026-11-21T16:11:33.353Z",
+      "message": "✓ Video job submitted successfully (Job ID: vid_job_98765, Status: queued)",
+      "recordedAt": "2026-11-21T16:11:33.353Z"
+    }
+  },
+  "recentErrors": [
+    {
+      "timestamp": "2026-11-21T16:11:33.163Z",
+      "code": "invalid_api_key",
+      "message": "Invalid API Key provided",
+      "status": 401
+    },
+    {
+      "timestamp": "2026-11-21T15:38:56.481Z",
+      "code": "invalid_api_key",
+      "message": "Invalid API Key provided",
+      "status": 401
+    },
+    {
+      "timestamp": "2026-11-21T15:38:47.173Z",
+      "code": "invalid_api_key",
+      "message": "Invalid API Key provided",
+      "status": 401
+    },
+    {
+      "timestamp": "2026-11-21T15:38:07.811Z",
+      "code": "invalid_api_key",
+      "message": "Invalid API Key provided",
+      "status": 401
+    }
+  ],
+  "updatedAt": "2026-11-21T16:12:00.446Z"
+}

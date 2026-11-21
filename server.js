@@ -26,6 +26,8 @@ const { createOllamaProvider } = require('./ollama-provider');
 const { createCloudflareConfig } = require('./cloudflare-config');
 const { createCloudflareProvider } = require('./cloudflare-provider');
 const { createPollinationsProvider } = require('./pollinations-provider');
+const { createEdenAiConfig } = require('./edenai-config');
+const { createEdenAiProvider } = require('./edenai-provider');
 const { createQuotaMonitorService } = require('./quota-monitor-service');
 const {
   CATEGORY_TEXT,
@@ -164,6 +166,8 @@ const razorpay = createRazorpayService({ env: process.env });
 const cloudflareConfig = createCloudflareConfig({ dir: ROOT, env: process.env });
 const cloudflare = createCloudflareProvider({ HttpError, env: process.env, config: cloudflareConfig });
 const pollinations = createPollinationsProvider({ HttpError, env: process.env, logger: console });
+const edenaiConfig = createEdenAiConfig({ dir: ROOT, env: process.env, logger: console });
+const edenai = createEdenAiProvider({ HttpError, env: process.env, config: edenaiConfig, logger: console });
 
 const quotaMonitor = createQuotaMonitorService({ dir: ROOT, env: process.env, logger: console });
 quotaMonitor.startBackgroundMonitoring(15000);
@@ -693,7 +697,24 @@ function availableModels() {
     description: m.description || 'Free high-speed AI image generation',
     reason: m.reason || '',
   }));
-  const merged = [...base, ...google, ...claude, ...free, ...gpt, ...cc, ...gq, ...nv, ...ltr, ...olm, ...cf, ...pol];
+  const ed = edenai.catalogEntries().map(m => ({
+    id: m.id,
+    name: m.name,
+    provider: m.provider,
+    providerId: 'edenai',
+    configured: m.configured,
+    supported: m.supported,
+    available: Boolean(m.available),
+    free: false,
+    pricingVerified: true,
+    category: m.category,
+    task: m.task,
+    contextLength: m.contextLength || 4096,
+    capabilities: m.capabilities,
+    description: m.description || '',
+    reason: m.reason || '',
+  }));
+  const merged = [...base, ...google, ...claude, ...free, ...gpt, ...cc, ...gq, ...nv, ...ltr, ...olm, ...cf, ...pol, ...ed];
   const seen = new Set();
   const out = [];
   for (const item of merged) {
@@ -906,9 +927,13 @@ function providerKey(option) {
   if (option.provider === 'Ollama') return 'ollama';
   if (option.provider === 'Cloudflare Workers AI' || option.provider === 'Cloudflare' || option.providerId === 'cloudflare_workers_ai') return 'cloudflare';
   if (option.provider === 'Pollinations AI' || option.provider === 'Pollinations' || option.providerId === 'pollinations') return 'pollinations';
+  if (option.provider === 'Eden AI' || option.providerId === 'edenai') return 'edenai';
   return 'gemini';
 }
 async function generateProvider({ providerName, modelId, system, history, text, attachments, contents, maxTokens, isProductionTraffic = false }) {
+  if (providerName === 'edenai') {
+    return edenai.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
+  }
   if (providerName === 'pollinations') {
     const prompt = text || system || 'a beautiful illustration';
     const imgRes = await pollinations.generateImage({ prompt, model: modelId });
@@ -932,6 +957,10 @@ async function generateProvider({ providerName, modelId, system, history, text, 
   return callGemini(modelId, contents || [{ role: 'user', parts: [{ text }] }], system);
 }
 async function* streamProvider({ providerName, modelId, system, history, text, attachments, contents, maxTokens, signal, isProductionTraffic = false }) {
+  if (providerName === 'edenai') {
+    yield* edenai.streamGenerate({ model: modelId, system, history, text, attachments, maxTokens, signal });
+    return;
+  }
   if (providerName === 'pollinations') {
     const prompt = text || system || 'a beautiful illustration';
     const imgRes = await pollinations.generateImage({ prompt, model: modelId, signal });
@@ -1664,7 +1693,7 @@ const server = http.createServer(async (req, res) => {
       }
       if (pathname.startsWith('/api/admin/llmtr')) return fail(res, new HttpError(404, 'not_found', 'LLMTR admin route not found.'), requestId);
       if (pathname === '/api/admin/provider-status' && req.method === 'GET') {
-        await Promise.allSettled([gemini.refreshModels(true), openrouter.refreshModels(true), codecraft.refreshModels(true), groq.refreshModels(true), nvidia.refreshModels(true), openai.refreshModels(true), llmtr.refreshModels(true), ollama.refreshModels(true), cloudflare.refreshModels(true)]);
+        await Promise.allSettled([gemini.refreshModels(true), openrouter.refreshModels(true), codecraft.refreshModels(true), groq.refreshModels(true), nvidia.refreshModels(true), openai.refreshModels(true), llmtr.refreshModels(true), ollama.refreshModels(true), cloudflare.refreshModels(true), edenai.refreshModels(true)]);
         return reply(res, 200, {
           success: true,
           data: {
@@ -1679,6 +1708,7 @@ const server = http.createServer(async (req, res) => {
             ollama: ollama.status(),
             cloudflare: cloudflare.status(),
             pollinations: pollinations.status(),
+            edenai: edenai.status(),
             creditsExhausted: { ...providerCreditStatus },
           },
         });
@@ -1712,6 +1742,77 @@ const server = http.createServer(async (req, res) => {
         const result = await pollinations.generateImage({ prompt: body.prompt || 'a simple red apple on a clean white background', model: body.model || 'flux' });
         return reply(res, 200, { success: true, data: { result, status: pollinations.status() } });
       }
+
+      // Eden AI Admin Routes
+      if (pathname === '/api/admin/edenai' && req.method === 'GET') {
+        return reply(res, 200, { success: true, data: edenai.status() });
+      }
+      if (pathname === '/api/admin/edenai' && req.method === 'PUT') {
+        const body = await readBody(req);
+        if (typeof body.enabled === 'boolean') edenai.setEnabled(body.enabled);
+        if (body.spendingPolicy) edenaiConfig.setSpendingPolicy(body.spendingPolicy);
+        return reply(res, 200, { success: true, data: edenai.status() });
+      }
+      if (pathname === '/api/admin/edenai/key' && req.method === 'POST') {
+        const body = await readBody(req);
+        const key = String(body.key || body.apiKey || '').trim();
+        if (!key) throw new HttpError(400, 'invalid_key', 'Eden AI API key cannot be empty.');
+        edenai.setApiKey(key);
+        try {
+          const envFile = typeof resolveEnvFile === 'function' ? resolveEnvFile(ROOT) : path.join(ROOT, 'API.env');
+          upsertEnvValue(envFile, 'EDENAI_API_KEY', key);
+        } catch (_) {}
+        await edenai.refreshModels(true);
+        return reply(res, 200, { success: true, data: edenai.status() });
+      }
+      if (pathname === '/api/admin/edenai/key' && req.method === 'DELETE') {
+        edenai.setApiKey('');
+        try {
+          const envFile = typeof resolveEnvFile === 'function' ? resolveEnvFile(ROOT) : path.join(ROOT, 'API.env');
+          removeEnvValue(envFile, 'EDENAI_API_KEY');
+        } catch (_) {}
+        return reply(res, 200, { success: true, data: edenai.status() });
+      }
+      if (pathname === '/api/admin/edenai/connection' && req.method === 'POST') {
+        const result = await edenai.testConnection();
+        if (result.ok) {
+          clearProviderCreditsExhausted('edenai');
+          await edenai.refreshModels(true);
+        } else if (result.code === 'insufficient_credits' || result.code === 'billing_required') {
+          markProviderCreditsExhausted('edenai', result.message);
+        }
+        return reply(res, 200, { success: true, data: { result, status: edenai.status() } });
+      }
+      if (pathname === '/api/admin/edenai/refresh' && req.method === 'POST') {
+        const result = await edenai.refreshModels(true);
+        return reply(res, 200, { success: true, data: { result, status: edenai.status() } });
+      }
+      const edenAiModelRoute = /^\/api\/admin\/edenai\/models\/(.+)$/.exec(pathname);
+      if (edenAiModelRoute && req.method === 'PUT') {
+        const modelId = decodeURIComponent(edenAiModelRoute[1]);
+        const body = await readBody(req);
+        try {
+          if (typeof body.enabled === 'boolean') edenaiConfig.setModelEnabled(modelId, body.enabled);
+        } catch (error) {
+          throw new HttpError(400, error?.code || 'invalid_model', error?.message || 'Invalid model ID.');
+        }
+        return reply(res, 200, { success: true, data: edenai.status() });
+      }
+      if (pathname === '/api/admin/edenai/test-text' && req.method === 'POST') {
+        const body = await readBody(req);
+        const result = await edenai.testTextModel(body.model, body.prompt);
+        return reply(res, 200, { success: true, data: { result, status: edenai.status() } });
+      }
+      if (pathname === '/api/admin/edenai/test-image' && req.method === 'POST') {
+        const body = await readBody(req);
+        const result = await edenai.testImageModel(body.model, body.prompt);
+        return reply(res, 200, { success: true, data: { result, status: edenai.status() } });
+      }
+      if (pathname === '/api/admin/edenai/test-video' && req.method === 'POST') {
+        const body = await readBody(req);
+        const result = await edenai.testVideoModel(body.model, body.prompt);
+        return reply(res, 200, { success: true, data: { result, status: edenai.status() } });
+      }
       if (pathname === '/api/admin/models/capabilities' && req.method === 'GET') {
         availableModels();
         return reply(res, 200, {
@@ -1732,12 +1833,18 @@ const server = http.createServer(async (req, res) => {
         availableModels();
         const runner = async ({ providerName, modelId, text, category }) => {
           if (category === 'image') {
+            if (providerName === 'edenai') {
+              return edenai.generateImage({ prompt: text, model: modelId });
+            }
             if (providerName === 'pollinations' || modelId === 'flux' || modelId === 'sana' || modelId === 'turbo') {
               return pollinations.generateImage({ prompt: text, model: modelId });
             }
             return cloudflare.generateImage({ prompt: text, model: modelId });
           }
           if (category === 'video') {
+            if (providerName === 'edenai') {
+              return edenai.testVideoModel(modelId, text);
+            }
             throw new HttpError(501, 'unsupported', 'No active free video generation endpoint configured for this model.');
           }
           return generateProvider({ providerName, modelId, text, system: 'Reply with exact test string' });
@@ -2204,6 +2311,7 @@ const server = http.createServer(async (req, res) => {
         llmtr.refreshModels(forceRefresh),
         ollama.refreshModels(forceRefresh),
         cloudflare.refreshModels(forceRefresh),
+        edenai.refreshModels(forceRefresh),
       ]);
       const data = loadStore();
       const gwStatus = getActiveGatewayService(data).getGatewayStatus(data);
@@ -2693,6 +2801,12 @@ const server = http.createServer(async (req, res) => {
         const videoJobMatch = /^\/api\/video\/jobs\/([A-Za-z0-9_-]+)$/.exec(pathname);
         if (req.method === 'GET' && videoJobMatch) {
           const jobId = videoJobMatch[1];
+          if (edenai.configured()) {
+            try {
+              const edenJob = await edenai.getVideoJob(jobId);
+              if (edenJob) return reply(res, 200, { success: true, data: edenJob });
+            } catch (_) {}
+          }
           const job = capabilityService ? capabilityService.getVideoJob(jobId) : null;
           if (!job) throw new HttpError(404, 'job_not_found', 'Video generation job was not found.');
           return reply(res, 200, { success: true, data: job });
@@ -2702,10 +2816,15 @@ const server = http.createServer(async (req, res) => {
           const prompt = String(body.prompt || '').trim();
           if (!prompt || prompt.length > 32000) throw new HttpError(400, 'invalid_prompt', 'Enter a prompt up to 32,000 characters.');
           const videoModels = capabilityService ? capabilityService.getModelsByCategory('video', { availableOnly: true }) : [];
+          const targetModel = String(body.model || (videoModels[0]?.id || '')).trim();
+          const isEdenAiVideo = edenai.configured() && (targetModel.startsWith('bytedance/') || targetModel.startsWith('pruna/') || targetModel.startsWith('pixverse/') || edenai.catalogEntries().some(m => m.id === targetModel && m.category === 'Video Generation'));
+          if (isEdenAiVideo) {
+            const edenJob = await edenai.createVideoJob({ prompt, model: targetModel, signal: req.signal });
+            return reply(res, 200, { success: true, data: { jobId: edenJob.jobId, model: targetModel, status: edenJob.status, prompt } });
+          }
           if (!videoModels.length) {
             throw new HttpError(503, 'no_video_provider', 'No video generation models are currently available. Please configure a video generation provider API key.');
           }
-          const targetModel = String(body.model || videoModels[0]?.id).trim();
           capabilityService.assertModelCapability(targetModel, 'video');
           const job = capabilityService.createVideoJob({ prompt, modelId: targetModel, uid: claims.sub });
           return reply(res, 200, { success: true, data: job });
@@ -2719,10 +2838,15 @@ const server = http.createServer(async (req, res) => {
 
           if (kind === 'video') {
             const videoModels = capabilityService ? capabilityService.getModelsByCategory('video', { availableOnly: true }) : [];
+            const targetModel = String(body.model || (videoModels[0]?.id || '')).trim();
+            const isEdenAiVideo = edenai.configured() && (targetModel.startsWith('bytedance/') || targetModel.startsWith('pruna/') || targetModel.startsWith('pixverse/') || edenai.catalogEntries().some(m => m.id === targetModel && m.category === 'Video Generation'));
+            if (isEdenAiVideo) {
+              const edenJob = await edenai.createVideoJob({ prompt, model: targetModel, signal: req.signal });
+              return reply(res, 200, { success: true, data: { jobId: edenJob.jobId, model: targetModel, status: edenJob.status, prompt } });
+            }
             if (!videoModels.length) {
               throw new HttpError(503, 'no_video_provider', 'No video generation models are currently available. Please configure a video generation provider API key in the admin panel.');
             }
-            const targetModel = String(body.model || videoModels[0]?.id).trim();
             capabilityService.assertModelCapability(targetModel, 'video');
             const job = capabilityService.createVideoJob({ prompt, modelId: targetModel, uid: claims.sub });
             return reply(res, 200, { success: true, data: job });
@@ -2730,6 +2854,55 @@ const server = http.createServer(async (req, res) => {
 
           if (kind === 'image') {
             const requestedModel = String(body.model || '').trim();
+            const isEdenAiImg = edenai.configured() && (requestedModel.startsWith('stabilityai/') || edenai.catalogEntries().some(m => m.id === requestedModel && m.category === 'Image Generation'));
+            if (isEdenAiImg) {
+              const reserved = await withStoreLock(() => {
+                const freshStore = loadStore();
+                const resTx = reserveTokenSpend(freshStore, {
+                  uid: claims.sub,
+                  activityKey: 'image',
+                  requestId: body.request_id || requestId,
+                  profile,
+                  provider: 'Eden AI',
+                  model: requestedModel,
+                });
+                saveStore();
+                return resTx;
+              });
+              let imgRes;
+              try {
+                imgRes = await edenai.generateImage({
+                  prompt,
+                  model: requestedModel,
+                  signal: req.signal,
+                });
+                if (typeof quotaMonitor !== 'undefined' && quotaMonitor) {
+                  quotaMonitor.recordSuccess({ providerName: 'edenai', modelId: imgRes.model });
+                }
+              } catch (err) {
+                if (typeof quotaMonitor !== 'undefined' && quotaMonitor) {
+                  quotaMonitor.recordError({ providerName: 'edenai', modelId: requestedModel, error: err });
+                }
+                refundTokenTransaction(loadStore(), reserved.transaction.id, err?.code || 'provider_error');
+                saveStore();
+                throw err;
+              }
+              const freshStore = loadStore();
+              commitTokenSpend(freshStore, reserved.transaction.id);
+              saveStore();
+              const profileUsage = profileTokensPayload(freshStore.profiles[claims.sub]);
+              return reply(res, 200, {
+                success: true,
+                data: {
+                  url: imgRes.imageUrl || imgRes.dataUrl,
+                  image: imgRes.dataUrl,
+                  b64_json: imgRes.dataUrl ? imgRes.dataUrl.split(',')[1] : null,
+                  model: imgRes.model,
+                  provider: 'Eden AI',
+                  profileUsage,
+                },
+              });
+            }
             const cfConfigured = Boolean(cloudflare && cloudflare.configured());
             const isCfRequested = requestedModel.startsWith('@cf/');
             const isPollinationsRequested = requestedModel === 'flux' || requestedModel === 'sana' || requestedModel === 'turbo' || requestedModel.toLowerCase().includes('pollinations');

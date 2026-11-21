@@ -12,10 +12,10 @@
  */
 
 const PLAN_ALLOWED_PROVIDERS = Object.freeze({
-  basic: Object.freeze(['openrouter', 'codecraft', 'ollama', 'llmtr', 'cloudflare', 'pollinations']),
-  free: Object.freeze(['openrouter', 'codecraft', 'ollama', 'llmtr', 'cloudflare', 'pollinations']),
-  pro: Object.freeze(['openrouter', 'codecraft', 'groq', 'ollama', 'llmtr', 'cloudflare', 'pollinations']),
-  premium: Object.freeze(['openrouter', 'codecraft', 'groq', 'nvidia', 'openai', 'google', 'ollama', 'llmtr', 'cloudflare', 'pollinations', '*']),
+  basic: Object.freeze(['openrouter', 'codecraft', 'ollama', 'llmtr', 'cloudflare', 'pollinations', 'edenai']),
+  free: Object.freeze(['openrouter', 'codecraft', 'ollama', 'llmtr', 'cloudflare', 'pollinations', 'edenai']),
+  pro: Object.freeze(['openrouter', 'codecraft', 'groq', 'ollama', 'llmtr', 'cloudflare', 'pollinations', 'edenai']),
+  premium: Object.freeze(['openrouter', 'codecraft', 'groq', 'nvidia', 'openai', 'google', 'ollama', 'llmtr', 'cloudflare', 'pollinations', 'edenai', '*']),
 });
 
 const PROVIDER_ALIASES = Object.freeze({
@@ -47,6 +47,10 @@ const PROVIDER_ALIASES = Object.freeze({
   'pollinations': 'pollinations',
   'pollinations ai': 'pollinations',
   'pollinationsai': 'pollinations',
+  'edenai': 'edenai',
+  'eden ai': 'edenai',
+  'eden-ai': 'edenai',
+  'eden_ai': 'edenai',
 });
 
 function normalizePlanId(planId) {

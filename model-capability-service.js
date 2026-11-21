@@ -66,6 +66,7 @@ function normalizeProviderId(name) {
   const s = String(name || '').toLowerCase().trim();
   if (s.includes('cloudflare')) return 'cloudflare_workers_ai';
   if (s.includes('pollinations')) return 'pollinations';
+  if (s.includes('edenai') || s.includes('eden ai') || s.includes('eden')) return 'edenai';
   if (s.includes('openrouter')) return 'openrouter';
   if (s.includes('gemini') || s.includes('google')) return 'gemini';
   if (s.includes('groq')) return 'groq';

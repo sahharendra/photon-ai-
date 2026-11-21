@@ -344,11 +344,171 @@
       <small class="muted" style="margin-top:4px">Free tier works automatically with no key required (1 image / 45s per IP).</small>
     </div>
   </div>
-  <div class="save-row" style="margin-top:10px">
+  <div class="save-row" style="margin-top:10px;display:flex;gap:8px">
+    <button id="pollinations-remove-key" type="button" style="border-color:#593434;color:#ffdede;display:none">Remove Key</button>
     <button id="pollinations-save-key" type="submit">Save Pollinations Settings</button>
   </div>
 </form>
 <div class="head" style="margin-top:28px"><div><h2>Pollinations AI Image Models</h2><small>Free unlimited high-speed AI image models.</small></div></div><div class="scroll"><table class="subscriptions-table"><thead><tr><th>Model</th><th>Capability</th><th>Pricing</th><th>Status</th></tr></thead><tbody id="pollinations-models"></tbody></table></div>
+
+<!-- Eden AI Provider Section -->
+<div class="head" style="margin-top:34px">
+  <div>
+    <h2>Eden AI (Text, Image &amp; Video Gateway)</h2>
+    <small>Unified AI platform with API key authentication. Aggregates models for Text, Image, and Video Generation.</small>
+  </div>
+  <div class="actions">
+    <button id="edenai-test-connection" type="button">Test connection</button>
+    <button id="edenai-refresh-models" type="button">Discover / Refresh models</button>
+  </div>
+</div>
+<div id="edenai-diag" class="list"></div>
+
+<form id="edenai-settings-form" class="inline-add-box" style="margin-top:14px">
+  <div class="settings-grid">
+    <div class="field">
+      <label for="edenai-key-input">Eden AI API Key (AES-256 Encrypted)</label>
+      <div style="display:flex;gap:6px">
+        <input id="edenai-key-input" type="password" autocomplete="new-password" placeholder="Enter Eden AI API key">
+        <button type="button" id="edenai-key-eye" style="padding:0 12px;background:#17213a;border:1px solid #2e4063;border-radius:7px;color:#c4ccdc;cursor:pointer" title="Show/Hide key">👁</button>
+      </div>
+      <small class="muted" style="margin-top:4px">Get your API key at <a href="https://app.edenai.run/settings/api-keys" target="_blank" rel="noopener" style="color:#60a5fa;text-decoration:underline">app.edenai.run/settings/api-keys</a>. Documentation: <a href="https://docs.edenai.co/" target="_blank" rel="noopener" style="color:#60a5fa;text-decoration:underline">docs.edenai.co</a>.</small>
+    </div>
+    <div class="field">
+      <label>Configured Status &amp; Key Details</label>
+      <div style="display:flex;align-items:center;gap:8px;height:40px;padding:0 4px">
+        <span id="edenai-key-badge" class="pill warn">Checking...</span>
+        <code id="edenai-masked-key" style="color:#b4c0d4">Not configured</code>
+      </div>
+      <small class="muted" style="margin-top:4px">Slug: <code>edenai</code> · Keys are encrypted on disk and never exposed in browser responses.</small>
+    </div>
+  </div>
+  <div class="settings-grid" style="margin-top:10px">
+    <div class="field">
+      <label for="edenai-enabled">Provider State</label>
+      <select id="edenai-enabled">
+        <option value="true">Enabled (Active)</option>
+        <option value="false">Disabled (Inactive)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="edenai-spending-policy">Spending Policy</label>
+      <select id="edenai-spending-policy">
+        <option value="allow_all">Allow All Configured Requests</option>
+        <option value="allow_free_only">Allow Free Tier Only</option>
+        <option value="block">Block All Requests</option>
+      </select>
+    </div>
+  </div>
+  <div class="save-row" style="margin-top:12px;display:flex;gap:8px">
+    <button id="edenai-save-settings" type="submit">Save Eden AI Settings</button>
+    <button id="edenai-delete-key" type="button" style="background:#2a1515;border:1px solid #5a2525;color:#f87171">Remove Key</button>
+  </div>
+</form>
+
+<!-- Three Independent Capability Testing Section -->
+<div class="head" style="margin-top:28px">
+  <div>
+    <h2>Eden AI Capability Verification (3 Independent Stages)</h2>
+    <small>Real model-by-model generation tests verifying authentication, latency, token consumption, and media output.</small>
+  </div>
+</div>
+<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-top: 14px;">
+  <!-- Stage A: Text Generation -->
+  <div class="card" style="padding:14px;background:#0d1322;border:1px solid #1e293b;border-radius:8px">
+    <h3 style="font-size:14px;margin-bottom:6px;display:flex;align-items:center;gap:6px"><span>📝</span> Stage 1: Text Generation</h3>
+    <small class="muted">Send test prompt &amp; measure latency and token usage.</small>
+    <div style="margin-top:10px">
+      <label style="font-size:11px;color:#94a3b8">Test Model</label>
+      <select id="edenai-test-text-model" style="width:100%;margin-top:2px;padding:6px;background:#151d30;border:1px solid #2d3b55;border-radius:6px;color:#fff"></select>
+    </div>
+    <div style="margin-top:8px">
+      <label style="font-size:11px;color:#94a3b8">Test Prompt</label>
+      <input id="edenai-test-text-prompt" type="text" value="Write a short 1-sentence greeting for Photon AI users." style="width:100%;margin-top:2px;padding:6px;background:#151d30;border:1px solid #2d3b55;border-radius:6px;color:#fff">
+    </div>
+    <button id="edenai-test-text-btn" type="button" style="margin-top:10px;width:100%;padding:8px">Run Text Test</button>
+    <div id="edenai-test-text-result" style="margin-top:10px;font-size:12px;display:none;background:#131c31;padding:8px;border-radius:6px"></div>
+  </div>
+
+  <!-- Stage B: Image Generation -->
+  <div class="card" style="padding:14px;background:#0d1322;border:1px solid #1e293b;border-radius:8px">
+    <h3 style="font-size:14px;margin-bottom:6px;display:flex;align-items:center;gap:6px"><span>🎨</span> Stage 2: Image Generation</h3>
+    <small class="muted">Submit image generation request &amp; verify binary output.</small>
+    <div style="margin-top:10px">
+      <label style="font-size:11px;color:#94a3b8">Test Model</label>
+      <select id="edenai-test-image-model" style="width:100%;margin-top:2px;padding:6px;background:#151d30;border:1px solid #2d3b55;border-radius:6px;color:#fff"></select>
+    </div>
+    <div style="margin-top:8px">
+      <label style="font-size:11px;color:#94a3b8">Test Prompt</label>
+      <input id="edenai-test-image-prompt" type="text" value="A modern futuristic skyline at sunset, highly detailed" style="width:100%;margin-top:2px;padding:6px;background:#151d30;border:1px solid #2d3b55;border-radius:6px;color:#fff">
+    </div>
+    <button id="edenai-test-image-btn" type="button" style="margin-top:10px;width:100%;padding:8px">Run Image Test</button>
+    <div id="edenai-test-image-result" style="margin-top:10px;font-size:12px;display:none;background:#131c31;padding:8px;border-radius:6px"></div>
+  </div>
+
+  <!-- Stage C: Video Generation -->
+  <div class="card" style="padding:14px;background:#0d1322;border:1px solid #1e293b;border-radius:8px">
+    <h3 style="font-size:14px;margin-bottom:6px;display:flex;align-items:center;gap:6px"><span>🎬</span> Stage 3: Video Generation</h3>
+    <small class="muted">Check video capability or run asynchronous job submission.</small>
+    <div style="margin-top:10px">
+      <label style="font-size:11px;color:#94a3b8">Test Model</label>
+      <select id="edenai-test-video-model" style="width:100%;margin-top:2px;padding:6px;background:#151d30;border:1px solid #2d3b55;border-radius:6px;color:#fff"></select>
+    </div>
+    <div style="margin-top:8px">
+      <label style="font-size:11px;color:#94a3b8">Test Prompt</label>
+      <input id="edenai-test-video-prompt" type="text" value="A calm ocean wave crashing against rocks at sunset" style="width:100%;margin-top:2px;padding:6px;background:#151d30;border:1px solid #2d3b55;border-radius:6px;color:#fff">
+    </div>
+    <button id="edenai-test-video-btn" type="button" style="margin-top:10px;width:100%;padding:8px">Run Video Test</button>
+    <div id="edenai-test-video-result" style="margin-top:10px;font-size:12px;display:none;background:#131c31;padding:8px;border-radius:6px"></div>
+  </div>
+</div>
+
+<!-- Discovered Models Catalogue -->
+<div class="head" style="margin-top:28px">
+  <div>
+    <h2>Eden AI Model Catalogue</h2>
+    <small>Configured and discovered models. Administrators can toggle individual models on/off.</small>
+  </div>
+  <div class="actions">
+    <select id="edenai-model-filter" style="padding:6px 10px;background:#151d30;border:1px solid #2d3b55;border-radius:6px;color:#fff;font-size:12px">
+      <option value="all">All Capabilities</option>
+      <option value="text">Text Generation</option>
+      <option value="image">Image Generation</option>
+      <option value="video">Video Generation</option>
+    </select>
+  </div>
+</div>
+<div class="scroll">
+  <table class="subscriptions-table">
+    <thead>
+      <tr>
+        <th>Model Name &amp; ID</th>
+        <th>Capability</th>
+        <th>Subprovider</th>
+        <th>Context / Limits</th>
+        <th>Pricing</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="edenai-models"></tbody>
+  </table>
+</div>
+
+<!-- Usage & Recent Errors -->
+<div class="settings-grid" style="margin-top:20px">
+  <div class="field">
+    <label>Eden AI Usage Statistics</label>
+    <div id="edenai-usage" class="muted">Loading usage...</div>
+  </div>
+</div>
+<div class="head" style="margin-top:20px">
+  <div>
+    <h2>Recent Eden AI Errors</h2>
+    <small>Sanitized error events without secret exposure.</small>
+  </div>
+</div>
+<div id="edenai-errors" class="list" style="margin-bottom:30px"></div>
 
 <div class="head" style="margin-top:34px">
   <div>
@@ -1632,10 +1792,10 @@ function setupDashboardAnalyticsFilter(){
   }
 }
 
-async function load(forceSettings=false){if(refreshing)return;refreshing=true;status('Loading admin data...');try{const data=await request('/api/admin/overview');showApp();const m=data.metrics||{};$('logout').hidden=!!data.localAccess;if($('total'))$('total').textContent=fmt(m.totalUsers);if($('login-today'))$('login-today').textContent=fmt(Math.max(Number(m.signInsToday)||0,(data.users||[]).reduce((total,u)=>total+loginsToday(u),0)));if($('tokens'))$('tokens').textContent=fmt(m.tokensToday);renderDashboard(data);setupDashboardAnalyticsFilter();loadUsersAdmin();loadSubscriptionsAdmin();if(data.paymentGateway)renderGatewayConfig(data.paymentGateway);else loadGatewayConfig();renderProviders(data.models);loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();loadCloudflare();loadPollinations();loadCapabilitiesAdmin();loadQuotaAdmin();if(forceSettings||!settingsDirty){renderPlanFields(data.settings||{});renderTokenRulesTable(data.settings||{});renderArtifactPricing(data.settings||{});settingsDirty=false}renderPricingAudit(data.pricingAuditLogs||[]);runConfigVerification(true);status('Admin data loaded.')}catch(error){if(error.status===401){showLogin();return}if(error.status===503&&error.code==='admin_not_configured'){showLogin('Admin sign-in is not configured. Set PHOTON_ADMIN_PASSWORD and restart the server.');return}status(error.message||'Could not load admin data.',true)}finally{refreshing=false}}
+async function load(forceSettings=false){if(refreshing)return;refreshing=true;status('Loading admin data...');try{const data=await request('/api/admin/overview');showApp();const m=data.metrics||{};$('logout').hidden=!!data.localAccess;if($('total'))$('total').textContent=fmt(m.totalUsers);if($('login-today'))$('login-today').textContent=fmt(Math.max(Number(m.signInsToday)||0,(data.users||[]).reduce((total,u)=>total+loginsToday(u),0)));if($('tokens'))$('tokens').textContent=fmt(m.tokensToday);renderDashboard(data);setupDashboardAnalyticsFilter();loadUsersAdmin();loadSubscriptionsAdmin();if(data.paymentGateway)renderGatewayConfig(data.paymentGateway);else loadGatewayConfig();renderProviders(data.models);loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();loadCloudflare();loadPollinations();loadEdenAI();loadCapabilitiesAdmin();loadQuotaAdmin();if(forceSettings||!settingsDirty){renderPlanFields(data.settings||{});renderTokenRulesTable(data.settings||{});renderArtifactPricing(data.settings||{});settingsDirty=false}renderPricingAudit(data.pricingAuditLogs||[]);runConfigVerification(true);status('Admin data loaded.')}catch(error){if(error.status===401){showLogin();return}if(error.status===503&&error.code==='admin_not_configured'){showLogin('Admin sign-in is not configured. Set PHOTON_ADMIN_PASSWORD and restart the server.');return}status(error.message||'Could not load admin data.',true)}finally{refreshing=false}}
  $('login-form').addEventListener('submit',async event=>{event.preventDefault();const button=$('login-button');button.disabled=true;button.textContent='Signing in...';$('login-error').hidden=true;try{await request('/api/admin/login','POST',{email:$('admin-email').value.trim(),password:$('admin-password').value});$('admin-password').value='';await load(true)}catch(error){showLogin(error.message||'Sign-in failed. Check the username and password.')}finally{button.disabled=false;button.textContent='Sign in'}});
  $('logout').addEventListener('click',async()=>{try{await request('/api/admin/logout','POST',{})}finally{showLogin('You have signed out.')}});
- const pageMeta={overview:['Dashboard','Live overview of Photon accounts and usage.'],'users-section':['Users & Sign-ins','Account access, sign-in methods, activity, and plan status.'],subscriptions:['Subscriptions & Purchases','Verified payments, revenue, MRR, and Cashfree gateway configuration.'],settings:['Pricing & Token Rules','Manage plan pricing, daily limits, and AI activity token costs.'],providers:['AI Provider Settings','Check and manage server-side AI provider keys. Secrets are never shown.']};function showPage(){let id=location.hash.slice(1)||'overview';if(!pageMeta[id])id='overview';document.querySelectorAll('.page-view').forEach(page=>page.classList.toggle('active',page.id===id));document.querySelectorAll('.sidebar nav a[href^="#"]').forEach(link=>link.classList.toggle('active',link.getAttribute('href')==='#'+id));$('page-title').textContent=pageMeta[id][0];$('page-description').textContent=pageMeta[id][1];if(id==='overview'){load()}else if(id==='users-section'){loadUsersAdmin()}else if(id==='subscriptions'){loadGatewayConfig();loadSubscriptionsAdmin()}else if(id==='settings'){load(true)}else if(id==='providers'){loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();loadCloudflare();loadPollinations();loadCapabilitiesAdmin();loadQuotaAdmin();}}window.addEventListener('hashchange',showPage);showPage();
+ const pageMeta={overview:['Dashboard','Live overview of Photon accounts and usage.'],'users-section':['Users & Sign-ins','Account access, sign-in methods, activity, and plan status.'],subscriptions:['Subscriptions & Purchases','Verified payments, revenue, MRR, and Cashfree gateway configuration.'],settings:['Pricing & Token Rules','Manage plan pricing, daily limits, and AI activity token costs.'],providers:['AI Provider Settings','Check and manage server-side AI provider keys. Secrets are never shown.']};function showPage(){let id=location.hash.slice(1)||'overview';if(!pageMeta[id])id='overview';document.querySelectorAll('.page-view').forEach(page=>page.classList.toggle('active',page.id===id));document.querySelectorAll('.sidebar nav a[href^="#"]').forEach(link=>link.classList.toggle('active',link.getAttribute('href')==='#'+id));$('page-title').textContent=pageMeta[id][0];$('page-description').textContent=pageMeta[id][1];if(id==='overview'){load()}else if(id==='users-section'){loadUsersAdmin()}else if(id==='subscriptions'){loadGatewayConfig();loadSubscriptionsAdmin()}else if(id==='settings'){load(true)}else if(id==='providers'){loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();loadCloudflare();loadPollinations();loadEdenAI();loadCapabilitiesAdmin();loadQuotaAdmin();}}window.addEventListener('hashchange',showPage);showPage();
  $('settings-form').addEventListener('input',()=>{settingsDirty=true});
  $('settings-form').addEventListener('change',()=>{settingsDirty=true});
  $('verify-token-calc-btn').addEventListener('click',()=>runConfigVerification(false));
@@ -2391,8 +2551,21 @@ async function load(forceSettings=false){if(refreshing)return;refreshing=true;st
       if (diag) {
         diag.replaceChildren();
         rowItem(diag, 'Pollinations AI (Text-to-Image)', '100% Free recurring AI image generation with zero credit card requirement.', orBadge('Active (Free)', true));
-        rowItem(diag, 'API Key', st.hasCustomKey ? 'Custom key configured (' + (st.maskedKey || 'sk-••••') + ')' : 'None (Using Free Public Tier)', orBadge(st.hasCustomKey ? 'Custom Key' : 'Free Tier', true));
+        rowItem(diag, 'API Key', st.hasCustomKey ? 'Custom key configured (' + (st.maskedKey || 'pk-••••') + ')' : 'None (Using Free Public Tier)', orBadge(st.hasCustomKey ? 'Custom Key' : 'Free Tier', true));
         rowItem(diag, 'Spending Policy', 'Strict free-only (zero billing guaranteed)', orBadge('Free Only', true));
+      }
+      const badge = $('pollinations-key-badge');
+      if (badge) {
+        badge.className = 'pill ok';
+        badge.textContent = st.hasCustomKey ? 'Active (Custom Key)' : 'Active (Free Tier)';
+      }
+      const maskedEl = $('pollinations-masked-key');
+      if (maskedEl) {
+        maskedEl.textContent = st.hasCustomKey ? (st.maskedKey || 'Configured') : 'Free Public Tier';
+      }
+      const remBtn = $('pollinations-remove-key');
+      if (remBtn) {
+        remBtn.style.display = st.hasCustomKey ? 'inline-block' : 'none';
       }
       const tbody = $('pollinations-models');
       if (tbody) {
@@ -2466,6 +2639,394 @@ async function load(forceSettings=false){if(refreshing)return;refreshing=true;st
       loadPollinations();
     } catch (err) {
       alert(`Could not save Pollinations settings: ${err.message}`);
+    }
+  });
+
+  const polliRemoveBtn = $('pollinations-remove-key');
+  if (polliRemoveBtn) {
+    polliRemoveBtn.addEventListener('click', async () => {
+      if (!confirm('Remove the custom Pollinations API key and return to the free public tier?')) return;
+      try {
+        await request('/api/admin/pollinations', 'PUT', { apiKey: '' });
+        alert('Pollinations custom key removed. Switched to free public tier.');
+        loadPollinations();
+      } catch (err) {
+        alert(`Could not remove Pollinations key: ${err.message}`);
+      }
+    });
+  }
+
+  const polliEyeBtn = $('pollinations-key-eye');
+  if (polliEyeBtn) {
+    polliEyeBtn.addEventListener('click', () => {
+      const inp = $('pollinations-key-input');
+      if (inp) {
+        inp.type = inp.type === 'password' ? 'text' : 'password';
+      }
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // EDEN AI PROVIDER INTEGRATION
+  // ---------------------------------------------------------------------------
+  let edenAiCachedModels = [];
+
+  async function loadEdenAI() {
+    try {
+      const res = await request('/api/admin/edenai');
+      const st = (res && res.data) || res || {};
+      const diag = $('edenai-diag');
+      if (diag) {
+        diag.replaceChildren();
+        rowItem(diag, 'Eden AI Provider Status', st.enabled ? (st.configured ? 'Active & Ready' : 'Key Required') : 'Disabled', orBadge(st.enabled && st.configured ? 'Active' : (st.configured ? 'Disabled' : 'Missing Key'), st.enabled && st.configured));
+        rowItem(diag, 'Encrypted API Key', st.hasKey ? `Configured (${st.maskedKey || 'eden-••••'}) · AES-256 encrypted` : 'None configured', orBadge(st.hasKey ? 'Saved' : 'Not Set', st.hasKey));
+        rowItem(diag, 'Spending Policy', st.spendingPolicy || 'allow_all', orBadge(st.spendingPolicy || 'allow_all', true));
+        rowItem(diag, 'Discovered Models', `${st.modelCount || 0} models registered in catalogue`, orBadge(`${st.modelCount || 0} Models`, true));
+      }
+
+      const keyBadge = $('edenai-key-badge');
+      if (keyBadge) {
+        keyBadge.className = 'pill ' + (st.hasKey ? (st.enabled ? 'ok' : 'warn') : 'no');
+        keyBadge.textContent = st.hasKey ? (st.enabled ? 'Active (Saved)' : 'Disabled') : 'Not Configured';
+      }
+      const maskedEl = $('edenai-masked-key');
+      if (maskedEl) {
+        maskedEl.textContent = st.maskedKey || 'No API key configured';
+      }
+      if ($('edenai-enabled')) {
+        $('edenai-enabled').value = String(st.enabled !== false);
+      }
+      if ($('edenai-spending-policy')) {
+        $('edenai-spending-policy').value = st.spendingPolicy || 'allow_all';
+      }
+
+      edenAiCachedModels = st.models || [];
+      renderEdenAiModels(edenAiCachedModels);
+      populateEdenAiTestSelects(edenAiCachedModels);
+
+      // Render usage stats
+      const usageEl = $('edenai-usage');
+      if (usageEl && st.usage) {
+        const u = st.usage;
+        const b = u.byCapability || {};
+        usageEl.innerHTML = `<strong>Total Requests:</strong> ${u.requests || 0} (Failures: ${u.failures || 0}) · ` +
+          `<strong>Tokens:</strong> In: ${(u.inputTokens || 0).toLocaleString()} · Out: ${(u.outputTokens || 0).toLocaleString()} · Total: ${(u.totalTokens || 0).toLocaleString()}<br>` +
+          `<small class="muted" style="display:inline-block;margin-top:4px">By Capability: Text (${b.text?.requests || 0} reqs, ${b.text?.tokens || 0} tok) · Images (${b.image?.images || 0} generated) · Video (${b.video?.jobs || 0} jobs)</small>`;
+      }
+
+      // Render recent errors
+      const errList = $('edenai-errors');
+      if (errList) {
+        errList.replaceChildren();
+        const errs = st.recentErrors || [];
+        if (!errs.length) {
+          rowItem(errList, 'No recent errors', 'All requests operating normally.', orBadge('Clear', true));
+        } else {
+          errs.slice(0, 10).forEach(e => {
+            rowItem(errList, `${e.code} (${e.status || 500})`, `${e.message} · ${profileTimeAgo(e.timestamp) || e.timestamp}`, orBadge('Error', false));
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load Eden AI settings:', err);
+    }
+  }
+
+  function populateEdenAiTestSelects(models) {
+    const textSel = $('edenai-test-text-model');
+    const imgSel = $('edenai-test-image-model');
+    const vidSel = $('edenai-test-video-model');
+
+    if (textSel) {
+      textSel.innerHTML = '';
+      const textModels = models.filter(m => m.category === 'Text Generation' || m.task === 'text-generation');
+      (textModels.length ? textModels : [{ id: 'openai/gpt-4o-mini', name: 'GPT-4o Mini (OpenAI)' }]).forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = `${m.name || m.id}`;
+        textSel.appendChild(opt);
+      });
+    }
+
+    if (imgSel) {
+      imgSel.innerHTML = '';
+      const imgModels = models.filter(m => m.category === 'Image Generation' || m.task === 'text-to-image');
+      (imgModels.length ? imgModels : [{ id: 'stabilityai/sd3.5-medium', name: 'Stable Diffusion 3.5 Medium' }]).forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = `${m.name || m.id}`;
+        imgSel.appendChild(opt);
+      });
+    }
+
+    if (vidSel) {
+      vidSel.innerHTML = '';
+      const vidModels = models.filter(m => m.category === 'Video Generation' || m.task === 'text-to-video');
+      (vidModels.length ? vidModels : [{ id: 'bytedance/dreamina-seedance-2-0-fast-260128', name: 'Dreamina Seedance 2.0 Fast' }]).forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = `${m.name || m.id}`;
+        vidSel.appendChild(opt);
+      });
+    }
+  }
+
+  function renderEdenAiModels(models) {
+    const tbody = $('edenai-models');
+    if (!tbody) return;
+    tbody.replaceChildren();
+
+    const filter = ($('edenai-model-filter') && $('edenai-model-filter').value) || 'all';
+    const filtered = models.filter(m => {
+      if (filter === 'all') return true;
+      if (filter === 'text') return m.category === 'Text Generation' || m.task === 'text-generation';
+      if (filter === 'image') return m.category === 'Image Generation' || m.task === 'text-to-image';
+      if (filter === 'video') return m.category === 'Video Generation' || m.task === 'text-to-video';
+      return true;
+    });
+
+    if (!filtered.length) {
+      const row = document.createElement('tr');
+      const cell = document.createElement('td');
+      cell.colSpan = 7;
+      cell.textContent = 'No models match the selected filter. Click "Discover / Refresh models" to query Eden AI.';
+      cell.style.color = '#94a3b8';
+      cell.style.padding = '14px';
+      row.appendChild(cell);
+      tbody.appendChild(row);
+      return;
+    }
+
+    filtered.forEach(m => {
+      const row = document.createElement('tr');
+
+      // Model Name & ID
+      const nameTd = document.createElement('td');
+      nameTd.innerHTML = `<strong>${esc(m.name || m.id)}</strong><br><small style="color:#94a3b8">${esc(m.id)}</small>`;
+      row.appendChild(nameTd);
+
+      // Capability
+      const capTd = document.createElement('td');
+      const capPill = document.createElement('span');
+      const isImg = m.category === 'Image Generation' || m.task === 'text-to-image';
+      const isVid = m.category === 'Video Generation' || m.task === 'text-to-video';
+      capPill.className = 'pill ' + (isVid ? 'warn' : (isImg ? 'ok' : 'info'));
+      capPill.textContent = isVid ? '🎬 Video' : (isImg ? '🎨 Image' : '📝 Text');
+      capTd.appendChild(capPill);
+      row.appendChild(capTd);
+
+      // Subprovider
+      td(row, m.subprovider || 'edenai');
+
+      // Context / Limits
+      td(row, m.contextWindow ? `${m.contextWindow.toLocaleString()} tokens` : 'Standard');
+
+      // Pricing
+      td(row, m.pricing || 'Standard');
+
+      // Status
+      const statusTd = document.createElement('td');
+      const stBadge = document.createElement('span');
+      stBadge.className = 'pill ' + (m.enabled ? 'ok' : 'no');
+      stBadge.textContent = m.enabled ? 'Enabled' : 'Disabled';
+      statusTd.appendChild(stBadge);
+      row.appendChild(statusTd);
+
+      // Action switch
+      const actionTd = document.createElement('td');
+      const toggleBtn = document.createElement('button');
+      toggleBtn.type = 'button';
+      toggleBtn.textContent = m.enabled ? 'Disable' : 'Enable';
+      toggleBtn.style.padding = '4px 10px';
+      toggleBtn.style.fontSize = '12px';
+      toggleBtn.style.background = m.enabled ? '#231b2b' : '#162822';
+      toggleBtn.style.border = '1px solid ' + (m.enabled ? '#532d5e' : '#225540');
+      toggleBtn.style.color = m.enabled ? '#f3a6ff' : '#4ade80';
+      toggleBtn.style.borderRadius = '5px';
+      toggleBtn.style.cursor = 'pointer';
+
+      toggleBtn.addEventListener('click', async () => {
+        toggleBtn.disabled = true;
+        try {
+          await request(`/api/admin/edenai/models/${encodeURIComponent(m.id)}`, 'PUT', { enabled: !m.enabled });
+          await loadEdenAI();
+        } catch (e) {
+          alert(`Failed to update model status: ${e.message}`);
+        } finally {
+          toggleBtn.disabled = false;
+        }
+      });
+      actionTd.appendChild(toggleBtn);
+      row.appendChild(actionTd);
+
+      tbody.appendChild(row);
+    });
+  }
+
+  $('edenai-key-eye')?.addEventListener('click', () => {
+    const inp = $('edenai-key-input');
+    if (inp) inp.type = inp.type === 'password' ? 'text' : 'password';
+  });
+
+  $('edenai-settings-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const key = $('edenai-key-input').value.trim();
+    const enabled = $('edenai-enabled').value === 'true';
+    const spendingPolicy = $('edenai-spending-policy').value;
+    try {
+      if (key) {
+        await request('/api/admin/edenai/key', 'POST', { key });
+        $('edenai-key-input').value = '';
+      }
+      await request('/api/admin/edenai', 'PUT', { enabled, spendingPolicy });
+      alert('Eden AI settings saved successfully.');
+      await loadEdenAI();
+    } catch (err) {
+      alert(`Could not save Eden AI settings: ${err.message}`);
+    }
+  });
+
+  $('edenai-delete-key')?.addEventListener('click', async () => {
+    if (!confirm('Are you sure you want to remove the Eden AI API key?')) return;
+    try {
+      await request('/api/admin/edenai/key', 'DELETE', {});
+      alert('Eden AI API key removed.');
+      await loadEdenAI();
+    } catch (err) {
+      alert(`Could not remove key: ${err.message}`);
+    }
+  });
+
+  $('edenai-test-connection')?.addEventListener('click', async () => {
+    const btn = $('edenai-test-connection');
+    btn.disabled = true;
+    btn.textContent = 'Testing...';
+    try {
+      const res = await request('/api/admin/edenai/connection', 'POST', {});
+      const r = (res && res.data && res.data.result) || res.result || {};
+      alert(r.ok ? `✓ Eden AI connection successful (${r.durationMs || 0}ms)\n${r.message || ''}` : `✗ Connection failed: ${r.error || r.message}`);
+      await loadEdenAI();
+    } catch (err) {
+      alert(`Eden AI connection test failed: ${err.message}`);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Test connection';
+    }
+  });
+
+  $('edenai-refresh-models')?.addEventListener('click', async () => {
+    const btn = $('edenai-refresh-models');
+    btn.disabled = true;
+    btn.textContent = 'Discovering...';
+    try {
+      const res = await request('/api/admin/edenai/refresh', 'POST', {});
+      const r = (res && res.data) || res || {};
+      alert(r.success ? `✓ Model catalogue refreshed! (${r.count || 0} models discovered)` : `✗ Refresh notice: ${r.error || 'Failed'}`);
+      await loadEdenAI();
+    } catch (err) {
+      alert(`Eden AI model refresh failed: ${err.message}`);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Discover / Refresh models';
+    }
+  });
+
+  $('edenai-model-filter')?.addEventListener('change', () => {
+    renderEdenAiModels(edenAiCachedModels);
+  });
+
+  // Stage A: Text Test
+  $('edenai-test-text-btn')?.addEventListener('click', async () => {
+    const btn = $('edenai-test-text-btn');
+    const out = $('edenai-test-text-result');
+    const model = $('edenai-test-text-model').value;
+    const prompt = $('edenai-test-text-prompt').value.trim();
+
+    btn.disabled = true;
+    btn.textContent = 'Running test...';
+    out.style.display = 'block';
+    out.innerHTML = '<span class="think">Sending text prompt to Eden AI...</span>';
+
+    try {
+      const res = await request('/api/admin/edenai/test-text', 'POST', { model, prompt });
+      const r = (res && res.data && res.data.result) || res.result || {};
+      if (r.ok) {
+        out.innerHTML = `<span style="color:#4ade80;font-weight:600">✓ Text Test Passed (${r.durationMs}ms)</span><br>` +
+          `<small style="color:#94a3b8">Model: ${esc(r.model)} · Tokens: In ${r.usage?.inputTokens || 0}, Out ${r.usage?.outputTokens || 0}, Total ${r.usage?.totalTokens || 0}</small><br>` +
+          `<div style="margin-top:6px;padding:6px;background:#0f172a;border-radius:4px;border:1px solid #1e293b">${esc(r.output || '')}</div>`;
+      } else {
+        out.innerHTML = `<span style="color:#f87171;font-weight:600">✗ Text Test Failed</span><br><small style="color:#fca5a5">${esc(r.error || r.message || 'Unknown error')}</small>`;
+      }
+    } catch (err) {
+      out.innerHTML = `<span style="color:#f87171;font-weight:600">✗ Request Error</span><br><small style="color:#fca5a5">${esc(err.message)}</small>`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Run Text Test';
+      loadEdenAI();
+    }
+  });
+
+  // Stage B: Image Test
+  $('edenai-test-image-btn')?.addEventListener('click', async () => {
+    const btn = $('edenai-test-image-btn');
+    const out = $('edenai-test-image-result');
+    const model = $('edenai-test-image-model').value;
+    const prompt = $('edenai-test-image-prompt').value.trim();
+
+    btn.disabled = true;
+    btn.textContent = 'Generating...';
+    out.style.display = 'block';
+    out.innerHTML = '<span class="think">Submitting image generation request...</span>';
+
+    try {
+      const res = await request('/api/admin/edenai/test-image', 'POST', { model, prompt });
+      const r = (res && res.data && res.data.result) || res.result || {};
+      if (r.ok && (r.dataUrl || r.imageUrl)) {
+        out.innerHTML = `<span style="color:#4ade80;font-weight:600">✓ Image Test Passed (${r.durationMs}ms)</span><br>` +
+          `<small style="color:#94a3b8">Model: ${esc(r.model)}</small><br>` +
+          `<div style="margin-top:6px;text-align:center"><img src="${r.dataUrl || r.imageUrl}" style="max-width:100%;max-height:220px;border-radius:6px;border:1px solid #2d3b55"></div>`;
+      } else {
+        out.innerHTML = `<span style="color:#f87171;font-weight:600">✗ Image Test Failed</span><br><small style="color:#fca5a5">${esc(r.error || r.message || 'Image generation failed')}</small>`;
+      }
+    } catch (err) {
+      out.innerHTML = `<span style="color:#f87171;font-weight:600">✗ Request Error</span><br><small style="color:#fca5a5">${esc(err.message)}</small>`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Run Image Test';
+      loadEdenAI();
+    }
+  });
+
+  // Stage C: Video Test
+  $('edenai-test-video-btn')?.addEventListener('click', async () => {
+    const btn = $('edenai-test-video-btn');
+    const out = $('edenai-test-video-result');
+    const model = $('edenai-test-video-model').value;
+    const prompt = $('edenai-test-video-prompt').value.trim();
+
+    btn.disabled = true;
+    btn.textContent = 'Checking video...';
+    out.style.display = 'block';
+    out.innerHTML = '<span class="think">Checking video model availability and job submission...</span>';
+
+    try {
+      const res = await request('/api/admin/edenai/test-video', 'POST', { model, prompt });
+      const r = (res && res.data && res.data.result) || res.result || {};
+      if (r.ok && r.jobId) {
+        out.innerHTML = `<span style="color:#4ade80;font-weight:600">✓ Video Job Created (${r.durationMs}ms)</span><br>` +
+          `<small style="color:#94a3b8">Model: ${esc(r.model)} · Job ID: <code>${esc(r.jobId)}</code> · Status: <strong>${esc(r.status || 'queued')}</strong></small><br>` +
+          `<small class="muted" style="margin-top:4px;display:inline-block">Job is processing asynchronously in Eden AI queue.</small>`;
+      } else if (r.supported === false) {
+        out.innerHTML = `<span style="color:#f59e0b;font-weight:600">⚠ Video Generation Notice</span><br><small style="color:#fde68a">Video generation is not supported by this configuration.</small>`;
+      } else {
+        out.innerHTML = `<span style="color:#f87171;font-weight:600">✗ Video Test Failed</span><br><small style="color:#fca5a5">${esc(r.error || r.message || 'Failed')}</small>`;
+      }
+    } catch (err) {
+      out.innerHTML = `<span style="color:#f87171;font-weight:600">✗ Request Error</span><br><small style="color:#fca5a5">${esc(err.message)}</small>`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Run Video Test';
+      loadEdenAI();
     }
   });
 

@@ -36,6 +36,10 @@ function createPollinationsProvider({ HttpError, env = process.env, fetchImpl = 
   let lastTestResult = null;
   let lastFreeRequestTime = 0;
 
+  function getEffectiveApiKey() {
+    return (customApiKey || env.POLLINATIONS_API_KEY || process.env.POLLINATIONS_API_KEY || '').trim();
+  }
+
   function configured() {
     // Pollinations free image generation works with or without an API key
     return true;
@@ -51,12 +55,17 @@ function createPollinationsProvider({ HttpError, env = process.env, fetchImpl = 
 
   function setApiKey(key) {
     customApiKey = String(key || '').trim();
-    if (customApiKey) env.POLLINATIONS_API_KEY = customApiKey;
-    else delete env.POLLINATIONS_API_KEY;
+    if (customApiKey) {
+      env.POLLINATIONS_API_KEY = customApiKey;
+      process.env.POLLINATIONS_API_KEY = customApiKey;
+    } else {
+      delete env.POLLINATIONS_API_KEY;
+      delete process.env.POLLINATIONS_API_KEY;
+    }
   }
 
   function getApiKey() {
-    return customApiKey;
+    return getEffectiveApiKey();
   }
 
   function catalogEntries() {
@@ -101,6 +110,8 @@ function createPollinationsProvider({ HttpError, env = process.env, fetchImpl = 
     const cleanPrompt = String(prompt || '').trim() || 'A modern futuristic cityscape at sunrise, 4k ultra-detailed';
     const chosenModel = String(model || 'flux').replace(/^pollinations\//, '').trim();
 
+    const activeKey = getEffectiveApiKey();
+
     const params = new URLSearchParams({
       width: String(Math.min(2048, Math.max(256, Number(width) || 1024))),
       height: String(Math.min(2048, Math.max(256, Number(height) || 1024))),
@@ -108,7 +119,7 @@ function createPollinationsProvider({ HttpError, env = process.env, fetchImpl = 
       nologo: 'true',
     });
     if (seed) params.set('seed', String(seed));
-    if (customApiKey) params.set('key', customApiKey);
+    if (activeKey) params.set('key', activeKey);
 
     const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?${params.toString()}`;
 
@@ -116,7 +127,7 @@ function createPollinationsProvider({ HttpError, env = process.env, fetchImpl = 
     const combined = signal ? (typeof AbortSignal.any === 'function' ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal) : timeoutSignal;
 
     // In free tier (no API key configured), enforce IP cooldown before sending request to prevent 402 errors
-    if (!customApiKey && !_isRetry && autoWait && lastFreeRequestTime > 0) {
+    if (!activeKey && !_isRetry && autoWait && lastFreeRequestTime > 0) {
       const elapsed = Date.now() - lastFreeRequestTime;
       const cooldownMs = 45000;
       if (elapsed < cooldownMs) {
@@ -129,12 +140,16 @@ function createPollinationsProvider({ HttpError, env = process.env, fetchImpl = 
     const started = Date.now();
     let res;
     try {
+      const headers = {
+        'Accept': 'image/jpeg,image/png,image/*;q=0.8',
+        'User-Agent': 'Photon-AI-Image-Client/2.0',
+      };
+      if (activeKey) {
+        headers['Authorization'] = `Bearer ${activeKey}`;
+      }
       res = await fetchImpl(imageUrl, {
         method: 'GET',
-        headers: {
-          'Accept': 'image/jpeg,image/png,image/*;q=0.8',
-          'User-Agent': 'Photon-AI-Image-Client/2.0',
-        },
+        headers,
         signal: combined,
       });
     } catch (err) {
@@ -252,13 +267,14 @@ function createPollinationsProvider({ HttpError, env = process.env, fetchImpl = 
   }
 
   function status() {
+    const activeKey = getEffectiveApiKey();
     return {
       provider: 'Pollinations AI',
       providerId: 'pollinations',
       enabled: isEnabled,
       configured: true,
-      hasCustomKey: Boolean(customApiKey),
-      maskedKey: customApiKey ? maskKey(customApiKey) : 'None (Using Free Public Tier)',
+      hasCustomKey: Boolean(activeKey),
+      maskedKey: activeKey ? maskKey(activeKey) : 'None (Using Free Public Tier)',
       models: DEFAULT_IMAGE_MODELS,
       lastTestResult,
       isFree: true,

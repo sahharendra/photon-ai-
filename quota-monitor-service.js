@@ -120,6 +120,7 @@ function normalizeProviderName(name) {
   if (s.includes('cohere')) return 'cohere';
   if (s.includes('stability')) return 'stability';
   if (s.includes('pollinations')) return 'pollinations';
+  if (s.includes('edenai') || s.includes('eden ai') || s.includes('eden')) return 'edenai';
   if (s.includes('openai')) return 'openai';
   if (s.includes('anthropic') || s.includes('claude')) return 'anthropic';
   if (s.includes('codecraft')) return 'codecraft';
@@ -138,6 +139,7 @@ function displayProviderName(norm) {
     case 'cohere': return 'Cohere';
     case 'stability': return 'Stability AI';
     case 'pollinations': return 'Pollinations AI';
+    case 'edenai': return 'Eden AI';
     case 'openai': return 'OpenAI';
     case 'anthropic': return 'Anthropic';
     case 'codecraft': return 'CodeCraft';
@@ -545,6 +547,40 @@ class StabilityAiQuotaAdapter extends BaseQuotaAdapter {
   }
 }
 
+class EdenAiQuotaAdapter extends BaseQuotaAdapter {
+  constructor() { super('edenai'); }
+
+  classifyError(opts = {}) {
+    const { status, message = '' } = opts;
+    const msg = String(message).toLowerCase();
+    if (status === 401 || status === 403 || msg.includes('unauthorized') || msg.includes('invalid_api_key')) {
+      return {
+        status: STATUS_INVALID_KEY,
+        scope: 'key',
+        reason: 'Eden AI API key is invalid or unauthorized.',
+        resetAt: null,
+      };
+    }
+    if (status === 402 || msg.includes('insufficient_credits') || msg.includes('insufficient credits') || msg.includes('credit')) {
+      return {
+        status: STATUS_INSUFFICIENT_CREDITS,
+        scope: 'provider',
+        reason: 'Eden AI account has insufficient credits.',
+        resetAt: null,
+      };
+    }
+    if (status === 429 || msg.includes('rate_limit') || msg.includes('rate limit')) {
+      return {
+        status: STATUS_RATE_LIMITED,
+        scope: 'provider',
+        reason: 'Eden AI rate limit reached. Resets in 60 seconds.',
+        resetAt: Date.now() + 60000,
+      };
+    }
+    return super.classifyError(opts);
+  }
+}
+
 class PollinationsAiQuotaAdapter extends BaseQuotaAdapter {
   constructor() { super('pollinations'); }
 
@@ -695,6 +731,7 @@ function createQuotaMonitorService({ dir = process.cwd(), env = process.env, log
     cohere: new CohereQuotaAdapter(),
     stability: new StabilityAiQuotaAdapter(),
     pollinations: new PollinationsAiQuotaAdapter(),
+    edenai: new EdenAiQuotaAdapter(),
     openai: new OpenAiQuotaAdapter(),
     anthropic: new AnthropicQuotaAdapter(),
     codecraft: new CodeCraftQuotaAdapter(),
@@ -1353,6 +1390,7 @@ module.exports = {
   CohereQuotaAdapter,
   StabilityAiQuotaAdapter,
   PollinationsAiQuotaAdapter,
+  EdenAiQuotaAdapter,
   OpenAiQuotaAdapter,
   AnthropicQuotaAdapter,
   CodeCraftQuotaAdapter,
