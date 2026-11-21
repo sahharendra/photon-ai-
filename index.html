@@ -613,7 +613,7 @@ textarea::placeholder{color:var(--mute)}
   <input class="chat-search-input" id="chat-search-input" type="search" placeholder="Search conversations..." aria-label="Search conversations" hidden>
   <button class="sb" id="upg">Upgrade</button>
   <button class="sb" id="proj">Projects</button>
-  <!-- Artifacts hidden to match original UI --><button class="sb" id="art" style="display:none;">Artifacts</button>
+  <button class="sb" id="art">Artifacts</button>
   <div class="lbl" id="rl">Recent Conversation</div>
   <div id="list"></div>
   <button class="tk" id="tk" title="View usage" aria-label="View token usage"><div class="tkr"><span>Tokens today</span><b id="tkt">0 / 0 tokens</b></div><div class="tkbar"><i id="tkb"></i></div></button>
@@ -1093,7 +1093,7 @@ function renderArtifactDashboard(artifacts){
       var id=btn.dataset.dlZip;
       try{
         var auth=await ensureFirebaseAuth();
-        var token=await auth.currentUser.getIdToken();
+        var token=auth&&auth.currentUser?await auth.currentUser.getIdToken():"";
         var r=await fetch('/api/artifacts/'+id+'/export',{headers:{'Authorization':'Bearer '+token}});
         if(!r.ok)throw new Error("Export failed");
         var blob=await r.blob();
@@ -1336,7 +1336,7 @@ function openArtifactEditor(art){
           close();
           try{
             var auth=await ensureFirebaseAuth();
-            var token=await auth.currentUser.getIdToken();
+            var token=auth&&auth.currentUser?await auth.currentUser.getIdToken():"";
             var r=await fetch('/api/artifacts/'+art.id+'/export',{headers:{'Authorization':'Bearer '+token}});
             if(!r.ok)throw new Error("ZIP export failed");
             var blob=await r.blob();
