@@ -209,7 +209,7 @@ textarea::placeholder{color:var(--mute)}
 .act button:hover{background:#2b2b2b;color:var(--ink);border-color:rgba(227,219,204,.35)}
 .media{margin:0;max-width:640px;overflow:hidden;position:relative;border-radius:4px}
 .media img{width:100%;display:block;border-radius:3px;background:#0d0d0d;border:1px solid rgba(227,219,204,.2)}
-.media img:not([data-cleaned="true"]){margin-bottom:-46px;clip-path:inset(0 0 46px 0)}
+.media img:not([data-cleaned="true"]){margin-bottom:-62px;clip-path:inset(0 0 62px 0)}
 .media img[data-cleaned="true"]{margin-bottom:0;clip-path:none}
 .media figcaption{font-size:11px;color:var(--mute);margin-top:5px}
 #vo{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:rgba(22,22,22,.95);border:1px solid rgba(227,219,204,.25);border-radius:3px;padding:8px 12px 8px 16px;display:none;align-items:center;gap:12px;z-index:7;font-size:12px;box-shadow:0 10px 40px rgba(0,0,0,.8),0 0 20px rgba(227,219,204,.12);backdrop-filter:blur(10px)}
@@ -588,17 +588,49 @@ textarea::placeholder{color:var(--mute)}
 .art-traffic-light.green{background:#10b981}
 .art-browser-url{flex:1;max-width:440px;background:#0b0b10;border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:3px 10px;font-size:11.5px;color:#8f91a8;display:flex;align-items:center;gap:6px;font-family:ui-monospace,monospace}
 .art-frame{width:100%;flex:1;border:0;display:block;background:#fff}
-.art-ws-copilot{width:330px;background:#0d0d12;border-left:1px solid rgba(255,255,255,0.06);display:flex;flex-direction:column;flex-shrink:0}
-.art-copilot-tabs{display:flex;border-bottom:1px solid rgba(255,255,255,0.06);background:rgba(18,18,26,0.9)}
-.art-copilot-tab{flex:1;text-align:center;padding:12px;font-size:12px;font-weight:600;color:#787994;cursor:pointer;border-bottom:2px solid transparent;background:none;border-left:0;border-right:0;border-top:0}
-.art-copilot-tab.on{color:#fff;border-bottom-color:#6366f1}
-.art-copilot-body{flex:1;padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
-.art-prompt{width:100%;background:#13131c;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:14px;color:#fff;font-family:inherit;font-size:13.5px;resize:vertical;min-height:92px;outline:0;transition:all .2s;box-shadow:inset 0 2px 6px rgba(0,0,0,0.3)}
-.art-prompt:focus{border-color:#6366f1;box-shadow:0 0 0 1px #6366f1,0 0 20px rgba(99,102,241,0.25)}
-.art-pills{display:flex;flex-wrap:wrap;gap:6px}
-.art-pill{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#a0a2b8;font-size:11.5px;padding:5px 11px;border-radius:99px;cursor:pointer;transition:all .18s;display:inline-flex;align-items:center;gap:5px}
+.art-ws-copilot{width:440px;max-width:500px;background:#09090d;border-left:1px solid rgba(255,255,255,0.08);display:flex;flex-direction:column;flex-shrink:0;position:relative}
+.art-copilot-tabs{display:flex;border-bottom:1px solid rgba(255,255,255,0.08);background:#0e0e15}
+.art-copilot-tab{flex:1;text-align:center;padding:12px;font-size:12.5px;font-weight:600;color:#787994;cursor:pointer;border-bottom:2px solid transparent;background:none;border-left:0;border-right:0;border-top:0;transition:all .15s}
+.art-copilot-tab.on{color:#fff;border-bottom-color:#6366f1;background:rgba(99,102,241,0.05)}
+.art-copilot-body{flex:1;display:flex;flex-direction:column;min-height:0;background:#09090d}
+.art-chat-feed{flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:14px;scroll-behavior:smooth}
+.art-chat-msg{display:flex;flex-direction:column;gap:5px;max-width:100%}
+.art-chat-msg.user{align-items:flex-end}
+.art-chat-msg.assistant{align-items:flex-start}
+.art-chat-author{font-size:11px;font-weight:600;color:#787994;display:flex;align-items:center;gap:6px;padding:0 4px}
+.art-ver-pill{font-size:10px;padding:1px 6px;border-radius:4px;background:rgba(99,102,241,0.2);color:#a5b4fc;font-weight:700}
+.art-chat-bubble{padding:12px 14px;border-radius:12px;font-size:13px;line-height:1.6;max-width:92%;word-break:break-word}
+.art-chat-msg.user .art-chat-bubble{background:linear-gradient(135deg,rgba(99,102,241,0.22),rgba(139,92,246,0.18));border:1px solid rgba(99,102,241,0.32);color:#f8fafc;border-top-right-radius:2px}
+.art-chat-msg.assistant .art-chat-bubble{background:#12121a;border:1px solid rgba(255,255,255,0.08);color:#e2e2ec;border-top-left-radius:2px;box-shadow:0 4px 16px rgba(0,0,0,0.35)}
+.art-chat-bubble p{margin:0 0 8px}
+.art-chat-bubble p:last-child{margin-bottom:0}
+.art-chat-bubble code{background:rgba(255,255,255,0.08);color:#a5b4fc;padding:2px 5px;border-radius:4px;font-family:ui-monospace,monospace;font-size:12px}
+.art-chat-bubble ul,.art-chat-bubble ol{margin:4px 0 8px 18px;padding:0}
+.art-chat-bubble li{margin-bottom:4px}
+.art-files-badge{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06)}
+.art-file-pill{font-size:11px;background:rgba(99,102,241,0.12);color:#a5b4fc;border:1px solid rgba(99,102,241,0.25);border-radius:6px;padding:3px 8px;display:inline-flex;align-items:center;gap:5px;cursor:pointer}
+.art-file-pill:hover{background:rgba(99,102,241,0.25);color:#fff}
+.art-chat-actions{display:flex;align-items:center;gap:6px;margin-top:2px;padding:0 4px}
+.art-chat-act{background:none;border:0;color:#6b6c84;font-size:11.5px;padding:3px 6px;border-radius:4px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:all .15s}
+.art-chat-act:hover{background:rgba(255,255,255,0.08);color:#cbd5e1}
+.art-chat-footer{display:flex;flex-direction:column;gap:8px;padding:10px 14px 14px;background:#09090d;border-top:1px solid rgba(255,255,255,0.06);flex-shrink:0}
+.art-chat-pills{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.art-chat-pills::-webkit-scrollbar{display:none}
+.art-pill{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#a0a2b8;font-size:11px;padding:4px 10px;border-radius:99px;cursor:pointer;transition:all .18s;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
 .art-pill:hover{background:rgba(99,102,241,0.15);color:#fff;border-color:rgba(99,102,241,0.35);transform:translateY(-1px)}
-.art-pill.on{background:rgba(99,102,241,0.2);color:#fff;border-color:#6366f1;font-weight:600;box-shadow:0 2px 10px rgba(99,102,241,0.3)}
+.art-composer-box{background:#111118;border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;box-shadow:0 8px 24px rgba(0,0,0,0.5);transition:border-color .2s}
+.art-composer-box:focus-within{border-color:#6366f1;box-shadow:0 0 0 1px #6366f1,0 8px 28px rgba(99,102,241,0.2)}
+.art-composer-textarea{background:transparent;border:0;color:#fff;font-family:inherit;font-size:13px;line-height:1.5;min-height:54px;max-height:120px;resize:none;outline:0;width:100%}
+.art-composer-textarea::placeholder{color:#64748b}
+.art-composer-bar{display:flex;align-items:center;justify-content:space-between;padding-top:2px}
+.art-composer-bar-l{display:flex;align-items:center;gap:8px}
+.art-composer-bar-r{display:flex;align-items:center;gap:8px}
+.art-composer-btn{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:#94a3b8;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .15s}
+.art-composer-btn:hover{background:rgba(255,255,255,0.1);color:#fff}
+.art-composer-send{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#6366f1);border:0;color:#fff;font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .15s,filter .15s;box-shadow:0 2px 10px rgba(99,102,241,0.4);font-weight:700}
+.art-composer-send:hover{filter:brightness(1.15);transform:scale(1.05)}
+.art-composer-send:disabled{opacity:.4;cursor:default;transform:none}
+.art-cost-hint{font-size:10.5px;color:#64748b}
 .art-versions{flex:1;overflow-y:auto;padding:12px}
 .art-ver-card{background:#13131c;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:12px;margin-bottom:10px;transition:all .18s}
 .art-ver-card:hover{border-color:rgba(99,102,241,0.35);transform:translateY(-1px)}
@@ -762,7 +794,7 @@ function cleanImageWatermark(dataUrl){
         var w=img.naturalWidth||img.width;
         var h=img.naturalHeight||img.height;
         if(!w||!h||h<100)return resolve(dataUrl);
-        var cropPx=Math.min(68,Math.max(42,Math.round(h*0.048)));
+        var cropPx=Math.min(84,Math.max(56,Math.round(h*0.072)));
         var targetH=h-cropPx;
         var canvas=document.createElement("canvas");
         canvas.width=w;
@@ -898,6 +930,10 @@ function svgToMp4(svg,onProg){return new Promise(function(res,rej){
 function dataUri(svg){return"data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg)}
 function addRow(role,text,m,i){var r=document.createElement("div");r.className="row "+(role==="user"?"u":"a");if(i!=null)r.dataset.i=i;var b=document.createElement("div");b.className="b";
   if(role==="user"){b.textContent=text;if(m&&m.attachments&&m.attachments.length){var files=document.createElement("div");files.className="file-attachments";m.attachments.forEach(function(f){var isImg=(f.mimeType&&f.mimeType.startsWith("image/"))||(/\.(png|jpe?g|webp|gif|svg)$/i.test(f.name)),imgSrc=f.preview||f.dataUrl||(f.kind==="inline"&&f.data?("data:"+(f.mimeType||"image/png")+";base64,"+f.data):"");if(isImg&&!imgSrc&&f.id){getAttachmentData(f.id).then(function(saved){if(saved&&(saved.preview||saved.dataUrl||saved.data)){f.preview=saved.preview||saved.dataUrl;f.dataUrl=saved.dataUrl;f.data=saved.data;if(b.isConnected)render()}})}if(isImg&&imgSrc){var card=document.createElement("div");card.className="chat-att-img-card";var img=document.createElement("img");img.src=imgSrc;img.alt=f.name;img.title="Click to view "+f.name;img.onclick=function(){previewChatImage(f)};var info=document.createElement("div");info.className="chat-att-img-info";var n=document.createElement("span");n.textContent=f.name;n.title=f.name;var dl=document.createElement("button");dl.type="button";dl.textContent="⬇ Download";dl.onclick=function(e){e.stopPropagation();downloadChatAttachment(f)};info.append(n,dl);card.append(img,info);files.appendChild(card)}else{var chip=document.createElement("div");chip.className="chat-att-chip";var n=document.createElement("span");n.textContent="📎 "+f.name+(f.size?" ("+(f.size<1024?f.size+" B":(f.size/1024).toFixed(0)+" KB")+")":"");n.title=f.name;var dl=document.createElement("button");dl.type="button";dl.textContent="⬇ Download";dl.onclick=function(e){e.stopPropagation();downloadChatAttachment(f)};chip.append(n,dl);files.appendChild(chip)}});b.appendChild(files)}}
+  else if(m&&(m.videoUrl||m.video)){
+    var vSrc=m.videoUrl||m.video;
+    b.innerHTML='<figure class="media video-media"><video controls autoplay loop playsinline src="'+esc(vSrc)+'" style="width:100%;border-radius:4px;background:#000;display:block"></video><div class="act"><button data-dl>Download MP4</button></div><figcaption>Video · '+esc(m.prompt||"")+'</figcaption></figure>';
+  }
   else if(m&&(m.svg||m.image)){
     var imgSrc=m.image||dataUri(m.svg);
     var isClean = Boolean(m.cleaned);
@@ -1596,6 +1632,46 @@ function openArtifactEditor(art){
       '</div>';
     }).reverse().join('');
 
+    var chatMessages = Array.isArray(art.chatHistory) && art.chatHistory.length ? art.chatHistory : [
+      {
+        role: 'assistant',
+        content: 'Hello! I am your Photon AI Copilot. Ask me to make changes, build features, add components, or fix styling for **' + esc(art.title || 'this project') + '**.',
+        timestamp: art.createdAt || new Date().toISOString()
+      }
+    ];
+
+    var chatFeedHtml = chatMessages.map(function(msg, mIdx){
+      var isUsr = msg.role === 'user';
+      if(isUsr){
+        return '<div class="art-chat-msg user">' +
+          '<div class="art-chat-author">You</div>' +
+          '<div class="art-chat-bubble">' + esc(msg.content) + '</div>' +
+        '</div>';
+      }
+      var filesHtml = '';
+      if(Array.isArray(msg.modifiedFiles) && msg.modifiedFiles.length){
+        filesHtml = '<div class="art-files-badge">' +
+          msg.modifiedFiles.map(function(fn){
+            return '<span class="art-file-pill" data-open-f="'+esc(fn)+'">📄 '+esc(fn)+'</span>';
+          }).join('') +
+        '</div>';
+      }
+      var verBadge = msg.version ? '<span class="art-ver-pill">v' + msg.version + '</span>' : '';
+      return '<div class="art-chat-msg assistant">' +
+        '<div class="art-chat-author">✨ Photon Copilot ' + verBadge + '</div>' +
+        '<div class="art-chat-bubble">' +
+          md(msg.content || msg.summary || 'Updated project deliverable.') +
+          filesHtml +
+        '</div>' +
+        '<div class="art-chat-actions">' +
+          (msg.version ? '<button class="art-chat-act" data-restore-ver="'+msg.version+'" title="Restore this version">↺ Revert</button>' : '') +
+          '<button class="art-chat-act" data-copy-chat="'+mIdx+'" title="Copy response">📋 Copy</button>' +
+          '<button class="art-chat-act" data-feedback="up" title="Helpful">👍</button>' +
+          '<button class="art-chat-act" data-feedback="down" title="Not helpful">👎</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
     var html='<div class="art-ws">' +
       '<div class="art-ws-hd">' +
         '<div class="art-ws-hd-l">' +
@@ -1679,21 +1755,31 @@ function openArtifactEditor(art){
             '<button class="art-copilot-tab '+(activeRightTab==='versions'?'on':'')+'" id="rtab-versions">↺ History ('+(art.versions?.length||1)+')</button>' +
           '</div>' +
           (activeRightTab==='copilot'?'<div class="art-copilot-body">' +
-            '<label style="font-size:12px;font-weight:600;color:#bbb">Ask Photon to Edit this Code</label>' +
-            '<textarea id="awe-prompt" class="art-prompt" placeholder="e.g. Add responsive hamburger navigation, implement dark mode toggle, modernize colors with soft gradients..."></textarea>' +
-            '<div class="art-pills">' +
-              '<button class="art-pill" data-quick="Make it fully responsive for mobile and tablet devices">📱 Responsive</button>' +
-              '<button class="art-pill" data-quick="Add a clean modern dark mode theme with smooth transition">🌙 Dark Mode</button>' +
-              '<button class="art-pill" data-quick="Modernize design with clean typography, rounded cards and subtle shadows">🎨 Modern UI</button>' +
-              '<button class="art-pill" data-quick="Fix any potential JavaScript errors or styling issues">🛠 Fix Bugs</button>' +
-              '<button class="art-pill" data-quick="Add interactive hover effects and smooth fade animations">✨ Animations</button>' +
+            '<div class="art-chat-feed" id="awe-chat-feed">' +
+              chatFeedHtml +
             '</div>' +
-            '<div style="font-size:11px;color:#787994;display:flex;align-items:center;justify-content:space-between;padding:0 2px">' +
-              '<span>Charge: 50 PHOTON Tokens</span>' +
-              '<span style="color:#60a5fa">Atomic Refund on Error</span>' +
+            '<div class="art-chat-footer">' +
+              '<div class="art-chat-pills">' +
+                '<button class="art-pill" data-quick="Make it fully responsive for mobile and tablet devices">📱 Responsive</button>' +
+                '<button class="art-pill" data-quick="Add a clean modern dark mode theme with smooth transition">🌙 Dark Mode</button>' +
+                '<button class="art-pill" data-quick="Modernize design with clean typography, rounded cards and subtle shadows">🎨 Modern UI</button>' +
+                '<button class="art-pill" data-quick="Fix any potential JavaScript errors or styling issues">🛠 Fix Bugs</button>' +
+                '<button class="art-pill" data-quick="Add interactive hover effects and smooth fade animations">✨ Animations</button>' +
+              '</div>' +
+              '<div class="art-composer-box">' +
+                '<textarea id="awe-prompt" class="art-composer-textarea" rows="2" placeholder="Ask Photon to edit this code, add features, refactor components..."></textarea>' +
+                '<div class="art-composer-bar">' +
+                  '<div class="art-composer-bar-l">' +
+                    '<button class="art-composer-btn" id="awe-key-btn-sub" title="OpenRouter API Key Status"><span class="art-key-dot" id="awe-key-dot-sub"></span><span>OpenRouter</span></button>' +
+                    '<span class="art-cost-hint">⚡ 50 tokens · Auto refund</span>' +
+                  '</div>' +
+                  '<div class="art-composer-bar-r">' +
+                    '<button class="art-composer-send" id="awe-apply-ai" title="Apply AI Changes (Enter)">↑</button>' +
+                  '</div>' +
+                '</div>' +
+                '<div class="ferr" id="awe-copilot-err" style="font-size:11.5px;color:#f87171;display:none;padding-top:4px"></div>' +
+              '</div>' +
             '</div>' +
-            '<button class="art-btn pri" id="awe-apply-ai" style="margin-top:6px;padding:10px">✨ Apply AI Changes</button>' +
-            '<div class="ferr" id="awe-copilot-err" style="font-size:12px;color:#f87171"></div>' +
           '</div>':'<div class="art-versions">' +
             (versionsHtml||'<div style="padding:20px;text-align:center;color:#666">No previous versions yet.</div>') +
           '</div>') +
@@ -1865,6 +1951,58 @@ function openArtifactEditor(art){
       }).catch(function(){});
     }
 
+    if($("awe-key-btn-sub")){
+      $("awe-key-btn-sub").onclick=function(){openArtifactKeyModal();};
+      profileApi('/api/artifacts/openrouter-key').then(function(k){
+        var dot=$("awe-key-dot-sub");
+        if(dot&&k&&k.hasKey)dot.className="art-key-dot on";
+      }).catch(function(){});
+    }
+
+    // Auto-scroll chat feed to bottom
+    var feedEl=$("awe-chat-feed");
+    if(feedEl)feedEl.scrollTop=feedEl.scrollHeight;
+
+    q.querySelectorAll("[data-open-f]").forEach(function(pill){
+      pill.onclick=function(){
+        var fname=pill.dataset.openF;
+        var fIdx=currentFiles.findIndex(function(f){return f.name.toLowerCase()===fname.toLowerCase();});
+        if(fIdx!==-1){
+          activeFileIdx=fIdx;
+          drawWorkspace();
+        }
+      };
+    });
+
+    q.querySelectorAll("[data-copy-chat]").forEach(function(btn){
+      btn.onclick=function(){
+        var idx=Number(btn.dataset.copyChat);
+        var msg=chatMessages[idx];
+        if(msg&&msg.content){
+          navigator.clipboard.writeText(msg.content);
+          toast("✓ Copied response to clipboard");
+        }
+      };
+    });
+
+    q.querySelectorAll("[data-feedback]").forEach(function(btn){
+      btn.onclick=function(){
+        btn.style.color="#10b981";
+        toast("✓ Feedback submitted");
+      };
+    });
+
+    if($("awe-prompt")){
+      $("awe-prompt").onkeydown=function(e){
+        if(e.key==="Enter"&&!e.shiftKey){
+          e.preventDefault();
+          if($("awe-apply-ai")&&!$("awe-apply-ai").disabled){
+            $("awe-apply-ai").click();
+          }
+        }
+      };
+    }
+
     if($("awe-apply-ai")){
       q.querySelectorAll(".art-pill").forEach(function(pill){
         pill.onclick=function(){
@@ -1876,13 +2014,31 @@ function openArtifactEditor(art){
       $("awe-apply-ai").onclick=async function(){
         var promptVal=($("awe-prompt").value||'').trim();
         if(!promptVal){
-          $("awe-copilot-err").textContent="Please enter instructions for the AI.";
           return;
         }
-        $("awe-copilot-err").textContent="";
+        var errEl=$("awe-copilot-err");
+        if(errEl){errEl.textContent="";errEl.style.display="none";}
         var btn=$("awe-apply-ai");
         btn.disabled=true;
-        btn.textContent="Applying AI Changes (50 tokens)...";
+        btn.textContent="⏳";
+        $("awe-prompt").value="";
+
+        // Instantly display user bubble in feed
+        if(!Array.isArray(art.chatHistory))art.chatHistory=[];
+        art.chatHistory.push({
+          role:'user',
+          content:promptVal,
+          timestamp:new Date().toISOString()
+        });
+
+        var feed=$("awe-chat-feed");
+        if(feed){
+          var uHtml='<div class="art-chat-msg user"><div class="art-chat-author">You</div><div class="art-chat-bubble">'+esc(promptVal)+'</div></div>';
+          var tHtml='<div class="art-chat-msg assistant" id="awe-typing"><div class="art-chat-author">✨ Photon Copilot</div><div class="art-chat-bubble"><span class="dots">Photon is updating code...<u></u><u></u><u></u></span></div></div>';
+          feed.insertAdjacentHTML('beforeend',uHtml+tHtml);
+          feed.scrollTop=feed.scrollHeight;
+        }
+
         try{
           syncEditorToCurrentFile();
           await saveCurrentArtifact();
@@ -1898,14 +2054,18 @@ function openArtifactEditor(art){
             currentFiles=art.files||currentFiles;
           }
           drawWorkspace();
+          var newFeed=$("awe-chat-feed");
+          if(newFeed)newFeed.scrollTop=newFeed.scrollHeight;
         }catch(err){
-          $("awe-copilot-err").textContent=err.message||"Failed to apply AI changes.";
-          if(err.message&&(err.message.includes("API key")||err.message.includes("OpenRouter")||err.message.includes("model_unavailable"))){
-            openArtifactKeyModal();
+          var typingEl=$("awe-typing");
+          if(typingEl)typingEl.remove();
+          if(errEl){
+            errEl.textContent=err.message||"Failed to apply AI changes.";
+            errEl.style.display="block";
           }
-        }finally{
           btn.disabled=false;
-          btn.textContent="✨ Apply AI Changes";
+          btn.textContent="↑";
+          $("awe-prompt").value=promptVal;
         }
       };
     }
@@ -2290,6 +2450,16 @@ $("msgs").addEventListener("click",function(e){var t=e.target;if(t.closest&&t.cl
   if(t.hasAttribute&&t.hasAttribute("data-speak")&&mm){if(speaking){stopSpeak();t.textContent="🔊 Listen"}else{t.textContent="■ Stop";speak(mm.content,function(){t.textContent="🔊 Listen"})}return}
   if(t.hasAttribute&&t.hasAttribute("data-replay")){var im=row.querySelector("img");im.src="";im.src=dataUri(mm.svg);return}
   if(t.hasAttribute&&t.hasAttribute("data-dl")&&mm){(async function(){try{
+    if(mm.videoUrl||mm.video){
+      var vUrl = mm.videoUrl || mm.video;
+      var a=document.createElement("a");
+      a.href=vUrl;
+      a.download="photon-video.mp4";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      return;
+    }
     if(mm.image){
       var cleanUrl=await cleanImageWatermark(mm.image);
       var a=document.createElement("a");a.href=cleanUrl;a.download="photon-image.jpg";document.body.appendChild(a);a.click();a.remove();return;
@@ -2304,6 +2474,10 @@ if(t.hasAttribute&&t.hasAttribute("data-zipall")&&row){(async function(){try{var
 if(t.hasAttribute&&t.hasAttribute("data-copy")){var c=pre.querySelector("code").textContent;
   try{navigator.clipboard.writeText(c).then(function(){t.textContent="Copied"},function(){t.textContent="Select & copy"})}catch(x){t.textContent="Select & copy"}
   setTimeout(function(){t.textContent="Copy"},1500)}});
+async function getAuthToken(){
+  var auth=await ensureFirebaseAuth();
+  return (auth&&auth.currentUser)?await auth.currentUser.getIdToken():"";
+}
 async function photonSample(payload,opts){
   opts=opts||{};var auth=await ensureFirebaseAuth();
   if(!auth||!auth.currentUser)throw{code:"auth_required",message:"Sign in again to continue."};
@@ -2422,13 +2596,71 @@ async function send(retry){
   try{
     if(kind==="video"){
       var allM=(profileConfig&&(profileConfig.allModels||profileConfig.models))||[];
-      var hasVid=allM.some(function(m){return (m.category==="video"||m.task==="text-to-video")&&m.available!==false&&!m.creditsExhausted});
-      if(!hasVid){
-        throw {code:"no_video_provider",message:"No video generation models are currently available. Please configure a video generation provider API key in the admin panel."};
+      var activeModelId=(cur&&cur.model)||(user&&user.defaultModel)||"";
+      var activeM=allM.find(function(m){return m.id===activeModelId});
+      var chosenVidModel=activeModelId;
+      if(!activeM || (activeM.category!=="video"&&activeM.task!=="text-to-video") || activeM.available===false || activeM.creditsExhausted===true){
+        var availVid=allM.find(function(m){return (m.category==="video"||m.task==="text-to-video")&&m.available!==false&&!m.creditsExhausted&&m.configured!==false});
+        chosenVidModel=availVid?availVid.id:"agnes-video-2.5-flash";
       }
-      var r=await fetch("/api/video/generate",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+(await getAuthToken())},body:JSON.stringify({prompt:text,model:cur.model||user.defaultModel||""}),signal:ctl.signal}).then(function(res){return res.json()});
-      if(!r.success)throw {code:r.error&&r.error.code||"video_failed",message:r.error&&r.error.message||"Video generation failed."};
-      cur.msgs.push({role:"assistant",content:"[Video generation job created: "+text+" · Job ID: "+r.data.jobId+"]",kind:"video",prompt:text,videoJob:r.data});
+      var token=await getAuthToken();
+      if(!token)throw {code:"auth_required",message:"Sign in again to continue."};
+
+      var genRes=await fetch("/api/video/generate",{
+        method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
+        body:JSON.stringify({prompt:text,model:chosenVidModel}),
+        signal:ctl.signal
+      }).then(function(res){return res.json()});
+
+      if(!genRes.success)throw {code:genRes.error&&genRes.error.code||"video_failed",message:genRes.error&&genRes.error.message||"Video generation failed."};
+
+      var vJobId=genRes.data.jobId||genRes.data.videoId;
+      var curSt=genRes.data.status||"queued";
+      if(out.isConnected){
+        out.innerHTML='<div class="gen"><div class="gv"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="sh"></i></div><div class="gt">Agnes AI rendering video ('+esc(curSt)+')...<span class="dots"><u></u><u></u><u></u></span></div></div>';
+      }
+
+      var videoResultUrl=null;
+      var pollCount=0;
+      while(pollCount<60&&!videoResultUrl){
+        if(ctl.signal.aborted)throw {code:"aborted",message:"Video generation cancelled."};
+        await new Promise(function(resolve){setTimeout(resolve,3000)});
+        pollCount++;
+        var checkRes=await fetch("/api/video/jobs/"+encodeURIComponent(vJobId),{
+          headers:{"Authorization":"Bearer "+token},
+          signal:ctl.signal
+        }).then(function(res){return res.json()}).catch(function(){return null;});
+
+        if(checkRes&&checkRes.success&&checkRes.data){
+          var jd=checkRes.data;
+          curSt=jd.status||curSt;
+          if(out.isConnected){
+            out.innerHTML='<div class="gen"><div class="gv"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="sh"></i></div><div class="gt">Agnes AI rendering video ('+esc(curSt)+')...<span class="dots"><u></u><u></u><u></u></span></div></div>';
+          }
+          if(jd.status==="completed"&&(jd.videoUrl||jd.url)){
+            videoResultUrl=jd.videoUrl||jd.url;
+            break;
+          }
+          if(jd.status==="failed"){
+            throw {code:"video_failed",message:jd.failureReason||"Video generation failed at provider."};
+          }
+        }
+      }
+
+      if(!videoResultUrl){
+        throw {code:"timeout",message:"Video generation timed out. Please try again."};
+      }
+
+      cur.msgs.push({
+        role:"assistant",
+        content:"[Video created: "+text+"]",
+        kind:"video",
+        prompt:text,
+        videoUrl:videoResultUrl,
+        video:videoResultUrl,
+        model:chosenVidModel
+      });
       got="created";
     }
     else if(kind==="image"){

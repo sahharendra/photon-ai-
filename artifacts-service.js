@@ -47,6 +47,47 @@ function inferLanguage(filename) {
 }
 
 /**
+ * High-speed fallback code generator using Photon reasoning engine
+ */
+async function callPollinationsTextCode({ system, text, signal } = {}) {
+  const timeoutSignal = AbortSignal.timeout(60000);
+  const combined = signal ? (typeof AbortSignal.any === 'function' ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal) : timeoutSignal;
+  const res = await fetch('https://text.pollinations.ai/openai', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'User-Agent': 'Photon-AI-Artifacts/2.0',
+    },
+    body: JSON.stringify({
+      messages: [
+        { role: 'system', content: system || '' },
+        { role: 'user', content: text || '' }
+      ],
+      model: 'openai'
+    }),
+    signal: combined
+  });
+
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '');
+    throw new Error(`Photon code engine returned HTTP ${res.status}: ${errText.slice(0, 100)}`);
+  }
+
+  const json = await res.json();
+  const choice = json.choices?.[0]?.message?.content || '';
+  if (!choice) throw new Error('Photon code engine returned an empty response.');
+
+  return {
+    text: choice,
+    result: { text: choice },
+    usage: { inputTokens: Math.ceil((text?.length || 100) / 4), outputTokens: Math.ceil(choice.length / 4) },
+    provider: 'Photon AI (Fast Reasoning)',
+    model: 'openai-fast',
+  };
+}
+
+/**
  * Parse multi-file code blocks from AI response
  */
 function parseFilesFromAiResponse(responseText, defaultTitle = 'My Project') {
@@ -193,7 +234,7 @@ function createArtifactsService({
     return art;
   }
 
-  function createArtifact(uid, { title, type = 'html', description = '', files = [], model = '', provider = '' } = {}) {
+  function createArtifact(uid, { title, type = 'html', description = '', files = [], model = '', provider = '', chatHistory } = {}) {
     const list = ensureUserArtifacts(uid);
     const id = `art_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
     const cleanTitle = String(title || 'New Artifact').trim().slice(0, 100);
@@ -237,6 +278,13 @@ function createArtifactsService({
       provider,
       createdAt: nowIso,
       updatedAt: nowIso,
+      chatHistory: Array.isArray(chatHistory) ? chatHistory : [
+        {
+          role: 'assistant',
+          content: `Project **${cleanTitle}** ready. What would you like to build or modify?`,
+          timestamp: nowIso
+        }
+      ],
       versions: [
         {
           version: 1,
@@ -292,6 +340,10 @@ function createArtifactsService({
       if (current.versions.length > 20) current.versions.shift();
     }
 
+    if (Array.isArray(updates.chatHistory)) {
+      current.chatHistory = updates.chatHistory.slice(-50);
+    }
+
     saveStore();
     return current;
   }
@@ -311,14 +363,22 @@ function createArtifactsService({
     const cloneId = `art_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
     const cloneFiles = (original.files || []).map(f => ({ ...f }));
 
+    const cloneTitle = `Copy of ${original.title}`.slice(0, 100);
     const clone = {
       ...original,
       id: cloneId,
       uid,
-      title: `Copy of ${original.title}`.slice(0, 100),
+      title: cloneTitle,
       files: cloneFiles,
       createdAt: nowIso,
       updatedAt: nowIso,
+      chatHistory: Array.isArray(original.chatHistory) ? JSON.parse(JSON.stringify(original.chatHistory)) : [
+        {
+          role: 'assistant',
+          content: `Project **${cloneTitle}** ready. What would you like to build or modify?`,
+          timestamp: nowIso
+        }
+      ],
       versions: [
         {
           version: 1,
@@ -442,10 +502,18 @@ RULES:
         text: `Create this artifact: ${cleanPrompt}\nRequested category/type: ${type}`,
       });
     } catch (err) {
-      // Refund reserved tokens on generation failure
-      refundTokenTransaction(store, reserved.transaction.id, err?.code || 'generation_failed');
-      saveStore();
-      throw err;
+      console.warn(`[ArtifactsGen] Primary provider ${pKey} failed (${err.message}), falling back to Photon Fast AI...`);
+      try {
+        aiResult = await callPollinationsTextCode({
+          system: systemPrompt,
+          text: `Create this artifact: ${cleanPrompt}\nRequested category/type: ${type}`,
+        });
+      } catch (fallbackErr) {
+        // Refund reserved tokens on generation failure
+        refundTokenTransaction(store, reserved.transaction.id, err?.code || 'generation_failed');
+        saveStore();
+        throw err;
+      }
     }
 
     const responseText = String(aiResult?.result?.text || aiResult?.text || '').trim();
@@ -577,9 +645,17 @@ RULES:
         text: `CURRENT PROJECT FILES:\n${currentFilesSummary}\n\nUSER INSTRUCTION:\n${cleanInstruction}`,
       });
     } catch (err) {
-      refundTokenTransaction(store, reserved.transaction.id, err?.code || 'editing_failed');
-      saveStore();
-      throw err;
+      console.warn(`[ArtifactsEdit] Primary provider ${pKey} failed (${err.message}), seamlessly applying changes with Photon Fast AI...`);
+      try {
+        aiResult = await callPollinationsTextCode({
+          system: systemPrompt,
+          text: `CURRENT PROJECT FILES:\n${currentFilesSummary}\n\nUSER INSTRUCTION:\n${cleanInstruction}`,
+        });
+      } catch (fallbackErr) {
+        refundTokenTransaction(store, reserved.transaction.id, err?.code || 'editing_failed');
+        saveStore();
+        throw err;
+      }
     }
 
     const responseText = String(aiResult?.result?.text || aiResult?.text || '').trim();
@@ -630,11 +706,30 @@ RULES:
       activityKey: 'code',
     });
 
+    const existingHistory = Array.isArray(art.chatHistory) ? art.chatHistory : [];
+    const newChatHistory = [
+      ...existingHistory,
+      {
+        role: 'user',
+        content: cleanInstruction,
+        timestamp: new Date().toISOString()
+      },
+      {
+        role: 'assistant',
+        content: summary,
+        summary: summary,
+        modifiedFiles: updatedFiles.map(f => f.name),
+        timestamp: new Date().toISOString(),
+        version: (art.versions?.length || 0) + 1
+      }
+    ];
+
     const updatedArtifact = updateArtifact(uid, id, {
       files: mergedFiles,
       createVersion: true,
       versionPrompt: cleanInstruction,
       versionSummary: summary,
+      chatHistory: newChatHistory,
     });
 
     return {

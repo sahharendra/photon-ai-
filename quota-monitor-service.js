@@ -581,6 +581,40 @@ class EdenAiQuotaAdapter extends BaseQuotaAdapter {
   }
 }
 
+class AgnesAiQuotaAdapter extends BaseQuotaAdapter {
+  constructor() { super('agnes'); }
+
+  classifyError(opts = {}) {
+    const { status, message = '' } = opts;
+    const msg = String(message).toLowerCase();
+    if (status === 401 || status === 403 || msg.includes('token not provided') || msg.includes('authorization header') || msg.includes('invalid_api_key') || msg.includes('unauthorized')) {
+      return {
+        status: STATUS_INVALID_KEY,
+        scope: 'key',
+        reason: 'Agnes AI API key is invalid or unauthorized.',
+        resetAt: null,
+      };
+    }
+    if (status === 402 || msg.includes('insufficient') || msg.includes('balance') || msg.includes('credit') || msg.includes('billing')) {
+      return {
+        status: STATUS_INSUFFICIENT_CREDITS,
+        scope: 'provider',
+        reason: 'Agnes AI account requires paid credits or free promotion has expired.',
+        resetAt: null,
+      };
+    }
+    if (status === 429 || msg.includes('rate_limit') || msg.includes('rate limit') || msg.includes('too many requests')) {
+      return {
+        status: STATUS_RATE_LIMITED,
+        scope: 'provider',
+        reason: 'Agnes AI rate limit reached. Resets in 60 seconds.',
+        resetAt: Date.now() + 60000,
+      };
+    }
+    return super.classifyError(opts);
+  }
+}
+
 class PollinationsAiQuotaAdapter extends BaseQuotaAdapter {
   constructor() { super('pollinations'); }
 
@@ -732,6 +766,7 @@ function createQuotaMonitorService({ dir = process.cwd(), env = process.env, log
     stability: new StabilityAiQuotaAdapter(),
     pollinations: new PollinationsAiQuotaAdapter(),
     edenai: new EdenAiQuotaAdapter(),
+    agnes: new AgnesAiQuotaAdapter(),
     openai: new OpenAiQuotaAdapter(),
     anthropic: new AnthropicQuotaAdapter(),
     codecraft: new CodeCraftQuotaAdapter(),
@@ -1391,6 +1426,7 @@ module.exports = {
   StabilityAiQuotaAdapter,
   PollinationsAiQuotaAdapter,
   EdenAiQuotaAdapter,
+  AgnesAiQuotaAdapter,
   OpenAiQuotaAdapter,
   AnthropicQuotaAdapter,
   CodeCraftQuotaAdapter,

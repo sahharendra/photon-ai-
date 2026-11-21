@@ -50,7 +50,7 @@ const TEST_PROMPTS = Object.freeze({
 const IMAGE_GEN_MODEL_REGEX = /^(?:@cf\/(?:black-forest-labs\/flux|stabilityai\/stable-diffusion|bytedance\/stable-diffusion|runwayml\/stable-diffusion)|flux|sana|turbo|dall-e|imagen|midjourney|stable-diffusion)/i;
 
 // Known video generation patterns
-const VIDEO_GEN_MODEL_REGEX = /(?:svd|stable-video|text-to-video|image-to-video|runway|luma-dream|cogvideox|sora|minimax-video|kling|seedance|wan-)/i;
+const VIDEO_GEN_MODEL_REGEX = /(?:svd|stable-video|text-to-video|image-to-video|runway|luma-dream|cogvideox|sora|minimax-video|kling|seedance|wan-|agnes-video|agnes)/i;
 
 // Known vision understanding (input only, text output) models
 const VISION_INPUT_REGEX = /(?:vision|multimodal|vl|gpt-4o|gemini|claude-3|pixtral|qwen-vl)/i;
@@ -66,6 +66,7 @@ function normalizeProviderId(name) {
   const s = String(name || '').toLowerCase().trim();
   if (s.includes('cloudflare')) return 'cloudflare_workers_ai';
   if (s.includes('pollinations')) return 'pollinations';
+  if (s.includes('agnes')) return 'agnes';
   if (s.includes('edenai') || s.includes('eden ai') || s.includes('eden')) return 'edenai';
   if (s.includes('openrouter')) return 'openrouter';
   if (s.includes('gemini') || s.includes('google')) return 'gemini';

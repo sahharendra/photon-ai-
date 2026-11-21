@@ -162,9 +162,10 @@ function createPollinationsProvider({ HttpError, env = process.env, fetchImpl = 
 
     const isJpeg = rawBuffer.length > 100 && rawBuffer[0] === 0xFF && rawBuffer[1] === 0xD8;
     const isPng = rawBuffer.length > 100 && rawBuffer[0] === 0x89 && rawBuffer[1] === 0x50 && rawBuffer[2] === 0x4E;
-    const hasPaymentRequired = Boolean(res.headers.get('payment-required'));
+    const hasPaymentRequired = Boolean(res.headers.get('payment-required') || res.headers.get('payment-response'));
     const isRateLimitStatus = res.status === 402 || res.status === 429;
-    const isErrorResponse = !res.ok || hasPaymentRequired || isRateLimitStatus;
+    const isRateLimitImage = rawBuffer.includes(Buffer.from('enter.pollinations.ai')) || rawBuffer.includes(Buffer.from('Free limit'));
+    const isErrorResponse = !res.ok || hasPaymentRequired || isRateLimitStatus || isRateLimitImage;
 
     if (isErrorResponse) {
       let retryAfter = Number(res.headers.get('retry-after')) || 0;

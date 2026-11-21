@@ -512,6 +512,122 @@
 
 <div class="head" style="margin-top:34px">
   <div>
+    <h2>Agnes AI (Video Generation Provider)</h2>
+    <small>High-speed 720P video generation via official Agnes AI API. Dedicated video model with $0/sec free promotion.</small>
+  </div>
+  <div class="actions">
+    <button id="agnes-test-connection" type="button">Test connection</button>
+    <button id="agnes-refresh-models" type="button">Discover / Refresh models</button>
+  </div>
+</div>
+<div id="agnes-diag" class="list"></div>
+
+<form id="agnes-settings-form" class="inline-add-box" style="margin-top:14px">
+  <div class="settings-grid">
+    <div class="field">
+      <label for="agnes-key-input">Agnes AI API Key (AES-256 Encrypted)</label>
+      <div style="display:flex;gap:6px">
+        <input id="agnes-key-input" type="password" autocomplete="new-password" placeholder="Enter Agnes AI API key (Bearer token)">
+        <button type="button" id="agnes-key-eye" style="padding:0 12px;background:#17213a;border:1px solid #2e4063;border-radius:7px;color:#c4ccdc;cursor:pointer" title="Show/Hide key">👁</button>
+      </div>
+      <small class="muted" style="margin-top:4px">API Base URL: <code>https://apihub.agnes-ai.com/v1</code> · Documentation: <a href="https://apihub.agnes-ai.com/v1" target="_blank" rel="noopener" style="color:#60a5fa;text-decoration:underline">apihub.agnes-ai.com</a>.</small>
+    </div>
+    <div class="field">
+      <label>Configured Status &amp; Key Details</label>
+      <div style="display:flex;align-items:center;gap:8px;height:40px;padding:0 4px">
+        <span id="agnes-key-badge" class="pill warn">Checking...</span>
+        <code id="agnes-masked-key" style="color:#b4c0d4">Not configured</code>
+      </div>
+      <small class="muted" style="margin-top:4px">Slug: <code>agnes</code> · Keys are encrypted on disk and never exposed in browser responses.</small>
+    </div>
+  </div>
+  <div class="settings-grid" style="margin-top:10px">
+    <div class="field">
+      <label for="agnes-enabled">Provider State</label>
+      <select id="agnes-enabled">
+        <option value="true">Enabled (Active)</option>
+        <option value="false">Disabled (Inactive)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="agnes-spending-policy">Spending Policy (Free-Only Protection)</label>
+      <select id="agnes-spending-policy">
+        <option value="strict_free_only">Strict Free-Only ($0/sec Promotion Active)</option>
+        <option value="allow_all">Allow All Configured Requests</option>
+        <option value="block">Block All Requests</option>
+      </select>
+    </div>
+  </div>
+  <div class="save-row" style="margin-top:12px;display:flex;gap:8px">
+    <button id="agnes-save-settings" type="submit">Save Agnes AI Settings</button>
+    <button id="agnes-delete-key" type="button" style="background:#2a1515;border:1px solid #5a2525;color:#f87171">Remove Key</button>
+  </div>
+</form>
+
+<!-- Dedicated Video Model Verification Section -->
+<div class="head" style="margin-top:28px">
+  <div>
+    <h2>Agnes AI Video Model Verification (Real End-to-End Test)</h2>
+    <small>Executes real asynchronous video creation, status polling, and validation of playable 720P video output.</small>
+  </div>
+</div>
+<div style="background:#0e1526;border:1px solid #233352;border-radius:10px;padding:16px;margin-top:10px">
+  <div style="display:grid;grid-template-columns:1fr 2fr;gap:14px">
+    <div>
+      <label style="font-size:12px;color:#94a3b8">Model ID</label>
+      <select id="agnes-test-video-model" style="width:100%;margin-top:2px;padding:6px;background:#151d30;border:1px solid #2d3b55;border-radius:6px;color:#fff">
+        <option value="agnes-video-2.5-flash">agnes-video-2.5-flash (720P · Free Promotion)</option>
+      </select>
+    </div>
+    <div>
+      <label style="font-size:12px;color:#94a3b8">Test Prompt</label>
+      <input id="agnes-test-video-prompt" type="text" value="Generate a short cinematic video of a red apple rotating slowly on a clean white background." style="width:100%;margin-top:2px;padding:6px;background:#151d30;border:1px solid #2d3b55;border-radius:6px;color:#fff">
+    </div>
+  </div>
+  <button id="agnes-test-video-btn" type="button" style="margin-top:12px;padding:8px 18px;background:linear-gradient(135deg,#3b82f6,#2563eb);border:0;border-radius:6px;color:#fff;cursor:pointer;font-weight:600">🎬 Run Real Agnes Video Generation Test</button>
+  <div id="agnes-test-video-result" style="margin-top:12px;font-size:12px;display:none;background:#131c31;padding:12px;border-radius:6px"></div>
+</div>
+
+<!-- Agnes Model Catalogue Table -->
+<div class="head" style="margin-top:28px">
+  <div>
+    <h2>Agnes AI Video Catalogue</h2>
+    <small>Documented video models. Category strictly VIDEO; text/image generation prohibited.</small>
+  </div>
+</div>
+<div class="table-wrap" style="margin-top:10px">
+  <table>
+    <thead>
+      <tr>
+        <th>Model Name &amp; ID</th>
+        <th>Category</th>
+        <th>Resolution</th>
+        <th>Pricing &amp; Promo</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="agnes-models"></tbody>
+  </table>
+</div>
+
+<!-- Usage & Recent Errors -->
+<div class="settings-grid" style="margin-top:20px">
+  <div class="field">
+    <label>Agnes AI Usage &amp; Generation Statistics</label>
+    <div id="agnes-usage" class="muted">Loading usage...</div>
+  </div>
+</div>
+<div class="head" style="margin-top:20px">
+  <div>
+    <h2>Recent Agnes AI Errors</h2>
+    <small>Sanitized error events without secret exposure.</small>
+  </div>
+</div>
+<div id="agnes-errors" class="list" style="margin-bottom:30px"></div>
+
+<div class="head" style="margin-top:34px">
+  <div>
     <h2>Model Capabilities &amp; Modality Registry</h2>
     <small>Strict modality detection (text/image/video in &amp; out). Only models with <code>image_output=true</code> are classified as IMAGE; only models with <code>video_output=true</code> are classified as VIDEO.</small>
   </div>
@@ -1792,10 +1908,10 @@ function setupDashboardAnalyticsFilter(){
   }
 }
 
-async function load(forceSettings=false){if(refreshing)return;refreshing=true;status('Loading admin data...');try{const data=await request('/api/admin/overview');showApp();const m=data.metrics||{};$('logout').hidden=!!data.localAccess;if($('total'))$('total').textContent=fmt(m.totalUsers);if($('login-today'))$('login-today').textContent=fmt(Math.max(Number(m.signInsToday)||0,(data.users||[]).reduce((total,u)=>total+loginsToday(u),0)));if($('tokens'))$('tokens').textContent=fmt(m.tokensToday);renderDashboard(data);setupDashboardAnalyticsFilter();loadUsersAdmin();loadSubscriptionsAdmin();if(data.paymentGateway)renderGatewayConfig(data.paymentGateway);else loadGatewayConfig();renderProviders(data.models);loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();loadCloudflare();loadPollinations();loadEdenAI();loadCapabilitiesAdmin();loadQuotaAdmin();if(forceSettings||!settingsDirty){renderPlanFields(data.settings||{});renderTokenRulesTable(data.settings||{});renderArtifactPricing(data.settings||{});settingsDirty=false}renderPricingAudit(data.pricingAuditLogs||[]);runConfigVerification(true);status('Admin data loaded.')}catch(error){if(error.status===401){showLogin();return}if(error.status===503&&error.code==='admin_not_configured'){showLogin('Admin sign-in is not configured. Set PHOTON_ADMIN_PASSWORD and restart the server.');return}status(error.message||'Could not load admin data.',true)}finally{refreshing=false}}
+async function load(forceSettings=false){if(refreshing)return;refreshing=true;status('Loading admin data...');try{const data=await request('/api/admin/overview');showApp();const m=data.metrics||{};$('logout').hidden=!!data.localAccess;if($('total'))$('total').textContent=fmt(m.totalUsers);if($('login-today'))$('login-today').textContent=fmt(Math.max(Number(m.signInsToday)||0,(data.users||[]).reduce((total,u)=>total+loginsToday(u),0)));if($('tokens'))$('tokens').textContent=fmt(m.tokensToday);renderDashboard(data);setupDashboardAnalyticsFilter();loadUsersAdmin();loadSubscriptionsAdmin();if(data.paymentGateway)renderGatewayConfig(data.paymentGateway);else loadGatewayConfig();renderProviders(data.models);loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();loadCloudflare();loadPollinations();loadEdenAI();loadAgnesAI();loadCapabilitiesAdmin();loadQuotaAdmin();if(forceSettings||!settingsDirty){renderPlanFields(data.settings||{});renderTokenRulesTable(data.settings||{});renderArtifactPricing(data.settings||{});settingsDirty=false}renderPricingAudit(data.pricingAuditLogs||[]);runConfigVerification(true);status('Admin data loaded.')}catch(error){if(error.status===401){showLogin();return}if(error.status===503&&error.code==='admin_not_configured'){showLogin('Admin sign-in is not configured. Set PHOTON_ADMIN_PASSWORD and restart the server.');return}status(error.message||'Could not load admin data.',true)}finally{refreshing=false}}
  $('login-form').addEventListener('submit',async event=>{event.preventDefault();const button=$('login-button');button.disabled=true;button.textContent='Signing in...';$('login-error').hidden=true;try{await request('/api/admin/login','POST',{email:$('admin-email').value.trim(),password:$('admin-password').value});$('admin-password').value='';await load(true)}catch(error){showLogin(error.message||'Sign-in failed. Check the username and password.')}finally{button.disabled=false;button.textContent='Sign in'}});
  $('logout').addEventListener('click',async()=>{try{await request('/api/admin/logout','POST',{})}finally{showLogin('You have signed out.')}});
- const pageMeta={overview:['Dashboard','Live overview of Photon accounts and usage.'],'users-section':['Users & Sign-ins','Account access, sign-in methods, activity, and plan status.'],subscriptions:['Subscriptions & Purchases','Verified payments, revenue, MRR, and Cashfree gateway configuration.'],settings:['Pricing & Token Rules','Manage plan pricing, daily limits, and AI activity token costs.'],providers:['AI Provider Settings','Check and manage server-side AI provider keys. Secrets are never shown.']};function showPage(){let id=location.hash.slice(1)||'overview';if(!pageMeta[id])id='overview';document.querySelectorAll('.page-view').forEach(page=>page.classList.toggle('active',page.id===id));document.querySelectorAll('.sidebar nav a[href^="#"]').forEach(link=>link.classList.toggle('active',link.getAttribute('href')==='#'+id));$('page-title').textContent=pageMeta[id][0];$('page-description').textContent=pageMeta[id][1];if(id==='overview'){load()}else if(id==='users-section'){loadUsersAdmin()}else if(id==='subscriptions'){loadGatewayConfig();loadSubscriptionsAdmin()}else if(id==='settings'){load(true)}else if(id==='providers'){loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();loadCloudflare();loadPollinations();loadEdenAI();loadCapabilitiesAdmin();loadQuotaAdmin();}}window.addEventListener('hashchange',showPage);showPage();
+ const pageMeta={overview:['Dashboard','Live overview of Photon accounts and usage.'],'users-section':['Users & Sign-ins','Account access, sign-in methods, activity, and plan status.'],subscriptions:['Subscriptions & Purchases','Verified payments, revenue, MRR, and Cashfree gateway configuration.'],settings:['Pricing & Token Rules','Manage plan pricing, daily limits, and AI activity token costs.'],providers:['AI Provider Settings','Check and manage server-side AI provider keys. Secrets are never shown.']};function showPage(){let id=location.hash.slice(1)||'overview';if(!pageMeta[id])id='overview';document.querySelectorAll('.page-view').forEach(page=>page.classList.toggle('active',page.id===id));document.querySelectorAll('.sidebar nav a[href^="#"]').forEach(link=>link.classList.toggle('active',link.getAttribute('href')==='#'+id));$('page-title').textContent=pageMeta[id][0];$('page-description').textContent=pageMeta[id][1];if(id==='overview'){load()}else if(id==='users-section'){loadUsersAdmin()}else if(id==='subscriptions'){loadGatewayConfig();loadSubscriptionsAdmin()}else if(id==='settings'){load(true)}else if(id==='providers'){loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();loadCloudflare();loadPollinations();loadEdenAI();loadAgnesAI();loadCapabilitiesAdmin();loadQuotaAdmin();}}window.addEventListener('hashchange',showPage);showPage();
  $('settings-form').addEventListener('input',()=>{settingsDirty=true});
  $('settings-form').addEventListener('change',()=>{settingsDirty=true});
  $('verify-token-calc-btn').addEventListener('click',()=>runConfigVerification(false));
@@ -3027,6 +3143,235 @@ async function load(forceSettings=false){if(refreshing)return;refreshing=true;st
       btn.disabled = false;
       btn.textContent = 'Run Video Test';
       loadEdenAI();
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // AGNES AI VIDEO PROVIDER INTEGRATION
+  // ---------------------------------------------------------------------------
+  let agnesCachedModels = [];
+
+  async function loadAgnesAI() {
+    try {
+      const res = await request('/api/admin/agnes');
+      const st = (res && res.data) || res || {};
+      const diag = $('agnes-diag');
+      if (diag) {
+        diag.replaceChildren();
+        rowItem(diag, 'Agnes AI Provider Status', st.enabled ? (st.configured ? 'Active & Ready' : 'Key Required') : 'Disabled', orBadge(st.enabled && st.configured ? 'Active' : (st.configured ? 'Disabled' : 'Missing Key'), st.enabled && st.configured));
+        rowItem(diag, 'Encrypted API Key', st.hasKey ? `Configured (${st.maskedKey || 'ag-••••'}) · AES-256 encrypted` : 'None configured', orBadge(st.hasKey ? 'Saved' : 'Not Set', st.hasKey));
+        rowItem(diag, 'Spending Policy', st.spendingPolicyDescription || 'Strict Free-Only ($0/sec Promotion)', orBadge(st.spendingPolicy || 'strict_free_only', true));
+        rowItem(diag, 'Free Promotion Status', '$0/sec Free Promotion verified for Flash model (720P output)', orBadge('$0/sec Active', true));
+      }
+
+      const keyBadge = $('agnes-key-badge');
+      if (keyBadge) {
+        keyBadge.className = 'pill ' + (st.hasKey ? (st.enabled ? 'ok' : 'warn') : 'no');
+        keyBadge.textContent = st.hasKey ? (st.enabled ? 'Active (Saved)' : 'Disabled') : 'Not Configured';
+      }
+      const maskedEl = $('agnes-masked-key');
+      if (maskedEl) {
+        maskedEl.textContent = st.maskedKey || 'No API key configured';
+      }
+      if ($('agnes-enabled')) {
+        $('agnes-enabled').value = String(st.enabled !== false);
+      }
+      if ($('agnes-spending-policy')) {
+        $('agnes-spending-policy').value = st.spendingPolicy || 'strict_free_only';
+      }
+
+      agnesCachedModels = st.models || [];
+      renderAgnesModels(agnesCachedModels);
+
+      // Render usage stats
+      const usageEl = $('agnes-usage');
+      if (usageEl && st.usage) {
+        const u = st.usage;
+        usageEl.innerHTML = `<strong>Total Video Jobs:</strong> ${u.videoJobs || 0} · ` +
+          `<strong>Completed Videos:</strong> ${u.completedVideos || 0} · ` +
+          `<strong>Failed:</strong> ${u.failedVideos || 0} · ` +
+          `<strong>Total Rendered Seconds:</strong> ${u.totalSeconds || 0}s<br>` +
+          `<small class="muted" style="display:inline-block;margin-top:4px">Pricing: $0.00 / sec under free promotion. Strict free-only policy prevents any unexpected charges.</small>`;
+      }
+
+      // Render recent errors
+      const errList = $('agnes-errors');
+      if (errList) {
+        errList.replaceChildren();
+        const errs = st.recentErrors || [];
+        if (!errs.length) {
+          rowItem(errList, 'No recent errors', 'All video generation requests operating normally.', orBadge('Clear', true));
+        } else {
+          errs.slice(0, 10).forEach(e => {
+            rowItem(errList, `${e.code} (${e.status || 500})`, `${e.message} · ${profileTimeAgo(e.timestamp) || e.timestamp}`, orBadge('Error', false));
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to load Agnes AI admin data:', err);
+    }
+  }
+
+  function renderAgnesModels(models) {
+    const tbody = $('agnes-models');
+    if (!tbody) return;
+    tbody.replaceChildren();
+
+    if (!models || !models.length) {
+      const row = document.createElement('tr');
+      const cell = document.createElement('td');
+      cell.colSpan = 6;
+      cell.className = 'muted';
+      cell.style.textAlign = 'center';
+      cell.textContent = 'No Agnes AI video models registered.';
+      row.appendChild(cell);
+      tbody.appendChild(row);
+      return;
+    }
+
+    models.forEach(m => {
+      const row = document.createElement('tr');
+
+      const idCell = document.createElement('td');
+      idCell.innerHTML = `<strong>${esc(m.name || m.id)}</strong><br><small class="muted"><code>${esc(m.id)}</code></small>`;
+      row.appendChild(idCell);
+
+      const catCell = document.createElement('td');
+      catCell.innerHTML = `<span class="pill ok" style="font-size:11px">🎬 VIDEO</span>`;
+      row.appendChild(catCell);
+
+      const resCell = document.createElement('td');
+      resCell.innerHTML = `<code>${esc(m.resolution || '720p')}</code>`;
+      row.appendChild(resCell);
+
+      const priceCell = document.createElement('td');
+      priceCell.innerHTML = `<span style="color:#4ade80;font-weight:600">${esc(m.pricing || '$0.00 / sec')}</span><br><small class="muted">Free Promotion Active</small>`;
+      row.appendChild(priceCell);
+
+      const statusCell = document.createElement('td');
+      statusCell.appendChild(orBadge(m.enabled ? 'Enabled' : 'Disabled', m.enabled));
+      row.appendChild(statusCell);
+
+      const actCell = document.createElement('td');
+      const toggleBtn = document.createElement('button');
+      toggleBtn.type = 'button';
+      toggleBtn.className = 'link-btn';
+      toggleBtn.textContent = m.enabled ? 'Disable' : 'Enable';
+      toggleBtn.onclick = async () => {
+        try {
+          await request(`/api/admin/agnes/models/${encodeURIComponent(m.id)}`, 'PUT', { enabled: !m.enabled });
+          await loadAgnesAI();
+        } catch (err) {
+          alert(`Failed to update model: ${err.message}`);
+        }
+      };
+      actCell.appendChild(toggleBtn);
+      row.appendChild(actCell);
+
+      tbody.appendChild(row);
+    });
+  }
+
+  $('agnes-key-eye')?.addEventListener('click', () => {
+    const inp = $('agnes-key-input');
+    if (inp) inp.type = inp.type === 'password' ? 'text' : 'password';
+  });
+
+  $('agnes-settings-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const key = $('agnes-key-input').value.trim();
+    const enabled = $('agnes-enabled').value === 'true';
+    const spendingPolicy = $('agnes-spending-policy').value;
+
+    try {
+      if (key) {
+        await request('/api/admin/agnes/key', 'POST', { key });
+        $('agnes-key-input').value = '';
+      }
+      await request('/api/admin/agnes', 'PUT', { enabled, spendingPolicy });
+      alert('✓ Agnes AI settings saved successfully!');
+      await loadAgnesAI();
+    } catch (err) {
+      alert(`Failed to save Agnes AI settings: ${err.message}`);
+    }
+  });
+
+  $('agnes-delete-key')?.addEventListener('click', async () => {
+    if (!confirm('Remove saved Agnes AI API key?')) return;
+    try {
+      await request('/api/admin/agnes/key', 'DELETE', {});
+      alert('✓ Agnes AI API key removed.');
+      await loadAgnesAI();
+    } catch (err) {
+      alert(`Failed to remove key: ${err.message}`);
+    }
+  });
+
+  $('agnes-test-connection')?.addEventListener('click', async () => {
+    const btn = $('agnes-test-connection');
+    btn.disabled = true;
+    btn.textContent = 'Testing...';
+    try {
+      const res = await request('/api/admin/agnes/connection', 'POST', {});
+      const r = (res && res.data && res.data.result) || res.result || {};
+      alert(r.ok ? `✓ Agnes AI connection successful (${r.durationMs || 0}ms)\n${r.message || ''}` : `✗ Connection failed: ${r.error || r.message}`);
+      await loadAgnesAI();
+    } catch (err) {
+      alert(`Agnes AI connection test failed: ${err.message}`);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Test connection';
+    }
+  });
+
+  $('agnes-refresh-models')?.addEventListener('click', async () => {
+    const btn = $('agnes-refresh-models');
+    btn.disabled = true;
+    btn.textContent = 'Refreshing...';
+    try {
+      const res = await request('/api/admin/agnes/refresh', 'POST', {});
+      const r = (res && res.data) || res || {};
+      alert(r.ok ? `✓ Agnes AI video model catalogue refreshed!` : `Notice: ${r.message || 'Updated'}`);
+      await loadAgnesAI();
+    } catch (err) {
+      alert(`Agnes AI model refresh failed: ${err.message}`);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Discover / Refresh models';
+    }
+  });
+
+  // Dedicated Video Model Test Runner
+  $('agnes-test-video-btn')?.addEventListener('click', async () => {
+    const btn = $('agnes-test-video-btn');
+    const out = $('agnes-test-video-result');
+    const model = $('agnes-test-video-model').value;
+    const prompt = $('agnes-test-video-prompt').value.trim();
+
+    btn.disabled = true;
+    btn.textContent = 'Rendering video (polling Agnes AI queue)...';
+    out.style.display = 'block';
+    out.innerHTML = '<span class="think">Submitting video job to Agnes AI API and polling for completion... Please wait.</span>';
+
+    try {
+      const res = await request('/api/admin/agnes/test-video', 'POST', { model, prompt });
+      const r = (res && res.data && res.data.result) || res.result || {};
+      if (r.ok && r.videoUrl) {
+        out.innerHTML = `<span style="color:#4ade80;font-weight:600">✓ Video Generation Succeeded (${r.durationMs}ms)</span><br>` +
+          `<small style="color:#94a3b8">Model: <strong>${esc(r.model)}</strong> · Resolution: <strong>${esc(r.resolution || '720P')}</strong> · Promotion: <strong>$0/sec Verified</strong></small><br>` +
+          `<div style="margin-top:10px">` +
+            `<video controls autoplay loop style="max-width:100%;max-height:320px;border-radius:8px;border:1px solid #2e4063;background:#000" src="${esc(r.videoUrl)}"></video>` +
+          `</div>` +
+          `<div style="margin-top:8px"><a href="${esc(r.videoUrl)}" target="_blank" rel="noopener" style="color:#60a5fa;text-decoration:underline">⬇ Download Test Video MP4</a></div>`;
+      } else {
+        out.innerHTML = `<span style="color:#f87171;font-weight:600">✗ Agnes Video Test Failed</span><br><small style="color:#fca5a5">${esc(r.error || r.message || 'Generation failed.')}</small>`;
+      }
+    } catch (err) {
+      out.innerHTML = `<span style="color:#f87171;font-weight:600">✗ Test Error</span><br><small style="color:#fca5a5">${esc(err.message)}</small>`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🎬 Run Real Agnes Video Generation Test';
+      loadAgnesAI();
     }
   });
 
