@@ -535,6 +535,67 @@ textarea::placeholder{color:var(--mute)}
 .models-modal-list-wrap{overflow:auto;max-height:60vh;padding-right:2px}
 @media(max-width:980px){.profile-overview{grid-template-columns:1fr}.profile-tabs{flex-direction:row;overflow-x:auto;scrollbar-width:thin}.profile-tabs button{min-height:44px}.profile-content{max-width:none}}
 @media(max-width:600px){.profile-page{padding:14px 12px 32px}.profile-top{padding-bottom:12px;margin-bottom:14px}.profile-wave{min-height:108px;padding:19px 17px;margin-bottom:14px}.profile-wave p{font-size:12px}.profile-card{padding:16px}.profile-card-head{gap:10px}.profile-info-grid{column-gap:0}.profile-info{min-height:40px}.profile-columns,.profile-lower{gap:12px;margin-bottom:12px}.profile-activity li{padding:9px 0}.profile-delete .profile-card-head{flex-direction:column}.profile-model-row{grid-template-columns:34px minmax(0,1fr);gap:10px;padding:10px 6px}.profile-model-row .model-action-col{grid-column:2;justify-self:start;margin-top:4px}.profile-model-toolbar{grid-template-columns:1fr}}
+/* PHOTON AI Dedicated Artifacts Workspace */
+.art-ws{position:fixed;inset:0;z-index:99;background:#0e0e12;color:#e2e2ec;display:flex;flex-direction:column;overflow:hidden;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.art-ws-hd{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;background:#14141a;border-bottom:1px solid #23232d;gap:12px;flex-shrink:0;z-index:10}
+.art-ws-hd-l,.art-ws-hd-c,.art-ws-hd-r{display:flex;align-items:center;gap:10px}
+.art-ws-back{background:none;border:1px solid #2e2e3d;color:#bbb;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s}
+.art-ws-back:hover{background:#1e1e28;color:#fff;border-color:#48485e}
+.art-ws-title{background:none;border:1px solid transparent;border-radius:4px;color:#fff;font-size:15px;font-weight:600;padding:4px 8px;outline:0;transition:all .2s;max-width:280px}
+.art-ws-title:focus,.art-ws-title:hover{background:#1a1a24;border-color:#36364a}
+.art-badge{font-size:10px;text-transform:uppercase;font-weight:700;letter-spacing:.5px;padding:3px 8px;border-radius:99px;background:#20212d;color:#9192aa;border:1px solid #2f3042}
+.art-grp{display:inline-flex;border-radius:6px;background:#181822;border:1px solid #292938;padding:2px;gap:2px}
+.art-grp button{background:none;border:0;color:#88899f;padding:5px 11px;font-size:12px;font-weight:500;border-radius:4px;cursor:pointer;transition:all .15s}
+.art-grp button.on{background:#272838;color:#fff;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.art-grp button:hover:not(.on){color:#ddd}
+.art-btn{background:#1a1a24;border:1px solid #2a2a3a;color:#ccc;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;font-weight:500}
+.art-btn:hover{background:#242533;color:#fff;border-color:#414258}
+.art-btn.pri{background:linear-gradient(135deg,#3b82f6,#2563eb);border-color:#2563eb;color:#fff;font-weight:600}
+.art-btn.pri:hover{filter:brightness(1.1)}
+.art-btn.pri:disabled{opacity:.5;cursor:default}
+.art-ws-body{display:flex;flex:1;min-height:0;position:relative}
+.art-ws-side{width:240px;background:#111116;border-right:1px solid #20202a;display:flex;flex-direction:column;flex-shrink:0}
+.art-ws-side-hd{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid #1c1c24;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#787994}
+.art-files{flex:1;overflow-y:auto;padding:8px}
+.art-file{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:6px;cursor:pointer;font-size:13px;color:#9b9cb5;margin-bottom:2px;transition:all .15s}
+.art-file:hover{background:#171822;color:#fff}
+.art-file.on{background:#1f2030;color:#fff;font-weight:600}
+.art-file-name{display:flex;align-items:center;gap:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.art-file-acts{display:flex;align-items:center;gap:3px;opacity:0;transition:opacity .15s}
+.art-file:hover .art-file-acts{opacity:1}
+.art-file-acts button{background:none;border:0;color:#666;padding:2px 5px;font-size:11px;cursor:pointer;border-radius:3px}
+.art-file-acts button:hover{background:#2b2c3d;color:#fff}
+.art-ws-main{flex:1;display:flex;min-width:0;position:relative;background:#0c0c10}
+.art-code-pane{flex:1;display:flex;flex-direction:column;min-height:0;min-width:0;background:#0f0f14}
+.art-editor-wrap{flex:1;display:flex;min-height:0;position:relative;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:13px;line-height:1.6}
+.art-gutter{width:46px;background:#121217;border-right:1px solid #1e1e26;color:#505166;padding:12px 6px;text-align:right;user-select:none;font-size:12px;overflow:hidden;flex-shrink:0}
+.art-textarea{flex:1;background:#0f0f14;color:#e1e1e8;border:0;padding:12px 14px;outline:0;resize:none;font-family:inherit;font-size:13px;line-height:1.6;tab-size:2;white-space:pre;overflow:auto}
+.art-preview-pane{flex:1;display:flex;flex-direction:column;min-height:0;min-width:0;background:#09090c;align-items:center;justify-content:flex-start;overflow:auto;padding:16px}
+.art-frame-wrap{width:100%;height:100%;max-width:100%;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.6);display:flex;flex-direction:column;transition:max-width .25s ease}
+.art-frame-wrap.tablet{max-width:768px}
+.art-frame-wrap.mobile{max-width:375px}
+.art-frame{width:100%;height:100%;border:0;display:block;background:#fff}
+.art-ws-copilot{width:320px;background:#111116;border-left:1px solid #20202a;display:flex;flex-direction:column;flex-shrink:0}
+.art-copilot-tabs{display:flex;border-bottom:1px solid #1c1c24;background:#14141a}
+.art-copilot-tab{flex:1;text-align:center;padding:11px;font-size:12px;font-weight:600;color:#787994;cursor:pointer;border-bottom:2px solid transparent;background:none;border-left:0;border-right:0;border-top:0}
+.art-copilot-tab.on{color:#fff;border-bottom-color:#3b82f6}
+.art-copilot-body{flex:1;padding:14px;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
+.art-prompt{width:100%;background:#171720;border:1px solid #282838;border-radius:8px;padding:12px;color:#fff;font-family:inherit;font-size:13px;resize:vertical;min-height:86px;outline:0}
+.art-prompt:focus{border-color:#3b82f6}
+.art-pills{display:flex;flex-wrap:wrap;gap:6px}
+.art-pill{background:#181822;border:1px solid #262738;color:#9b9cb5;font-size:11px;padding:4px 9px;border-radius:99px;cursor:pointer;transition:all .15s}
+.art-pill:hover{background:#232433;color:#fff;border-color:#3a3c54}
+.art-versions{flex:1;overflow-y:auto;padding:10px}
+.art-ver-card{background:#15151e;border:1px solid #232332;border-radius:8px;padding:11px;margin-bottom:8px}
+.art-ver-card:hover{border-color:#34354c}
+.art-ver-meta{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#777;margin-bottom:6px}
+.art-ver-prompt{font-size:12px;color:#ddd;margin-bottom:8px;line-height:1.4}
+.art-dash{max-width:1100px;margin:0 auto;padding:40px 24px;width:100%;overflow-y:auto}
+.art-dash-hero{background:linear-gradient(135deg,#13131c,#0f0f15);border:1px solid #232332;border-radius:12px;padding:28px;margin-bottom:34px;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+.art-dash-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.art-dash-card{background:#13131a;border:1px solid #21212e;border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:10px;transition:all .2s;cursor:pointer;text-align:left}
+.art-dash-card:hover{border-color:#3b82f6;background:#181822;transform:translateY(-2px)}
+@media(max-width:960px){.art-ws-side{display:none}.art-ws-copilot{display:none}}
 </style>
 </head>
 <body>
@@ -878,20 +939,617 @@ function artifactPrompt(kind,topic){var common="Create this for the user: "+topi
   return common+" Create a polished responsive web design/prototype as one self-contained HTML file named design.html, with inline CSS and any needed JavaScript."}
 function startArtifact(kind){modal('<h2>Create '+esc(kind==='Docs'?'a document':kind==='Slides'?'a slide presentation':'a design')+'</h2><p class="s">Describe what you want Photon to make.</p><label>What should it be about?</label><textarea id="art-topic" rows="4" maxlength="1200" placeholder="For example: a presentation about renewable energy for high-school students"></textarea><div class="ferr" id="art-err"></div><div class="gbt2"><button class="pv-btn ghost" id="art-cancel">Cancel</button><button class="pv-btn" id="art-create">Create in chat</button></div>',function(close){$("art-cancel").onclick=close;$("art-topic").focus();var go=function(){var topic=$("art-topic").value.trim();if(!topic){$("art-err").textContent="Describe what you want Photon to create.";return}close();closePv();mode="general";newChat();$("in").value=artifactPrompt(kind,topic);send()};$("art-create").onclick=go;$("art-topic").onkeydown=function(e){if(e.key==="Enter"&&(e.ctrlKey||e.metaKey)){e.preventDefault();go()}}})}
 function artifactKind(name){var e=(name.split(".").pop()||"").toLowerCase();if(["ppt","pptx","key"].indexOf(e)>-1||/slide|presentation/i.test(name))return"slides";if(["html","htm","svg","css"].indexOf(e)>-1||/design|mockup|prototype/i.test(name))return"design";if(["md","txt","doc","docx","pdf"].indexOf(e)>-1||/document|proposal|report/i.test(name))return"doc";return"code"}
-function showArtifacts(){artifactItems=collectArtifacts();artifactTab="all";artifactSearch="";
-  pvOpen('<div class="pv artifact-page"><div class="pv-hd"><h1>Artifacts</h1><div class="artifact-tools"><button id="art-search-toggle" title="Search artifacts" aria-label="Search artifacts">⌘</button><button id="art-plus" title="Create artifact" aria-label="Create artifact">+</button></div></div><div class="artifact-tabs"><button data-at="all" class="on">All</button><button data-at="yours">Yours</button><button data-at="shared">Shared with you</button></div><div id="art-search" class="pv-tools" hidden><input id="art-q" placeholder="Search artifacts" aria-label="Search artifacts"></div><section class="artifact-create"><h2>Make something new</h2><div class="artifact-types"><button class="artifact-type" data-create="Docs"><span class="art-pic">▤</span><strong>Docs</strong><small>Reports and documents</small></button><button class="artifact-type" data-create="Slides"><span class="art-pic">▱</span><strong>Slides</strong><small>Presentations</small></button><button class="artifact-type" data-create="Design"><span class="art-pic">◉</span><strong>Design</strong><small>Websites and prototypes</small></button></div></section><h2 class="artifact-list-h" id="art-list-title">Your artifacts</h2><div id="artifact-grid" class="artifact-grid"></div></div>');
-  var q=$("pv");q.querySelectorAll("[data-at]").forEach(function(b){b.onclick=function(){artifactTab=b.dataset.at;q.querySelectorAll("[data-at]").forEach(function(x){x.classList.toggle("on",x===b)});draw()}});
-  q.querySelectorAll("[data-create]").forEach(function(b){b.onclick=function(){startArtifact(b.dataset.create)}});
-  $("art-search-toggle").onclick=function(){$("art-search").hidden=!$("art-search").hidden;if(!$("art-search").hidden)$("art-q").focus()};$("art-plus").onclick=function(){startArtifact("Docs")};
-  $("art-q").oninput=function(){artifactSearch=this.value;draw()};
-  function draw(){var shown=artifactTab==="shared"?[]:artifactItems.filter(function(x){return!artifactSearch||(""+x.name+" "+x.title+" "+x.lang).toLowerCase().indexOf(artifactSearch.toLowerCase())>-1});$("art-list-title").textContent=artifactTab==="shared"?"Shared with you":"Your artifacts";var g=$("artifact-grid");g.className="artifact-grid";
-    if(!shown.length){g.innerHTML='<div class="artifact-empty" style="grid-column:1/-1">'+(artifactTab==="shared"?"Nothing has been shared with you yet.":artifactSearch?"No artifacts match your search.":"Your artifacts will appear here after Photon creates a file in a conversation.")+'</div>';return}
-    g.innerHTML=shown.map(function(x){var kind=artifactKind(x.name),stamp=ago(x.at),glyph=kind==="slides"?"▱":kind==="doc"?"▤":kind==="design"?"◉":"‹›";return'<button class="artifact-card" data-artifact="'+esc(x.id)+'"><div class="artifact-thumb"><div class="artifact-thumb-window"><div class="artifact-thumb-title">'+esc(x.name)+'</div><div class="artifact-thumb-lines"></div><div class="artifact-thumb-lines" style="width:54%"></div><div class="artifact-thumb-lines" style="width:68%"></div></div></div><div class="artifact-meta"><span class="artifact-file-ico">'+glyph+'</span><span><b>'+esc(x.name)+'</b><small>From '+esc(x.title)+' · '+esc(stamp)+'</small></span></div></button>'}).join("");g.onclick=function(e){var b=e.target.closest("[data-artifact]");if(b)openArtifactViewer(b.dataset.artifact)}}
-  draw()}
-function openArtifactViewer(id){var x=artifactItems.filter(function(a){return a.id===id})[0];if(!x)return;var preview=/\.html?$/i.test(x.name)||/\.svg$/i.test(x.name),kind=artifactKind(x.name),tab=preview||kind==="doc"?"preview":"code";
-  function draw(){modal('<div class="artifact-viewer-head"><div><b>'+esc(x.name)+'</b><div style="font-size:10px;color:#777;margin-top:3px">From '+esc(x.title)+'</div></div><div style="display:flex;gap:6px">'+(preview||kind==="doc"?'<button id="av-preview">Preview</button><button id="av-code">Code</button>':"")+'<button id="av-copy">Copy</button><button id="av-dl">Download</button><button id="av-chat">Open chat</button><button id="av-close" aria-label="Close">✕</button></div></div><div class="artifact-viewer-body" id="artifact-body"></div><div class="artifact-foot"><span>'+esc(x.lang.toUpperCase())+' · '+esc(ago(x.at))+'</span><span>Saved with this conversation</span></div>',function(close){var body=$("artifact-body");if(tab==="preview"&&preview){if(/\.svg$/i.test(x.name)){var im=document.createElement("img");im.alt=x.name;im.src=dataUri(x.code);im.style.cssText="display:block;max-width:100%;max-height:100%;margin:auto";body.append(im)}else{var fr=document.createElement("iframe");fr.title=x.name;fr.setAttribute("sandbox","allow-scripts");body.append(fr);fr.srcdoc=x.code}}else if(tab==="preview"&&kind==="doc"){var d=document.createElement("div");d.className="artifact-doc";d.innerHTML=/\.md$/i.test(x.name)?md(x.code):"<pre style='white-space:pre-wrap'>"+esc(x.code)+"</pre>";body.append(d)}else{var pre=document.createElement("pre");pre.className="artifact-code";pre.textContent=x.code;body.append(pre)}
-    if($("av-preview"))$("av-preview").onclick=function(){tab="preview";draw()};if($("av-code"))$("av-code").onclick=function(){tab="code";draw()};$("av-close").onclick=close;$("av-copy").onclick=function(){navigator.clipboard.writeText(x.code).then(function(){toast("Copied "+x.name)},function(){toast("Couldn't copy the file")})};$("av-dl").onclick=function(){var u=URL.createObjectURL(new Blob([x.code],{type:"text/plain;charset=utf-8"})),a=document.createElement("a");a.href=u;a.download=x.name;a.click();setTimeout(function(){URL.revokeObjectURL(u)},1000)};$("av-chat").onclick=function(){close();closePv();cur=chats.filter(function(c){return c.id===x.chatId})[0];if(cur){save();render()}}})}
-  draw()}
+var activeArtifactWorkspace=null;
+function showArtifacts(){openArtifactsWorkspace();}
+async function openArtifactsWorkspace(artifactId){
+  if(!user){showAuth("login");return;}
+  closePv();
+  pvOpen('<div class="art-ws"><div class="art-ws-hd"><div class="art-ws-hd-l"><button class="art-ws-back" id="aw-bk">← Back to Chat</button><h2 style="margin:0;font-size:16px">Artifacts Workspace</h2></div></div><div style="flex:1;display:flex;align-items:center;justify-content:center;color:#888"><span class="dots">Loading Artifacts Workspace...<u></u><u></u><u></u></span></div></div>');
+  $("aw-bk").onclick=closePv;
+  var artifacts=[];
+  try{
+    var res=await profileApi('/api/artifacts');
+    if(Array.isArray(res))artifacts=res;
+  }catch(err){
+    console.warn('Could not load server artifacts, falling back to local chat files:',err);
+    artifacts=collectArtifacts().map(function(c){
+      return{
+        id:c.id,
+        title:c.name||'Untitled Project',
+        type:artifactKind(c.name),
+        description:'Generated in chat: '+(c.title||''),
+        files:[{name:c.name,path:c.name,language:c.lang,content:c.code}],
+        updatedAt:new Date(c.at).toISOString(),
+        versions:[{version:1,prompt:'Initial generation',createdAt:new Date(c.at).toISOString(),fileCount:1}]
+      };
+    });
+  }
+  if(artifactId){
+    var match=artifacts.find(function(a){return a.id===artifactId;});
+    if(match)return openArtifactEditor(match);
+  }
+  renderArtifactDashboard(artifacts);
+}
+function renderArtifactDashboard(artifacts){
+  var types=[
+    {id:'html',label:'HTML / CSS / JS',desc:'Interactive web applications & landing pages',icon:'🌐'},
+    {id:'react',label:'React Application',desc:'Modern React 18 JSX component apps',icon:'⚛️'},
+    {id:'python',label:'Python Script',desc:'Automation, data processing & utility scripts',icon:'🐍'},
+    {id:'markdown',label:'Markdown Document',desc:'Reports, documentation, proposals & specs',icon:'📝'}
+  ];
+  var chosenType='html';
+  var cardsHtml=(artifacts||[]).map(function(art){
+    var typeBadge=(art.type||'html').toUpperCase();
+    var fCount=Array.isArray(art.files)?art.files.length:1;
+    var updated=art.updatedAt?new Date(art.updatedAt).toLocaleDateString():'Recent';
+    return '<div class="art-dash-card" data-open-art="'+esc(art.id)+'">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between">' +
+        '<span class="art-badge">'+esc(typeBadge)+'</span>' +
+        '<small style="color:#777">'+esc(updated)+'</small>' +
+      '</div>' +
+      '<h3 style="margin:0;font-size:15px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(art.title||'Untitled')+'</h3>' +
+      '<p style="margin:0;font-size:12px;color:#8f90a6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">'+esc(art.description||'Multi-file project with '+fCount+' file(s)')+'</p>' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:8px;border-top:1px solid #1f202b">' +
+        '<small style="color:#888">'+fCount+' file'+(fCount>1?'s':'')+'</small>' +
+        '<div style="display:flex;gap:6px">' +
+          '<button class="art-btn" data-dl-zip="'+esc(art.id)+'" title="Download project ZIP" style="padding:4px 8px;font-size:11px">📦 ZIP</button>' +
+          '<button class="art-btn pri" data-open-art="'+esc(art.id)+'" style="padding:4px 10px;font-size:11px">Open →</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  var html='<div class="art-ws">' +
+    '<div class="art-ws-hd">' +
+      '<div class="art-ws-hd-l">' +
+        '<button class="art-ws-back" id="aw-bk">← Back to Chat</button>' +
+        '<h2 style="margin:0;font-size:16px;color:#fff">Artifacts Workspace</h2>' +
+      '</div>' +
+      '<div class="art-ws-hd-r">' +
+        '<span class="art-badge" style="background:#1d1d28;color:#9b9cb5">Base Charge: 50 Tokens</span>' +
+      '</div>' +
+    '</div>' +
+    '<div class="art-dash">' +
+      '<div class="art-dash-hero">' +
+        '<h2 style="margin:0 0 6px;font-size:22px;color:#fff">Create New Artifact with AI</h2>' +
+        '<p style="margin:0 0 16px;font-size:13px;color:#8f90a6">Describe what you want to build in natural language. Photon AI will generate full multi-file source code, responsive styling, and interactive preview.</p>' +
+        '<textarea id="ad-prompt" class="art-prompt" placeholder="For example: Build a responsive cryptocurrency dashboard with portfolio cards, live mock prices, and interactive dark/light theme switcher..."></textarea>' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;flex-wrap:wrap;gap:10px">' +
+          '<div style="display:flex;gap:6px;flex-wrap:wrap" id="ad-types">' +
+            types.map(function(t){return '<button class="art-pill'+(t.id==='html'?' on':'')+'" data-type="'+t.id+'" style="padding:6px 12px;font-size:12px">'+t.icon+' '+t.label+'</button>';}).join('') +
+          '</div>' +
+          '<div style="display:flex;gap:8px">' +
+            '<button class="art-btn" id="ad-blank">📁 Start Blank</button>' +
+            '<button class="art-btn pri" id="ad-generate">✨ Generate with AI (50 tokens)</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="ferr" id="ad-err" style="margin-top:8px;font-size:12px;color:#f87171"></div>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">' +
+        '<h3 style="margin:0;font-size:17px;color:#fff">Your Artifacts ('+artifacts.length+')</h3>' +
+      '</div>' +
+      (artifacts.length?'<div class="art-dash-grid">'+cardsHtml+'</div>':'<div style="text-align:center;padding:48px 0;color:#787994;background:#121218;border-radius:10px;border:1px dashed #242533"><p style="font-size:15px;margin:0 0 8px">No artifacts created yet</p><small>Type a prompt above to generate your first live code artifact.</small></div>') +
+    '</div>' +
+  '</div>';
+
+  pvOpen(html);
+  $("aw-bk").onclick=closePv;
+
+  var q=$("pv");
+  q.querySelectorAll("#ad-types button").forEach(function(btn){
+    btn.onclick=function(){
+      chosenType=btn.dataset.type;
+      q.querySelectorAll("#ad-types button").forEach(function(b){b.classList.toggle("on",b===btn);});
+    };
+  });
+
+  $("ad-blank").onclick=async function(){
+    try{
+      var initialFiles=[
+        {name:'index.html',path:'index.html',language:'html',content:'<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <title>New Project</title>\n  <link rel="stylesheet" href="style.css">\n</head>\n<body>\n  <h1>Hello, Photon AI!</h1>\n  <p>Start editing this project or use the AI Copilot.</p>\n  <script src="script.js"></script>\n</body>\n</html>'},
+        {name:'style.css',path:'style.css',language:'css',content:'body {\n  font-family: system-ui, sans-serif;\n  background: #0f172a;\n  color: #f8fafc;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  justify-content: center;\n  min-height: 100vh;\n  margin: 0;\n}'},
+        {name:'script.js',path:'script.js',language:'javascript',content:'console.log("Photon Artifact initialized.");'}
+      ];
+      var newArt=await profileApi('/api/artifacts',{
+        method:'POST',
+        body:{title:'Untitled Project',type:chosenType,files:initialFiles}
+      });
+      openArtifactEditor(newArt);
+    }catch(e){
+      toast(e.message||"Could not create blank project");
+    }
+  };
+
+  $("ad-generate").onclick=async function(){
+    var promptText=($("ad-prompt").value||'').trim();
+    if(!promptText){
+      $("ad-err").textContent="Please enter a description for your artifact.";
+      return;
+    }
+    $("ad-err").textContent="";
+    var btn=$("ad-generate");
+    btn.disabled=true;
+    btn.textContent="Generating Artifact (50 tokens)...";
+    try{
+      var activeModel=(cur&&cur.model)||(user&&user.defaultModel)||"";
+      var res=await profileApi('/api/artifacts/generate',{
+        method:'POST',
+        body:{prompt:promptText,type:chosenType,model:activeModel}
+      });
+      if(res.profileUsage)syncProfileUsage(res.profileUsage);
+      toast("Artifact generated successfully!");
+      openArtifactEditor(res.artifact||res);
+    }catch(err){
+      $("ad-err").textContent=err.message||"Failed to generate artifact. Please try again.";
+    }finally{
+      btn.disabled=false;
+      btn.textContent="✨ Generate with AI (50 tokens)";
+    }
+  };
+
+  q.querySelectorAll("[data-dl-zip]").forEach(function(btn){
+    btn.onclick=async function(e){
+      e.stopPropagation();
+      var id=btn.dataset.dlZip;
+      try{
+        var auth=await ensureFirebaseAuth();
+        var token=await auth.currentUser.getIdToken();
+        var r=await fetch('/api/artifacts/'+id+'/export',{headers:{'Authorization':'Bearer '+token}});
+        if(!r.ok)throw new Error("Export failed");
+        var blob=await r.blob();
+        var u=URL.createObjectURL(blob);
+        var a=document.createElement("a");
+        a.href=u;
+        a.download=(btn.closest(".art-dash-card").querySelector("h3")?.textContent||"artifact")+".zip";
+        a.click();
+        setTimeout(function(){URL.revokeObjectURL(u);},2000);
+      }catch(err){
+        toast("Could not download project ZIP");
+      }
+    };
+  });
+
+  q.querySelectorAll("[data-open-art]").forEach(function(card){
+    card.onclick=async function(e){
+      if(e.target.closest("[data-dl-zip]"))return;
+      var id=card.dataset.openArt;
+      var art=artifacts.find(function(a){return a.id===id;});
+      if(art){
+        try{
+          var fullArt=await profileApi('/api/artifacts/'+id);
+          openArtifactEditor(fullArt);
+        }catch(_){
+          openArtifactEditor(art);
+        }
+      }
+    };
+  });
+}
+function openArtifactEditor(art){
+  activeArtifactWorkspace=art;
+  var currentFiles=Array.isArray(art.files)&&art.files.length?JSON.parse(JSON.stringify(art.files)):[
+    {name:'index.html',path:'index.html',language:'html',content:'<h1>Empty Artifact</h1>'}
+  ];
+  var activeFileIdx=0;
+  var viewMode='split';
+  var deviceMode='desktop';
+  var activeRightTab='copilot';
+
+  function getActiveFile(){
+    return currentFiles[activeFileIdx]||currentFiles[0];
+  }
+
+  function compilePreviewHtml(){
+    var htmlFile=currentFiles.find(function(f){return f.name.endsWith('.html')||f.name.endsWith('.htm');});
+    var cssFiles=currentFiles.filter(function(f){return f.name.endsWith('.css');});
+    var jsFiles=currentFiles.filter(function(f){return f.name.endsWith('.js')&&!f.name.endsWith('.jsx');});
+    var reactFiles=currentFiles.filter(function(f){return f.name.endsWith('.jsx')||f.name.endsWith('.tsx')||(f.content&&f.content.includes('React.'));});
+    var mdFile=currentFiles.find(function(f){return f.name.endsWith('.md');});
+
+    if(reactFiles.length>0){
+      var reactCode=reactFiles.map(function(f){return f.content;}).join('\n\n');
+      var cssContent=cssFiles.map(function(f){return f.content;}).join('\n\n');
+      return '<!DOCTYPE html>\n<html>\n<head>\n' +
+        '<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n' +
+        '<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>\n' +
+        '<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>\n' +
+        '<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>\n' +
+        '<style>'+cssContent+'</style>\n' +
+        '</head>\n<body>\n<div id="root"></div>\n' +
+        '<script type="text/babel">\n' +
+        reactCode + '\n\n' +
+        'if (typeof App !== "undefined") {\n' +
+        '  const root = ReactDOM.createRoot(document.getElementById("root"));\n' +
+        '  root.render(<App />);\n' +
+        '}\n' +
+        '</script>\n</body>\n</html>';
+    }
+
+    if(!htmlFile&&mdFile){
+      return '<!DOCTYPE html>\n<html>\n<head>\n<meta charset="UTF-8">\n' +
+        '<style>body{font-family:system-ui,-apple-system,sans-serif;line-height:1.6;max-width:800px;margin:30px auto;padding:0 20px;color:#222;background:#fff}pre{background:#f4f4f5;padding:12px;border-radius:6px;overflow:auto}</style>\n' +
+        '</head>\n<body>\n'+md(mdFile.content)+'\n</body>\n</html>';
+    }
+
+    var baseHtml=htmlFile?htmlFile.content:'<!DOCTYPE html><html><body><pre>'+esc(getActiveFile().content)+'</pre></body></html>';
+    var styleTags=cssFiles.map(function(f){return '<style data-file="'+esc(f.name)+'">\n'+f.content+'\n</style>';}).join('\n');
+    var scriptTags=jsFiles.map(function(f){return '<script data-file="'+esc(f.name)+'">\ntry{\n'+f.content+'\n}catch(e){console.error(e);}\n</script>';}).join('\n');
+
+    if(baseHtml.includes('</head>')){
+      baseHtml=baseHtml.replace('</head>',styleTags+'\n</head>');
+    }else{
+      baseHtml=styleTags+'\n'+baseHtml;
+    }
+    if(baseHtml.includes('</body>')){
+      baseHtml=baseHtml.replace('</body>',scriptTags+'\n</body>');
+    }else{
+      baseHtml=baseHtml+'\n'+scriptTags;
+    }
+    return baseHtml;
+  }
+
+  function renderGutter(text){
+    var count=(text||'').split('\n').length;
+    var nums=[];
+    for(var i=1;i<=count;i++)nums.push(i);
+    return nums.join('\n');
+  }
+
+  function drawWorkspace(){
+    var activeF=getActiveFile();
+    var fileTabsHtml=currentFiles.map(function(f,idx){
+      var isAct=idx===activeFileIdx;
+      return '<div class="art-file'+(isAct?' on':'')+'" data-fidx="'+idx+'">' +
+        '<span class="art-file-name">📄 '+esc(f.name)+'</span>' +
+        '<div class="art-file-acts">' +
+          '<button data-rename-f="'+idx+'" title="Rename file">✎</button>' +
+          (currentFiles.length>1?'<button data-del-f="'+idx+'" title="Delete file">✕</button>':'') +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    var versionsHtml=(art.versions||[]).map(function(v){
+      var vDate=v.createdAt?new Date(v.createdAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',month:'short',day:'numeric'}):'Earlier';
+      return '<div class="art-ver-card">' +
+        '<div class="art-ver-meta">' +
+          '<strong>Version '+v.version+'</strong>' +
+          '<span>'+esc(vDate)+'</span>' +
+        '</div>' +
+        '<div class="art-ver-prompt">'+esc(v.summary||v.prompt||'Changes applied')+'</div>' +
+        '<button class="art-btn" style="padding:3px 8px;font-size:11px" data-restore-ver="'+v.version+'">↺ Restore this version</button>' +
+      '</div>';
+    }).reverse().join('');
+
+    var html='<div class="art-ws">' +
+      '<div class="art-ws-hd">' +
+        '<div class="art-ws-hd-l">' +
+          '<button class="art-ws-back" id="awe-back">← Dashboard</button>' +
+          '<input id="awe-title" class="art-ws-title" value="'+esc(art.title||'Untitled Project')+'" title="Click to rename">' +
+          '<span class="art-badge">'+esc((art.type||'html').toUpperCase())+'</span>' +
+        '</div>' +
+        '<div class="art-ws-hd-c">' +
+          '<div class="art-grp">' +
+            '<button id="vm-code" class="'+(viewMode==='code'?'on':'')+'">Code</button>' +
+            '<button id="vm-split" class="'+(viewMode==='split'?'on':'')+'">Split</button>' +
+            '<button id="vm-preview" class="'+(viewMode==='preview'?'on':'')+'">Preview</button>' +
+          '</div>' +
+          (viewMode!=='code'?'<div class="art-grp">' +
+            '<button id="dev-desk" class="'+(deviceMode==='desktop'?'on':'')+'" title="Desktop View">🖥 Full</button>' +
+            '<button id="dev-tab" class="'+(deviceMode==='tablet'?'on':'')+'" title="Tablet (768px)">📱 Tablet</button>' +
+            '<button id="dev-mob" class="'+(deviceMode==='mobile'?'on':'')+'" title="Mobile (375px)">📱 Mobile</button>' +
+          '</div>':'') +
+        '</div>' +
+        '<div class="art-ws-hd-r">' +
+          '<button class="art-btn" id="awe-refresh" title="Refresh Live Preview">↻ Refresh</button>' +
+          '<button class="art-btn" id="awe-export" title="Export Project">📦 Export ▾</button>' +
+          '<button class="art-btn pri" id="awe-save">💾 Save</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="art-ws-body">' +
+        '<div class="art-ws-side">' +
+          '<div class="art-ws-side-hd">' +
+            '<span>Files ('+currentFiles.length+')</span>' +
+            '<button class="art-btn" id="awe-add-file" style="padding:2px 7px;font-size:11px">+ File</button>' +
+          '</div>' +
+          '<div class="art-files">'+fileTabsHtml+'</div>' +
+        '</div>' +
+        '<div class="art-ws-main">' +
+          (viewMode!=='preview'?'<div class="art-code-pane">' +
+            '<div style="display:flex;align-items:center;background:#14141a;border-bottom:1px solid #23232e;padding:0 8px;gap:2px">' +
+              '<div style="padding:8px 14px;font-size:12px;color:#fff;border-bottom:2px solid #3b82f6;background:#0f0f14;font-weight:500">📄 '+esc(activeF.name)+'</div>' +
+            '</div>' +
+            '<div class="art-editor-wrap">' +
+              '<div class="art-gutter" id="awe-gutter">'+renderGutter(activeF.content)+'</div>' +
+              '<textarea id="awe-editor" class="art-textarea" spellcheck="false" autocomplete="off" wrap="off">'+esc(activeF.content||'')+'</textarea>' +
+            '</div>' +
+          '</div>':'') +
+          (viewMode!=='code'?'<div class="art-preview-pane">' +
+            '<div class="art-frame-wrap '+deviceMode+'">' +
+              '<iframe id="awe-iframe" class="art-frame" sandbox="allow-scripts allow-modals"></iframe>' +
+            '</div>' +
+          '</div>':'') +
+        '</div>' +
+        '<div class="art-ws-copilot">' +
+          '<div class="art-copilot-tabs">' +
+            '<button class="art-copilot-tab '+(activeRightTab==='copilot'?'on':'')+'" id="rtab-copilot">✨ AI Copilot</button>' +
+            '<button class="art-copilot-tab '+(activeRightTab==='versions'?'on':'')+'" id="rtab-versions">↺ History ('+(art.versions?.length||1)+')</button>' +
+          '</div>' +
+          (activeRightTab==='copilot'?'<div class="art-copilot-body">' +
+            '<label style="font-size:12px;font-weight:600;color:#bbb">Ask Photon to Edit this Code</label>' +
+            '<textarea id="awe-prompt" class="art-prompt" placeholder="e.g. Add responsive hamburger navigation, implement dark mode toggle, modernize colors with soft gradients..."></textarea>' +
+            '<div class="art-pills">' +
+              '<button class="art-pill" data-quick="Make it fully responsive for mobile and tablet devices">📱 Responsive</button>' +
+              '<button class="art-pill" data-quick="Add a clean modern dark mode theme with smooth transition">🌙 Dark Mode</button>' +
+              '<button class="art-pill" data-quick="Modernize design with clean typography, rounded cards and subtle shadows">🎨 Modern UI</button>' +
+              '<button class="art-pill" data-quick="Fix any potential JavaScript errors or styling issues">🛠 Fix Bugs</button>' +
+              '<button class="art-pill" data-quick="Add interactive hover effects and smooth fade animations">✨ Animations</button>' +
+            '</div>' +
+            '<div style="font-size:11px;color:#787994;display:flex;align-items:center;justify-content:space-between;padding:0 2px">' +
+              '<span>Charge: 50 PHOTON Tokens</span>' +
+              '<span style="color:#60a5fa">Atomic Refund on Error</span>' +
+            '</div>' +
+            '<button class="art-btn pri" id="awe-apply-ai" style="margin-top:6px;padding:10px">✨ Apply AI Changes</button>' +
+            '<div class="ferr" id="awe-copilot-err" style="font-size:12px;color:#f87171"></div>' +
+          '</div>':'<div class="art-versions">' +
+            (versionsHtml||'<div style="padding:20px;text-align:center;color:#666">No previous versions yet.</div>') +
+          '</div>') +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+    pvOpen(html);
+
+    $("awe-back").onclick=function(){openArtifactsWorkspace();};
+    $("awe-title").onchange=function(){
+      art.title=this.value.trim()||'Untitled Project';
+      saveCurrentArtifact();
+    };
+
+    $("vm-code").onclick=function(){viewMode='code';drawWorkspace();};
+    $("vm-split").onclick=function(){viewMode='split';drawWorkspace();};
+    $("vm-preview").onclick=function(){viewMode='preview';drawWorkspace();};
+
+    if($("dev-desk"))$("dev-desk").onclick=function(){deviceMode='desktop';drawWorkspace();};
+    if($("dev-tab"))$("dev-tab").onclick=function(){deviceMode='tablet';drawWorkspace();};
+    if($("dev-mob"))$("dev-mob").onclick=function(){deviceMode='mobile';drawWorkspace();};
+
+    $("awe-refresh").onclick=updateLivePreview;
+
+    $("awe-save").onclick=async function(){
+      var btn=$("awe-save");
+      btn.disabled=true;
+      btn.textContent="Saving...";
+      await saveCurrentArtifact();
+      btn.disabled=false;
+      btn.textContent="✓ Saved";
+      setTimeout(function(){if(btn.isConnected)btn.textContent="💾 Save";},1500);
+    };
+
+    $("awe-export").onclick=function(){
+      modal('<h2>Export Artifact</h2><p class="s">Download source code or project archive.</p>' +
+        '<div style="display:grid;gap:10px;margin-top:14px">' +
+          '<button class="pv-btn" id="exp-zip">📦 Download Project Archive (ZIP)</button>' +
+          '<button class="pv-btn ghost" id="exp-file">📄 Download Current File ('+esc(activeF.name)+')</button>' +
+          '<button class="pv-btn ghost" id="exp-copy">📋 Copy Code to Clipboard</button>' +
+        '</div>',function(close){
+        $("exp-zip").onclick=async function(){
+          close();
+          try{
+            var auth=await ensureFirebaseAuth();
+            var token=await auth.currentUser.getIdToken();
+            var r=await fetch('/api/artifacts/'+art.id+'/export',{headers:{'Authorization':'Bearer '+token}});
+            if(!r.ok)throw new Error("ZIP export failed");
+            var blob=await r.blob();
+            var u=URL.createObjectURL(blob);
+            var a=document.createElement("a");
+            a.href=u;
+            a.download=(art.title||'artifact').replace(/[^a-zA-Z0-9_-]/g,'_')+'.zip';
+            a.click();
+            setTimeout(function(){URL.revokeObjectURL(u);},2000);
+            toast("ZIP project downloaded!");
+          }catch(e){
+            toast("Export failed: "+e.message);
+          }
+        };
+        $("exp-file").onclick=function(){
+          close();
+          var blob=new Blob([activeF.content],{type:'text/plain;charset=utf-8'});
+          var u=URL.createObjectURL(blob);
+          var a=document.createElement("a");
+          a.href=u;
+          a.download=activeF.name;
+          a.click();
+          setTimeout(function(){URL.revokeObjectURL(u);},1500);
+          toast("File downloaded: "+activeF.name);
+        };
+        $("exp-copy").onclick=function(){
+          close();
+          navigator.clipboard.writeText(activeF.content).then(function(){
+            toast("Copied "+activeF.name+" code!");
+          });
+        };
+      });
+    };
+
+    var q=$("pv");
+    q.querySelectorAll("[data-fidx]").forEach(function(item){
+      item.onclick=function(e){
+        if(e.target.closest("button"))return;
+        syncEditorToCurrentFile();
+        activeFileIdx=Number(item.dataset.fidx);
+        drawWorkspace();
+      };
+    });
+
+    q.querySelectorAll("[data-rename-f]").forEach(function(btn){
+      btn.onclick=function(e){
+        e.stopPropagation();
+        var idx=Number(btn.dataset.renameF);
+        var targetF=currentFiles[idx];
+        var newName=prompt("Rename file:",targetF.name);
+        if(newName&&newName.trim()&&newName.trim()!==targetF.name){
+          targetF.name=newName.trim();
+          targetF.path=targetF.name;
+          drawWorkspace();
+        }
+      };
+    });
+
+    q.querySelectorAll("[data-del-f]").forEach(function(btn){
+      btn.onclick=function(e){
+        e.stopPropagation();
+        var idx=Number(btn.dataset.delF);
+        if(currentFiles.length<=1)return;
+        if(confirm("Delete file "+currentFiles[idx].name+"?")){
+          currentFiles.splice(idx,1);
+          if(activeFileIdx>=currentFiles.length)activeFileIdx=currentFiles.length-1;
+          drawWorkspace();
+        }
+      };
+    });
+
+    $("awe-add-file").onclick=function(){
+      var fname=prompt("New file name (e.g. style.css, App.jsx, utils.js):");
+      if(fname&&fname.trim()){
+        fname=fname.trim();
+        if(currentFiles.some(function(f){return f.name===fname;})){
+          alert("A file with that name already exists.");
+          return;
+        }
+        currentFiles.push({name:fname,path:fname,language:fname.split('.').pop()||'plaintext',content:''});
+        activeFileIdx=currentFiles.length-1;
+        drawWorkspace();
+      }
+    };
+
+    var editor=$("awe-editor");
+    var gutter=$("awe-gutter");
+    if(editor){
+      editor.oninput=function(){
+        activeF.content=this.value;
+        if(gutter)gutter.innerText=renderGutter(this.value);
+      };
+      editor.onscroll=function(){
+        if(gutter)gutter.scrollTop=this.scrollTop;
+      };
+      editor.onkeydown=function(e){
+        if(e.key==="Tab"){
+          e.preventDefault();
+          var sStart=this.selectionStart,sEnd=this.selectionEnd;
+          this.value=this.value.substring(0,sStart)+"  "+this.value.substring(sEnd);
+          this.selectionStart=this.selectionEnd=sStart+2;
+          activeF.content=this.value;
+          if(gutter)gutter.innerText=renderGutter(this.value);
+        }
+        if((e.ctrlKey||e.metaKey)&&e.key==="s"){
+          e.preventDefault();
+          saveCurrentArtifact();
+          toast("✓ Saved project");
+        }
+      };
+    }
+
+    $("rtab-copilot").onclick=function(){activeRightTab='copilot';drawWorkspace();};
+    $("rtab-versions").onclick=function(){activeRightTab='versions';drawWorkspace();};
+
+    if($("awe-apply-ai")){
+      q.querySelectorAll(".art-pill").forEach(function(pill){
+        pill.onclick=function(){
+          $("awe-prompt").value=pill.dataset.quick;
+          $("awe-prompt").focus();
+        };
+      });
+
+      $("awe-apply-ai").onclick=async function(){
+        var promptVal=($("awe-prompt").value||'').trim();
+        if(!promptVal){
+          $("awe-copilot-err").textContent="Please enter instructions for the AI.";
+          return;
+        }
+        $("awe-copilot-err").textContent="";
+        var btn=$("awe-apply-ai");
+        btn.disabled=true;
+        btn.textContent="Applying AI Changes (50 tokens)...";
+        try{
+          syncEditorToCurrentFile();
+          await saveCurrentArtifact();
+          var activeModel=(cur&&cur.model)||(user&&user.defaultModel)||"";
+          var res=await profileApi('/api/artifacts/'+art.id+'/edit',{
+            method:'POST',
+            body:{instruction:promptVal,model:activeModel}
+          });
+          if(res.profileUsage)syncProfileUsage(res.profileUsage);
+          toast("✓ Applied AI modifications!");
+          if(res.artifact){
+            art=res.artifact;
+            currentFiles=art.files||currentFiles;
+          }
+          drawWorkspace();
+        }catch(err){
+          $("awe-copilot-err").textContent=err.message||"Failed to apply AI changes.";
+        }finally{
+          btn.disabled=false;
+          btn.textContent="✨ Apply AI Changes";
+        }
+      };
+    }
+
+    q.querySelectorAll("[data-restore-ver]").forEach(function(btn){
+      btn.onclick=async function(){
+        var vNum=Number(btn.dataset.restoreVer);
+        if(confirm("Restore version "+vNum+"? Current unsaved edits will be replaced.")){
+          try{
+            var restored=await profileApi('/api/artifacts/'+art.id+'/restore',{
+              method:'POST',
+              body:{version:vNum}
+            });
+            art=restored;
+            currentFiles=art.files||currentFiles;
+            activeFileIdx=0;
+            toast("Restored version "+vNum);
+            drawWorkspace();
+          }catch(e){
+            toast("Restore failed: "+e.message);
+          }
+        }
+      };
+    });
+
+    updateLivePreview();
+  }
+
+  function syncEditorToCurrentFile(){
+    var editor=$("awe-editor");
+    if(editor&&currentFiles[activeFileIdx]){
+      currentFiles[activeFileIdx].content=editor.value;
+    }
+  }
+
+  function updateLivePreview(){
+    var frame=$("awe-iframe");
+    if(!frame)return;
+    syncEditorToCurrentFile();
+    var compiled=compilePreviewHtml();
+    frame.srcdoc=compiled;
+  }
+
+  async function saveCurrentArtifact(){
+    syncEditorToCurrentFile();
+    try{
+      var updated=await profileApi('/api/artifacts/'+art.id,{
+        method:'PUT',
+        body:{title:art.title,files:currentFiles}
+      });
+      art=updated;
+      return true;
+    }catch(e){
+      console.warn("Could not save to server:",e);
+      return false;
+    }
+  }
+
+  drawWorkspace();
+}
 function showProject(id){
   var p=getProj(id);if(!p){showProjects();return}
   var cs=projChats(id),files=p.files||[],pct=Math.min(100,Math.max(used(p)?1:0,Math.round(used(p)/CAP*100)));
@@ -1336,7 +1994,12 @@ async function send(retry){
     });
     touchProj();
   }
-  var userMsg=cur.msgs.filter(function(m){return m.role==="user"}).slice(-1)[0],kind=activeGenCat==="image"?"image":(activeGenCat==="video"?"video":(!requestFiles.length&&(k0==="image"||k0==="video")?k0:""));
+  var activeModelId=(cur&&cur.model)||(user&&user.defaultModel)||"";
+  var activeModelM=((profileConfig&&(profileConfig.allModels||profileConfig.models))||[]).find(function(m){return m.id===activeModelId});
+  var isImgModel = Boolean(activeModelM && getModelCat(activeModelM) === "image");
+  var isVidModel = Boolean(activeModelM && getModelCat(activeModelM) === "video");
+  var userMsg=cur.msgs.filter(function(m){return m.role==="user"}).slice(-1)[0],
+      kind=activeGenCat==="image"||isImgModel?"image":(activeGenCat==="video"||isVidModel?"video":(!requestFiles.length&&(k0==="image"||k0==="video")?k0:""));
   cur.updatedAt=Date.now();render();var out=addRow("assistant","");out.innerHTML=kind?'<div class="gen"><div class="gv"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="sh"></i></div><div class="gt">Creating '+kind+'<span class="dots"><u></u><u></u><u></u></span></div></div>':'<span class="think">Thinking...</span>';
   ctl=new AbortController();busy=true;upd();var got="",failure="",failureCode="",serverSynced=false;
   try{

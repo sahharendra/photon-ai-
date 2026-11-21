@@ -66,7 +66,9 @@ const {
   commitTokenTransaction,
   refundTokenTransaction,
   verifyConfiguration,
+  calculateArtifactTokenCost,
 } = require('./pricing-rules-service');
+const { createArtifactsService } = require('./artifacts-service');
 const {
   PaymentError: CashfreePaymentError,
   createCashfreeService,
@@ -987,6 +989,24 @@ async function* streamProvider({ providerName, modelId, system, history, text, a
   if (result.text) yield { type: 'delta', text: result.text };
   yield { type: 'done', text: result.text, usage: result.usage, model: result.model };
 }
+
+const artifactsService = createArtifactsService({
+  store: loadStore(),
+  loadStore,
+  saveStore,
+  withStoreLock,
+  generateProvider: generateWithFallback,
+  resolveModel,
+  providerKey,
+  calculateArtifactTokenCost,
+  reserveTokenSpend,
+  commitTokenTransaction,
+  refundTokenTransaction,
+  addActivity,
+  HttpError,
+  logger: console,
+});
+
 function normalizeProviderUsage(usage) {
   if (!usage) return null;
   const inputTokens = Number(usage.inputTokens ?? usage.input_tokens) || 0;
@@ -1013,12 +1033,24 @@ async function prepareChat(body, claims, profile) {
   if (typeof body.message !== 'string' || body.message.length > 20000 || (!body.message.trim() && (!Array.isArray(body.attachments) || !body.attachments.length))) throw new HttpError(400, 'invalid_message', 'Enter a message or attach a file.');
   const attachments = validateChatAttachments(body.attachments);
   const rawActivity = String(body.activity_type || 'chat').trim().toLowerCase();
-  const chosenModel = requireModelId(profile, body.model);
-  const modelOption = await resolveModel(chosenModel);
+  let chosenModel = requireModelId(profile, body.model);
+  let modelOption = await resolveModel(chosenModel);
   assertPlanModel(modelOption, userEffectivePlanId(profile));
-  const providerName = providerKey(modelOption);
+  let providerName = providerKey(modelOption);
   if (typeof capabilityService !== 'undefined' && capabilityService) {
-    capabilityService.assertModelCapability(chosenModel, 'text');
+    try {
+      capabilityService.assertModelCapability(chosenModel, 'text');
+    } catch (capErr) {
+      // If user had an image/video model selected, or model quota is exhausted, auto-fallback to fastest available text model
+      const fallbackText = getFastestAvailableModel(userEffectivePlanId(profile));
+      if (fallbackText && fallbackText.id !== chosenModel) {
+        chosenModel = fallbackText.id;
+        modelOption = await resolveModel(chosenModel);
+        providerName = providerKey(modelOption);
+      } else {
+        throw capErr;
+      }
+    }
   }
   if (typeof quotaMonitor !== 'undefined' && quotaMonitor) {
     quotaMonitor.assertModelRequestAllowed(providerName, chosenModel);
@@ -1783,6 +1815,13 @@ const server = http.createServer(async (req, res) => {
           },
         });
       }
+      if (pathname === '/api/admin/pricing/artifacts' && req.method === 'PUT') {
+        const body = await readBody(req);
+        const data = loadStore();
+        data.settings.artifactPricing = { ...(data.settings.artifactPricing || {}), ...body };
+        saveStore();
+        return reply(res, 200, { success: true, data: data.settings.artifactPricing });
+      }
       if (pathname === '/api/admin/pricing/plans' && req.method === 'POST') {
         const body = await readBody(req);
         const data = loadStore();
@@ -2239,7 +2278,7 @@ const server = http.createServer(async (req, res) => {
       }
       return reply(res, 200, { success: true, data: { authorized: true } });
     }
-    if (req.method.startsWith('POST') || req.method === 'PUT' || req.method === 'DELETE' || pathname.startsWith('/api/profile') || pathname.startsWith('/api/payments') || pathname.startsWith('/api/chat') || pathname.startsWith('/api/generate') || pathname.startsWith('/api/images')) {
+    if (req.method.startsWith('POST') || req.method === 'PUT' || req.method === 'DELETE' || pathname.startsWith('/api/profile') || pathname.startsWith('/api/payments') || pathname.startsWith('/api/chat') || pathname.startsWith('/api/generate') || pathname.startsWith('/api/images') || pathname.startsWith('/api/artifacts')) {
       if (pathname.startsWith('/api/')) {
         const { claims, profile } = await authenticated(req); rateLimit(claims.sub);
         if (req.method === 'GET' && pathname === '/api/profile') return reply(res, 200, { success: true, data: profileResponse(profile, claims.sub) });
@@ -2456,6 +2495,103 @@ const server = http.createServer(async (req, res) => {
           s.deleted[claims.sub] = Date.now(); saveStore();
           return reply(res, 200, { success: true, data: { deleted: true } });
         }
+        if (pathname.startsWith('/api/artifacts')) {
+          if (req.method === 'GET' && pathname === '/api/artifacts') {
+            return reply(res, 200, { success: true, data: artifactsService.listArtifacts(claims.sub) });
+          }
+          if (req.method === 'POST' && pathname === '/api/artifacts') {
+            const body = await readBody(req);
+            const art = artifactsService.createArtifact(claims.sub, body);
+            return reply(res, 201, { success: true, data: art });
+          }
+          if (req.method === 'POST' && pathname === '/api/artifacts/generate') {
+            const body = await readBody(req);
+            const result = await artifactsService.generateArtifact({
+              uid: claims.sub,
+              prompt: body.prompt,
+              type: body.type,
+              modelId: body.model,
+              profile,
+              requestId: body.request_id || requestId,
+            });
+            return reply(res, 200, {
+              success: true,
+              data: result,
+              profileUsage: profileResponse(profile, claims.sub).usage,
+            });
+          }
+
+          const artExportMatch = /^\/api\/artifacts\/([^/]+)\/export$/.exec(pathname);
+          if (req.method === 'GET' && artExportMatch) {
+            const id = decodeURIComponent(artExportMatch[1]);
+            const { filename, zipBuffer } = artifactsService.exportZip(claims.sub, id);
+            res.writeHead(200, {
+              'Content-Type': 'application/zip',
+              'Content-Disposition': `attachment; filename="${filename}"`,
+              'Content-Length': zipBuffer.length,
+            });
+            return res.end(zipBuffer);
+          }
+
+          const artDupMatch = /^\/api\/artifacts\/([^/]+)\/duplicate$/.exec(pathname);
+          if (req.method === 'POST' && artDupMatch) {
+            const id = decodeURIComponent(artDupMatch[1]);
+            const duplicated = artifactsService.duplicateArtifact(claims.sub, id);
+            return reply(res, 201, { success: true, data: duplicated });
+          }
+
+          const artEditMatch = /^\/api\/artifacts\/([^/]+)\/edit$/.exec(pathname);
+          if (req.method === 'POST' && artEditMatch) {
+            const id = decodeURIComponent(artEditMatch[1]);
+            const body = await readBody(req);
+            const result = await artifactsService.editArtifact({
+              uid: claims.sub,
+              id,
+              instruction: body.instruction,
+              modelId: body.model,
+              profile,
+              requestId: body.request_id || requestId,
+            });
+            return reply(res, 200, {
+              success: true,
+              data: result,
+              profileUsage: profileResponse(profile, claims.sub).usage,
+            });
+          }
+
+          const artVersionsMatch = /^\/api\/artifacts\/([^/]+)\/versions$/.exec(pathname);
+          if (req.method === 'GET' && artVersionsMatch) {
+            const id = decodeURIComponent(artVersionsMatch[1]);
+            const art = artifactsService.getArtifact(claims.sub, id);
+            return reply(res, 200, { success: true, data: art.versions || [] });
+          }
+
+          const artRestoreMatch = /^\/api\/artifacts\/([^/]+)\/restore$/.exec(pathname);
+          if (req.method === 'POST' && artRestoreMatch) {
+            const id = decodeURIComponent(artRestoreMatch[1]);
+            const body = await readBody(req);
+            const restored = artifactsService.restoreVersion(claims.sub, id, body.version);
+            return reply(res, 200, { success: true, data: restored });
+          }
+
+          const artItemMatch = /^\/api\/artifacts\/([^/]+)$/.exec(pathname);
+          if (artItemMatch) {
+            const id = decodeURIComponent(artItemMatch[1]);
+            if (req.method === 'GET') {
+              const art = artifactsService.getArtifact(claims.sub, id);
+              return reply(res, 200, { success: true, data: art });
+            }
+            if (req.method === 'PUT') {
+              const body = await readBody(req);
+              const updated = artifactsService.updateArtifact(claims.sub, id, body);
+              return reply(res, 200, { success: true, data: updated });
+            }
+            if (req.method === 'DELETE') {
+              const result = artifactsService.deleteArtifact(claims.sub, id);
+              return reply(res, 200, { success: true, data: result });
+            }
+          }
+        }
         if (req.method === 'POST' && pathname === '/api/chat') {
           const body = await readBody(req);
           const ctx = await prepareChat(body, claims, profile);
@@ -2617,11 +2753,32 @@ const server = http.createServer(async (req, res) => {
               targetModel = requestedModel || '@cf/black-forest-labs/flux-1-schnell';
             }
 
+            // Check if selected model is exhausted or unavailable in capability service; if so, fallback to Pollinations free
+            if (capabilityService) {
+              const capModel = capabilityService.getModel(targetModel);
+              if (!usePollinations && (!capModel || !capModel.available || capModel.creditsExhausted)) {
+                usePollinations = true;
+                targetModel = 'flux';
+              }
+            }
+
             let providerDisplayName = usePollinations ? 'Pollinations AI' : 'Cloudflare Workers AI';
             let provShort = usePollinations ? 'pollinations' : 'cloudflare';
 
             if (capabilityService) {
-              capabilityService.assertModelCapability(targetModel, 'image');
+              try {
+                capabilityService.assertModelCapability(targetModel, 'image');
+              } catch (capErr) {
+                if (!usePollinations) {
+                  usePollinations = true;
+                  targetModel = 'flux';
+                  providerDisplayName = 'Pollinations AI';
+                  provShort = 'pollinations';
+                  capabilityService.assertModelCapability(targetModel, 'image');
+                } else {
+                  throw capErr;
+                }
+              }
             }
 
             if (!usePollinations) {

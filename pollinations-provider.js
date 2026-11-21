@@ -121,13 +121,13 @@ function createPollinationsProvider({ HttpError, env = process.env, fetchImpl = 
     const rawBuffer = Buffer.from(await res.arrayBuffer());
 
     // Check if the response contains valid image binary data (even if HTTP 402/200 was sent)
-    const isJpeg = rawBuffer.length > 2048 && rawBuffer[0] === 0xFF && rawBuffer[1] === 0xD8 && rawBuffer[2] === 0xFF;
-    const isPng = rawBuffer.length > 2048 && rawBuffer[0] === 0x89 && rawBuffer[1] === 0x50 && rawBuffer[2] === 0x4E;
+    const isJpeg = rawBuffer.length > 100 && rawBuffer[0] === 0xFF && rawBuffer[1] === 0xD8;
+    const isPng = rawBuffer.length > 100 && rawBuffer[0] === 0x89 && rawBuffer[1] === 0x50 && rawBuffer[2] === 0x4E;
     const isValidImage = isJpeg || isPng;
 
     if (!res.ok && !isValidImage) {
       let errorMsg = '';
-      const retryAfter = Number(res.headers.get('retry-after')) || 0;
+      let retryAfter = Number(res.headers.get('retry-after')) || 0;
       try {
         const json = JSON.parse(rawBuffer.toString('utf8'));
         if (json && json.error && json.error.message) {
@@ -136,25 +136,32 @@ function createPollinationsProvider({ HttpError, env = process.env, fetchImpl = 
           errorMsg = json.message;
         }
       } catch (_) {
-        const textSlice = rawBuffer.toString('utf8', 0, 200).replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+        // Strip non-printable and binary characters to avoid displaying garbage
+        const textSlice = rawBuffer.toString('utf8', 0, 300).replace(/[\x00-\x1F\x7F-\x9F]/g, ' ').replace(/\s+/g, ' ').trim();
         errorMsg = textSlice;
       }
 
-      const isRateLimit = res.status === 402 || res.status === 429 || errorMsg.includes('FREE_LIMIT') || errorMsg.includes('Free limit') || errorMsg.includes('every 45 seconds');
+      // Check for retry count inside the error text if header was absent (e.g. "Retry after 20s")
+      if (!retryAfter && errorMsg) {
+        const match = errorMsg.match(/retry\s+after\s+(\d+)s?/i) || errorMsg.match(/wait\s+(\d+)\s*s/i);
+        if (match) retryAfter = Number(match[1]);
+      }
+
+      const isRateLimit = res.status === 402 || res.status === 429 || /FREE_LIMIT|Free limit|every 45 seconds/i.test(errorMsg);
 
       if (isRateLimit) {
         // If retry-after is reasonably short (<= 25 seconds) and we haven't already retried, wait and retry once
         if (!_isRetry && retryAfter > 0 && retryAfter <= 25 && (!signal || !signal.aborted)) {
-          logger.log(`[Pollinations] Free rate-limit reached. Waiting ${retryAfter}s before automatic retry...`);
+          logger.log(`[Pollinations] Free rate-limit reached. Waiting ${retryAfter + 1}s before automatic retry...`);
           await new Promise(r => setTimeout(r, (retryAfter + 1) * 1000));
           return generateImage({ prompt, model, width, height, seed, signal, _isRetry: true });
         }
 
-        const waitNotice = retryAfter > 0 ? ` Please retry in ${retryAfter} seconds.` : ' Please wait 45 seconds between free image generations.';
+        const waitNotice = retryAfter > 0 ? ` Please retry in ${retryAfter} seconds.` : ' Please wait 45 seconds between free generations.';
         throw new HttpError(
           429,
           'rate_limit_exceeded',
-          `Pollinations free tier rate limit: 1 image every 45 seconds per IP.${waitNotice} (Tip: Add a free API key from https://enter.pollinations.ai in Admin Settings to remove this limit).`
+          `Pollinations free tier rate limit: 1 image every 45 seconds per IP.${waitNotice} (Tip: Add a free API key from https://enter.pollinations.ai in Admin Settings to eliminate this wait).`
         );
       }
 

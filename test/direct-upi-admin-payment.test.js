@@ -48,6 +48,8 @@ const FILES = [
   'pricing-rules-service.js',
   'cashfree-service.js', 'cloudflare-config.js', 'cloudflare-provider.js', 'pollinations-provider.js', 'quota-monitor-service.js', 'model-capability-service.js',
   'razorpay-service.js',
+  'artifact-zip.js',
+  'artifacts-service.js',
   'index.html',
   'admin.html',
   'upi-qr.jpg',

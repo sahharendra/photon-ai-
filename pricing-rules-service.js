@@ -314,10 +314,24 @@ function normalizeSettings(raw) {
     message: String(privateModeRaw.message || 'Photon AI is currently in private preview & maintenance. Public access will reopen in a few days!').trim(),
   };
 
+  const artifactPricingRaw = (input.artifactPricing && typeof input.artifactPricing === 'object') ? input.artifactPricing : {};
+  const artifactPricing = {
+    baseCost: Number.isInteger(Number(artifactPricingRaw.baseCost)) ? Math.max(1, Number(artifactPricingRaw.baseCost)) : 50,
+    includedTokens: Number.isInteger(Number(artifactPricingRaw.includedTokens)) ? Math.max(0, Number(artifactPricingRaw.includedTokens)) : 1000,
+    surchargePerBlock: Number.isInteger(Number(artifactPricingRaw.surchargePerBlock)) ? Math.max(0, Number(artifactPricingRaw.surchargePerBlock)) : 1,
+    blockSize: Number.isInteger(Number(artifactPricingRaw.blockSize)) ? Math.max(100, Number(artifactPricingRaw.blockSize)) : 1000,
+    outputSurchargeEnabled: Boolean(artifactPricingRaw.outputSurchargeEnabled),
+    outputSurchargePerBlock: Number.isInteger(Number(artifactPricingRaw.outputSurchargePerBlock)) ? Math.max(0, Number(artifactPricingRaw.outputSurchargePerBlock)) : 1,
+    outputBlockSize: Number.isInteger(Number(artifactPricingRaw.outputBlockSize)) ? Math.max(100, Number(artifactPricingRaw.outputBlockSize)) : 1000,
+    enabled: artifactPricingRaw.enabled !== false,
+    aiEditingEnabled: artifactPricingRaw.aiEditingEnabled !== false,
+  };
+
   return {
     plans: mergedPlans,
     tokenCosts,
     tokenRules: mergedRules,
+    artifactPricing,
     allowancePolicy,
     razorpay,
     cashfree,
@@ -614,6 +628,7 @@ function saveBulkSettings(store, body, { actor = 'admin' } = {}) {
     plans: nextPlans,
     tokenRules: nextRules,
     allowancePolicy,
+    artifactPricing: body?.artifactPricing ? { ...current.artifactPricing, ...body.artifactPricing } : current.artifactPricing,
     settingsVersion: SETTINGS_VERSION,
     rulesVersion: RULES_VERSION,
   };
@@ -716,7 +731,22 @@ function reservedTokensToday(store, uid, timezone, now = Date.now()) {
     .reduce((sum, tx) => sum + (Number(tx.tokensCharged) || 0), 0);
 }
 
-function reserveTokenSpend(store, { uid, activityKey, requestId, profile, provider = '', model = '', now = Date.now() }) {
+function calculateArtifactTokenCost(inputTokens = 0, artifactPricing = null, outputTokens = 0) {
+  const cfg = artifactPricing || { baseCost: 50, includedTokens: 1000, surchargePerBlock: 1, blockSize: 1000 };
+  const inTokens = Math.max(0, Number(inputTokens) || 0);
+  const excessIn = Math.max(0, inTokens - (cfg.includedTokens ?? 1000));
+  const inBlocks = Math.ceil(excessIn / (cfg.blockSize || 1000));
+  let total = Number(cfg.baseCost ?? 50) + (inBlocks * Number(cfg.surchargePerBlock ?? 1));
+
+  if (cfg.outputSurchargeEnabled && outputTokens > 0) {
+    const outTokens = Math.max(0, Number(outputTokens) || 0);
+    const outBlocks = Math.ceil(outTokens / (cfg.outputBlockSize || 1000));
+    total += (outBlocks * Number(cfg.outputSurchargePerBlock ?? 1));
+  }
+  return Math.max(Number(cfg.baseCost ?? 50), total);
+}
+
+function reserveTokenSpend(store, { uid, activityKey, requestId, profile, provider = '', model = '', now = Date.now(), overrideCost = null }) {
   store.settings = normalizeSettings(store.settings);
   store.tokenTransactions ||= [];
   store.activities ||= {};
@@ -739,7 +769,7 @@ function reserveTokenSpend(store, { uid, activityKey, requestId, profile, provid
   const summary = summarizeUsage(store.activities[uid] || [], timezone, now);
   const pending = reservedTokensToday(store, uid, timezone, now);
   const limit = getEffectiveDailyLimit(profile, store, now);
-  const cost = Number(rule.tokenCost);
+  const cost = overrideCost != null ? Math.max(1, Number(overrideCost)) : Number(rule.tokenCost);
   const balanceBefore = Math.max(0, limit - summary.used - pending);
 
   if (summary.used + pending + cost > limit) {
@@ -849,6 +879,7 @@ module.exports = {
   resolveEffectivePlan,
   getEffectiveDailyLimit,
   resolveActivityRule,
+  calculateArtifactTokenCost,
   reserveTokenSpend,
   commitTokenTransaction,
   refundTokenTransaction,
