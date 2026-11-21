@@ -2582,14 +2582,36 @@ const server = http.createServer(async (req, res) => {
           }
 
           if (kind === 'image') {
-            const isPollinationsModel = body.model === 'flux' || body.model === 'sana' || body.model === 'turbo' || String(body.model || '').includes('pollinations');
-            const targetModel = body.model || (isPollinationsModel || !cloudflare.configured() ? 'flux' : '@cf/black-forest-labs/flux-1-schnell');
+            const requestedModel = String(body.model || '').trim();
+            const cfConfigured = Boolean(cloudflare && cloudflare.configured());
+            const cfExhausted = !cfConfigured || isProviderCreditsExhausted('cloudflare') || (typeof quotaMonitor !== 'undefined' && quotaMonitor && !quotaMonitor.getProviderAvailability('cloudflare').available);
+
+            const isCfRequested = requestedModel.startsWith('@cf/');
+            const isPollinationsRequested = requestedModel === 'flux' || requestedModel === 'sana' || requestedModel === 'turbo' || requestedModel.toLowerCase().includes('pollinations');
+
+            let usePollinations = false;
+            let targetModel = requestedModel;
+
+            // Automatically resolve targetModel and provider:
+            // If Pollinations requested, or no model requested, or Cloudflare model requested but Cloudflare is unconfigured/exhausted:
+            if (isPollinationsRequested || !requestedModel || (isCfRequested && cfExhausted) || !cfConfigured) {
+              usePollinations = true;
+              if (requestedModel === 'sana' || requestedModel === 'turbo' || requestedModel === 'flux') {
+                targetModel = requestedModel;
+              } else {
+                targetModel = 'flux'; // Default to Pollinations FLUX.1 Schnell
+              }
+            } else {
+              usePollinations = false;
+              targetModel = requestedModel || '@cf/black-forest-labs/flux-1-schnell';
+            }
+
+            let providerDisplayName = usePollinations ? 'Pollinations AI' : 'Cloudflare Workers AI';
+            let provShort = usePollinations ? 'pollinations' : 'cloudflare';
+
             if (capabilityService) {
               capabilityService.assertModelCapability(targetModel, 'image');
             }
-            const usePollinations = isPollinationsModel || !cloudflare.configured();
-            const providerDisplayName = usePollinations ? 'Pollinations AI' : 'Cloudflare Workers AI';
-            const provShort = usePollinations ? 'pollinations' : 'cloudflare';
 
             if (!usePollinations) {
               if (typeof quotaMonitor !== 'undefined' && quotaMonitor) {
@@ -2626,12 +2648,26 @@ const server = http.createServer(async (req, res) => {
                   signal: req.signal,
                 });
               } else {
-                imgRes = await cloudflare.generateImage({
-                  prompt,
-                  model: targetModel,
-                  steps: body.steps,
-                  signal: req.signal,
-                });
+                try {
+                  imgRes = await cloudflare.generateImage({
+                    prompt,
+                    model: targetModel,
+                    steps: body.steps,
+                    signal: req.signal,
+                  });
+                } catch (cfErr) {
+                  // Automatic fallback to Pollinations AI if Cloudflare Workers AI fails
+                  console.warn(`[ImageGen] Cloudflare generation failed (${cfErr.message}), falling back to Pollinations AI (flux)...`);
+                  usePollinations = true;
+                  providerDisplayName = 'Pollinations AI';
+                  provShort = 'pollinations';
+                  targetModel = 'flux';
+                  imgRes = await pollinations.generateImage({
+                    prompt,
+                    model: 'flux',
+                    signal: req.signal,
+                  });
+                }
               }
               if (typeof quotaMonitor !== 'undefined' && quotaMonitor) {
                 quotaMonitor.recordSuccess({ providerName: provShort, modelId: imgRes.model });

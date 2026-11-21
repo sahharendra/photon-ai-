@@ -635,7 +635,8 @@ function ensureCompatibleModelForCategory(cat){
   var currentModelId=(cur&&cur.model)||(user&&user.defaultModel)||"";
   var currentModel=catalog.find(function(m){return m.id===currentModelId});
   var currentCat=getModelCat(currentModel);
-  if(currentCat!==cat){
+  var isCurrentValid=currentModel && currentCat===cat && currentModel.available!==false && !currentModel.creditsExhausted && currentModel.configured!==false;
+  if(!isCurrentValid){
     var eligible=catalog.filter(function(m){
       return getModelCat(m)===cat&&m.available!==false&&!m.creditsExhausted&&m.configured!==false;
     });
@@ -1021,9 +1022,13 @@ function updateModelPickerBtn(){
   var currentModelId=(cur&&cur.model)||(user&&user.defaultModel)||(photonProfile&&photonProfile.defaultModel)||"";
   var catalog=(profileConfig&&(profileConfig.allModels||profileConfig.models))||[];
   var found=catalog.find(function(m){return m.id===currentModelId});
+  if(found && typeof getModelCat==="function" && getModelCat(found)!==activeGenCat){
+    var catMatch=catalog.find(function(m){return getModelCat(m)===activeGenCat && m.available!==false && !m.creditsExhausted});
+    if(catMatch){found=catMatch;currentModelId=catMatch.id;if(cur)cur.model=catMatch.id;}
+  }
   var icon = activeGenCat === 'image' ? '🎨 ' : (activeGenCat === 'video' ? '🎬 ' : '✨ ');
   var label=found?(found.name||found.id):currentModelId||(activeGenCat==='image'?'Image Model':activeGenCat==='video'?'Video Model':'Model');
-  if(label.length>18)label=label.slice(0,16)+"…";
+  if(label.length>22)label=label.slice(0,20)+"…";
   nameEl.textContent=icon + label;
   btn.title="Category: "+activeGenCat.toUpperCase()+" · Model: "+(found?(found.name+" ("+found.id+")"):currentModelId||"Default")+" — click to change";
 }
@@ -1228,7 +1233,8 @@ async function photonSample(payload,opts){
   opts=opts||{};var auth=await ensureFirebaseAuth();
   if(!auth||!auth.currentUser)throw{code:"auth_required",message:"Sign in again to continue."};
   var token=await auth.currentUser.getIdToken(),isChat=typeof payload==="object";
-  var response=await fetch(isChat?"/api/chat":"/api/generate",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},signal:opts.signal,body:JSON.stringify(isChat?payload:{prompt:payload,kind:opts.kind})});
+  var reqBody=isChat?payload:{prompt:payload,kind:opts.kind,model:opts.model};
+  var response=await fetch(isChat?"/api/chat":"/api/generate",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},signal:opts.signal,body:JSON.stringify(reqBody)});
   var data=await response.json().catch(function(){return{}});
   if(!response.ok||!data.success){var er=new Error(data.error&&data.error.message||"The AI request failed.");er.code=data.error&&data.error.code||"provider_error";er.status=response.status;throw er}
   if(data.data&&data.data.profileUsage)syncProfileUsage(data.data.profileUsage);
@@ -1346,13 +1352,22 @@ async function send(retry){
       got="created";
     }
     else if(kind==="image"){
-      var r=await photonSample(text,{signal:ctl.signal,kind:"image",model:cur.model||user.defaultModel||"@cf/black-forest-labs/flux-1-schnell"});
-      if(r.image){
+      var catalog=(profileConfig&&(profileConfig.allModels||profileConfig.models))||[];
+      var activeModelId=(cur&&cur.model)||(user&&user.defaultModel)||"";
+      var activeModel=catalog.find(function(m){return m.id===activeModelId});
+      var chosenImgModel=activeModelId;
+      if(!activeModel || getModelCat(activeModel)!=="image" || activeModel.available===false || activeModel.creditsExhausted===true){
+        var availImg=catalog.find(function(m){return getModelCat(m)==="image"&&m.available!==false&&!m.creditsExhausted&&m.configured!==false});
+        chosenImgModel=availImg?availImg.id:"flux";
+      }
+      var r=await photonSample(text,{signal:ctl.signal,kind:"image",model:chosenImgModel});
+      var imgData=r.image||r.dataUrl;
+      if(imgData){
         if(r.profileUsage)serverSynced=true;
-        cur.msgs.push({role:"assistant",content:"["+kind+" created: "+text+"]",image:r.image,kind:kind,prompt:text});
+        cur.msgs.push({role:"assistant",content:"["+kind+" created: "+text+"]",image:imgData,kind:kind,prompt:text});
         got="created";
       }else{
-        throw {code:"empty_response",message:"Cloudflare Workers AI did not return an image."};
+        throw {code:"empty_response",message:"Image service did not return an image."};
       }
     }
     else{var history=cur.msgs.slice(0,-1).slice(-20).filter(function(m){return (m.role==="user"||m.role==="assistant")&&typeof m.content==="string"&&m.content.trim().length>0}).map(function(m){return{role:m.role,content:m.content.trim()}});var answer=await photonStream({conversation_id:cur.id,message:text,history:history,system_instruction:SYS+projCtx()+"\nMode: "+MODES[mode][1],request_id:userMsg.request_id,attachments:requestFiles.map(function(f){return f.kind==="text"?{name:f.name,mimeType:f.mimeType,kind:"text",text:f.text}:{name:f.name,mimeType:f.mimeType,kind:"inline",data:f.data||(f.dataUrl?String(f.dataUrl).split(",")[1]:"")}}),model:cur.model||user.defaultModel||null,activity_type:vm?"voice":k0==="code"?"code":"chat",token_cost_type:billKind},{signal:ctl.signal},function(delta,full){if(out.isConnected){out.innerHTML=md(full);$("msgs").scrollTop=$("msgs").scrollHeight}});got=answer.text;if(answer.profileUsage)serverSynced=true;cur.msgs.push({role:"assistant",content:got});if(answer.fallback){var fb=answer.fallback;toast("Your selected model was temporarily unavailable, so this reply used "+fb.provider+" ("+fb.to+")"+(fb.paid?". Estimated provider cost applies.":"."))}}
