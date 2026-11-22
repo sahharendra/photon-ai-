@@ -55,11 +55,19 @@ describe('cloudflare-config', () => {
   } = require('../cloudflare-config');
 
   it('readEnvCredentials returns trimmed credentials or null', () => {
-    assert.deepEqual(readEnvCredentials({}), { accountId: null, apiToken: null });
-    assert.deepEqual(readEnvCredentials({ CLOUDFLARE_ACCOUNT_ID: '', CLOUDFLARE_API_TOKEN: ' ' }), { accountId: null, apiToken: null });
+    assert.deepEqual(readEnvCredentials({}), { accountId: null, apiToken: null, apiToken2: null });
+    assert.deepEqual(readEnvCredentials({ CLOUDFLARE_ACCOUNT_ID: '', CLOUDFLARE_API_TOKEN: ' ', CLOUDFLARE_API_TOKEN_2: ' ' }), { accountId: null, apiToken: null, apiToken2: null });
     assert.deepEqual(
-      readEnvCredentials({ CLOUDFLARE_ACCOUNT_ID: 'abc1234567890def1234567890abcdef', CLOUDFLARE_API_TOKEN: 'cf_tok_secret_9988' }),
-      { accountId: 'abc1234567890def1234567890abcdef', apiToken: 'cf_tok_secret_9988' }
+      readEnvCredentials({
+        CLOUDFLARE_ACCOUNT_ID: 'abc1234567890def1234567890abcdef',
+        CLOUDFLARE_API_TOKEN: 'cf_tok_secret_9988',
+        CLOUDFLARE_API_TOKEN_2: 'cf_img_tok_5566',
+      }),
+      {
+        accountId: 'abc1234567890def1234567890abcdef',
+        apiToken: 'cf_tok_secret_9988',
+        apiToken2: 'cf_img_tok_5566',
+      }
     );
   });
 
@@ -428,6 +436,44 @@ describe('cloudflare-provider', () => {
       assert.equal(res.ok, true);
       assert.equal(res.status, 'working');
       assert.equal(res.model, '@cf/black-forest-labs/flux-1-schnell');
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('generateImage() uses CLOUDFLARE_API_TOKEN_2 as dedicated image token and reports status', async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cf-tok2-'));
+    const env = {
+      CLOUDFLARE_ACCOUNT_ID: 'a1b2c3d4e5f60718293a4b5c6d7e8f90',
+      CLOUDFLARE_API_TOKEN: 'cf_text_token_primary',
+      CLOUDFLARE_API_TOKEN_2: 'cf_image_token_secondary_9988',
+    };
+    try {
+      const cfg = createCloudflareConfig({ dir: tmpDir, env });
+      let tokenUsed = null;
+      const fakeBytes = Buffer.from('image-token-2-test-bytes');
+      const fetchImpl = async (url, opts) => {
+        tokenUsed = opts?.headers?.Authorization || opts?.headers?.authorization;
+        return {
+          ok: true,
+          status: 200,
+          headers: { get: () => 'image/png' },
+          arrayBuffer: async () => fakeBytes.buffer.slice(fakeBytes.byteOffset, fakeBytes.byteOffset + fakeBytes.byteLength),
+        };
+      };
+
+      const provider = createCloudflareProvider({ HttpError, env, config: cfg, fetchImpl });
+      assert.equal(provider.imageConfigured(), true);
+      const st = provider.status();
+      assert.equal(st.hasImageToken, true);
+      assert.ok(st.maskedToken2.includes('9988'));
+
+      const res = await provider.generateImage({
+        prompt: 'a glowing cosmic flower',
+        model: '@cf/black-forest-labs/flux-1-schnell',
+      });
+      assert.equal(res.success, true);
+      assert.equal(tokenUsed, 'Bearer cf_image_token_secondary_9988');
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }

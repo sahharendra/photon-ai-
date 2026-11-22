@@ -245,12 +245,21 @@
   </div>
   <div class="settings-grid" style="margin-top:10px">
     <div class="field">
+      <label for="cloudflare-token2-input">Cloudflare Image Generator API Token (CLOUDFLARE_API_TOKEN_2)</label>
+      <div style="display:flex;gap:6px">
+        <input id="cloudflare-token2-input" type="password" autocomplete="new-password" placeholder="Enter dedicated image token or leave empty to use primary token">
+        <button type="button" id="cloudflare-token2-eye" style="padding:0 12px;background:#17213a;border:1px solid #2e4063;border-radius:7px;color:#c4ccdc;cursor:pointer" title="Show/Hide Token">👁</button>
+      </div>
+    </div>
+    <div class="field">
       <label>Configured Status</label>
       <div style="display:flex;align-items:center;gap:8px;height:40px;padding:0 4px">
         <span id="cloudflare-key-badge" class="pill">Checking...</span>
         <code id="cloudflare-masked-creds" style="color:#b4c0d4">••••</code>
       </div>
     </div>
+  </div>
+  <div class="settings-grid" style="margin-top:10px">
     <div class="field">
       <label>Free Tier Daily Quota (00:00 UTC Reset)</label>
       <div style="display:flex;align-items:center;gap:8px;height:40px;padding:0 4px">
@@ -263,7 +272,7 @@
     <button id="cloudflare-remove-key" type="button" style="border-color:#593434;color:#ffdede;display:none">Remove Credentials</button>
     <button id="cloudflare-save-key" type="submit">Save Credentials</button>
   </div>
-  <small class="muted" style="display:block;margin-top:6px;font-size:11px">Tip: For permanent persistence across Render sleep cycles, add <code>CLOUDFLARE_ACCOUNT_ID</code> and <code>CLOUDFLARE_API_TOKEN</code> in Render Dashboard &rarr; Environment.</small>
+  <small class="muted" style="display:block;margin-top:6px;font-size:11px">Tip: For permanent persistence across Render sleep cycles, add <code>CLOUDFLARE_ACCOUNT_ID</code>, <code>CLOUDFLARE_API_TOKEN</code>, and <code>CLOUDFLARE_API_TOKEN_2</code> in Render Dashboard &rarr; Environment.</small>
 </form>
 <div class="settings-grid" style="margin-top:18px"><div class="field"><label>Request, token &amp; Neuron usage</label><div id="cloudflare-usage" class="muted">Not loaded.</div></div></div><form id="cloudflare-settings-form" style="margin-top:14px"><div class="settings-grid"><div class="field"><label for="cloudflare-enabled">Provider state</label><select id="cloudflare-enabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div><div class="field"><label for="cloudflare-spending-policy">Spending policy</label><select id="cloudflare-spending-policy"><option value="allow_free_only">Allow free models &amp; daily neurons only (zero-billing safe)</option><option value="block">Block all requests</option></select></div><div class="field"><label for="cloudflare-daily-neurons">Daily Neuron Limit</label><input id="cloudflare-daily-neurons" type="number" min="100" max="1000000" step="1000" value="10000"></div></div><div class="save-row"><small class="muted">Cloudflare Workers AI 10,000 free daily Neurons. Strict zero-billing protection stops calls when free quota is reached.</small><button id="cloudflare-save-settings" type="submit">Save Cloudflare settings</button></div></form><div class="head" style="margin-top:28px"><div><h2>Cloudflare Workers AI models</h2><small>Discovered from GET /v1/models. High-speed edge inference models.</small></div></div><div class="scroll"><table class="subscriptions-table"><thead><tr><th>Model</th><th>Status</th><th>Context window</th><th>Actions</th></tr></thead><tbody id="cloudflare-models"></tbody></table></div><div class="head" style="margin-top:28px"><div><h2>Recent Cloudflare errors</h2><small>Key-free error codes only.</small></div></div><div id="cloudflare-errors" class="list"></div>
 
@@ -1434,6 +1443,7 @@
   }
   setupProviderKeyEye('nvidia-key-eye', 'nvidia-key-input');
   setupProviderKeyEye('cloudflare-token-eye', 'cloudflare-token-input');
+  setupProviderKeyEye('cloudflare-token2-eye', 'cloudflare-token2-input');
   setupProviderKeyEye('groq-key-eye', 'groq-key-input');
   setupProviderKeyEye('codecraft-key-eye', 'codecraft-key-input');
   setupProviderKeyEye('openai-key-eye', 'openai-key-input');
@@ -1470,12 +1480,14 @@
     const btn = $('cloudflare-save-key');
     const acct = $('cloudflare-account-id-input').value.trim();
     const tok = $('cloudflare-token-input').value.trim();
-    if (!acct && !tok) { alert('Please enter Cloudflare Account ID and/or API Token.'); return; }
+    const tok2 = $('cloudflare-token2-input')?.value.trim() || '';
+    if (!acct && !tok && !tok2) { alert('Please enter Cloudflare Account ID and/or API Token.'); return; }
     btn.disabled = true; btn.textContent = 'Saving...';
     try {
-      const data = await request('/api/admin/cloudflare/key', 'POST', { accountId: acct, token: tok });
+      const data = await request('/api/admin/cloudflare/key', 'POST', { accountId: acct, token: tok, token2: tok2 });
       $('cloudflare-account-id-input').value = '';
       $('cloudflare-token-input').value = '';
+      if ($('cloudflare-token2-input')) $('cloudflare-token2-input').value = '';
       renderCloudflare(data);
       status('Cloudflare credentials saved successfully.');
       alert('Cloudflare credentials saved successfully.');
@@ -2290,7 +2302,14 @@ async function load(forceSettings=false){if(refreshing)return;refreshing=true;st
       badge.textContent = configured ? 'Configured' : 'Not Configured';
     }
     if (creds) {
-      creds.textContent = configured ? ((st.maskedAccountId || '••••') + ' / ' + (st.maskedToken || '••••')) : 'None';
+      if (!configured) {
+        creds.textContent = 'None';
+      } else {
+        const credParts = [st.maskedAccountId || '••••'];
+        if (st.maskedToken) credParts.push('Token 1: ' + st.maskedToken);
+        if (st.maskedToken2) credParts.push('Image Token 2: ' + st.maskedToken2);
+        creds.textContent = credParts.join(' | ');
+      }
     }
     if (remBtn) remBtn.style.display = configured ? 'inline-block' : 'none';
     if (saveBtn) saveBtn.textContent = configured ? 'Update Credentials' : 'Save Credentials';
@@ -2306,6 +2325,11 @@ async function load(forceSettings=false){if(refreshing)return;refreshing=true;st
     if (diag) {
       diag.replaceChildren();
       rowItem(diag, 'Cloudflare Workers AI', (configured ? 'Configured (' + (st.maskedAccountId || '') + ')' : 'Credentials not set') + '; ' + (st.modelCount || 0) + ' models discovered, ' + (st.enabledModelCount || 0) + ' enabled', orBadge(st.validation === 'ok' ? 'Connected' : (st.validation || 'Not checked'), st.validation === 'ok'));
+      if (st.hasImageToken || st.maskedToken2) {
+        rowItem(diag, 'Image Generator Token (Token 2)', 'Configured (' + st.maskedToken2 + ') · Dedicated Cloudflare image generation token active', orBadge('Ready', true));
+      } else if (configured) {
+        rowItem(diag, 'Image Generator Token', 'Using primary Cloudflare token for image generation', orBadge('Active', true));
+      }
       rowItem(diag, 'Spending policy', st.spendingPolicy === 'block' ? 'Block all requests' : 'Allow free credits/neurons only (zero-billing safe)', orBadge(st.spendingPolicy === 'block' ? 'Blocked' : 'Free only', st.spendingPolicy !== 'block'));
       if (st.keyFormatWarning) rowItem(diag, 'Key format warning', st.keyFormatWarning, orBadge('Check credentials', false));
       if (st.usage && st.usage.lastSuccessAt) rowItem(diag, 'Last successful request', dateTime(st.usage.lastSuccessAt), '');

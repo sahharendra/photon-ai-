@@ -131,9 +131,17 @@ function isCloudflareImageModel(id) {
 function readEnvCredentials(env) {
   const accountId = String(env.CLOUDFLARE_ACCOUNT_ID || '').trim();
   const apiToken = String(env.CLOUDFLARE_API_TOKEN || env.CLOUDFLARE_API_KEY || '').trim();
+  const apiToken2 = String(
+    env.CLOUDFLARE_API_TOKEN_2 ||
+    env.CLOUDFLARE_API_KEY_2 ||
+    env.CLOUDFLARE_IMAGE_API_TOKEN ||
+    env.CLOUDFLARE_IMAGE_API_KEY ||
+    ''
+  ).trim();
   return {
     accountId: accountId || null,
     apiToken: apiToken || null,
+    apiToken2: apiToken2 || null,
   };
 }
 

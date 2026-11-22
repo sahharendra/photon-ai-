@@ -109,7 +109,12 @@ function createCloudflareProvider({
 
   function configured() {
     const creds = credentials();
-    return Boolean(creds.accountId && creds.apiToken);
+    return Boolean(creds.accountId && (creds.apiToken || creds.apiToken2));
+  }
+
+  function imageConfigured() {
+    const creds = credentials();
+    return Boolean(creds.accountId && (creds.apiToken2 || creds.apiToken));
   }
 
   function enabled() {
@@ -124,12 +129,15 @@ function createCloudflareProvider({
     return `https://api.cloudflare.com/client/v4/accounts/${creds.accountId}/ai/v1`;
   }
 
-  function authHeaders() {
+  function authHeaders(forImage = false) {
     const creds = credentials();
-    if (!creds.apiToken) throw new HttpError(503, 'missing_api_token', validationMessage('missing_api_token'));
+    const token = forImage
+      ? (creds.apiToken2 || creds.apiToken)
+      : (creds.apiToken || creds.apiToken2);
+    if (!token) throw new HttpError(503, 'missing_api_token', validationMessage('missing_api_token'));
     return {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${creds.apiToken}`,
+      'Authorization': `Bearer ${token}`,
       'Accept': 'application/json',
     };
   }
@@ -653,6 +661,9 @@ function createCloudflareProvider({
         modelCount: count,
         maskedAccountId: maskAccountId(creds.accountId),
         maskedToken: maskToken(creds.apiToken),
+        maskedToken2: creds.apiToken2 ? maskToken(creds.apiToken2) : null,
+        hasImageToken: Boolean(creds.apiToken2),
+        imageConfigured: imageConfigured(),
         responseTimeMs: Date.now() - started,
         testedAt: new Date().toISOString(),
       };
@@ -762,7 +773,10 @@ function createCloudflareProvider({
     signal,
   } = {}) {
     const creds = credentials();
-    if (!creds.accountId || !creds.apiToken) {
+    const targetToken = creds.apiToken2 || creds.apiToken;
+    const backupToken = (targetToken === creds.apiToken2) ? creds.apiToken : creds.apiToken2;
+
+    if (!creds.accountId || !targetToken) {
       throw new HttpError(503, 'not_configured', validationMessage('not_configured'));
     }
     if (!enabled()) {
@@ -788,21 +802,29 @@ function createCloudflareProvider({
     const numSteps = Number.isInteger(steps) && steps > 0 ? steps : meta.steps;
     const runUrl = `https://api.cloudflare.com/client/v4/accounts/${creds.accountId}/ai/run/${targetModel}`;
 
-    const headers = {
-      'Authorization': `Bearer ${creds.apiToken}`,
-      'Content-Type': 'application/json',
-      'Accept': 'image/*, application/json',
-    };
-
     const combined = combinedSignal(signal, REQUEST_TIMEOUT_MS);
-    let res;
-    try {
-      res = await fetchImpl(runUrl, {
+
+    async function executeImageCall(authToken) {
+      const headers = {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
+        'Accept': 'image/*, application/json',
+      };
+      return fetchImpl(runUrl, {
         method: 'POST',
         headers,
         body: JSON.stringify({ prompt: cleanPrompt, steps: numSteps }),
         signal: combined,
       });
+    }
+
+    let res;
+    try {
+      res = await executeImageCall(targetToken);
+      if (!res.ok && (res.status === 401 || res.status === 403) && backupToken) {
+        logger.warn(`Cloudflare image run with token returned ${res.status}, retrying with secondary token...`);
+        res = await executeImageCall(backupToken);
+      }
     } catch (err) {
       const mapped = mapError(err);
       throw new HttpError(mapped.status || 502, mapped.code, mapped.message);
@@ -944,6 +966,9 @@ function createCloudflareProvider({
       keyFormatWarning: keyFormatWarning(),
       maskedAccountId: maskAccountId(creds.accountId),
       maskedToken: maskToken(creds.apiToken),
+      maskedToken2: creds.apiToken2 ? maskToken(creds.apiToken2) : null,
+      hasImageToken: Boolean(creds.apiToken2),
+      imageConfigured: imageConfigured(),
       spendingPolicy: snap.spendingPolicy,
       dailyNeuronsLimit: snap.dailyNeuronsLimit,
       remainingDailyNeurons: snap.remainingDailyNeurons,
@@ -963,6 +988,7 @@ function createCloudflareProvider({
 
   return {
     configured,
+    imageConfigured,
     enabled,
     status,
     refreshModels,

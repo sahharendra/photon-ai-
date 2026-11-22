@@ -1772,15 +1772,18 @@ const server = http.createServer(async (req, res) => {
         const body = await readBody(req);
         const accountId = String(body.accountId || body.account_id || '').trim();
         const token = String(body.token || body.apiToken || body.key || '').trim();
-        if (!accountId && !token) throw new HttpError(400, 'invalid_credentials', 'Cloudflare Account ID or API Token must be provided.');
+        const token2 = String(body.token2 || body.apiToken2 || body.imageToken || body.image_token || '').trim();
+        if (!accountId && !token && !token2) throw new HttpError(400, 'invalid_credentials', 'Cloudflare Account ID, API Token, or Image Token must be provided.');
         if (accountId) setEnvKey('CLOUDFLARE_ACCOUNT_ID', accountId);
         if (token) setEnvKey('CLOUDFLARE_API_TOKEN', token);
+        if (token2) setEnvKey('CLOUDFLARE_API_TOKEN_2', token2);
         await cloudflare.refreshModels(true);
         return reply(res, 200, { success: true, data: cloudflare.status() });
       }
       if (cfNormPath === '/api/admin/cloudflare/key' && req.method === 'DELETE') {
         clearEnvKey('CLOUDFLARE_ACCOUNT_ID');
         clearEnvKey('CLOUDFLARE_API_TOKEN');
+        clearEnvKey('CLOUDFLARE_API_TOKEN_2');
         await cloudflare.refreshModels(true);
         return reply(res, 200, { success: true, data: cloudflare.status() });
       }
@@ -3182,7 +3185,7 @@ const server = http.createServer(async (req, res) => {
                 },
               });
             }
-            const cfConfigured = Boolean(cloudflare && cloudflare.configured());
+            const cfImageConfigured = Boolean(cloudflare && (typeof cloudflare.imageConfigured === 'function' ? cloudflare.imageConfigured() : cloudflare.configured()));
             const isCfRequested = requestedModel.startsWith('@cf/');
             const isPollinationsRequested = requestedModel === 'flux' || requestedModel === 'sana' || requestedModel === 'turbo' || requestedModel.toLowerCase().includes('pollinations');
 
@@ -3190,19 +3193,31 @@ const server = http.createServer(async (req, res) => {
               ? quotaMonitor.getModelAvailability('cloudflare', requestedModel || '@cf/black-forest-labs/flux-1-schnell')
               : { available: true };
             const cfModelExhausted = !cfModelCheck.available;
-            const cfExhausted = !cfConfigured || isProviderCreditsExhausted('cloudflare') || cfModelExhausted || (typeof quotaMonitor !== 'undefined' && quotaMonitor && !quotaMonitor.getProviderAvailability('cloudflare').available);
+            const cfExhausted = !cfImageConfigured || isProviderCreditsExhausted('cloudflare') || cfModelExhausted || (typeof quotaMonitor !== 'undefined' && quotaMonitor && !quotaMonitor.getProviderAvailability('cloudflare').available);
 
             let usePollinations = false;
             let targetModel = requestedModel;
 
             // Automatically resolve targetModel and provider:
-            // If Pollinations requested, or no model requested, or Cloudflare model requested but Cloudflare is unconfigured/exhausted:
-            if (isPollinationsRequested || !requestedModel || (isCfRequested && cfExhausted) || !cfConfigured) {
+            if (isPollinationsRequested) {
               usePollinations = true;
-              if (requestedModel === 'sana' || requestedModel === 'turbo' || requestedModel === 'flux') {
-                targetModel = requestedModel;
+              targetModel = (requestedModel === 'sana' || requestedModel === 'turbo' || requestedModel === 'flux') ? requestedModel : 'flux';
+            } else if (isCfRequested) {
+              if (cfExhausted) {
+                usePollinations = true;
+                targetModel = 'flux';
               } else {
-                targetModel = 'flux'; // Default to Pollinations FLUX.1 Schnell
+                usePollinations = false;
+                targetModel = requestedModel;
+              }
+            } else if (!requestedModel) {
+              // No specific model requested: prefer Cloudflare Workers AI FLUX.1 Schnell if configured, else Pollinations
+              if (cfImageConfigured && !cfExhausted) {
+                usePollinations = false;
+                targetModel = '@cf/black-forest-labs/flux-1-schnell';
+              } else {
+                usePollinations = true;
+                targetModel = 'flux';
               }
             } else {
               usePollinations = false;
