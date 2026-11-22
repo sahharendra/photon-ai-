@@ -922,7 +922,12 @@ function addRow(role,text,m,i){var r=document.createElement("div");r.className="
   else if(m&&(m.svg||m.image)){
     var imgSrc=m.image||dataUri(m.svg);
     var isClean = Boolean(m.cleaned);
-    b.innerHTML='<figure class="media"><img alt="" src="'+esc(imgSrc)+'"'+(isClean?' data-cleaned="true"':'')+'><div class="act"><button data-dl>Download</button>'+(m.kind==="video"?'<button data-replay>Replay</button>':'')+'</div><figcaption>'+esc(m.kind==="video"?"Video · ":"Image · ")+esc(m.prompt||"")+'</figcaption></figure>';
+    var metaHtml = '';
+    if(m.aspectRatio || (m.dimensions && m.dimensions.width)){
+      var dimStr = m.aspectRatio ? (m.aspectRatio + (m.dimensions ? ' · ' + m.dimensions.width + '×' + m.dimensions.height : '')) : (m.dimensions.width + '×' + m.dimensions.height);
+      metaHtml = ' <span style="display:inline-block;padding:1px 6px;border-radius:4px;background:rgba(227,219,204,.12);border:1px solid rgba(227,219,204,.2);font-size:10px;font-weight:600;letter-spacing:.3px;margin-left:6px;vertical-align:middle">'+esc(dimStr)+'</span>';
+    }
+    b.innerHTML='<figure class="media"><img alt="" src="'+esc(imgSrc)+'"'+(isClean?' data-cleaned="true"':'')+'><div class="act"><button data-dl>Download</button>'+(m.kind==="video"?'<button data-replay>Replay</button>':'')+'</div><figcaption>'+esc(m.kind==="video"?"Video · ":"Image · ")+esc(m.prompt||"")+metaHtml+'</figcaption></figure>';
     if(!isClean && m.image && (m.image.indexOf("data:image/")===0 || m.image.indexOf("http")===0)){
       cleanImageWatermark(m.image).then(function(cleaned){
         if(cleaned && cleaned !== m.image){
@@ -2472,7 +2477,7 @@ async function photonSample(payload,opts){
   var data=await response.json().catch(function(){return{}});
   if(!response.ok||!data.success){var er=new Error(data.error&&data.error.message||"The AI request failed.");er.code=data.error&&data.error.code||"provider_error";er.status=response.status;throw er}
   if(data.data&&data.data.profileUsage)syncProfileUsage(data.data.profileUsage);
-  return isChat?{text:data.data.message,model:data.data.model,profileUsage:data.data.profileUsage}:{text:data.data.text,image:data.data.image,b64_json:data.data.b64_json,model:data.data.model,profileUsage:data.data.profileUsage};
+  return isChat?{text:data.data.message,model:data.data.model,profileUsage:data.data.profileUsage}:{text:data.data.text,image:data.data.image,b64_json:data.data.b64_json,model:data.data.model,profileUsage:data.data.profileUsage,originalPrompt:data.data&&data.data.originalPrompt,enhancedPrompt:data.data&&data.data.enhancedPrompt,wasEnhanced:data.data&&data.data.wasEnhanced,aspectRatio:data.data&&data.data.aspectRatio,dimensions:data.data&&data.data.dimensions};
 }
 async function photonStream(payload,opts,onDelta){
   opts=opts||{};var auth=await ensureFirebaseAuth();
@@ -2663,7 +2668,7 @@ async function send(retry){
       if(imgData){
         imgData=await cleanImageWatermark(imgData);
         if(r.profileUsage)serverSynced=true;
-        cur.msgs.push({role:"assistant",content:"["+kind+" created: "+text+"]",image:imgData,cleaned:true,kind:kind,prompt:text});
+        cur.msgs.push({role:"assistant",content:"["+kind+" created: "+text+"]",image:imgData,cleaned:true,kind:kind,prompt:text,originalPrompt:r.originalPrompt,enhancedPrompt:r.enhancedPrompt,wasEnhanced:r.wasEnhanced,aspectRatio:r.aspectRatio,dimensions:r.dimensions,model:r.model});
         got="created";
       }else{
         throw {code:"empty_response",message:"Image service did not return an image."};

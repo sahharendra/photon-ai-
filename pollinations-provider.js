@@ -117,6 +117,7 @@ function createPollinationsProvider({ HttpError, env = process.env, fetchImpl = 
       height: String(Math.min(2048, Math.max(256, Number(height) || 1024))),
       model: chosenModel,
       nologo: 'true',
+      nofeed: 'true',
     });
     if (seed) params.set('seed', String(seed));
     if (activeKey) params.set('key', activeKey);

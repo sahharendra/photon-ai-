@@ -42,6 +42,13 @@ const {
   enrichModelWithCapabilities,
   createModelCapabilityService,
 } = require('./model-capability-service');
+const {
+  enhancePrompt,
+  selectOptimalImageModel,
+  analyzePrompt,
+  getModelQualityReport,
+  ASPECT_RATIO_PRESETS,
+} = require('./image-quality-engine');
 // Anthropic provider is disabled (no key configured).
 // File is kept on disk for future re-enablement. To re-enable, restore the imports
 // and provider instance below, and add ANTHROPIC_API_KEY to API.env.
@@ -1201,13 +1208,23 @@ async function generateProvider({ providerName, modelId, system, history, text, 
     return edenai.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
   }
   if (providerName === 'pollinations') {
-    const prompt = text || system || 'a beautiful illustration';
-    const imgRes = await pollinations.generateImage({ prompt, model: modelId });
+    const rawPrompt = text || system || 'a beautiful illustration';
+    const enhancement = enhancePrompt(rawPrompt);
+    const imgRes = await pollinations.generateImage({
+      prompt: enhancement.enhancedPrompt,
+      model: modelId,
+      width: enhancement.dimensions.width,
+      height: enhancement.dimensions.height,
+    });
     return {
-      text: `![${prompt}](${imgRes.dataUrl})`,
+      text: `![${rawPrompt}](${imgRes.dataUrl})`,
       image: imgRes.dataUrl,
       imageUrl: imgRes.imageUrl,
       model: imgRes.model,
+      originalPrompt: enhancement.originalPrompt,
+      enhancedPrompt: enhancement.enhancedPrompt,
+      wasEnhanced: enhancement.wasEnhanced,
+      dimensions: enhancement.dimensions,
       usage: { inputTokens: 10, outputTokens: 50, totalTokens: 60 },
       key: { id: 'pollinations-free', slot: 1 },
     };
@@ -3293,6 +3310,9 @@ const server = http.createServer(async (req, res) => {
           const imageModels = capabilityService ? capabilityService.getModelsByCategory('image', { availableOnly: true }) : cloudflare.imageCatalogEntries();
           return reply(res, 200, { success: true, data: imageModels });
         }
+        if (req.method === 'GET' && pathname === '/api/images/quality-report') {
+          return reply(res, 200, { success: true, data: getModelQualityReport() });
+        }
         if (req.method === 'GET' && pathname === '/api/video/models') {
           const videoModels = capabilityService ? capabilityService.getModelsByCategory('video', { availableOnly: true }) : [];
           return reply(res, 200, { success: true, data: videoModels });
@@ -3424,6 +3444,12 @@ const server = http.createServer(async (req, res) => {
           }
 
           if (kind === 'image') {
+            const shouldEnhance = body.enhance !== false && body.autoEnhance !== false;
+            const enhancement = enhancePrompt(prompt, { enhance: shouldEnhance });
+            const finalPrompt = enhancement.enhancedPrompt;
+            const targetWidth = Number(body.width) || (body.aspect_ratio && ASPECT_RATIO_PRESETS[body.aspect_ratio]?.width) || enhancement.dimensions.width || 1024;
+            const targetHeight = Number(body.height) || (body.aspect_ratio && ASPECT_RATIO_PRESETS[body.aspect_ratio]?.height) || enhancement.dimensions.height || 1024;
+
             const requestedModel = String(body.model || '').trim();
             const isEdenAiImg = edenai.configured() && (requestedModel.startsWith('stabilityai/') || edenai.catalogEntries().some(m => m.id === requestedModel && m.category === 'Image Generation'));
             if (isEdenAiImg) {
@@ -3443,7 +3469,7 @@ const server = http.createServer(async (req, res) => {
               let imgRes;
               try {
                 imgRes = await edenai.generateImage({
-                  prompt,
+                  prompt: finalPrompt,
                   model: requestedModel,
                   signal: req.signal,
                 });
@@ -3470,6 +3496,11 @@ const server = http.createServer(async (req, res) => {
                   b64_json: imgRes.dataUrl ? imgRes.dataUrl.split(',')[1] : null,
                   model: imgRes.model,
                   provider: 'Eden AI',
+                  originalPrompt: enhancement.originalPrompt,
+                  enhancedPrompt: enhancement.enhancedPrompt,
+                  wasEnhanced: enhancement.wasEnhanced,
+                  aspectRatio: enhancement.aspectRatio,
+                  dimensions: { width: targetWidth, height: targetHeight },
                   profileUsage,
                 },
               });
@@ -3500,13 +3531,14 @@ const server = http.createServer(async (req, res) => {
                 targetModel = requestedModel;
               }
             } else if (!requestedModel) {
-              // No specific model requested: prefer Cloudflare Workers AI FLUX.1 Schnell if configured, else Pollinations
-              if (cfImageConfigured && !cfExhausted) {
+              // Intelligent Model Selection: pick optimal verified model for this prompt
+              const optimal = selectOptimalImageModel({ prompt, requestedModel, availableModels: availableModels() });
+              if (optimal.provider === 'Cloudflare Workers AI' && cfImageConfigured && !cfExhausted) {
                 usePollinations = false;
-                targetModel = '@cf/black-forest-labs/flux-1-schnell';
+                targetModel = optimal.modelId;
               } else {
                 usePollinations = true;
-                targetModel = 'flux';
+                targetModel = optimal.modelId === 'flux' ? 'flux' : 'flux';
               }
             } else {
               usePollinations = false;
@@ -3581,14 +3613,17 @@ const server = http.createServer(async (req, res) => {
             try {
               if (usePollinations) {
                 imgRes = await pollinations.generateImage({
-                  prompt,
+                  prompt: finalPrompt,
                   model: targetModel,
+                  width: targetWidth,
+                  height: targetHeight,
+                  seed: body.seed,
                   signal: req.signal,
                 });
               } else {
                 try {
                   imgRes = await cloudflare.generateImage({
-                    prompt,
+                    prompt: finalPrompt,
                     model: targetModel,
                     steps: body.steps,
                     signal: req.signal,
@@ -3601,8 +3636,11 @@ const server = http.createServer(async (req, res) => {
                   provShort = 'pollinations';
                   targetModel = 'flux';
                   imgRes = await pollinations.generateImage({
-                    prompt,
+                    prompt: finalPrompt,
                     model: 'flux',
+                    width: targetWidth,
+                    height: targetHeight,
+                    seed: body.seed,
                     signal: req.signal,
                   });
                 }
@@ -3636,6 +3674,11 @@ const server = http.createServer(async (req, res) => {
               provider: providerDisplayName,
               model: imgRes.model,
               modelName: imgRes.modelName || imgRes.model,
+              originalPrompt: enhancement.originalPrompt,
+              enhancedPrompt: enhancement.enhancedPrompt,
+              wasEnhanced: enhancement.wasEnhanced,
+              aspectRatio: enhancement.aspectRatio,
+              dimensions: { width: targetWidth, height: targetHeight },
               tokensCharged: reserved.transaction.tokensCharged,
               profileUsage: profileResponse(profile, claims.sub).usage,
               request_id: requestId,

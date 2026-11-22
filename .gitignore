@@ -17,6 +17,7 @@ photon-profile-data.json.lock
 .photon-cloudflare-config.json
 .photon-edenai-config.json
 .photon-agnes-config.json
+.photon-replicate-config.json
 test_poll.jpg
 *.log
 scratch/

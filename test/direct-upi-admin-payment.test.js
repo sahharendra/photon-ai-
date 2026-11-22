@@ -56,6 +56,7 @@ const FILES = [
   'agnes-provider.js',
   'replicate-config.js',
   'replicate-provider.js',
+  'image-quality-engine.js',
   'index.html',
   'admin.html',
   'upi-qr.jpg',
