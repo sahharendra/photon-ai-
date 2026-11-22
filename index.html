@@ -2600,10 +2600,11 @@ async function send(retry){
 
       if(!genRes.success)throw {code:genRes.error&&genRes.error.code||"video_failed",message:genRes.error&&genRes.error.message||"Video generation failed."};
 
-      var vJobId=genRes.data.jobId||genRes.data.videoId;
+      var vJobId=genRes.data.jobId||genRes.data.videoId||genRes.data.predictionId;
       var curSt=genRes.data.status||"queued";
+      var vidProvName=(activeM&&activeM.provider)||"AI";
       if(out.isConnected){
-        out.innerHTML='<div class="gen"><div class="gv"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="sh"></i></div><div class="gt">Agnes AI rendering video ('+esc(curSt)+')...<span class="dots"><u></u><u></u><u></u></span></div></div>';
+        out.innerHTML='<div class="gen"><div class="gv"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="sh"></i></div><div class="gt">'+esc(vidProvName)+' rendering video ('+esc(curSt)+')...<span class="dots"><u></u><u></u><u></u></span></div></div>';
       }
 
       var videoResultUrl=null;
@@ -2621,7 +2622,7 @@ async function send(retry){
           var jd=checkRes.data;
           curSt=jd.status||curSt;
           if(out.isConnected){
-            out.innerHTML='<div class="gen"><div class="gv"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="sh"></i></div><div class="gt">Agnes AI rendering video ('+esc(curSt)+')...<span class="dots"><u></u><u></u><u></u></span></div></div>';
+            out.innerHTML='<div class="gen"><div class="gv"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="sh"></i></div><div class="gt">'+esc(vidProvName)+' rendering video ('+esc(curSt)+')...<span class="dots"><u></u><u></u><u></u></span></div></div>';
           }
           if(jd.status==="completed"&&(jd.videoUrl||jd.url)){
             videoResultUrl=jd.videoUrl||jd.url;

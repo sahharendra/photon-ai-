@@ -26,7 +26,7 @@ const FILES = [
   'groq-provider.js', 'nvidia-config.js', 'nvidia-provider.js', 'llmtr-config.js', 'llmtr-provider.js', 'provider-fallback.js',
   'provider-access-service.js', 'dashboard-analytics.js',
   'photon-limits.js', 'photon-usage.js', 'photon-admin-users.js', 'photon-admin-subscriptions.js',
-  'pricing-rules-service.js', 'cashfree-service.js', 'cloudflare-config.js', 'cloudflare-provider.js', 'pollinations-provider.js', 'quota-monitor-service.js', 'model-capability-service.js', 'razorpay-service.js', 'artifact-zip.js', 'artifacts-service.js', 'edenai-config.js', 'edenai-provider.js', 'agnes-config.js', 'agnes-provider.js', 'index.html', 'admin.html',
+  'pricing-rules-service.js', 'cashfree-service.js', 'cloudflare-config.js', 'cloudflare-provider.js', 'pollinations-provider.js', 'quota-monitor-service.js', 'model-capability-service.js', 'razorpay-service.js', 'artifact-zip.js', 'artifacts-service.js', 'edenai-config.js', 'edenai-provider.js', 'agnes-config.js', 'agnes-provider.js', 'replicate-config.js', 'replicate-provider.js', 'index.html', 'admin.html',
 ];
 
 // Cashfree webhook signature: HMAC-SHA256(timestamp + rawBody, secret), base64

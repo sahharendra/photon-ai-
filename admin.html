@@ -637,6 +637,131 @@
 
 <div class="head" style="margin-top:34px">
   <div>
+    <h2>Replicate (Video Generation Provider)</h2>
+    <small>Official Replicate predictions API for video generation. Asynchronous lifecycle with strict free-only spending protection.</small>
+  </div>
+  <div class="actions">
+    <button id="replicate-test-connection" type="button">Test connection</button>
+    <button id="replicate-refresh-models" type="button">Discover / Refresh models</button>
+  </div>
+</div>
+<div id="replicate-diag" class="list"></div>
+
+<form id="replicate-settings-form" class="inline-add-box" style="margin-top:14px">
+  <div class="settings-grid">
+    <div>
+      <label for="replicate-key-input">Replicate API Token (REPLICATE_API_TOKEN · AES-256 Encrypted)</label>
+      <div style="display:flex;gap:6px">
+        <input id="replicate-key-input" type="password" autocomplete="new-password" placeholder="Enter Replicate API token (r8_...)">
+        <button type="button" id="replicate-key-eye" style="padding:0 12px;background:#17213a;border:1px solid #2e4063;border-radius:7px;color:#c4ccdc;cursor:pointer" title="Show/Hide token">👁</button>
+      </div>
+      <small class="muted" style="margin-top:4px">API Base URL: <code>https://api.replicate.com/v1</code> · Documentation: <a href="https://replicate.com/docs/reference/http" target="_blank" rel="noopener" style="color:#60a5fa;text-decoration:underline">replicate.com/docs</a>.</small>
+    </div>
+    <div>
+      <label>Current Token Status</label>
+      <div style="display:flex;align-items:center;gap:10px;height:42px">
+        <span id="replicate-key-badge" class="pill warn">Checking...</span>
+        <code id="replicate-masked-key" style="color:#b4c0d4">Not configured</code>
+      </div>
+      <small class="muted" style="margin-top:4px">Slug: <code>replicate</code> · Tokens are encrypted on disk and never exposed in browser responses.</small>
+    </div>
+  </div>
+
+  <div class="settings-grid" style="margin-top:10px">
+    <div>
+      <label for="replicate-enabled">Provider State</label>
+      <select id="replicate-enabled">
+        <option value="true">Enabled (Accept Requests)</option>
+        <option value="false">Disabled (Reject Requests)</option>
+      </select>
+    </div>
+    <div>
+      <label for="replicate-spending-policy">Spending Policy (Free-Only Protection)</label>
+      <select id="replicate-spending-policy">
+        <option value="strict_free_only">Strict Free-Only (Blocks paid models &amp; unverified compute)</option>
+        <option value="allow_all">Allow All (Permit pay-as-you-go if billing on file)</option>
+        <option value="block">Block All Replicate Generations</option>
+      </select>
+      <small class="muted" style="margin-top:4px">PHOTON enforces zero unexpected charges: models with unverified free runs are blocked.</small>
+    </div>
+  </div>
+
+  <div class="actions" style="margin-top:14px;display:flex;gap:10px">
+    <button id="replicate-save-settings" type="submit">Save Replicate Settings</button>
+    <button id="replicate-delete-key" type="button" style="background:#2a1515;border:1px solid #5a2525;color:#f87171">Remove Token</button>
+  </div>
+</form>
+
+<!-- Replicate End-to-End Model Test Section -->
+<div class="head" style="margin-top:24px">
+  <div>
+    <h2>Replicate Video Model Verification (Real End-to-End Test)</h2>
+    <small>Executes a real asynchronous prediction on Replicate and verifies playable video output.</small>
+  </div>
+</div>
+<div class="inline-add-box" style="margin-top:12px;background:#0d1424;border:1px solid #1e293b;padding:16px;border-radius:8px">
+  <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px">
+    <div>
+      <label for="replicate-test-video-model" style="font-size:12px;font-weight:600;color:#94a3b8">Target Model</label>
+      <select id="replicate-test-video-model" style="width:100%;margin-top:2px;padding:6px;background:#151d30;border:1px solid #2d3b55;border-radius:6px;color:#fff">
+        <option value="minimax/video-01">minimax/video-01 (720P · MiniMax)</option>
+        <option value="minimax/video-01-live">minimax/video-01-live (720P · Image-to-Video)</option>
+        <option value="bytedance/seedance-1-lite">bytedance/seedance-1-lite (720P · ByteDance)</option>
+        <option value="bytedance/seedance-1-pro">bytedance/seedance-1-pro (1080P · ByteDance)</option>
+        <option value="google/veo-3">google/veo-3 (1080P · Google Veo)</option>
+      </select>
+    </div>
+    <div>
+      <label for="replicate-test-video-prompt" style="font-size:12px;font-weight:600;color:#94a3b8">Test Prompt</label>
+      <input id="replicate-test-video-prompt" type="text" value="Generate a short cinematic video of a red apple rotating slowly on a clean white background." style="width:100%;margin-top:2px;padding:6px;background:#151d30;border:1px solid #2d3b55;border-radius:6px;color:#fff">
+    </div>
+  </div>
+  <button id="replicate-test-video-btn" type="button" style="margin-top:12px;padding:8px 18px;background:linear-gradient(135deg,#6366f1,#4f46e5);border:0;border-radius:6px;color:#fff;cursor:pointer;font-weight:600">🎬 Run Real Replicate Video Generation Test</button>
+  <div id="replicate-test-video-result" style="margin-top:12px;font-size:12px;display:none;background:#131c31;padding:12px;border-radius:6px"></div>
+</div>
+
+<!-- Replicate Model Catalogue Table -->
+<div class="head" style="margin-top:24px">
+  <div>
+    <h2>Replicate Video Model Catalogue</h2>
+    <small>Registered video generation models with input schema, pricing, and free eligibility status.</small>
+  </div>
+</div>
+<div class="table-wrap" style="margin-top:12px">
+  <table>
+    <thead>
+      <tr>
+        <th>Model ID</th>
+        <th>Display Name</th>
+        <th>Task / Modality</th>
+        <th>Resolution</th>
+        <th>Free Eligibility</th>
+        <th>Billing Required</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="replicate-models"></tbody>
+  </table>
+</div>
+
+<div class="head" style="margin-top:24px">
+  <div>
+    <label>Replicate Usage &amp; Generation Statistics</label>
+    <div id="replicate-usage" class="muted">Loading usage...</div>
+  </div>
+</div>
+
+<div class="head" style="margin-top:24px">
+  <div>
+    <h2>Recent Replicate Errors</h2>
+    <small>Sanitized error events without secret exposure.</small>
+  </div>
+</div>
+<div id="replicate-errors" class="list" style="margin-bottom:30px"></div>
+
+<div class="head" style="margin-top:34px">
+  <div>
     <h2>Model Capabilities &amp; Modality Registry</h2>
     <small>Strict modality detection (text/image/video in &amp; out). Only models with <code>image_output=true</code> are classified as IMAGE; only models with <code>video_output=true</code> are classified as VIDEO.</small>
   </div>
@@ -1920,10 +2045,10 @@ function setupDashboardAnalyticsFilter(){
   }
 }
 
-async function load(forceSettings=false){if(refreshing)return;refreshing=true;status('Loading admin data...');try{const data=await request('/api/admin/overview');showApp();const m=data.metrics||{};$('logout').hidden=!!data.localAccess;if($('total'))$('total').textContent=fmt(m.totalUsers);if($('login-today'))$('login-today').textContent=fmt(Math.max(Number(m.signInsToday)||0,(data.users||[]).reduce((total,u)=>total+loginsToday(u),0)));if($('tokens'))$('tokens').textContent=fmt(m.tokensToday);renderDashboard(data);setupDashboardAnalyticsFilter();loadUsersAdmin();loadSubscriptionsAdmin();if(data.paymentGateway)renderGatewayConfig(data.paymentGateway);else loadGatewayConfig();renderProviders(data.models);loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();loadCloudflare();loadPollinations();loadEdenAI();loadAgnesAI();loadCapabilitiesAdmin();loadQuotaAdmin();if(forceSettings||!settingsDirty){renderPlanFields(data.settings||{});renderTokenRulesTable(data.settings||{});renderArtifactPricing(data.settings||{});settingsDirty=false}renderPricingAudit(data.pricingAuditLogs||[]);runConfigVerification(true);status('Admin data loaded.')}catch(error){if(error.status===401){showLogin();return}if(error.status===503&&error.code==='admin_not_configured'){showLogin('Admin sign-in is not configured. Set PHOTON_ADMIN_PASSWORD and restart the server.');return}status(error.message||'Could not load admin data.',true)}finally{refreshing=false}}
+async function load(forceSettings=false){if(refreshing)return;refreshing=true;status('Loading admin data...');try{const data=await request('/api/admin/overview');showApp();const m=data.metrics||{};$('logout').hidden=!!data.localAccess;if($('total'))$('total').textContent=fmt(m.totalUsers);if($('login-today'))$('login-today').textContent=fmt(Math.max(Number(m.signInsToday)||0,(data.users||[]).reduce((total,u)=>total+loginsToday(u),0)));if($('tokens'))$('tokens').textContent=fmt(m.tokensToday);renderDashboard(data);setupDashboardAnalyticsFilter();loadUsersAdmin();loadSubscriptionsAdmin();if(data.paymentGateway)renderGatewayConfig(data.paymentGateway);else loadGatewayConfig();renderProviders(data.models);loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();loadCloudflare();loadPollinations();loadEdenAI();loadAgnesAI();loadReplicate();loadCapabilitiesAdmin();loadQuotaAdmin();if(forceSettings||!settingsDirty){renderPlanFields(data.settings||{});renderTokenRulesTable(data.settings||{});renderArtifactPricing(data.settings||{});settingsDirty=false}renderPricingAudit(data.pricingAuditLogs||[]);runConfigVerification(true);status('Admin data loaded.')}catch(error){if(error.status===401){showLogin();return}if(error.status===503&&error.code==='admin_not_configured'){showLogin('Admin sign-in is not configured. Set PHOTON_ADMIN_PASSWORD and restart the server.');return}status(error.message||'Could not load admin data.',true)}finally{refreshing=false}}
  $('login-form').addEventListener('submit',async event=>{event.preventDefault();const button=$('login-button');button.disabled=true;button.textContent='Signing in...';$('login-error').hidden=true;try{await request('/api/admin/login','POST',{email:$('admin-email').value.trim(),password:$('admin-password').value});$('admin-password').value='';await load(true)}catch(error){showLogin(error.message||'Sign-in failed. Check the username and password.')}finally{button.disabled=false;button.textContent='Sign in'}});
  $('logout').addEventListener('click',async()=>{try{await request('/api/admin/logout','POST',{})}finally{showLogin('You have signed out.')}});
- const pageMeta={overview:['Dashboard','Live overview of Photon accounts and usage.'],'users-section':['Users & Sign-ins','Account access, sign-in methods, activity, and plan status.'],subscriptions:['Subscriptions & Purchases','Verified payments, revenue, MRR, and Cashfree gateway configuration.'],settings:['Pricing & Token Rules','Manage plan pricing, daily limits, and AI activity token costs.'],providers:['AI Provider Settings','Check and manage server-side AI provider keys. Secrets are never shown.']};function showPage(){let id=location.hash.slice(1)||'overview';if(!pageMeta[id])id='overview';document.querySelectorAll('.page-view').forEach(page=>page.classList.toggle('active',page.id===id));document.querySelectorAll('.sidebar nav a[href^="#"]').forEach(link=>link.classList.toggle('active',link.getAttribute('href')==='#'+id));$('page-title').textContent=pageMeta[id][0];$('page-description').textContent=pageMeta[id][1];if(id==='overview'){load()}else if(id==='users-section'){loadUsersAdmin()}else if(id==='subscriptions'){loadGatewayConfig();loadSubscriptionsAdmin()}else if(id==='settings'){load(true)}else if(id==='providers'){loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();loadCloudflare();loadPollinations();loadEdenAI();loadAgnesAI();loadCapabilitiesAdmin();loadQuotaAdmin();}}window.addEventListener('hashchange',showPage);showPage();
+ const pageMeta={overview:['Dashboard','Live overview of Photon accounts and usage.'],'users-section':['Users & Sign-ins','Account access, sign-in methods, activity, and plan status.'],subscriptions:['Subscriptions & Purchases','Verified payments, revenue, MRR, and Cashfree gateway configuration.'],settings:['Pricing & Token Rules','Manage plan pricing, daily limits, and AI activity token costs.'],providers:['AI Provider Settings','Check and manage server-side AI provider keys. Secrets are never shown.']};function showPage(){let id=location.hash.slice(1)||'overview';if(!pageMeta[id])id='overview';document.querySelectorAll('.page-view').forEach(page=>page.classList.toggle('active',page.id===id));document.querySelectorAll('.sidebar nav a[href^="#"]').forEach(link=>link.classList.toggle('active',link.getAttribute('href')==='#'+id));$('page-title').textContent=pageMeta[id][0];$('page-description').textContent=pageMeta[id][1];if(id==='overview'){load()}else if(id==='users-section'){loadUsersAdmin()}else if(id==='subscriptions'){loadGatewayConfig();loadSubscriptionsAdmin()}else if(id==='settings'){load(true)}else if(id==='providers'){loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();loadCloudflare();loadPollinations();loadEdenAI();loadAgnesAI();loadReplicate();loadCapabilitiesAdmin();loadQuotaAdmin();}}window.addEventListener('hashchange',showPage);showPage();
  $('settings-form').addEventListener('input',()=>{settingsDirty=true});
  $('settings-form').addEventListener('change',()=>{settingsDirty=true});
  $('verify-token-calc-btn').addEventListener('click',()=>runConfigVerification(false));
@@ -3396,6 +3521,255 @@ async function load(forceSettings=false){if(refreshing)return;refreshing=true;st
       btn.disabled = false;
       btn.textContent = '🎬 Run Real Agnes Video Generation Test';
       loadAgnesAI();
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // REPLICATE VIDEO GENERATION PROVIDER INTEGRATION
+  // ---------------------------------------------------------------------------
+  let replicateCachedModels = [];
+
+  async function loadReplicate() {
+    try {
+      const res = await request('/api/admin/replicate');
+      const st = (res && res.data) || res || {};
+      const diag = $('replicate-diag');
+      if (diag) {
+        diag.replaceChildren();
+        const accountInfo = st.account?.username ? `@${st.account.username} (${st.account.hasBilling ? 'Billing on file' : 'No credit card / Trial'})` : 'Account not linked';
+        rowItem(diag, 'Replicate Provider Status', st.enabled ? (st.configured ? 'Active & Ready' : 'Token Required') : 'Disabled', orBadge(st.enabled && st.configured ? 'Active' : (st.configured ? 'Disabled' : 'Missing Token'), st.enabled && st.configured));
+        rowItem(diag, 'Encrypted API Token', st.hasToken ? `Configured (${st.maskedToken || 'r8_••••'}) · AES-256 encrypted` : 'None configured', orBadge(st.hasToken ? 'Saved' : 'Not Set', st.hasToken));
+        rowItem(diag, 'Replicate Account', accountInfo, orBadge(st.account?.username ? 'Connected' : 'Unchecked', Boolean(st.account?.username)));
+        rowItem(diag, 'Spending Policy', st.spendingPolicyDescription || 'Strict Free-Only', orBadge(st.spendingPolicy || 'strict_free_only', true));
+      }
+
+      const keyBadge = $('replicate-key-badge');
+      if (keyBadge) {
+        keyBadge.className = 'pill ' + (st.hasToken ? (st.enabled ? 'ok' : 'warn') : 'no');
+        keyBadge.textContent = st.hasToken ? (st.enabled ? 'Active (Saved)' : 'Disabled') : 'Not Configured';
+      }
+      const maskedEl = $('replicate-masked-key');
+      if (maskedEl) {
+        maskedEl.textContent = st.maskedToken || 'No API token configured';
+      }
+      if ($('replicate-enabled')) {
+        $('replicate-enabled').value = String(st.enabled !== false);
+      }
+      if ($('replicate-spending-policy')) {
+        $('replicate-spending-policy').value = st.spendingPolicy || 'strict_free_only';
+      }
+
+      replicateCachedModels = st.models || [];
+      renderReplicateModels(replicateCachedModels);
+
+      // Render usage stats
+      const usageEl = $('replicate-usage');
+      if (usageEl && st.usage) {
+        const u = st.usage;
+        usageEl.innerHTML = `<strong>Total Video Jobs:</strong> ${u.videoJobs || 0} · ` +
+          `<strong>Completed Videos:</strong> ${u.completedVideos || 0} · ` +
+          `<strong>Failed:</strong> ${u.failedVideos || 0} · ` +
+          `<strong>Total Rendered Seconds:</strong> ${u.totalSeconds || 0}s<br>` +
+          `<small class="muted" style="display:inline-block;margin-top:4px">Spending Policy: ${esc(st.spendingPolicy)}. Strict free-only mode blocks any pay-as-you-go runs requiring billing.</small>`;
+      }
+
+      // Render recent errors
+      const errList = $('replicate-errors');
+      if (errList) {
+        errList.replaceChildren();
+        const errs = st.recentErrors || [];
+        if (!errs.length) {
+          rowItem(errList, 'No recent errors', 'All Replicate prediction requests operating normally.', orBadge('Clear', true));
+        } else {
+          errs.slice(0, 10).forEach(e => {
+            rowItem(errList, `${e.code} (${e.status || 500})`, `${e.message} · ${profileTimeAgo(e.timestamp) || e.timestamp}`, orBadge('Error', false));
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to load Replicate admin data:', err);
+    }
+  }
+
+  function renderReplicateModels(models) {
+    const tbody = $('replicate-models');
+    if (!tbody) return;
+    tbody.replaceChildren();
+
+    if (!models || !models.length) {
+      const row = document.createElement('tr');
+      const cell = document.createElement('td');
+      cell.colSpan = 8;
+      cell.className = 'empty';
+      cell.textContent = 'No Replicate video models registered.';
+      row.appendChild(cell);
+      tbody.appendChild(row);
+      return;
+    }
+
+    models.forEach(m => {
+      const row = document.createElement('tr');
+
+      const idCell = document.createElement('td');
+      idCell.innerHTML = `<code>${esc(m.id)}</code>`;
+      row.appendChild(idCell);
+
+      const nameCell = document.createElement('td');
+      nameCell.textContent = m.displayName || m.name || m.id;
+      row.appendChild(nameCell);
+
+      const taskCell = document.createElement('td');
+      taskCell.innerHTML = `<span class="pill">${esc(m.task || 'text-to-video')}</span>`;
+      row.appendChild(taskCell);
+
+      const resCell = document.createElement('td');
+      resCell.textContent = m.resolution || '720p';
+      row.appendChild(resCell);
+
+      const eligCell = document.createElement('td');
+      const eligPill = document.createElement('span');
+      eligPill.className = 'pill ' + (m.freeEligibility === 'FREE_VERIFIED' ? 'ok' : (m.freeEligibility === 'TRIAL_ONLY' ? 'warn' : 'no'));
+      eligPill.textContent = m.freeEligibility || 'FREE_ELIGIBILITY_UNKNOWN';
+      eligCell.appendChild(eligPill);
+      row.appendChild(eligCell);
+
+      const billCell = document.createElement('td');
+      billCell.textContent = m.billingRequired ? 'Yes (Pay-as-you-go)' : 'Free Run';
+      row.appendChild(billCell);
+
+      const statusCell = document.createElement('td');
+      const statusPill = document.createElement('span');
+      statusPill.className = 'pill ' + (m.enabled ? 'ok' : 'no');
+      statusPill.textContent = m.enabled ? 'Enabled' : 'Disabled';
+      statusCell.appendChild(statusPill);
+      row.appendChild(statusCell);
+
+      const actCell = document.createElement('td');
+      const toggleBtn = document.createElement('button');
+      toggleBtn.type = 'button';
+      toggleBtn.textContent = m.enabled ? 'Disable' : 'Enable';
+      toggleBtn.style.padding = '4px 10px';
+      toggleBtn.style.fontSize = '12px';
+      toggleBtn.onclick = async () => {
+        try {
+          await request(`/api/admin/replicate/models/${encodeURIComponent(m.id)}`, 'PUT', { enabled: !m.enabled });
+          await loadReplicate();
+        } catch (e) {
+          alert(`Failed to update model state: ${e.message}`);
+        }
+      };
+      actCell.appendChild(toggleBtn);
+      row.appendChild(actCell);
+
+      tbody.appendChild(row);
+    });
+  }
+
+  // Eye toggle for Replicate API token
+  $('replicate-key-eye')?.addEventListener('click', () => {
+    const inp = $('replicate-key-input');
+    if (inp) inp.type = inp.type === 'password' ? 'text' : 'password';
+  });
+
+  // Settings form submit
+  $('replicate-settings-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const key = $('replicate-key-input').value.trim();
+    const enabled = $('replicate-enabled').value === 'true';
+    const spendingPolicy = $('replicate-spending-policy').value;
+
+    try {
+      if (key) {
+        await request('/api/admin/replicate/key', 'POST', { key });
+        $('replicate-key-input').value = '';
+      }
+      await request('/api/admin/replicate', 'PUT', { enabled, spendingPolicy });
+      alert('✓ Replicate settings saved successfully!');
+      await loadReplicate();
+    } catch (err) {
+      alert(`Failed to save Replicate settings: ${err.message}`);
+    }
+  });
+
+  // Delete key
+  $('replicate-delete-key')?.addEventListener('click', async () => {
+    if (!confirm('Remove saved Replicate API token?')) return;
+    try {
+      await request('/api/admin/replicate/key', 'DELETE', {});
+      alert('✓ Replicate API token removed.');
+      await loadReplicate();
+    } catch (err) {
+      alert(`Failed to delete token: ${err.message}`);
+    }
+  });
+
+  // Test Connection
+  $('replicate-test-connection')?.addEventListener('click', async () => {
+    const btn = $('replicate-test-connection');
+    btn.disabled = true;
+    btn.textContent = 'Testing...';
+    try {
+      const res = await request('/api/admin/replicate/connection', 'POST', {});
+      const r = (res && res.data && res.data.result) || res.result || {};
+      alert(r.ok ? `✓ Replicate connection successful (${r.durationMs || 0}ms)\n${r.message || ''}` : `✗ Connection failed: ${r.error || r.message}`);
+      await loadReplicate();
+    } catch (err) {
+      alert(`Replicate connection test failed: ${err.message}`);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Test connection';
+    }
+  });
+
+  // Discover / Refresh models
+  $('replicate-refresh-models')?.addEventListener('click', async () => {
+    const btn = $('replicate-refresh-models');
+    btn.disabled = true;
+    btn.textContent = 'Discovering...';
+    try {
+      const res = await request('/api/admin/replicate/refresh', 'POST', {});
+      const r = (res && res.data) || res || {};
+      alert(r.ok ? `✓ Replicate video model catalogue refreshed!` : `Notice: ${r.message || 'Updated'}`);
+      await loadReplicate();
+    } catch (err) {
+      alert(`Replicate model refresh failed: ${err.message}`);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Discover / Refresh models';
+    }
+  });
+
+  // Dedicated Video Model Test Runner
+  $('replicate-test-video-btn')?.addEventListener('click', async () => {
+    const btn = $('replicate-test-video-btn');
+    const out = $('replicate-test-video-result');
+    const model = $('replicate-test-video-model').value;
+    const prompt = $('replicate-test-video-prompt').value.trim();
+
+    btn.disabled = true;
+    btn.textContent = 'Rendering video (polling Replicate prediction)...';
+    out.style.display = 'block';
+    out.innerHTML = '<span class="think">Submitting video prediction to Replicate API and polling for completion... Please wait.</span>';
+
+    try {
+      const res = await request('/api/admin/replicate/test-video', 'POST', { model, prompt });
+      const r = (res && res.data && res.data.result) || res.result || {};
+      if (r.ok && r.videoUrl) {
+        out.innerHTML = `<span style="color:#4ade80;font-weight:600">✓ Video Generation Succeeded (${r.durationMs}ms)</span><br>` +
+          `<small style="color:#94a3b8">Model: <strong>${esc(r.model)}</strong> · Free Eligibility: <strong>${esc(r.freeEligibility || 'FREE_VERIFIED')}</strong></small><br>` +
+          `<div style="margin-top:10px">` +
+            `<video controls autoplay loop style="max-width:100%;max-height:320px;border-radius:8px;border:1px solid #2e4063;background:#000" src="${esc(r.videoUrl)}"></video>` +
+          `</div>` +
+          `<div style="margin-top:8px"><a href="${esc(r.videoUrl)}" target="_blank" rel="noopener" style="color:#60a5fa;text-decoration:underline">⬇ Download Test Video MP4</a></div>`;
+      } else {
+        out.innerHTML = `<span style="color:#f87171;font-weight:600">✗ Replicate Video Test Failed</span><br><small style="color:#fca5a5">${esc(r.error || r.message || 'Generation failed.')}</small>`;
+      }
+    } catch (err) {
+      out.innerHTML = `<span style="color:#f87171;font-weight:600">✗ Test Error</span><br><small style="color:#fca5a5">${esc(err.message)}</small>`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🎬 Run Real Replicate Video Generation Test';
+      loadReplicate();
     }
   });
 
