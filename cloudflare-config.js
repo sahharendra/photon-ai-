@@ -128,16 +128,73 @@ function isCloudflareImageModel(id) {
   return Boolean(CLOUDFLARE_IMAGE_MODELS[value]) || /(sdxl|stable-diffusion|flux)/i.test(value);
 }
 
-function readEnvCredentials(env) {
-  const accountId = String(env.CLOUDFLARE_ACCOUNT_ID || '').trim();
-  const apiToken = String(env.CLOUDFLARE_API_TOKEN || env.CLOUDFLARE_API_KEY || '').trim();
-  const apiToken2 = String(
+function getEncryptionKey() {
+  const secret = process.env.PHOTON_SECRET || process.env.PHOTON_ADMIN_PASSWORD || 'photon-cloudflare-master-seed-key';
+  return crypto.createHash('sha256').update(secret).digest();
+}
+
+function encryptToken(plainText) {
+  if (!plainText) return null;
+  const key = getEncryptionKey();
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  let encrypted = cipher.update(plainText, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  const authTag = cipher.getAuthTag().toString('hex');
+  return `${iv.toString('hex')}:${authTag}:${encrypted}`;
+}
+
+function decryptToken(cipherText) {
+  if (!cipherText || typeof cipherText !== 'string') return null;
+  const parts = cipherText.split(':');
+  if (parts.length !== 3) return null;
+  try {
+    const [ivHex, authTagHex, encryptedHex] = parts;
+    const key = getEncryptionKey();
+    const decipher = crypto.createDecipheriv('aes-256-gcm', key, Buffer.from(ivHex, 'hex'));
+    decipher.setAuthTag(Buffer.from(authTagHex, 'hex'));
+    let decrypted = decipher.update(encryptedHex, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
+  } catch {
+    return null;
+  }
+}
+
+function readEnvCredentials(env = process.env, config = null) {
+  let accountId = String(env.CLOUDFLARE_ACCOUNT_ID || '').trim();
+  let apiToken = String(env.CLOUDFLARE_API_TOKEN || env.CLOUDFLARE_API_KEY || '').trim();
+  let apiToken2 = String(
     env.CLOUDFLARE_API_TOKEN_2 ||
     env.CLOUDFLARE_API_KEY_2 ||
     env.CLOUDFLARE_IMAGE_API_TOKEN ||
     env.CLOUDFLARE_IMAGE_API_KEY ||
     ''
   ).trim();
+
+  // If missing from environment, check stored encrypted fallback in config
+  if (!accountId && config?.encryptedAccountId) {
+    const dec = decryptToken(config.encryptedAccountId);
+    if (dec) {
+      accountId = dec;
+      env.CLOUDFLARE_ACCOUNT_ID = dec;
+    }
+  }
+  if (!apiToken && config?.encryptedToken) {
+    const dec = decryptToken(config.encryptedToken);
+    if (dec) {
+      apiToken = dec;
+      env.CLOUDFLARE_API_TOKEN = dec;
+    }
+  }
+  if (!apiToken2 && config?.encryptedToken2) {
+    const dec = decryptToken(config.encryptedToken2);
+    if (dec) {
+      apiToken2 = dec;
+      env.CLOUDFLARE_API_TOKEN_2 = dec;
+    }
+  }
+
   return {
     accountId: accountId || null,
     apiToken: apiToken || null,
@@ -198,6 +255,9 @@ function defaultConfig() {
     spendingPolicy: 'allow_free_only',
     dailyNeuronsLimit: DEFAULT_DAILY_NEURONS_LIMIT,
     defaultModelId: '@cf/meta/llama-3.1-8b-instruct',
+    encryptedAccountId: null,
+    encryptedToken: null,
+    encryptedToken2: null,
     models: { ...DEFAULT_CLOUDFLARE_MODELS },
     usage: {
       requests: 0,
@@ -231,8 +291,8 @@ function atomicWriteJson(targetPath, data) {
   fs.renameSync(tmp, targetPath);
 }
 
-function createCloudflareConfig({ dir = process.cwd(), env = process.env, logger = console, now = Date.now } = {}) {
-  const stateFile = path.join(dir, CONFIG_FILE);
+function createCloudflareConfig({ dir = process.cwd(), configFile, env = process.env, logger = console, now = Date.now } = {}) {
+  const stateFile = configFile || path.join(dir, CONFIG_FILE);
   let config;
 
   try {
@@ -270,6 +330,9 @@ function createCloudflareConfig({ dir = process.cwd(), env = process.env, logger
       spendingPolicy: SPENDING_POLICIES.includes(raw.spendingPolicy) ? raw.spendingPolicy : 'allow_free_only',
       dailyNeuronsLimit: safeInteger(raw.dailyNeuronsLimit, DEFAULT_DAILY_NEURONS_LIMIT),
       defaultModelId: raw.defaultModelId || '@cf/meta/llama-3.1-8b-instruct',
+      encryptedAccountId: raw.encryptedAccountId || null,
+      encryptedToken: raw.encryptedToken || null,
+      encryptedToken2: raw.encryptedToken2 || null,
       models: {},
       usage: {
         requests: safeInteger(raw.usage?.requests),
@@ -496,6 +559,45 @@ function createCloudflareConfig({ dir = process.cwd(), env = process.env, logger
     };
   }
 
+  function setStoredCredentials({ accountId, apiToken, apiToken2 } = {}) {
+    if (accountId !== undefined) {
+      const cleanAcct = String(accountId || '').trim();
+      config.encryptedAccountId = cleanAcct ? encryptToken(cleanAcct) : null;
+      if (cleanAcct) env.CLOUDFLARE_ACCOUNT_ID = cleanAcct;
+      else delete env.CLOUDFLARE_ACCOUNT_ID;
+    }
+    if (apiToken !== undefined) {
+      const cleanTok = String(apiToken || '').trim();
+      config.encryptedToken = cleanTok ? encryptToken(cleanTok) : null;
+      if (cleanTok) env.CLOUDFLARE_API_TOKEN = cleanTok;
+      else delete env.CLOUDFLARE_API_TOKEN;
+    }
+    if (apiToken2 !== undefined) {
+      const cleanTok2 = String(apiToken2 || '').trim();
+      config.encryptedToken2 = cleanTok2 ? encryptToken(cleanTok2) : null;
+      if (cleanTok2) env.CLOUDFLARE_API_TOKEN_2 = cleanTok2;
+      else delete env.CLOUDFLARE_API_TOKEN_2;
+    }
+    save();
+  }
+
+  function clearStoredCredentials() {
+    config.encryptedAccountId = null;
+    config.encryptedToken = null;
+    config.encryptedToken2 = null;
+    delete env.CLOUDFLARE_ACCOUNT_ID;
+    delete env.CLOUDFLARE_API_TOKEN;
+    delete env.CLOUDFLARE_API_TOKEN_2;
+    save();
+  }
+
+  function getStoredCredentials() {
+    return readEnvCredentials(env, config);
+  }
+
+  // Decrypt and populate environment on initialization if not set in process.env
+  readEnvCredentials(env, config);
+
   return {
     stateFile,
     isEnabled,
@@ -513,6 +615,9 @@ function createCloudflareConfig({ dir = process.cwd(), env = process.env, logger
     markModelVerified,
     recordUsage,
     updateRateLimits,
+    setStoredCredentials,
+    clearStoredCredentials,
+    getStoredCredentials,
     snapshot,
   };
 }
@@ -526,6 +631,7 @@ module.exports = {
   isCloudflareImageModel,
   CLOUDFLARE_IMAGE_MODELS,
   CLOUDFLARE_DEFAULT_IMAGE_MODEL,
+  DEFAULT_CLOUDFLARE_MODELS,
   prettyName,
   getUtcDayKey,
   DEFAULT_DAILY_NEURONS_LIMIT,

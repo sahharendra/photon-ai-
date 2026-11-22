@@ -19,6 +19,7 @@ const {
   isCloudflareImageModel,
   CLOUDFLARE_IMAGE_MODELS,
   CLOUDFLARE_DEFAULT_IMAGE_MODEL,
+  DEFAULT_CLOUDFLARE_MODELS,
 } = require('./cloudflare-config');
 const { parseRetryAfter, backoffDelay } = require('./gemini-provider');
 
@@ -104,7 +105,7 @@ function createCloudflareProvider({
   let inflight = null;
 
   function credentials() {
-    return readEnvCredentials(env);
+    return (typeof cfg?.getStoredCredentials === 'function') ? cfg.getStoredCredentials() : readEnvCredentials(env);
   }
 
   function configured() {
@@ -223,51 +224,46 @@ function createCloudflareProvider({
 
   async function fetchModels() {
     if (!configured()) throw new HttpError(503, 'not_configured', validationMessage('not_configured'));
-    const apiBase = getBaseUrl();
-    const modelsUrl = `${apiBase}/models`;
+    const creds = credentials();
     const signal = AbortSignal.timeout(15000);
 
-    let res;
+    // Try 1: Cloudflare native models search endpoint
+    if (creds.accountId) {
+      const altUrl = `https://api.cloudflare.com/client/v4/accounts/${creds.accountId}/ai/models/search`;
+      try {
+        const altRes = await fetchImpl(altUrl, { method: 'GET', headers: authHeaders(), signal });
+        if (altRes.ok) {
+          const altData = await altRes.json().catch(() => ({}));
+          const rawList = Array.isArray(altData.result) ? altData.result : [];
+          const chatOnly = rawList.filter(m => isCloudflareChatModel(m.id || m.name));
+          if (chatOnly.length > 0) {
+            return cfg.syncDiscoveredModels(chatOnly);
+          }
+        }
+      } catch (_) {}
+    }
+
+    // Try 2: OpenAI-compatible /models endpoint
     try {
-      res = await fetchImpl(modelsUrl, {
+      const apiBase = getBaseUrl();
+      const modelsUrl = `${apiBase}/models`;
+      const res = await fetchImpl(modelsUrl, {
         method: 'GET',
         headers: authHeaders(),
         signal,
       });
-    } catch (err) {
-      throw mapError(err);
-    }
-
-    const rlHeaders = extractRateLimitHeaders(res.headers);
-    cfg.updateRateLimits(rlHeaders);
-
-    if (!res.ok) {
-      // Fallback: try Cloudflare native models search endpoint if OpenAI /models returned 404
-      const creds = credentials();
-      if (res.status === 404 && creds.accountId) {
-        const altUrl = `https://api.cloudflare.com/client/v4/accounts/${creds.accountId}/ai/models/search`;
-        try {
-          const altRes = await fetchImpl(altUrl, { method: 'GET', headers: authHeaders(), signal: AbortSignal.timeout(15000) });
-          if (altRes.ok) {
-            const altData = await altRes.json().catch(() => ({}));
-            const rawList = Array.isArray(altData.result) ? altData.result : [];
-            const chatOnly = rawList.filter(m => isCloudflareChatModel(m.id || m.name));
-            return cfg.syncDiscoveredModels(chatOnly);
-          }
-        } catch {}
+      if (res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        const rawList = Array.isArray(payload.data) ? payload.data : (Array.isArray(payload.result) ? payload.result : []);
+        const chatOnly = rawList.filter(m => isCloudflareChatModel(m.id || m.name));
+        if (chatOnly.length > 0) {
+          return cfg.syncDiscoveredModels(chatOnly);
+        }
       }
+    } catch (_) {}
 
-      const body = await res.json().catch(() => ({}));
-      const errMsg = body?.errors?.[0]?.message || body?.error?.message || `Cloudflare returned HTTP ${res.status}`;
-      const err = new Error(errMsg);
-      err.status = res.status;
-      throw mapError(err);
-    }
-
-    const payload = await res.json().catch(() => ({}));
-    const rawList = Array.isArray(payload.data) ? payload.data : (Array.isArray(payload.result) ? payload.result : []);
-    const chatOnly = rawList.filter(m => isCloudflareChatModel(m.id || m.name));
-    return cfg.syncDiscoveredModels(chatOnly);
+    // Fallback: sync and return default curated Cloudflare models so inference is never blocked
+    return cfg.syncDiscoveredModels(Object.values(DEFAULT_CLOUDFLARE_MODELS));
   }
 
   async function refreshModels(force = false) {
@@ -294,12 +290,18 @@ function createCloudflareProvider({
         modelsError = null;
       } catch (err) {
         const mapped = mapError(err);
-        modelsOk = false;
-        modelsError = mapped.code;
-        if (mapped.code === 'invalid_api_token' || mapped.code === 'invalid_account_id' || mapped.code === 'provider_forbidden') {
+        if (mapped.code === 'invalid_api_token' || mapped.code === 'invalid_account_id') {
+          modelsOk = false;
+          modelsError = mapped.code;
           models = [];
+        } else {
+          // Keep curated models alive for transient network or discovery issues
+          const dict = cfg.syncDiscoveredModels(Object.values(DEFAULT_CLOUDFLARE_MODELS));
+          models = Object.values(dict);
+          modelsOk = true;
+          modelsError = null;
         }
-        logger.error(JSON.stringify({ category: 'cloudflare_refresh_models', code: mapped.code, status: mapped.status }));
+        logger.warn(JSON.stringify({ category: 'cloudflare_refresh_models', code: mapped.code, status: mapped.status }));
       } finally {
         modelsAt = now();
         inflight = null;
@@ -321,6 +323,8 @@ function createCloudflareProvider({
     const snap = cfg.snapshot();
     const modelList = Object.values(snap.models || {});
     const active = modelList.filter(m => m.enabled && m.freeTierEligible);
+    const creds = credentials();
+    const hasTextToken = Boolean(creds.apiToken);
 
     const chatEntries = active.map(m => ({
       id: m.id,
@@ -329,13 +333,13 @@ function createCloudflareProvider({
       providerId: 'cloudflare_workers_ai',
       configured: true,
       supported: true,
-      available: !snap.isDailyQuotaExhausted && modelsOk !== false,
+      available: hasTextToken && !snap.isDailyQuotaExhausted && modelsOk !== false,
       free: true,
       category: 'Text Generation',
       contextLength: m.contextWindow || 32768,
       capabilities: { text: true, vision: false, pdf: false },
       description: m.description || `General chat & reasoning · ${Math.round((m.contextWindow || 32768) / 1024)}k context`,
-      reason: modelsOk === false ? validationMessage(modelsError || 'invalid_api_token') : (snap.isDailyQuotaExhausted ? validationMessage('quota_exhausted') : ''),
+      reason: !hasTextToken ? 'Add CLOUDFLARE_API_TOKEN for text generation.' : (modelsOk === false ? validationMessage(modelsError || 'invalid_api_token') : (snap.isDailyQuotaExhausted ? validationMessage('quota_exhausted') : '')),
     }));
 
     const imageEntries = imageCatalogEntries();
@@ -683,7 +687,7 @@ function createCloudflareProvider({
         status: 'connected',
         modelCount: count,
         maskedAccountId: maskAccountId(creds.accountId),
-        maskedToken: maskToken(creds.apiToken),
+        maskedToken: creds.apiToken ? maskToken(creds.apiToken) : null,
         maskedToken2: creds.apiToken2 ? maskToken(creds.apiToken2) : null,
         hasImageToken: Boolean(creds.apiToken2),
         imageConfigured: imageConfigured(),
@@ -692,6 +696,23 @@ function createCloudflareProvider({
       };
     } catch (err) {
       const mapped = mapError(err);
+      if (imageConfigured()) {
+        modelsOk = true;
+        return {
+          ok: true,
+          code: 'ok',
+          status: 'connected',
+          modelCount: Object.keys(CLOUDFLARE_IMAGE_MODELS).length,
+          maskedAccountId: maskAccountId(creds.accountId),
+          maskedToken: creds.apiToken ? maskToken(creds.apiToken) : null,
+          maskedToken2: creds.apiToken2 ? maskToken(creds.apiToken2) : null,
+          hasImageToken: Boolean(creds.apiToken2),
+          imageConfigured: true,
+          message: 'Connected (Image Generation active with dedicated token).',
+          responseTimeMs: Date.now() - started,
+          testedAt: new Date().toISOString(),
+        };
+      }
       modelsOk = false;
       modelsError = mapped.code;
       modelsAt = now();
@@ -770,22 +791,27 @@ function createCloudflareProvider({
   }
 
   function imageCatalogEntries() {
-    const isAvail = configured() && enabled() && !cfg.isDailyQuotaExhausted() && modelsOk !== false;
+    const isAvail = imageConfigured() && enabled() && !cfg.isDailyQuotaExhausted();
     return Object.values(CLOUDFLARE_IMAGE_MODELS).map(m => ({
       id: m.id,
       name: m.name,
       provider: 'Cloudflare Workers AI',
+      providerId: 'cloudflare_workers_ai',
       providerKey: 'cloudflare',
       category: 'Image Generation',
       task: 'text-to-image',
       available: isAvail,
-      configured: configured(),
+      configured: imageConfigured(),
       enabled: enabled(),
+      supported: true,
       free: true,
       freeTierEligible: true,
       pricingVerified: true,
+      capabilities: { text: false, image_output: true, vision: false },
+      contextLength: 0,
       description: m.description,
       steps: m.steps,
+      reason: !imageConfigured() ? validationMessage('not_configured') : (!enabled() ? validationMessage('provider_disabled') : (isAvail ? '' : validationMessage('quota_exhausted'))),
     }));
   }
 

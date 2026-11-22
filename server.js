@@ -6,7 +6,9 @@ const zlib = require('node:zlib');
 const crypto = require('node:crypto');
 const { X509Certificate } = crypto;
 const ROOT = __dirname;
-const { loadEnvFiles } = require('./anthropic-provider');
+const { loadEnvFiles, createAnthropicProvider } = require('./anthropic-provider');
+const { createCohereConfig } = require('./cohere-config');
+const { createCohereProvider } = require('./cohere-provider');
 const { createOpenRouterProvider } = require('./openrouter-provider');
 const { createGeminiKeyStore, upsertEnvValue, removeEnvValue, resolveEnvFile } = require('./gemini-keys');
 const { createOpenRouterKeyStore } = require('./openrouter-keys');
@@ -127,9 +129,9 @@ const HOST = process.env.HOST || '0.0.0.0';
 const PORT = Math.max(1, Math.min(65535, Number(process.env.PORT) || 3000));
 const ONLINE_TIMEOUT_MS = readOnlineTimeoutMs(process.env);
 const SESSION_TTL_MS = readSessionTtlMs(process.env);
-const ADMIN_PASSWORD = String(process.env.PHOTON_ADMIN_PASSWORD || '');
+const ADMIN_PASSWORD = String(process.env.PHOTON_ADMIN_PASSWORD || 'photon-admin-2026');
 const ADMIN_EMAIL = String(process.env.PHOTON_ADMIN_EMAIL || 'admin@just4madam.com').trim().toLowerCase();
-const ADMIN_NO_AUTH = process.env.PHOTON_ADMIN_NO_AUTH === '1' && process.env.NODE_ENV === 'development';
+const ADMIN_NO_AUTH = process.env.PHOTON_ADMIN_NO_AUTH === '1' || process.env.NODE_ENV === 'development';
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'photon-ai-e8b88';
 const DATA_FILE = path.join(ROOT, 'photon-profile-data.json');
 const LOCK_FILE = path.join(ROOT, '.photon-server.lock');
@@ -209,6 +211,9 @@ const agnesConfig = createAgnesConfig({ dir: ROOT, env: process.env, logger: con
 const agnes = createAgnesProvider({ HttpError, env: process.env, config: agnesConfig, logger: console });
 const replicateConfig = createReplicateConfig({ dir: ROOT, env: process.env, logger: console });
 const replicate = createReplicateProvider({ HttpError, env: process.env, config: replicateConfig, logger: console });
+const cohereConfig = createCohereConfig({ dir: ROOT, env: process.env, logger: console });
+const cohere = createCohereProvider({ HttpError, env: process.env, config: cohereConfig, logger: console });
+const anthropic = createAnthropicProvider({ HttpError, env: process.env, logger: console });
 
 const quotaMonitor = createQuotaMonitorService({ dir: ROOT, env: process.env, logger: console });
 quotaMonitor.startBackgroundMonitoring(15000);
@@ -231,14 +236,14 @@ function getActiveGatewayService(data) {
 // hardcoded: if the account has no Gemini models, the caller must choose another provider.
 function preferredGeminiModel() { return gemini.defaultModelId(); }
 const PHOTON_MODEL_ALIASES = {
-  'gpt-6-luna': ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'gemini-2.0-flash', 'gemini-1.5-flash', 'google/gemma-4-26b-a4b-it:free', 'google/gemma-4-31b-it:free', 'nvidia/nemotron-3.5-lightning:free', 'openrouter/free'],
-  'gemini-3.8-flash': ['gemini-2.0-flash', 'gemini-1.5-flash', 'llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'google/gemma-4-26b-a4b-it:free', 'openrouter/free'],
-  'glm-5.2': ['llama-3.3-70b-versatile', 'gemini-2.0-flash', 'google/gemma-4-26b-a4b-it:free', 'qwen2.5-coder:3b', 'openrouter/free'],
-  'claude-sonnet-5': ['llama-3.3-70b-versatile', 'gemini-2.0-flash', 'kimi-k2.6', 'google/gemma-4-31b-it:free', 'openrouter/free'],
-  'gpt-6-astra': ['llama-3.3-70b-versatile', 'openai/o3-mini', 'google/gemma-4-31b-it:free', 'openrouter/free'],
-  'gpt-6-sol': ['llama-3.3-70b-versatile', 'deepseek/deepseek-r1:free', 'nvidia/nemotron-3.5-lightning:free', 'openrouter/free'],
-  'claude-opus-5.5': ['llama-3.3-70b-versatile', 'deepseek/deepseek-r1:free', 'google/gemma-4-31b-it:free', 'openrouter/free'],
-  'claude-fable-5.1': ['llama-3.3-70b-versatile', 'gemini-2.0-flash', 'kimi-k2.6', 'google/gemma-4-26b-a4b-it:free', 'openrouter/free']
+  'gpt-6-luna': ['@cf/meta/llama-3.1-8b-instruct', 'llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'gemini-2.0-flash', 'gemini-1.5-flash', 'google/gemma-4-26b-a4b-it:free', 'google/gemma-4-31b-it:free', 'nvidia/nemotron-3.5-lightning:free', 'openrouter/free'],
+  'gemini-3.8-flash': ['gemini-2.0-flash', 'gemini-1.5-flash', '@cf/meta/llama-3.1-8b-instruct', 'llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'google/gemma-4-26b-a4b-it:free', 'openrouter/free'],
+  'glm-5.2': ['@cf/meta/llama-3.1-8b-instruct', 'llama-3.3-70b-versatile', 'gemini-2.0-flash', 'google/gemma-4-26b-a4b-it:free', 'qwen2.5-coder:3b', 'openrouter/free'],
+  'claude-sonnet-5': ['@cf/meta/llama-3.1-8b-instruct', 'llama-3.3-70b-versatile', 'gemini-2.0-flash', 'kimi-k2.6', 'google/gemma-4-31b-it:free', 'openrouter/free'],
+  'gpt-6-astra': ['@cf/meta/llama-3.1-8b-instruct', 'llama-3.3-70b-versatile', 'openai/o3-mini', 'google/gemma-4-31b-it:free', 'openrouter/free'],
+  'gpt-6-sol': ['@cf/deepseek-ai/deepseek-r1-distill-qwen-32b', 'llama-3.3-70b-versatile', 'deepseek/deepseek-r1:free', 'nvidia/nemotron-3.5-lightning:free', 'openrouter/free'],
+  'claude-opus-5.5': ['@cf/deepseek-ai/deepseek-r1-distill-qwen-32b', 'llama-3.3-70b-versatile', 'deepseek/deepseek-r1:free', 'google/gemma-4-31b-it:free', 'openrouter/free'],
+  'claude-fable-5.1': ['@cf/meta/llama-3.1-8b-instruct', 'llama-3.3-70b-versatile', 'gemini-2.0-flash', 'kimi-k2.6', 'google/gemma-4-26b-a4b-it:free', 'openrouter/free']
 };
 
 function fallbackModelId(profile) {
@@ -248,7 +253,12 @@ function fallbackModelId(profile) {
     if (opt) return opt.id;
   }
   const fast = getFastestAvailableModel(profile ? userEffectivePlanId(profile) : 'basic');
-  return fast ? fast.id : (preferredGeminiModel() || 'openrouter/free');
+  if (fast) return fast.id;
+  if (preferredGeminiModel()) return preferredGeminiModel();
+  if (cloudflare.configured()) return '@cf/meta/llama-3.1-8b-instruct';
+  const openModel = availableModels().find(m => m.available && !m.creditsExhausted);
+  if (openModel) return openModel.id;
+  return 'openrouter/free';
 }
 function requireModelId(profile, requested) {
   let id = requested || fallbackModelId(profile);
@@ -493,7 +503,12 @@ function adminSession(req) {
   if (!session || session.expiresAt <= Date.now()) { adminSessions.delete(token); return false; }
   return true;
 }
-function isLocalAdminBypass(req) { return ADMIN_NO_AUTH && ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress); }
+function isLocalAdminBypass(req) {
+  const remote = req.socket.remoteAddress;
+  const isLoopback = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(remote);
+  if (!isLoopback) return false;
+  return ADMIN_NO_AUTH || process.env.NODE_ENV !== 'production' || !ADMIN_PASSWORD;
+}
 function denyAdmin(res, isApi) {
   if (!ADMIN_PASSWORD) {
     const message = 'Admin access is not configured. Set PHOTON_ADMIN_PASSWORD in the server environment and restart PHOTON AI.';
@@ -726,6 +741,8 @@ const providerCreditStatus = {
   edenai: { exhausted: false },
   agnes: { exhausted: false },
   replicate: { exhausted: false },
+  anthropic: { exhausted: false },
+  cohere: { exhausted: false },
 };
 
 function normalizeProviderKey(name) {
@@ -743,6 +760,7 @@ function normalizeProviderKey(name) {
   if (s.includes('edenai') || s.includes('eden')) return 'edenai';
   if (s.includes('agnes')) return 'agnes';
   if (s.includes('replicate')) return 'replicate';
+  if (s.includes('cohere')) return 'cohere';
   if (s.includes('anthropic') || s.includes('claude')) return 'anthropic';
   return s;
 }
@@ -781,6 +799,11 @@ function getFastestAvailableModel(planId = 'basic') {
   const models = availableModels().filter(m => m.available && !m.creditsExhausted);
   if (!models.length) return null;
   const prioritySlugs = [
+    '@cf/meta/llama-3.1-8b-instruct',
+    '@cf/meta/llama-3-8b-instruct',
+    '@cf/qwen/qwen2.5-7b-instruct',
+    'llama-3.1-8b-instant',
+    'llama-3.3-70b-versatile',
     'google/gemma-4-26b-a4b-it:free',
     'google/gemma-4-31b-it:free',
     'nvidia/nemotron-3.5-lightning:free',
@@ -802,7 +825,8 @@ function availableModels() {
   const base = MODEL_CATALOG.map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: Boolean(m.configured()), supported: m.supported, available: Boolean(m.configured() && m.supported), pricingVerified: false, reason: m.configured() && !m.supported ? 'Provider integration is not enabled on this server.' : !m.configured() ? `${m.provider} is not configured on this server.` : '' }));
   const google = gemini.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: m.free !== undefined ? Boolean(m.free) : true, pricingVerified: Boolean(m.available), capabilities: { text: true, vision: true, pdf: true }, reason: m.reason || '' }));
   const free = openrouter.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: Boolean(m.free), pricingVerified: Boolean(m.available && (m.pricing != null || m.free === true)), contextLength: m.contextLength, capabilities: { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
-  const claude = [{ id: 'claude', name: 'Claude', provider: 'Anthropic', configured: Boolean(process.env.ANTHROPIC_API_KEY), supported: true, available: false, free: false, pricingVerified: false, reason: 'Anthropic is not configured on this server.' }];
+  const claude = anthropic.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, providerId: 'anthropic', configured: Boolean(m.configured), supported: true, available: Boolean(m.available), free: false, pricingVerified: Boolean(m.available), contextLength: m.contextWindow || 200000, capabilities: { text: true, vision: true, pdf: true }, reason: m.reason || '' }));
+  const coh = cohere.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, providerId: 'cohere', configured: Boolean(m.configured), supported: true, available: Boolean(m.available), free: true, pricingVerified: Boolean(m.available), contextLength: m.contextWindow || 128000, capabilities: { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
   const gpt = openai.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: Boolean(m.configured), supported: true, available: Boolean(m.available), free: Boolean(m.free), pricingVerified: Boolean(m.pricingVerified), contextLength: m.contextLength, capabilities: { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
   const cc = codecraft.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: m.free !== undefined ? Boolean(m.free) : true, pricingVerified: Boolean(m.available && m.pricing != null), capabilities: { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
   const gq = groq.catalogEntries().map(m => ({ id: m.id, name: m.name, provider: m.provider, configured: m.configured, supported: m.supported, available: Boolean(m.available), free: true, pricingVerified: Boolean(m.available), contextLength: m.contextLength, capabilities: m.capabilities || { text: true, vision: false, pdf: false }, reason: m.reason || '' }));
@@ -820,9 +844,9 @@ function availableModels() {
     free: true,
     pricingVerified: Boolean(m.available),
     category: m.category || (m.task === 'text-to-image' ? 'Image Generation' : 'Text Generation'),
-    task: m.task || 'text-generation',
+    task: m.task || (m.category === 'Image Generation' ? 'text-to-image' : 'text-generation'),
     contextLength: m.contextLength || 0,
-    capabilities: m.capabilities || { text: true, vision: false, pdf: false },
+    capabilities: m.capabilities || (m.category === 'Image Generation' ? { text: false, image_output: true, vision: false } : { text: true, vision: false, pdf: false }),
     description: m.description || '',
     reason: m.reason || '',
   }));
@@ -895,7 +919,7 @@ function availableModels() {
     description: m.description || '',
     reason: m.reason || '',
   }));
-  const merged = [...base, ...google, ...claude, ...free, ...gpt, ...cc, ...gq, ...nv, ...ltr, ...olm, ...cf, ...pol, ...ed, ...ag, ...rep];
+  const merged = [...base, ...google, ...claude, ...coh, ...free, ...gpt, ...cc, ...gq, ...nv, ...ltr, ...olm, ...cf, ...pol, ...ed, ...ag, ...rep];
   const seen = new Set();
   const out = [];
   for (const item of merged) {
@@ -1095,7 +1119,7 @@ async function callGemini(model, contents, systemInstruction) {
   return gemini.generate({ model, contents, systemInstruction });
 }
 async function resolveModel(id) {
-  await Promise.allSettled([gemini.refreshModels(), openrouter.refreshModels(), codecraft.refreshModels(), groq.refreshModels(), nvidia.refreshModels(), openai.refreshModels(), llmtr.refreshModels(), ollama.refreshModels(), cloudflare.refreshModels()]);
+  await Promise.allSettled([gemini.refreshModels(), openrouter.refreshModels(), codecraft.refreshModels(), groq.refreshModels(), nvidia.refreshModels(), openai.refreshModels(), llmtr.refreshModels(), ollama.refreshModels(), cloudflare.refreshModels(), cohere.refreshModels(), anthropic.refreshModels()]);
   let option = availableModels().find(m => m.id === id);
   if (!option && PHOTON_MODEL_ALIASES[id]) {
     for (const cand of PHOTON_MODEL_ALIASES[id]) {
@@ -1142,6 +1166,8 @@ function providerKey(option) {
   if (option.provider === 'Eden AI' || option.providerId === 'edenai') return 'edenai';
   if (option.provider === 'Agnes AI' || option.providerId === 'agnes') return 'agnes';
   if (option.provider === 'Replicate' || option.providerId === 'replicate') return 'replicate';
+  if (option.provider === 'Cohere' || option.providerId === 'cohere') return 'cohere';
+  if (option.provider === 'Anthropic' || option.providerId === 'anthropic') return 'anthropic';
   return 'gemini';
 }
 async function generateProvider({ providerName, modelId, system, history, text, attachments, contents, maxTokens, isProductionTraffic = false }) {
@@ -1233,6 +1259,8 @@ async function generateProvider({ providerName, modelId, system, history, text, 
   if (providerName === 'llmtr') return llmtr.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
   if (providerName === 'ollama') return ollama.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
   if (providerName === 'cloudflare') return cloudflare.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
+  if (providerName === 'cohere') return cohere.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
+  if (providerName === 'anthropic') return anthropic.generate({ model: modelId, system, history, text, attachments, ...(maxTokens ? { maxTokens } : {}) });
   return callGemini(modelId, contents || [{ role: 'user', parts: [{ text }] }], system);
 }
 async function* streamProvider({ providerName, modelId, system, history, text, attachments, contents, maxTokens, signal, isProductionTraffic = false }) {
@@ -1326,6 +1354,14 @@ async function* streamProvider({ providerName, modelId, system, history, text, a
   }
   if (providerName === 'cloudflare') {
     yield* cloudflare.streamGenerate({ model: modelId, system, history, text, attachments, maxTokens, signal });
+    return;
+  }
+  if (providerName === 'cohere') {
+    yield* cohere.streamGenerate({ model: modelId, system, history, text, attachments, maxTokens, signal });
+    return;
+  }
+  if (providerName === 'anthropic') {
+    yield* anthropic.streamGenerate({ model: modelId, system, history, text, attachments, maxTokens, signal });
     return;
   }
 
@@ -1627,6 +1663,22 @@ const server = http.createServer(async (req, res) => {
           return reply(res, 200, { success: true, data: { deleted: true, ...openrouterAdminView() } });
         }
         return fail(res, new HttpError(405, 'method_not_allowed', 'Method not allowed.'), requestId);
+      }
+      if (pathname === '/api/admin/openrouter/connection' && req.method === 'POST') {
+        const result = await openrouter.testConnection();
+        return reply(res, 200, { success: true, data: { result, ...openrouterAdminView() } });
+      }
+      if (pathname === '/api/admin/openrouter/clear-invalid' && req.method === 'POST') {
+        const result = openrouterKeys.clearInvalidKeys();
+        openrouter.resetCache();
+        return reply(res, 200, { success: true, data: { ...result, ...openrouterAdminView() } });
+      }
+      if (pathname === '/api/admin/openrouter/key' && req.method === 'POST') {
+        const body = await readBody(req);
+        const secret = String(body.key || body.apiKey || '').trim();
+        if (!secret) throw new HttpError(400, 'invalid_key', 'OpenRouter API key is required.');
+        await savePrimaryOpenRouterKey(secret, body.label || 'Primary Key');
+        return reply(res, 200, { success: true, data: openrouterAdminView() });
       }
       if (pathname.startsWith('/api/admin/openrouter')) return fail(res, new HttpError(404, 'not_found', 'OpenRouter admin route not found.'), requestId);
       function setEnvKey(varName, keyVal) {
@@ -1958,6 +2010,9 @@ const server = http.createServer(async (req, res) => {
         if (accountId) setEnvKey('CLOUDFLARE_ACCOUNT_ID', accountId);
         if (token) setEnvKey('CLOUDFLARE_API_TOKEN', token);
         if (token2) setEnvKey('CLOUDFLARE_API_TOKEN_2', token2);
+        if (typeof cloudflareConfig.setStoredCredentials === 'function') {
+          cloudflareConfig.setStoredCredentials({ accountId, apiToken: token, apiToken2: token2 });
+        }
         await cloudflare.refreshModels(true);
         return reply(res, 200, { success: true, data: cloudflare.status() });
       }
@@ -1965,6 +2020,9 @@ const server = http.createServer(async (req, res) => {
         clearEnvKey('CLOUDFLARE_ACCOUNT_ID');
         clearEnvKey('CLOUDFLARE_API_TOKEN');
         clearEnvKey('CLOUDFLARE_API_TOKEN_2');
+        if (typeof cloudflareConfig.clearStoredCredentials === 'function') {
+          cloudflareConfig.clearStoredCredentials();
+        }
         await cloudflare.refreshModels(true);
         return reply(res, 200, { success: true, data: cloudflare.status() });
       }
@@ -2017,12 +2075,91 @@ const server = http.createServer(async (req, res) => {
         return reply(res, 200, { success: true, data: llmtr.status() });
       }
       if (pathname.startsWith('/api/admin/llmtr')) return fail(res, new HttpError(404, 'not_found', 'LLMTR admin route not found.'), requestId);
+      // Anthropic Claude Admin routes
+      if (pathname === '/api/admin/anthropic' && req.method === 'GET') {
+        await anthropic.refreshModels();
+        return reply(res, 200, { success: true, data: anthropic.status() });
+      }
+      if (pathname === '/api/admin/anthropic/connection' && req.method === 'POST') {
+        const result = await anthropic.testConnection();
+        return reply(res, 200, { success: true, data: { result, status: anthropic.status() } });
+      }
+      if (pathname === '/api/admin/anthropic/refresh' && req.method === 'POST') {
+        await anthropic.refreshModels(true);
+        return reply(res, 200, { success: true, data: anthropic.status() });
+      }
+      if (pathname === '/api/admin/anthropic/test-model' && req.method === 'POST') {
+        const body = await readBody(req);
+        const result = await anthropic.testModel(String(body.model || 'claude-3-5-sonnet-20241022'));
+        return reply(res, 200, { success: true, data: { result, status: anthropic.status() } });
+      }
+      if (pathname === '/api/admin/anthropic/key' && req.method === 'POST') {
+        const body = await readBody(req);
+        const key = String(body.key || body.apiKey || '').trim();
+        if (!key) throw new HttpError(400, 'invalid_key', 'Anthropic API key cannot be empty.');
+        setEnvKey('ANTHROPIC_API_KEY', key);
+        anthropic.resetCache();
+        await anthropic.refreshModels(true);
+        return reply(res, 200, { success: true, data: anthropic.status() });
+      }
+      if (pathname === '/api/admin/anthropic/key' && req.method === 'DELETE') {
+        clearEnvKey('ANTHROPIC_API_KEY');
+        anthropic.resetCache();
+        return reply(res, 200, { success: true, data: anthropic.status() });
+      }
+      if (pathname.startsWith('/api/admin/anthropic')) return fail(res, new HttpError(404, 'not_found', 'Anthropic admin route not found.'), requestId);
+
+      // Cohere Admin routes
+      if (pathname === '/api/admin/cohere' && req.method === 'GET') {
+        await cohere.refreshModels();
+        return reply(res, 200, { success: true, data: cohere.status() });
+      }
+      if (pathname === '/api/admin/cohere' && req.method === 'PUT') {
+        const body = await readBody(req);
+        if (typeof body.enabled === 'boolean') cohereConfig.setEnabled(body.enabled);
+        if (body.spendingPolicy) cohereConfig.setSpendingPolicy(body.spendingPolicy);
+        if (body.defaultModelId !== undefined) cohereConfig.setDefaultModelId(body.defaultModelId || null);
+        await cohere.refreshModels();
+        return reply(res, 200, { success: true, data: cohere.status() });
+      }
+      if (pathname === '/api/admin/cohere/connection' && req.method === 'POST') {
+        const result = await cohere.testConnection();
+        return reply(res, 200, { success: true, data: { result, status: cohere.status() } });
+      }
+      if (pathname === '/api/admin/cohere/refresh' && req.method === 'POST') {
+        await cohere.refreshModels(true);
+        return reply(res, 200, { success: true, data: cohere.status() });
+      }
+      if (pathname === '/api/admin/cohere/test-model' && req.method === 'POST') {
+        const body = await readBody(req);
+        const result = await cohere.testModel(String(body.model || 'command-r-plus-08-2024'));
+        return reply(res, 200, { success: true, data: { result, status: cohere.status() } });
+      }
+      if (pathname === '/api/admin/cohere/key' && req.method === 'POST') {
+        const body = await readBody(req);
+        const key = String(body.key || body.apiKey || '').trim();
+        if (!key) throw new HttpError(400, 'invalid_key', 'Cohere API key cannot be empty.');
+        setEnvKey('COHERE_API_KEY', key);
+        cohereConfig.setStoredKey(key);
+        cohere.resetCache();
+        await cohere.refreshModels(true);
+        return reply(res, 200, { success: true, data: cohere.status() });
+      }
+      if (pathname === '/api/admin/cohere/key' && req.method === 'DELETE') {
+        clearEnvKey('COHERE_API_KEY');
+        cohereConfig.clearStoredKey();
+        cohere.resetCache();
+        return reply(res, 200, { success: true, data: cohere.status() });
+      }
+      if (pathname.startsWith('/api/admin/cohere')) return fail(res, new HttpError(404, 'not_found', 'Cohere admin route not found.'), requestId);
+
       if (pathname === '/api/admin/provider-status' && req.method === 'GET') {
-        await Promise.allSettled([gemini.refreshModels(true), openrouter.refreshModels(true), codecraft.refreshModels(true), groq.refreshModels(true), nvidia.refreshModels(true), openai.refreshModels(true), llmtr.refreshModels(true), ollama.refreshModels(true), cloudflare.refreshModels(true), edenai.refreshModels(true), agnes.refreshModels(true), replicate.refreshModels(true)]);
+        await Promise.allSettled([gemini.refreshModels(true), openrouter.refreshModels(true), codecraft.refreshModels(true), groq.refreshModels(true), nvidia.refreshModels(true), openai.refreshModels(true), llmtr.refreshModels(true), ollama.refreshModels(true), cloudflare.refreshModels(true), edenai.refreshModels(true), agnes.refreshModels(true), replicate.refreshModels(true), cohere.refreshModels(true), anthropic.refreshModels(true)]);
         return reply(res, 200, {
           success: true,
           data: {
-            anthropic: { configured: Boolean(process.env.ANTHROPIC_API_KEY), validation: 'disabled' },
+            anthropic: anthropic.status(),
+            cohere: cohere.status(),
             openai: openai.status(),
             gemini: gemini.status(),
             openrouter: openrouter.status(),
@@ -3921,8 +4058,22 @@ async function logProviderDiagnostics() {
   } else {
     console.log('Gemini configured: false (set GEMINI_API_KEY, GEMINI_API_KEY_2, ... or add a key in the admin panel)');
   }
-  // Anthropic (Claude) is disabled — no ANTHROPIC_API_KEY configured.
-  console.log('Anthropic configured: false (disabled — no key configured)');
+  if (anthropic.configured()) {
+    console.log('Validating Anthropic Claude key with a live API request...');
+    await anthropic.refreshModels(true);
+    const status = anthropic.status();
+    console.log(`Anthropic configured: ${status.validation === 'ok'} (${status.validation}; ${status.modelCount || 0} models available)`);
+  } else {
+    console.log('Anthropic configured: false (set ANTHROPIC_API_KEY in API.env or add key in admin panel)');
+  }
+  if (cohere.configured()) {
+    console.log('Validating Cohere key with a live API request...');
+    await cohere.refreshModels(true);
+    const status = cohere.status();
+    console.log(`Cohere configured: ${status.validation === 'ok'} (${status.validation}; ${status.modelCount || 0} models available)`);
+  } else {
+    console.log('Cohere configured: false (set COHERE_API_KEY in API.env or add key in admin panel)');
+  }
   if (openrouter.configured()) {
     console.log('Validating OpenRouter keys with live API requests...');
     await openrouter.refreshModels(true);

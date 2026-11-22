@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "enabled": true,
+  "spendingPolicy": "allow_free_only",
+  "defaultModelId": "command-r-plus-08-2024",
+  "encryptedKey": null,
+  "models": {
+    "command-r-plus-08-2024": {
+      "id": "command-r-plus-08-2024",
+      "name": "Command R+ (Cohere)",
+      "ownedBy": "Cohere",
+      "enabled": true,
+      "contextWindow": 128000,
+      "verifiedAt": null
+    }
+  },
+  "usage": {
+    "requests": 1,
+    "failures": 0,
+    "inputTokens": 3,
+    "outputTokens": 4,
+    "totalTokens": 7,
+    "lastSuccessAt": "2026-11-22T08:19:17.521Z",
+    "lastError": null,
+    "byModel": {}
+  },
+  "rateLimits": {
+    "remainingRequests": 5,
+    "remainingTokens": null,
+    "resetRequests": 0,
+    "resetTokens": null,
+    "lastUpdated": "2026-11-22T08:19:17.548Z"
+  },
+  "recentErrors": [],
+  "updatedAt": "2026-11-22T08:19:17.548Z"
+}

@@ -879,7 +879,7 @@ function checkPrivateModeGate(){
   }
   btn.onclick=tryUnlock;input.onkeydown=function(e){if(e.key==="Enter")tryUnlock()};input.focus();
 }
-async function loadPublicConfig(){try{var r=await fetch("/api/profile/config",{cache:"no-store"}),j=await r.json();if(r.ok&&j.success){profileConfig=j.data;profileConfigFetchedAt=Date.now();applyPublicConfig(j.data);if(typeof updateModelPickerBtn==="function")updateModelPickerBtn();}}catch(e){}}
+async function loadPublicConfig(){try{var r=await fetch("/api/profile/config",{cache:"no-store"}),j=await r.json();if(r.ok&&j.success){profileConfig=j.data;profileConfigFetchedAt=Date.now();applyPublicConfig(j.data);if(typeof ensureCompatibleModelForCategory==="function")ensureCompatibleModelForCategory(activeGenCat);if(typeof updateModelPickerBtn==="function")updateModelPickerBtn();}}catch(e){}}
 async function syncAuthenticatedAccount(){if(!user)return;try{await loadPublicConfig();var account=await profileApi("/api/profile");if(!account)return;photonProfile=account;user.name=account.fullName||user.name;user.plan=(account.plan&&account.plan.id)||user.plan||"basic";user.planInterval=account.subscriptionInterval||(user.plan==="basic"?"none":"monthly");var U=users();if(U[user.email]){U[user.email].name=user.name;U[user.email].plan=user.plan;U[user.email].planInterval=user.planInterval;putUsers(U)}if(account.usage)syncProfileUsage(account.usage);else tokUI();$("upl").parentNode.firstChild.textContent=planName()+" plan - "}catch(e){}}
 function inr(n){return"₹"+n.toLocaleString("en-IN")}
 function planName(){var p=PLANS.filter(function(x){return x.id===user.plan})[0];return p?p.n:"Basic"}
@@ -2700,12 +2700,21 @@ function updateModelPickerBtn(){
   var currentModelId=(cur&&cur.model)||(user&&user.defaultModel)||(photonProfile&&photonProfile.defaultModel)||"";
   var catalog=(profileConfig&&(profileConfig.allModels||profileConfig.models))||[];
   var found=catalog.find(function(m){return m.id===currentModelId});
-  if(found && typeof getModelCat==="function" && getModelCat(found)!==activeGenCat){
-    var catMatch=catalog.find(function(m){return getModelCat(m)===activeGenCat && m.available!==false && !m.creditsExhausted});
-    if(catMatch){found=catMatch;currentModelId=catMatch.id;if(cur)cur.model=catMatch.id;}
+  var isInvalid = !found || found.available === false || found.configured === false || found.creditsExhausted === true;
+  var isWrongCat = found && typeof getModelCat==="function" && getModelCat(found)!==activeGenCat;
+  if(isInvalid || isWrongCat){
+    var catMatch=catalog.find(function(m){
+      return (typeof getModelCat!=="function" || getModelCat(m)===activeGenCat) && m.available!==false && m.configured!==false && !m.creditsExhausted;
+    });
+    if(catMatch){
+      found=catMatch;
+      currentModelId=catMatch.id;
+      if(cur)cur.model=catMatch.id;
+      if(user && !user.defaultModel)user.defaultModel=catMatch.id;
+    }
   }
   var icon = activeGenCat === 'image' ? '🎨 ' : (activeGenCat === 'video' ? '🎬 ' : '✨ ');
-  var label=found?(found.name||found.id):(activeGenCat==='video'?'No free video model':currentModelId||(activeGenCat==='image'?'Image Model':'Model'));
+  var label=found?(found.name||found.id):(activeGenCat==='video'?'No free video model':(activeGenCat==='image'?'Image Model':'Model'));
   if(label.length>22)label=label.slice(0,20)+"…";
   nameEl.textContent=icon + label;
   btn.title="Category: "+activeGenCat.toUpperCase()+" · Model: "+(found?(found.name+" ("+found.id+")"):currentModelId||"Default")+" — click to change";
@@ -2975,20 +2984,37 @@ async function photonStream(payload,opts,onDelta){
 }
 async function switchToFreeModelAndRetry(){
   await loadPublicConfig();
-  var models=(profileConfig&&profileConfig.models)||[];
+  var catalog=(profileConfig&&(profileConfig.allModels||profileConfig.models))||[];
   var currentId=(cur&&cur.model)||(user&&user.defaultModel)||"";
-  var currentObj=models.find(function(m){return m.id===currentId});
-  var badProvider=currentObj&&currentObj.provider?currentObj.provider:"CodeCraft";
-  var pick=models.find(function(m){return m.id==="openrouter/free"&&m.available})
-    ||models.find(function(m){return m.available&&m.provider==="OpenRouter"&&m.free!==false})
-    ||models.find(function(m){return m.available&&m.provider==="OpenRouter"})
-    ||models.find(function(m){return m.available&&m.free!==false});
+  var currentObj=catalog.find(function(m){return m.id===currentId});
+  var badProvider=currentObj&&currentObj.provider?currentObj.provider:"";
+  var planId=(photonProfile&&photonProfile.plan?photonProfile.plan.id:(user&&user.plan||"basic"));
+
+  var candidates=catalog.filter(function(m){
+    if(!m || m.available===false || m.configured===false || m.creditsExhausted===true) return false;
+    if(badProvider && (m.provider===badProvider || (m.providerId && String(m.providerId).toLowerCase()===badProvider.toLowerCase()))) return false;
+    if(typeof profileModelTierAllowed==="function" && !profileModelTierAllowed(m, planId)) return false;
+    return true;
+  });
+
+  var catCandidates=candidates.filter(function(m){
+    return typeof getModelCat!=="function" || getModelCat(m)===activeGenCat;
+  });
+
+  var priorityProviders=["Cloudflare Workers AI", "Google", "Groq", "NVIDIA"];
+  var pick=catCandidates.find(function(m){ return priorityProviders.indexOf(m.provider)>-1 && m.free!==false; })
+    || catCandidates.find(function(m){ return m.free!==false; })
+    || catCandidates[0]
+    || candidates[0]
+    || catalog.find(function(m){ return m.available && m.configured!==false && !m.creditsExhausted; });
+
   if(!pick){toast("No alternative free model is currently available.");return}
   if(cur)cur.model=pick.id;
   if(user)user.defaultModel=pick.id;
   save();
+  if(typeof updateModelPickerBtn==="function")updateModelPickerBtn();
   profileApi("/api/profile/model",{method:"PUT",body:{model:pick.id}}).catch(function(){});
-  toast("Switched to "+pick.name+" ("+pick.provider+"). Retrying...");
+  toast("Switched to "+(pick.name||pick.id)+" ("+(pick.provider||"AI")+"). Retrying...");
   send(true);
 }
 async function send(retry){

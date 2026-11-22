@@ -134,7 +134,7 @@
 <div class="users-kpis" aria-label="Users summary KPIs"><article class="users-kpi"><small>Total Registered Users</small><b id="kpi-reg">—</b><span>All database profiles</span></article><article class="users-kpi"><small>Logged In Today</small><b id="kpi-logged-today">—</b><span>Unique users today</span></article><article class="users-kpi"><small>Currently Online</small><b id="kpi-online">—</b><span id="kpi-online-note">Active 5m heartbeat</span></article><article class="users-kpi"><small>Total Sign-ins</small><b id="kpi-signins">—</b><span>Verified successful logins</span></article><article class="users-kpi"><small>Total Tokens Used</small><b id="kpi-tokens">—</b><span>Lifetime Input + Output</span></article><article class="users-kpi"><small>Active Paid Subscribers</small><b id="kpi-paid">—</b><span>Verified payment active</span></article><article class="users-kpi"><small>Free Plan Users</small><b id="kpi-free">—</b><span>Free &amp; unverified plans</span></article></div><div class="users-filters"><div class="field"><label for="users-search">Search user</label><input id="users-search" type="search" placeholder="Name, email, or USR ID..."></div><div class="field"><label for="users-plan-filter">Plan</label><select id="users-plan-filter"><option value="all">All plans</option><option value="basic">Free (Basic)</option><option value="pro">Pro</option><option value="premium">Premium</option></select></div><div class="field"><label for="users-status-filter">Account status</label><select id="users-status-filter"><option value="all">All statuses</option><option value="online">Online</option><option value="offline">Offline</option></select></div><div class="field"><label for="users-provider-filter">Sign-in method</label><select id="users-provider-filter"><option value="all">All methods</option><option value="google">Google</option><option value="gmail">Gmail / Password</option><option value="other">Other OAuth</option></select></div><div class="field"><label for="users-sub-filter">Subscription</label><select id="users-sub-filter"><option value="all">All subscriptions</option><option value="active">Active Paid</option><option value="inactive">Free / Inactive</option><option value="demo">Demo Selection</option></select></div><div class="field"><label for="users-reg-from">Registered from</label><input id="users-reg-from" type="date"></div><div class="field"><label for="users-last-from">Last sign-in from</label><input id="users-last-from" type="date"></div><div class="field"><label for="users-sort">Sort by</label><select id="users-sort"><option value="last_sign_in">Last sign-in (newest)</option><option value="newest">Newest registration</option><option value="sign_ins">Most sign-ins</option><option value="tokens">Highest token usage</option></select></div><div class="field" style="align-self:end"><button id="users-reset-filters" type="button" style="width:100%;height:36px">Reset filters</button></div></div><div id="users-state" class="status" hidden></div><div class="scroll"><table class="user-table"><thead><tr><th>User ID</th><th>User Name</th><th>Email</th><th>Plan</th><th>Total Sign-ins</th><th>Tokens Used Today</th><th>Daily Token Allowance</th><th>Created Date</th><th>Account Status</th><th>Last Sign-in</th><th>Sign-in Method</th></tr></thead><tbody id="users"></tbody></table></div><div class="users-pagination" id="users-pagination"><span id="users-page-info">Showing 0 users</span><div class="page-controls"><label for="users-page-size">Per page</label><select id="users-page-size"><option value="10">10</option><option value="20" selected>20</option><option value="50">50</option></select><button id="users-prev-page" type="button">← Prev</button><span id="users-page-num">Page 1 of 1</span><button id="users-next-page" type="button">Next →</button></div></div><p class="table-hint">Click any User ID, row, Total Sign-ins, or Tokens Used cell to inspect complete login history, daily/monthly/lifetime provider token usage, and subscription verification.</p></section><div id="user-detail-modal" class="admin-modal-bg" hidden><section class="admin-modal" role="dialog" aria-modal="true" aria-labelledby="ud-title"><div class="head" style="margin-bottom:8px"><div><h2 id="ud-title">User Details</h2><small id="ud-subtitle"></small></div><button id="ud-close" type="button">✕ Close</button></div><div class="admin-tabs" id="ud-tabs"><button type="button" class="active" data-ud-tab="overview">Profile &amp; Auth</button><button type="button" data-ud-tab="logins">Login History</button><button type="button" data-ud-tab="usage">Token Usage</button><button type="button" data-ud-tab="subscriptions">Subscriptions</button></div><div class="admin-modal-body" id="ud-body"></div></section></div><section id="providers" class="card section page-view"><div class="head"><div><h2>Model Providers</h2><small>Configuration status only; API keys are never shown.</small></div></div><div id="models" class="list"></div><div class="note" style="margin-top:14px;padding:12px 16px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.3);border-radius:8px;font-size:13px;color:#cbd5e1;line-height:1.5"><strong style="color:#60a5fa">💡 Cloud Hosting Persistence Notice:</strong> When hosted on cloud platforms with ephemeral containers (such as Render free tier, Railway, or Heroku), keys entered below are active immediately for the running session. When Render spins down after ~15 minutes of inactivity or restarts, ephemeral disk files reset. To make your keys <strong>permanently persist forever</strong> across all restarts and sleeps, add them in your <strong>Render Dashboard &rarr; photon-ai-2wk7 &rarr; Environment &rarr; Environment Variables</strong> (e.g. <code>GROQ_API_KEY</code>, <code>NVIDIA_API_KEY</code>, <code>CODECRAFT_API_KEY</code>).</div><div class="head" style="margin-top:28px"><div><h2>Gemini API Keys</h2><small>Keys are read only from the server secret file. Only a masked fingerprint is shown after saving.</small></div><button id="gemini-test-all" type="button">Test all keys</button></div><div class="scroll"><table class="user-table"><thead><tr><th>Provider</th><th>Key label</th><th>API key</th><th>Status</th><th>Last validation</th><th>Actions</th></tr></thead><tbody id="gemini-keys"></tbody></table></div><form id="gemini-add-form" style="margin-top:18px"><div class="settings-grid"><div class="field"><label for="gemini-label">Key label</label><input id="gemini-label" type="text" maxlength="40" placeholder="Primary"></div><div class="field"><label for="gemini-key">Gemini API key</label><input id="gemini-key" type="password" autocomplete="new-password" required placeholder="AIza..."></div></div><div class="save-row"><small class="muted">Several keys can share one Google Cloud project quota. PHOTON never rotates keys to bypass quota limits.</small><button id="gemini-add" type="submit">Add key</button></div></form>
 <div class="head" style="margin-top:28px"><div><h2>Gemini Models</h2><small>Live models loaded via Google Gemini API. Click Test Model to verify response.</small></div></div>
 <div class="scroll"><table class="subscriptions-table"><thead><tr><th>Model</th><th>Provider</th><th>Status</th><th>Actions</th></tr></thead><tbody id="gemini-models"></tbody></table></div>
-<div class="head" style="margin-top:34px"><div><h2>OpenRouter API Keys</h2><small>Up to 10 keys: OPENROUTER_API_KEY, OPENROUTER_API_KEY_2 ... _10. Read only from the server secret file; only a masked fingerprint is shown after saving.</small></div><button id="openrouter-test-all" type="button">Test all keys</button></div><div id="openrouter-diag" class="list"></div><div class="scroll" style="margin-top:14px"><table class="user-table"><thead><tr><th>#</th><th>Key name</th><th>API key</th><th>Provider status</th><th>Validation</th><th>Last successful validation</th><th>Last error</th><th>Actions</th></tr></thead><tbody id="openrouter-keys"></tbody></table></div><form id="openrouter-add-form" style="margin-top:18px"><div class="settings-grid"><div class="field"><label for="openrouter-label">Key name</label><input id="openrouter-label" type="text" maxlength="40" placeholder="Key name"></div><div class="field"><label for="openrouter-key">OpenRouter API key</label><input id="openrouter-key" type="password" autocomplete="new-password" required placeholder="sk-or-..."></div></div><div class="save-row"><small class="muted" id="openrouter-slots">Keys from one OpenRouter account share one credit balance and rate limit. PHOTON never switches keys to get around a rate limit or billing error.</small><button id="openrouter-add" type="submit">Add key</button></div></form><div class="head" style="margin-top:28px"><div><h2>OpenRouter free models</h2><small>Read from the live OpenRouter catalog; only models whose pricing metadata is zero are listed.</small></div></div><div class="scroll"><table class="subscriptions-table"><thead><tr><th>Model</th><th>Provider</th><th>Pricing (per 1M tokens)</th><th>Availability</th><th>Actions</th></tr></thead><tbody id="openrouter-models"></tbody></table></div><div class="head" style="margin-top:34px"><div><h2>OpenAI GPT</h2><small>OPENAI_API_KEY is read only from the backend environment and is never shown. Models stay disabled until an administrator verifies them with a real test completion. Every cost is an estimate, not an invoice.</small></div><div class="actions"><button id="openai-test-connection" type="button">Test connection</button><button id="openai-refresh" type="button">Refresh models</button></div></div><div id="openai-diag" class="list"></div>
+<div class="head" style="margin-top:34px"><div><h2>OpenRouter API Keys</h2><small>Up to 10 keys: OPENROUTER_API_KEY, OPENROUTER_API_KEY_2 ... _10. Read only from the server secret file; only a masked fingerprint is shown after saving.</small></div><div class="actions"><button id="openrouter-test-all" type="button">Test all keys</button><button id="openrouter-clear-invalid" type="button" style="margin-left:6px">Clear invalid keys</button></div></div><div id="openrouter-diag" class="list"></div><div class="scroll" style="margin-top:14px"><table class="user-table"><thead><tr><th>#</th><th>Key name</th><th>API key</th><th>Provider status</th><th>Validation</th><th>Last successful validation</th><th>Last error</th><th>Actions</th></tr></thead><tbody id="openrouter-keys"></tbody></table></div><form id="openrouter-add-form" style="margin-top:18px"><div class="settings-grid"><div class="field"><label for="openrouter-label">Key name</label><input id="openrouter-label" type="text" maxlength="40" placeholder="Key name"></div><div class="field"><label for="openrouter-key">OpenRouter API key</label><input id="openrouter-key" type="password" autocomplete="new-password" required placeholder="sk-or-..."></div></div><div class="save-row"><small class="muted" id="openrouter-slots">Keys from one OpenRouter account share one credit balance and rate limit. PHOTON never switches keys to get around a rate limit or billing error.</small><button id="openrouter-add" type="submit">Add key</button></div></form><div class="head" style="margin-top:28px"><div><h2>OpenRouter free models</h2><small>Read from the live OpenRouter catalog; only models whose pricing metadata is zero are listed.</small></div></div><div class="scroll"><table class="subscriptions-table"><thead><tr><th>Model</th><th>Provider</th><th>Pricing (per 1M tokens)</th><th>Availability</th><th>Actions</th></tr></thead><tbody id="openrouter-models"></tbody></table></div><div class="head" style="margin-top:34px"><div><h2>OpenAI GPT</h2><small>OPENAI_API_KEY is read only from the backend environment and is never shown. Models stay disabled until an administrator verifies them with a real test completion. Every cost is an estimate, not an invoice.</small></div><div class="actions"><button id="openai-test-connection" type="button">Test connection</button><button id="openai-refresh" type="button">Refresh models</button></div></div><div id="openai-diag" class="list"></div>
 <form id="openai-key-form" class="inline-add-box" style="margin-top:14px">
   <div class="settings-grid">
     <div class="field">
@@ -759,6 +759,86 @@
   </div>
 </div>
 <div id="replicate-errors" class="list" style="margin-bottom:30px"></div>
+
+<div class="head" style="margin-top:34px">
+  <div>
+    <h2>Anthropic Claude API</h2>
+    <small>ANTHROPIC_API_KEY is read from environment. Direct integration for Claude 3.5 Sonnet, Claude 3.5 Haiku, and Claude 3 Opus.</small>
+  </div>
+  <div class="actions">
+    <button id="anthropic-test-connection" type="button">Test connection</button>
+    <button id="anthropic-refresh" type="button">Refresh models</button>
+  </div>
+</div>
+<div id="anthropic-diag" class="list"></div>
+<form id="anthropic-key-form" class="inline-add-box" style="margin-top:14px">
+  <div class="settings-grid">
+    <div class="field">
+      <label for="anthropic-key-input">Anthropic API Key (sk-ant-...)</label>
+      <div style="display:flex;gap:6px">
+        <input id="anthropic-key-input" type="password" autocomplete="new-password" placeholder="Enter Anthropic API key (sk-ant-...)">
+        <button type="button" id="anthropic-key-eye" style="padding:0 12px;background:#17213a;border:1px solid #2e4063;border-radius:7px;color:#c4ccdc;cursor:pointer" title="Show/Hide Key">👁</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Current Key Status</label>
+      <div style="display:flex;align-items:center;gap:8px;height:40px;padding:0 4px">
+        <span id="anthropic-key-badge" class="pill">Checking...</span>
+        <code id="anthropic-masked-key" style="color:#b4c0d4">••••••••</code>
+      </div>
+    </div>
+  </div>
+  <div class="save-row" style="margin-top:10px">
+    <button id="anthropic-remove-key" type="button" style="border-color:#593434;color:#ffdede;display:none">Remove Key</button>
+    <button id="anthropic-save-key" type="submit">Save Anthropic Key</button>
+  </div>
+</form>
+<div class="scroll" style="margin-top:14px">
+  <table class="subscriptions-table">
+    <thead><tr><th>Model ID</th><th>Model Name</th><th>Context Window</th><th>Actions</th></tr></thead>
+    <tbody id="anthropic-models"></tbody>
+  </table>
+</div>
+
+<div class="head" style="margin-top:34px">
+  <div>
+    <h2>Cohere API</h2>
+    <small>COHERE_API_KEY is read from environment. Official Cohere v2 Chat & v1 Models API. Free/trial access with 10 RPM protection.</small>
+  </div>
+  <div class="actions">
+    <button id="cohere-test-connection" type="button">Test connection</button>
+    <button id="cohere-refresh" type="button">Refresh models</button>
+  </div>
+</div>
+<div id="cohere-diag" class="list"></div>
+<form id="cohere-key-form" class="inline-add-box" style="margin-top:14px">
+  <div class="settings-grid">
+    <div class="field">
+      <label for="cohere-key-input">Cohere API Key</label>
+      <div style="display:flex;gap:6px">
+        <input id="cohere-key-input" type="password" autocomplete="new-password" placeholder="Enter Cohere API key">
+        <button type="button" id="cohere-key-eye" style="padding:0 12px;background:#17213a;border:1px solid #2e4063;border-radius:7px;color:#c4ccdc;cursor:pointer" title="Show/Hide Key">👁</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Current Key Status</label>
+      <div style="display:flex;align-items:center;gap:8px;height:40px;padding:0 4px">
+        <span id="cohere-key-badge" class="pill">Checking...</span>
+        <code id="cohere-masked-key" style="color:#b4c0d4">••••••••</code>
+      </div>
+    </div>
+  </div>
+  <div class="save-row" style="margin-top:10px">
+    <button id="cohere-remove-key" type="button" style="border-color:#593434;color:#ffdede;display:none">Remove Key</button>
+    <button id="cohere-save-key" type="submit">Save Cohere Key</button>
+  </div>
+</form>
+<div class="scroll" style="margin-top:14px">
+  <table class="subscriptions-table">
+    <thead><tr><th>Model ID</th><th>Model Name</th><th>Context Window</th><th>Actions</th></tr></thead>
+    <tbody id="cohere-models"></tbody>
+  </table>
+</div>
 
 <div class="head" style="margin-top:34px">
   <div>
@@ -1574,6 +1654,8 @@
   setupProviderKeyEye('openai-key-eye', 'openai-key-input');
   setupProviderKeyEye('llmtr-key-eye', 'llmtr-key-input');
   setupProviderKeyEye('ollama-key-eye', 'ollama-key-input');
+  setupProviderKeyEye('anthropic-key-eye', 'anthropic-key-input');
+  setupProviderKeyEye('cohere-key-eye', 'cohere-key-input');
   function updateKeyFormUi(prefix, configured, maskedKey, placeholderName) {
     const badge = $(prefix + '-key-badge');
     const masked = $(prefix + '-masked-key');
@@ -1864,6 +1946,80 @@
     }
   });
 
+  $('anthropic-key-form')?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = $('anthropic-save-key');
+    const val = $('anthropic-key-input').value.trim();
+    if (!val) { alert('Please enter an Anthropic API key.'); return; }
+    btn.disabled = true; btn.textContent = 'Saving...';
+    try {
+      const data = await request('/api/admin/anthropic/key', 'POST', { key: val });
+      $('anthropic-key-input').value = '';
+      renderAnthropic(data);
+      status('Anthropic API Key saved successfully.');
+      alert('Anthropic API Key saved successfully.');
+    } catch (err) {
+      status(err.message || 'Could not save Anthropic API key.', true);
+      alert(err.message || 'Could not save Anthropic API key.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $('anthropic-remove-key')?.addEventListener('click', async () => {
+    if (!confirm('Are you sure you want to remove the saved Anthropic API key?')) return;
+    const btn = $('anthropic-remove-key');
+    btn.disabled = true;
+    try {
+      const data = await request('/api/admin/anthropic/key', 'DELETE', {});
+      renderAnthropic(data);
+      status('Anthropic API Key removed.');
+      alert('Anthropic API Key removed.');
+    } catch (err) {
+      status(err.message || 'Could not remove Anthropic API key.', true);
+      alert(err.message || 'Could not remove Anthropic API key.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $('cohere-key-form')?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = $('cohere-save-key');
+    const val = $('cohere-key-input').value.trim();
+    if (!val) { alert('Please enter a Cohere API key.'); return; }
+    btn.disabled = true; btn.textContent = 'Saving...';
+    try {
+      const data = await request('/api/admin/cohere/key', 'POST', { key: val });
+      $('cohere-key-input').value = '';
+      renderCohere(data);
+      status('Cohere API Key saved successfully.');
+      alert('Cohere API Key saved successfully.');
+    } catch (err) {
+      status(err.message || 'Could not save Cohere API key.', true);
+      alert(err.message || 'Could not save Cohere API key.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $('cohere-remove-key')?.addEventListener('click', async () => {
+    if (!confirm('Are you sure you want to remove the saved Cohere API key?')) return;
+    const btn = $('cohere-remove-key');
+    btn.disabled = true;
+    try {
+      const data = await request('/api/admin/cohere/key', 'DELETE', {});
+      renderCohere(data);
+      status('Cohere API Key removed.');
+      alert('Cohere API Key removed.');
+    } catch (err) {
+      status(err.message || 'Could not remove Cohere API key.', true);
+      alert(err.message || 'Could not remove Cohere API key.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
   async function geminiTestModel(m) {
     try {
       const data = await request('/api/admin/gemini/test-model', 'POST', { model: m.id });
@@ -2045,10 +2201,10 @@ function setupDashboardAnalyticsFilter(){
   }
 }
 
-async function load(forceSettings=false){if(refreshing)return;refreshing=true;status('Loading admin data...');try{const data=await request('/api/admin/overview');showApp();const m=data.metrics||{};$('logout').hidden=!!data.localAccess;if($('total'))$('total').textContent=fmt(m.totalUsers);if($('login-today'))$('login-today').textContent=fmt(Math.max(Number(m.signInsToday)||0,(data.users||[]).reduce((total,u)=>total+loginsToday(u),0)));if($('tokens'))$('tokens').textContent=fmt(m.tokensToday);renderDashboard(data);setupDashboardAnalyticsFilter();loadUsersAdmin();loadSubscriptionsAdmin();if(data.paymentGateway)renderGatewayConfig(data.paymentGateway);else loadGatewayConfig();renderProviders(data.models);loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();loadCloudflare();loadPollinations();loadEdenAI();loadAgnesAI();loadReplicate();loadCapabilitiesAdmin();loadQuotaAdmin();if(forceSettings||!settingsDirty){renderPlanFields(data.settings||{});renderTokenRulesTable(data.settings||{});renderArtifactPricing(data.settings||{});settingsDirty=false}renderPricingAudit(data.pricingAuditLogs||[]);runConfigVerification(true);status('Admin data loaded.')}catch(error){if(error.status===401){showLogin();return}if(error.status===503&&error.code==='admin_not_configured'){showLogin('Admin sign-in is not configured. Set PHOTON_ADMIN_PASSWORD and restart the server.');return}status(error.message||'Could not load admin data.',true)}finally{refreshing=false}}
+async function load(forceSettings=false){if(refreshing)return;refreshing=true;status('Loading admin data...');try{const data=await request('/api/admin/overview');showApp();const m=data.metrics||{};$('logout').hidden=!!data.localAccess;if($('total'))$('total').textContent=fmt(m.totalUsers);if($('login-today'))$('login-today').textContent=fmt(Math.max(Number(m.signInsToday)||0,(data.users||[]).reduce((total,u)=>total+loginsToday(u),0)));if($('tokens'))$('tokens').textContent=fmt(m.tokensToday);renderDashboard(data);setupDashboardAnalyticsFilter();loadUsersAdmin();loadSubscriptionsAdmin();if(data.paymentGateway)renderGatewayConfig(data.paymentGateway);else loadGatewayConfig();renderProviders(data.models);loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();loadCloudflare();loadPollinations();loadEdenAI();loadAgnesAI();loadReplicate();loadAnthropic();loadCohere();loadCapabilitiesAdmin();loadQuotaAdmin();if(forceSettings||!settingsDirty){renderPlanFields(data.settings||{});renderTokenRulesTable(data.settings||{});renderArtifactPricing(data.settings||{});settingsDirty=false}renderPricingAudit(data.pricingAuditLogs||[]);runConfigVerification(true);status('Admin data loaded.')}catch(error){if(error.status===401){showLogin();return}if(error.status===503&&error.code==='admin_not_configured'){showLogin('Admin sign-in is not configured. Set PHOTON_ADMIN_PASSWORD and restart the server.');return}status(error.message||'Could not load admin data.',true)}finally{refreshing=false}}
  $('login-form').addEventListener('submit',async event=>{event.preventDefault();const button=$('login-button');button.disabled=true;button.textContent='Signing in...';$('login-error').hidden=true;try{await request('/api/admin/login','POST',{email:$('admin-email').value.trim(),password:$('admin-password').value});$('admin-password').value='';await load(true)}catch(error){showLogin(error.message||'Sign-in failed. Check the username and password.')}finally{button.disabled=false;button.textContent='Sign in'}});
  $('logout').addEventListener('click',async()=>{try{await request('/api/admin/logout','POST',{})}finally{showLogin('You have signed out.')}});
- const pageMeta={overview:['Dashboard','Live overview of Photon accounts and usage.'],'users-section':['Users & Sign-ins','Account access, sign-in methods, activity, and plan status.'],subscriptions:['Subscriptions & Purchases','Verified payments, revenue, MRR, and Cashfree gateway configuration.'],settings:['Pricing & Token Rules','Manage plan pricing, daily limits, and AI activity token costs.'],providers:['AI Provider Settings','Check and manage server-side AI provider keys. Secrets are never shown.']};function showPage(){let id=location.hash.slice(1)||'overview';if(!pageMeta[id])id='overview';document.querySelectorAll('.page-view').forEach(page=>page.classList.toggle('active',page.id===id));document.querySelectorAll('.sidebar nav a[href^="#"]').forEach(link=>link.classList.toggle('active',link.getAttribute('href')==='#'+id));$('page-title').textContent=pageMeta[id][0];$('page-description').textContent=pageMeta[id][1];if(id==='overview'){load()}else if(id==='users-section'){loadUsersAdmin()}else if(id==='subscriptions'){loadGatewayConfig();loadSubscriptionsAdmin()}else if(id==='settings'){load(true)}else if(id==='providers'){loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();loadCloudflare();loadPollinations();loadEdenAI();loadAgnesAI();loadReplicate();loadCapabilitiesAdmin();loadQuotaAdmin();}}window.addEventListener('hashchange',showPage);showPage();
+ const pageMeta={overview:['Dashboard','Live overview of Photon accounts and usage.'],'users-section':['Users & Sign-ins','Account access, sign-in methods, activity, and plan status.'],subscriptions:['Subscriptions & Purchases','Verified payments, revenue, MRR, and Cashfree gateway configuration.'],settings:['Pricing & Token Rules','Manage plan pricing, daily limits, and AI activity token costs.'],providers:['AI Provider Settings','Check and manage server-side AI provider keys. Secrets are never shown.']};function showPage(){let id=location.hash.slice(1)||'overview';if(!pageMeta[id])id='overview';document.querySelectorAll('.page-view').forEach(page=>page.classList.toggle('active',page.id===id));document.querySelectorAll('.sidebar nav a[href^="#"]').forEach(link=>link.classList.toggle('active',link.getAttribute('href')==='#'+id));$('page-title').textContent=pageMeta[id][0];$('page-description').textContent=pageMeta[id][1];if(id==='overview'){load()}else if(id==='users-section'){loadUsersAdmin()}else if(id==='subscriptions'){loadGatewayConfig();loadSubscriptionsAdmin()}else if(id==='settings'){load(true)}else if(id==='providers'){loadGemini();loadOpenRouter();loadOpenAI();loadCodeCraft();loadGroq();loadNvidia();loadLlmtr();loadOllama();loadCloudflare();loadPollinations();loadEdenAI();loadAgnesAI();loadReplicate();loadAnthropic();loadCohere();loadCapabilitiesAdmin();loadQuotaAdmin();}}window.addEventListener('hashchange',showPage);showPage();
  $('settings-form').addEventListener('input',()=>{settingsDirty=true});
  $('settings-form').addEventListener('change',()=>{settingsDirty=true});
  $('verify-token-calc-btn').addEventListener('click',()=>runConfigVerification(false));
@@ -2305,6 +2461,7 @@ async function load(forceSettings=false){if(refreshing)return;refreshing=true;st
     }
   });
  $('openrouter-test-all').addEventListener('click',async()=>{const button=$('openrouter-test-all');button.disabled=true;button.textContent='Testing...';try{const data=await request('/api/admin/openrouter/test-all','POST',{});renderOpenRouter(data);const res=data.results||[];const anyOk=res.some(x=>x.status==='ok');showTestResultModal({title:'OpenRouter API Key Test',provider:'OpenRouter',ok:anyOk,status:anyOk?'connected':'failed',code:anyOk?'ok':'failed',message:anyOk?'At least one OpenRouter key is valid.':'All OpenRouter keys failed validation.',modelCount:(data.status&&data.status.freeModels&&data.status.freeModels.length)||0});status('OpenRouter validation finished.');}catch(error){showTestResultModal({title:'OpenRouter API Key Test',provider:'OpenRouter',ok:false,status:'connection_failed',message:error.message||'Could not validate OpenRouter keys.'});}finally{button.disabled=false;button.textContent='Test all keys'}});
+ $('openrouter-clear-invalid')?.addEventListener('click',async()=>{const button=$('openrouter-clear-invalid');button.disabled=true;button.textContent='Clearing...';try{const data=await request('/api/admin/openrouter/clear-invalid','POST',{});renderOpenRouter(data);status('Cleared invalid OpenRouter keys.');alert('Invalid keys cleared.');}catch(error){alert(error.message||'Could not clear invalid OpenRouter keys.');}finally{button.disabled=false;button.textContent='Clear invalid keys'}});
   function openaiUsageText(u){u=u||{};return fmt(u.requests)+' requests, '+fmt(u.failures)+' failed, '+fmt(u.inputTokens)+' input / '+fmt(u.outputTokens)+' output tokens ('+fmt(u.totalTokens)+' total), estimated $'+Number(u.estimatedCostUsd||0).toFixed(4)}
   function olmUsageText(u){u=u||{};return fmt(u.requests||0)+' requests, '+fmt(u.failures||0)+' failed, '+fmt(u.inputTokens||0)+' in / '+fmt(u.outputTokens||0)+' out tokens'}
   function renderOllama(view){
@@ -2693,6 +2850,257 @@ async function load(forceSettings=false){if(refreshing)return;refreshing=true;st
   $('llmtr-settings-form').addEventListener('submit',async event=>{event.preventDefault();const button=$('llmtr-save-settings');button.disabled=true;try{renderLlmtr(await request('/api/admin/llmtr','PUT',{enabled:$('llmtr-enabled').value==='true',spendingPolicy:$('llmtr-spending-policy').value}))}catch(error){alert(error.message||'Could not save LLMTR settings.')}finally{button.disabled=false}});
   $('llmtr-test-connection').addEventListener('click',async()=>{const button=$('llmtr-test-connection');button.disabled=true;button.textContent='Testing...';try{const data=await request('/api/admin/llmtr/connection','POST',{});renderLlmtr(data);const r=data.result||{};showTestResultModal({title:'LLMTR Connection Test',provider:'LLMTR',ok:r.ok,status:r.ok?'ok':'failed',code:r.code,message:r.error||'Connection successful',responseTimeMs:r.responseTimeMs,testedAt:new Date().toISOString(),modelCount:r.modelCount});}catch(error){showTestResultModal({title:'LLMTR Connection Test',provider:'LLMTR',ok:false,status:'connection_failed',message:error.message||'Could not test LLMTR connection.'});}finally{button.disabled=false;button.textContent='Test connection'}});
   $('llmtr-refresh').addEventListener('click',async()=>{const button=$('llmtr-refresh');button.disabled=true;try{renderLlmtr(await request('/api/admin/llmtr/refresh','POST',{}))}catch(error){alert(error.message||'Could not refresh LLMTR models.')}finally{button.disabled=false}});
+
+  function renderAnthropic(view) {
+    const st = (view && view.status) || (view && view.data) || view || {};
+    updateKeyFormUi('anthropic', st.configured, st.maskedKey, 'Anthropic');
+    const diag = $('anthropic-diag');
+    if (diag) {
+      diag.replaceChildren();
+      rowItem(diag, 'Anthropic Claude API', (st.configured ? 'Key ' + (st.maskedKey || 'configured') : 'ANTHROPIC_API_KEY is not set') + '; ' + (st.modelCount || 0) + ' models configured', orBadge(st.validation === 'ok' ? 'Connected' : (st.configured ? 'Configured' : 'Not configured'), st.validation === 'ok'));
+      if (st.endpoint) rowItem(diag, 'API Endpoint', st.endpoint, '');
+    }
+    const root = $('anthropic-models');
+    if (root) {
+      root.replaceChildren();
+      (st.models || []).forEach(m => {
+        const row = document.createElement('tr');
+        td(row, m.id || m.name);
+        td(row, m.name || m.id);
+        const ctxCell = td(row, '');
+        ctxCell.textContent = m.contextWindow ? (m.contextWindow.toLocaleString() + ' tokens') : '200,000 tokens';
+        const actions = td(row, '');
+        actions.style.whiteSpace = 'nowrap';
+        const btn = (label, fn) => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.textContent = label;
+          b.addEventListener('click', fn);
+          return b;
+        };
+        actions.append(btn('Test model', () => anthropicTestModel(m)));
+        root.appendChild(row);
+      });
+      if (!(st.models || []).length) {
+        const row = document.createElement('tr'), empty = td(row, st.configured ? 'No models discovered yet. Test connection or refresh models.' : 'Set ANTHROPIC_API_KEY to discover models.');
+        empty.colSpan = 4;
+        empty.className = 'empty';
+        root.appendChild(row);
+      }
+    }
+  }
+
+  async function loadAnthropic() {
+    try {
+      const data = await request('/api/admin/anthropic');
+      renderAnthropic(data);
+    } catch (err) {
+      status(err.message || 'Could not load Anthropic status.', true);
+    }
+  }
+
+  async function anthropicTestModel(m) {
+    try {
+      const data = await request('/api/admin/anthropic/test-model', 'POST', { model: m.id });
+      renderAnthropic(data);
+      const r = (data && data.result) || data || {};
+      showTestResultModal({
+        title: 'Anthropic Claude Model Test',
+        provider: 'Anthropic',
+        model: m.id,
+        modelName: m.name || m.id,
+        ok: r.ok,
+        status: r.status,
+        code: r.code,
+        message: r.message,
+        responseTimeMs: r.responseTimeMs,
+        testedAt: r.testedAt,
+        reply: r.reply
+      });
+    } catch (err) {
+      showTestResultModal({
+        title: 'Anthropic Claude Model Test',
+        provider: 'Anthropic',
+        model: m.id,
+        modelName: m.name || m.id,
+        ok: false,
+        status: 'failed',
+        message: err.message || 'Could not test model.'
+      });
+    }
+    await loadAnthropic();
+  }
+
+  $('anthropic-test-connection')?.addEventListener('click', async () => {
+    const btn = $('anthropic-test-connection');
+    btn.disabled = true;
+    btn.textContent = 'Testing...';
+    try {
+      const data = await request('/api/admin/anthropic/connection', 'POST', {});
+      renderAnthropic(data);
+      const r = (data && data.result) || data || {};
+      showTestResultModal({
+        title: 'Anthropic Connection Test',
+        provider: 'Anthropic',
+        ok: r.ok,
+        status: r.status,
+        code: r.code,
+        message: r.message,
+        responseTimeMs: r.responseTimeMs,
+        testedAt: r.testedAt,
+        modelCount: r.modelCount
+      });
+    } catch (err) {
+      showTestResultModal({
+        title: 'Anthropic Connection Test',
+        provider: 'Anthropic',
+        ok: false,
+        status: 'connection_failed',
+        message: err.message || 'Could not test Anthropic connection.'
+      });
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Test connection';
+    }
+  });
+
+  $('anthropic-refresh')?.addEventListener('click', async () => {
+    const btn = $('anthropic-refresh');
+    btn.disabled = true;
+    try {
+      renderAnthropic(await request('/api/admin/anthropic/refresh', 'POST', {}));
+    } catch (err) {
+      alert(err.message || 'Could not refresh Anthropic models.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  function renderCohere(view) {
+    const st = (view && view.status) || (view && view.data) || view || {};
+    updateKeyFormUi('cohere', st.configured, st.maskedKey, 'Cohere');
+    const diag = $('cohere-diag');
+    if (diag) {
+      diag.replaceChildren();
+      rowItem(diag, 'Cohere API', (st.configured ? 'Key ' + (st.maskedKey || 'configured') : 'COHERE_API_KEY is not set') + '; ' + (st.modelCount || 0) + ' models configured', orBadge(st.validation === 'ok' ? 'Connected' : (st.configured ? 'Configured' : 'Not configured'), st.validation === 'ok'));
+      rowItem(diag, 'Spending policy', st.spendingPolicy || 'allow_free_only', orBadge(st.spendingPolicy || 'allow_free_only', true));
+      if (st.endpoint) rowItem(diag, 'API Endpoint', st.endpoint, '');
+    }
+    const root = $('cohere-models');
+    if (root) {
+      root.replaceChildren();
+      (st.models || []).forEach(m => {
+        const row = document.createElement('tr');
+        td(row, m.id || m.name);
+        td(row, m.name || m.id);
+        const ctxCell = td(row, '');
+        ctxCell.textContent = m.contextWindow ? (m.contextWindow.toLocaleString() + ' tokens') : '128,000 tokens';
+        const actions = td(row, '');
+        actions.style.whiteSpace = 'nowrap';
+        const btn = (label, fn) => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.textContent = label;
+          b.addEventListener('click', fn);
+          return b;
+        };
+        actions.append(btn('Test model', () => cohereTestModel(m)));
+        root.appendChild(row);
+      });
+      if (!(st.models || []).length) {
+        const row = document.createElement('tr'), empty = td(row, st.configured ? 'No models discovered yet. Test connection or refresh models.' : 'Set COHERE_API_KEY to discover models.');
+        empty.colSpan = 4;
+        empty.className = 'empty';
+        root.appendChild(row);
+      }
+    }
+  }
+
+  async function loadCohere() {
+    try {
+      const data = await request('/api/admin/cohere');
+      renderCohere(data);
+    } catch (err) {
+      status(err.message || 'Could not load Cohere status.', true);
+    }
+  }
+
+  async function cohereTestModel(m) {
+    try {
+      const data = await request('/api/admin/cohere/test-model', 'POST', { model: m.id });
+      renderCohere(data);
+      const r = (data && data.result) || data || {};
+      showTestResultModal({
+        title: 'Cohere Model Test',
+        provider: 'Cohere',
+        model: m.id,
+        modelName: m.name || m.id,
+        ok: r.ok,
+        status: r.status,
+        code: r.code,
+        message: r.message,
+        responseTimeMs: r.responseTimeMs,
+        testedAt: r.testedAt,
+        reply: r.reply
+      });
+    } catch (err) {
+      showTestResultModal({
+        title: 'Cohere Model Test',
+        provider: 'Cohere',
+        model: m.id,
+        modelName: m.name || m.id,
+        ok: false,
+        status: 'failed',
+        message: err.message || 'Could not test model.'
+      });
+    }
+    await loadCohere();
+  }
+
+  $('cohere-test-connection')?.addEventListener('click', async () => {
+    const btn = $('cohere-test-connection');
+    btn.disabled = true;
+    btn.textContent = 'Testing...';
+    try {
+      const data = await request('/api/admin/cohere/connection', 'POST', {});
+      renderCohere(data);
+      const r = (data && data.result) || data || {};
+      showTestResultModal({
+        title: 'Cohere Connection Test',
+        provider: 'Cohere',
+        ok: r.ok,
+        status: r.status,
+        code: r.code,
+        message: r.message,
+        responseTimeMs: r.responseTimeMs,
+        testedAt: r.testedAt,
+        modelCount: r.modelCount
+      });
+    } catch (err) {
+      showTestResultModal({
+        title: 'Cohere Connection Test',
+        provider: 'Cohere',
+        ok: false,
+        status: 'connection_failed',
+        message: err.message || 'Could not test Cohere connection.'
+      });
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Test connection';
+    }
+  });
+
+  $('cohere-refresh')?.addEventListener('click', async () => {
+    const btn = $('cohere-refresh');
+    btn.disabled = true;
+    try {
+      renderCohere(await request('/api/admin/cohere/refresh', 'POST', {}));
+    } catch (err) {
+      alert(err.message || 'Could not refresh Cohere models.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
 
   async function loadCapabilitiesAdmin() {
     try {

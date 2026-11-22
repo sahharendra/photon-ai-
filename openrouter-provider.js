@@ -592,9 +592,45 @@ function createOpenRouterProvider({ HttpError, env = process.env, fetchImpl = gl
       };
     }
   }
+  async function testConnection() {
+    const started = Date.now();
+    if (!configured()) {
+      return { ok: false, code: 'not_configured', status: 'not_configured', message: validationMessage('not_configured'), responseTimeMs: 0, testedAt: new Date().toISOString() };
+    }
+    try {
+      const results = await testAll();
+      const anyOk = results.some(r => r.status === 'ok');
+      if (anyOk) {
+        return {
+          ok: true,
+          code: 'ok',
+          status: 'connected',
+          modelCount: models.length,
+          keyCount: results.length,
+          responseTimeMs: Date.now() - started,
+          testedAt: new Date().toISOString(),
+          results,
+        };
+      }
+      const firstError = results[0];
+      return {
+        ok: false,
+        code: firstError?.status || 'invalid_api_key',
+        status: firstError?.status || 'invalid_api_key',
+        message: validationMessage(firstError?.status || 'invalid_api_key'),
+        responseTimeMs: Date.now() - started,
+        testedAt: new Date().toISOString(),
+        results,
+      };
+    } catch (err) {
+      const mapped = mapError(err);
+      return { ok: false, code: mapped.code, status: mapped.code, message: mapped.message, responseTimeMs: Date.now() - started, testedAt: new Date().toISOString() };
+    }
+  }
+
   function resetCache() { models = []; modelsOk = null; modelsError = null; modelsAt = 0; }
 
-  return { configured, status, refreshModels, catalogEntries, generate, streamGenerate, buildMessages, buildRequest, mapError, validateKey, verifyModel, testKey, testAll, testModel, resetCache, keyManager: manager, apiBase };
+  return { configured, status, refreshModels, catalogEntries, generate, streamGenerate, buildMessages, buildRequest, mapError, validateKey, verifyModel, testKey, testAll, testConnection, testModel, resetCache, keyManager: manager, apiBase };
 }
 
 module.exports = {

@@ -10,7 +10,12 @@
  * - Quality Enhancement (Sharpening, normalization)
  */
 
-const sharp = require('sharp');
+let sharp;
+try {
+  sharp = require('sharp');
+} catch (e) {
+  // sharp optional when running in minimal test sandboxes
+}
 
 /**
  * Detect if a user message is an image editing/manipulation intent

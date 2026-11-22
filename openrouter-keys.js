@@ -212,7 +212,34 @@ function createOpenRouterKeyStore({ dir = process.cwd(), env = process.env, logg
     else { stats.failureCount += 1; stats.lastError = { code: String(code || 'unknown'), message: message ? String(message).slice(0, 200) : null, at }; saveNow(); }
   }
 
-  return { all, list, ignoredEnvNames, secretFor, add, update, remove, markUsed, recordValidation, recordResult, flush: saveNow, secretFile, statePath, MAX_KEYS };
+  function clearInvalidKeys() {
+    let removed = 0;
+    const currentList = all();
+    for (const item of currentList) {
+      if (item?.lastValidation?.status && AUTH_CODES.has(item.lastValidation.status)) {
+        if (persist) removeEnvValue(secretFile, item.envName);
+        delete env[item.envName];
+        delete state.keys[item.id];
+        removed++;
+      }
+    }
+    if (removed > 0) saveNow();
+    return { removed };
+  }
+
+  function clearAllKeys() {
+    const currentList = all();
+    for (const item of currentList) {
+      if (persist) removeEnvValue(secretFile, item.envName);
+      delete env[item.envName];
+      delete state.keys[item.id];
+    }
+    state.keys = {};
+    saveNow();
+    return { cleared: true };
+  }
+
+  return { all, list, ignoredEnvNames, secretFor, add, update, remove, markUsed, recordValidation, recordResult, clearInvalidKeys, clearAllKeys, flush: saveNow, secretFile, statePath, MAX_KEYS };
 }
 
 // Centralized key manager: eligibility, round-robin selection, failure bookkeeping and cooldowns.

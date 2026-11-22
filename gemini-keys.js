@@ -88,7 +88,7 @@ function writeSecret(file, text) {
 }
 
 function envLineRegex(name) {
-  return new RegExp('^\\s*(?:export\\s+)?' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*=');
+  return new RegExp('^\\s*(?:#\\s*)?(?:export\\s+)?' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*=');
 }
 
 function upsertEnvValue(file, name, value) {
