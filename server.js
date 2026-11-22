@@ -33,6 +33,7 @@ const { createAgnesConfig } = require('./agnes-config');
 const { createAgnesProvider } = require('./agnes-provider');
 const { createReplicateConfig } = require('./replicate-config');
 const { createReplicateProvider } = require('./replicate-provider');
+const imageEditingService = require('./image-editing-service');
 const { createQuotaMonitorService } = require('./quota-monitor-service');
 const {
   CATEGORY_TEXT,
@@ -1070,7 +1071,8 @@ function validateChatAttachments(input) {
       totalBytes += Buffer.byteLength(file.text, 'utf8');
       return { name, kind: 'text', text: file.text };
     }
-    const mimeType = String(file.mimeType || '').toLowerCase();
+    let mimeType = String(file.mimeType || '').toLowerCase();
+    if (mimeType === 'image/jpg') mimeType = 'image/jpeg';
     if (file.kind !== 'inline' || !['application/pdf', 'image/jpeg', 'image/png', 'image/webp'].includes(mimeType) || typeof file.data !== 'string' || !/^[A-Za-z0-9+/]*={0,2}$/.test(file.data) || file.data.length % 4 !== 0) throw new HttpError(400, 'invalid_attachments', 'Only PDF, PNG, JPG, WEBP, and text/code files are supported.');
     const bytes = Buffer.from(file.data, 'base64');
     if (!bytes.length || bytes.length > 5 * 1024 * 1024 || bytes.toString('base64') !== file.data) throw new HttpError(400, 'invalid_attachments', 'Each PDF or image must be no larger than 5 MB.');
@@ -1438,8 +1440,12 @@ async function prepareChat(body, claims, profile) {
     return { activityType: effActivityType, conversation, priorHistory, contents, tokenTx, tokens };
   });
 
+  const imageAttachment = attachments.find(a => a && a.kind === 'inline' && a.data && a.mimeType && a.mimeType.startsWith('image/'));
+  const isImageEdit = Boolean(imageAttachment && imageEditingService.isImageEditingIntent(body.message));
+  const isVisionModel = Boolean(imageEditingService.isVisionCapableModel(modelOption));
+
   const savedUserText = userText + (attachments.length ? ' [Attached: ' + attachments.map(file => file.name).join(', ') + ']' : '');
-  return { uid: claims.sub, timezone: profile.timezone, profile, description: body.message, attachments, activityType: prep.activityType, tokens: prep.tokens, tokenTx: prep.tokenTx, chosenModel: modelOption.id, modelOption, providerName, conversation: prep.conversation, requestIdClient, history, userText, currentParts, systemInstruction, priorHistory: prep.priorHistory, contents: prep.contents, savedUserText };
+  return { uid: claims.sub, timezone: profile.timezone, profile, description: body.message, attachments, activityType: prep.activityType, tokens: prep.tokens, tokenTx: prep.tokenTx, chosenModel: modelOption.id, modelOption, providerName, conversation: prep.conversation, requestIdClient, history, userText, currentParts, systemInstruction, priorHistory: prep.priorHistory, contents: prep.contents, savedUserText, imageAttachment, isImageEdit, isVisionModel };
 }
 function saveChatResult(ctx, text, providerUsage, providerKey, meta = {}) {
   ctx.conversation.messages.push({ role: 'user', content: ctx.savedUserText }, { role: 'model', content: text });
@@ -3242,7 +3248,37 @@ const server = http.createServer(async (req, res) => {
             (ctx.modelOption && (ctx.modelOption.trial))
           );
           const isProductionTraffic = body.isProductionTraffic === true ? true : !isDevTesting;
-          outcome = await generateWithFallback({ providerName: ctx.providerName, modelId: ctx.chosenModel, system: ctx.systemInstruction, history: ctx.priorHistory, text: ctx.userText, attachments: ctx.attachments, contents: ctx.contents, profile, isProductionTraffic });
+          if (ctx.imageAttachment && ctx.isImageEdit) {
+            const editBuffer = Buffer.from(ctx.imageAttachment.data, 'base64');
+            const editRes = await imageEditingService.processImageEdit({
+              buffer: editBuffer,
+              mimeType: ctx.imageAttachment.mimeType,
+              filename: ctx.imageAttachment.name,
+              text: ctx.userText,
+            });
+            outcome = {
+              providerName: 'photon-image-engine',
+              modelId: 'photon-sharp-engine',
+              result: {
+                text: editRes.markdown,
+                key: { id: 'local-sharp', slot: 1 },
+                usage: { inputTokens: 5, outputTokens: 50, totalTokens: 55 },
+              },
+            };
+          } else if (ctx.imageAttachment && !ctx.isVisionModel) {
+            const notice = imageEditingService.buildTextOnlyModelVisionNotice(ctx.modelOption, availableModels());
+            outcome = {
+              providerName: ctx.providerName,
+              modelId: ctx.chosenModel,
+              result: {
+                text: notice,
+                key: { id: 'vision-guidance', slot: 1 },
+                usage: { inputTokens: 5, outputTokens: 25, totalTokens: 30 },
+              },
+            };
+          } else {
+            outcome = await generateWithFallback({ providerName: ctx.providerName, modelId: ctx.chosenModel, system: ctx.systemInstruction, history: ctx.priorHistory, text: ctx.userText, attachments: ctx.attachments, contents: ctx.contents, profile, isProductionTraffic });
+          }
           } catch (error) {
             if (ctx.tokenTx) { refundTokenTransaction(loadStore(), ctx.tokenTx.id, error?.code || 'provider_error'); saveStore(); }
             throw error;
@@ -3279,6 +3315,48 @@ const server = http.createServer(async (req, res) => {
               (ctx.modelOption && (ctx.modelOption.trial))
             );
             const isProductionTrafficStream = body.isProductionTraffic === true ? true : !isDevTestingStream;
+            if (ctx.imageAttachment && ctx.isImageEdit) {
+              const editBuffer = Buffer.from(ctx.imageAttachment.data, 'base64');
+              const editRes = await imageEditingService.processImageEdit({
+                buffer: editBuffer,
+                mimeType: ctx.imageAttachment.mimeType,
+                filename: ctx.imageAttachment.name,
+                text: ctx.userText,
+              });
+              sseWrite(res, 'meta', { conversation_id: body.conversation_id, provider: 'photon-image-engine', model: 'photon-sharp-engine', request_id: requestId });
+              sseWrite(res, 'delta', { text: editRes.markdown });
+              const providerUsage = { inputTokens: 5, outputTokens: 50, totalTokens: 55 };
+              saveChatResult(ctx, editRes.markdown, providerUsage, { id: 'local-sharp', slot: 1 }, { provider: 'photon-image-engine', model: 'photon-sharp-engine' });
+              sseWrite(res, 'done', {
+                conversation_id: body.conversation_id,
+                message: editRes.markdown,
+                provider: 'photon-image-engine',
+                model: 'photon-sharp-engine',
+                usage: usageResponse(providerUsage),
+                tokensCharged: ctx.tokens,
+                profileUsage: profileResponse(profile, claims.sub).usage,
+                request_id: requestId,
+              });
+              return res.end();
+            }
+            if (ctx.imageAttachment && !ctx.isVisionModel) {
+              const notice = imageEditingService.buildTextOnlyModelVisionNotice(ctx.modelOption, availableModels());
+              sseWrite(res, 'meta', { conversation_id: body.conversation_id, provider: ctx.providerName, model: ctx.chosenModel, request_id: requestId });
+              sseWrite(res, 'delta', { text: notice });
+              const providerUsage = { inputTokens: 5, outputTokens: 25, totalTokens: 30 };
+              saveChatResult(ctx, notice, providerUsage, { id: 'vision-guidance', slot: 1 }, { provider: ctx.providerName, model: ctx.chosenModel });
+              sseWrite(res, 'done', {
+                conversation_id: body.conversation_id,
+                message: notice,
+                provider: ctx.providerName,
+                model: ctx.chosenModel,
+                usage: usageResponse(providerUsage),
+                tokensCharged: ctx.tokens,
+                profileUsage: profileResponse(profile, claims.sub).usage,
+                request_id: requestId,
+              });
+              return res.end();
+            }
             const outcome = await streamWithFallback({
               providerName: ctx.providerName,
               modelId: ctx.chosenModel,

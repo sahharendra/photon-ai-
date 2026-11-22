@@ -6,7 +6,7 @@
   "documentation": "https://docs.edenai.co/",
   "enabled": true,
   "spendingPolicy": "allow_all",
-  "encryptedKey": "178155dbef788b7eb9bf7151:56cfac7ee21f3cfc129ff14af89c80cb:3f44c4fc199805b515c2d1eb35",
+  "encryptedKey": "739b999168f6f15b71c8c86d:02265e2d1c7b331d451e4b6b02b9a759:6d084c64e6ff0d8535ac712dfe",
   "maskedKey": "eden••••••••-key",
   "keyFingerprint": "f87cee10b1c55e9f",
   "models": {
@@ -215,33 +215,33 @@
     }
   },
   "usage": {
-    "requests": 60,
+    "requests": 72,
     "failures": 0,
-    "inputTokens": 300,
-    "outputTokens": 200,
-    "totalTokens": 500,
-    "lastSuccessAt": "2026-11-21T17:36:27.835Z",
+    "inputTokens": 360,
+    "outputTokens": 240,
+    "totalTokens": 600,
+    "lastSuccessAt": "2026-11-22T06:51:33.692Z",
     "lastError": {
-      "timestamp": "2026-11-21T17:36:27.665Z",
+      "timestamp": "2026-11-22T06:51:33.575Z",
       "code": "invalid_api_key",
       "message": "Invalid API Key provided",
       "status": 401
     },
     "byCapability": {
       "text": {
-        "requests": 20,
+        "requests": 24,
         "failures": 0,
-        "tokens": 500
+        "tokens": 600
       },
       "image": {
-        "requests": 20,
+        "requests": 24,
         "failures": 0,
-        "images": 20
+        "images": 24
       },
       "video": {
-        "requests": 20,
+        "requests": 24,
         "failures": 0,
-        "jobs": 20
+        "jobs": 24
       }
     }
   },
@@ -249,35 +249,35 @@
     "connection": {
       "ok": false,
       "durationMs": 0,
-      "testedAt": "2026-11-21T17:36:27.662Z",
+      "testedAt": "2026-11-22T06:51:33.571Z",
       "error": "Invalid API Key provided",
       "code": "invalid_api_key",
       "message": "Eden AI connection test failed: Invalid API Key provided",
-      "recordedAt": "2026-11-21T17:36:27.662Z"
+      "recordedAt": "2026-11-22T06:51:33.571Z"
     },
     "text": {
       "ok": true,
       "model": "openai/gpt-4o-mini",
-      "durationMs": 6,
-      "testedAt": "2026-11-21T17:36:27.756Z",
+      "durationMs": 2,
+      "testedAt": "2026-11-22T06:51:33.637Z",
       "output": "Greetings! How can I assist you today?",
       "usage": {
         "inputTokens": 15,
         "outputTokens": 10,
         "totalTokens": 25
       },
-      "message": "✓ Text generation successful (6ms, 25 tokens)",
-      "recordedAt": "2026-11-21T17:36:27.756Z"
+      "message": "✓ Text generation successful (2ms, 25 tokens)",
+      "recordedAt": "2026-11-22T06:51:33.637Z"
     },
     "image": {
       "ok": true,
       "model": "stabilityai/sd3.5-medium",
       "durationMs": 3,
-      "testedAt": "2026-11-21T17:36:27.796Z",
+      "testedAt": "2026-11-22T06:51:33.665Z",
       "dataUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
       "imageUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
       "message": "✓ Image generation successful (3ms)",
-      "recordedAt": "2026-11-21T17:36:27.796Z"
+      "recordedAt": "2026-11-22T06:51:33.665Z"
     },
     "video": {
       "ok": true,
@@ -285,13 +285,25 @@
       "model": "bytedance/dreamina-seedance-2-0-fast-260128",
       "jobId": "vid_job_98765",
       "status": "queued",
-      "durationMs": 5,
-      "testedAt": "2026-11-21T17:36:27.839Z",
+      "durationMs": 2,
+      "testedAt": "2026-11-22T06:51:33.694Z",
       "message": "✓ Video job submitted successfully (Job ID: vid_job_98765, Status: queued)",
-      "recordedAt": "2026-11-21T17:36:27.839Z"
+      "recordedAt": "2026-11-22T06:51:33.694Z"
     }
   },
   "recentErrors": [
+    {
+      "timestamp": "2026-11-22T06:51:33.575Z",
+      "code": "invalid_api_key",
+      "message": "Invalid API Key provided",
+      "status": 401
+    },
+    {
+      "timestamp": "2026-11-22T06:50:43.472Z",
+      "code": "invalid_api_key",
+      "message": "Invalid API Key provided",
+      "status": 401
+    },
     {
       "timestamp": "2026-11-21T17:36:27.665Z",
       "code": "invalid_api_key",
@@ -353,5 +365,5 @@
       "status": 401
     }
   ],
-  "updatedAt": "2026-11-22T06:03:52.990Z"
+  "updatedAt": "2026-11-22T06:51:33.694Z"
 }

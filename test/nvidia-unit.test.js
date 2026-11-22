@@ -278,12 +278,13 @@ describe('profile models section UI helpers', () => {
     assert.ok(html.includes('id="activity"'), 'Recent Activity card is preserved');
     assert.ok(html.includes('function showAllActivity()'), 'Recent Activity modal is preserved');
 
-    const fnMatch = html.match(/function profileModelIcon[\s\S]*?function profileModelRowMarkup\([\s\S]*?\n/);
+    const fnMatch = html.match(/function profileModelIcon[\s\S]*?function profileModelRowMarkup\([\s\S]*?\n\}/);
     assert.ok(fnMatch, 'model helper functions found in index.html');
     const vm = require('node:vm');
     const ctx = {
       esc: s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'),
       profileEscape: v => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'),
+      profileModelTierAllowed: () => true,
     };
     vm.runInNewContext(fnMatch[0], ctx);
 

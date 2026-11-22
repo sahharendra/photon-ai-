@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "photon-ai",
   "version": "1.0.0",
   "private": true,
@@ -19,6 +19,7 @@
     "node": ">=20"
   },
   "dependencies": {
-    "openai": "^6.49.0"
+    "openai": "^6.49.0",
+    "sharp": "^0.35.5"
   }
 }

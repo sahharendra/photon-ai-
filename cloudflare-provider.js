@@ -375,16 +375,39 @@ function createCloudflareProvider({
     }
 
     let userText = String(text || '').trim();
-    if (attachments.length > 0) {
+    const hasInline = attachments.some(att => att.kind === 'inline' && att.data);
+
+    if (hasInline) {
+      const parts = [];
+      let textContent = userText;
       for (const att of attachments) {
         if (att.kind === 'text') {
-          userText += `\n\n[Attached text file: ${att.name}]\n${att.text}\n[End attached file]`;
+          textContent += `\n\n[Attached text file: ${att.name}]\n${att.text}\n[End attached file]`;
         }
       }
-    }
-
-    if (userText) {
-      messages.push({ role: 'user', content: userText });
+      if (textContent) {
+        parts.push({ type: 'text', text: textContent });
+      }
+      for (const att of attachments) {
+        if (att.kind === 'inline' && att.data) {
+          parts.push({
+            type: 'image_url',
+            image_url: { url: `data:${att.mimeType || 'image/jpeg'};base64,${att.data}` },
+          });
+        }
+      }
+      messages.push({ role: 'user', content: parts.length > 0 ? parts : (userText || 'Please review the attached file(s).') });
+    } else {
+      if (attachments.length > 0) {
+        for (const att of attachments) {
+          if (att.kind === 'text') {
+            userText += `\n\n[Attached text file: ${att.name}]\n${att.text}\n[End attached file]`;
+          }
+        }
+      }
+      if (userText) {
+        messages.push({ role: 'user', content: userText });
+      }
     }
 
     return messages;

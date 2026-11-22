@@ -297,6 +297,27 @@ function createEdenAiProvider({
     }
   }
 
+  // Helper to format multimodal content for OpenAI-compatible Eden AI chat
+  function formatEdenAiUserContent(textStr, atts = []) {
+    const body = String(textStr || '').trim();
+    if (Array.isArray(atts) && atts.length > 0) {
+      const parts = [];
+      if (body) parts.push({ type: 'text', text: body });
+      for (const att of atts) {
+        if (att.kind === 'inline' && att.data) {
+          parts.push({
+            type: 'image_url',
+            image_url: { url: `data:${att.mimeType || 'image/jpeg'};base64,${att.data}` },
+          });
+        } else if (att.text) {
+          parts.push({ type: 'text', text: `\n[Attached File: ${att.name || 'document'}]\n${att.text}` });
+        }
+      }
+      return parts.length > 0 ? parts : (body || 'Please review the attached file(s).');
+    }
+    return body || 'Please review the attached file(s).';
+  }
+
   // ---------------------------------------------------------------------------
   // Capability 1: Text Generation & Chat
   // ---------------------------------------------------------------------------
@@ -327,23 +348,7 @@ function createEdenAiProvider({
       }
     }
 
-    let userContent = text || '';
-    if (Array.isArray(attachments) && attachments.length > 0) {
-      const parts = [];
-      if (userContent) parts.push({ type: 'text', text: userContent });
-      for (const att of attachments) {
-        if (att.kind === 'inline' && att.data) {
-          parts.push({
-            type: 'image_url',
-            image_url: { url: `data:${att.mimeType || 'image/jpeg'};base64,${att.data}` },
-          });
-        } else if (att.text) {
-          parts.push({ type: 'text', text: `\n[Attached File: ${att.name || 'document'}]\n${att.text}` });
-        }
-      }
-      userContent = parts.length > 0 ? parts : userContent;
-    }
-
+    const userContent = formatEdenAiUserContent(text, attachments);
     messages.push({ role: 'user', content: userContent });
 
     const payload = {
@@ -415,7 +420,8 @@ function createEdenAiProvider({
         }
       }
     }
-    messages.push({ role: 'user', content: text || '' });
+    const userContent = formatEdenAiUserContent(text, attachments);
+    messages.push({ role: 'user', content: userContent });
 
     const payload = {
       model: cleanModel,

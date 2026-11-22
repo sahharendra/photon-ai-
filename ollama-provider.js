@@ -269,6 +269,7 @@ function createOllamaProvider({
     const parts = [];
     for (const file of attachments) {
       if (file.kind === 'text') parts.push('[Attached text file: ' + file.name + ']\n' + file.text + '\n[End attached file]');
+      else if (file.kind === 'inline') parts.push('[Attached image: ' + (file.name || 'image') + ']');
       else parts.push('[Attached file: ' + file.name + ']');
     }
     parts.push(body);
@@ -279,10 +280,10 @@ function createOllamaProvider({
     const messages = [];
     const systemText = String(system || '').trim().slice(0, 80000);
     if (systemText) messages.push({ role: 'system', content: systemText });
-    const push = (role, content) => {
-      const last = messages[messages.length - 1];
-      if (last && last.role === role && typeof last.content === 'string' && typeof content === 'string') last.content += '\n\n' + content;
-      else messages.push({ role, content });
+    const push = (role, content, images) => {
+      const msg = { role, content };
+      if (Array.isArray(images) && images.length) msg.images = images;
+      messages.push(msg);
     };
     let sawUser = false;
     for (const turn of history || []) {
@@ -293,7 +294,10 @@ function createOllamaProvider({
       if (role === 'user') sawUser = true;
       push(role, body.slice(0, 12000));
     }
-    push('user', userContent(text, attachments));
+    const inlineImages = (attachments || [])
+      .filter(a => a && a.kind === 'inline' && a.data)
+      .map(a => a.data);
+    push('user', userContent(text, attachments), inlineImages.length ? inlineImages : undefined);
     return messages;
   }
 
