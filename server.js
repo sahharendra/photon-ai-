@@ -2,6 +2,7 @@
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
+const zlib = require('node:zlib');
 const crypto = require('node:crypto');
 const { X509Certificate } = crypto;
 const ROOT = __dirname;
@@ -504,6 +505,101 @@ function denyAdmin(res, isApi) {
 function reply(res, status, body) {
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
   res.end(JSON.stringify(body));
+}
+const staticCompressCache = new Map();
+
+function getCompressedBuffer(filePath, mtimeMs, encoding, rawBuffer) {
+  const cacheKey = `${filePath}:${mtimeMs}:${encoding}`;
+  const cached = staticCompressCache.get(cacheKey);
+  if (cached) return cached;
+  let compressed;
+  if (encoding === 'br') {
+    compressed = zlib.brotliCompressSync(rawBuffer, { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 5 } });
+  } else if (encoding === 'gzip') {
+    compressed = zlib.gzipSync(rawBuffer, { level: 6 });
+  } else if (encoding === 'deflate') {
+    compressed = zlib.deflateSync(rawBuffer, { level: 6 });
+  }
+  if (compressed) {
+    if (staticCompressCache.size > 50) staticCompressCache.clear();
+    staticCompressCache.set(cacheKey, compressed);
+  }
+  return compressed;
+}
+
+function serveStaticFile(req, res, filePath, contentType, isImmutable = false, customHeaders = {}) {
+  try {
+    if (!fs.existsSync(filePath)) {
+      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8', 'X-Content-Type-Options': 'nosniff' });
+      return res.end('Not found');
+    }
+    const stat = fs.statSync(filePath);
+    const etag = `W/"${stat.size.toString(16)}-${stat.mtimeMs.toString(16)}"`;
+    const lastModified = stat.mtime.toUTCString();
+
+    const isHtml = contentType.includes('text/html');
+    const defaultCache = isImmutable
+      ? 'public, max-age=31536000, immutable'
+      : (isHtml
+          ? 'public, max-age=0, must-revalidate'
+          : 'public, max-age=86400, stale-while-revalidate=604800');
+
+    // Conditional GET (304 Not Modified)
+    const ifNoneMatch = req.headers['if-none-match'];
+    const ifModifiedSince = req.headers['if-modified-since'];
+    if ((ifNoneMatch && ifNoneMatch === etag) || (ifModifiedSince && new Date(ifModifiedSince) >= stat.mtime)) {
+      res.writeHead(304, {
+        'ETag': etag,
+        'Last-Modified': lastModified,
+        'Cache-Control': customHeaders['Cache-Control'] || defaultCache,
+        'Vary': 'Accept-Encoding',
+      });
+      return res.end();
+    }
+
+    const headers = {
+      'Content-Type': contentType,
+      'ETag': etag,
+      'Last-Modified': lastModified,
+      'Cache-Control': defaultCache,
+      'X-Content-Type-Options': 'nosniff',
+      'Vary': 'Accept-Encoding',
+      ...customHeaders,
+    };
+
+    if (req.method === 'HEAD') {
+      res.writeHead(200, headers);
+      return res.end();
+    }
+
+    const isCompressible = /text|javascript|json|xml|svg/i.test(contentType);
+    const acceptEncoding = String(req.headers['accept-encoding'] || '').toLowerCase();
+
+    if (isCompressible) {
+      const fileBuffer = fs.readFileSync(filePath);
+      let chosenEncoding = null;
+      if (acceptEncoding.includes('br')) chosenEncoding = 'br';
+      else if (acceptEncoding.includes('gzip')) chosenEncoding = 'gzip';
+      else if (acceptEncoding.includes('deflate')) chosenEncoding = 'deflate';
+
+      if (chosenEncoding) {
+        const compressed = getCompressedBuffer(filePath, stat.mtimeMs, chosenEncoding, fileBuffer);
+        if (compressed) {
+          headers['Content-Encoding'] = chosenEncoding;
+          headers['Content-Length'] = compressed.length;
+          res.writeHead(200, headers);
+          return res.end(compressed);
+        }
+      }
+    }
+
+    headers['Content-Length'] = stat.size;
+    res.writeHead(200, headers);
+    fs.createReadStream(filePath).pipe(res);
+  } catch {
+    res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('Internal server error');
+  }
 }
 function fail(res, error, requestId) {
   const knownError = error instanceof HttpError ||
@@ -1367,9 +1463,7 @@ const server = http.createServer(async (req, res) => {
   try {
     if (pathname === '/admin' || pathname === '/admin.html') {
       if (req.method !== 'GET' && req.method !== 'HEAD') { res.setHeader('Allow', 'GET, HEAD'); return fail(res, new HttpError(405, 'method_not_allowed', 'Method not allowed.'), requestId); }
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer' });
-      if (req.method === 'HEAD') return res.end();
-      return fs.createReadStream(path.join(ROOT, 'admin.html')).pipe(res);
+      return serveStaticFile(req, res, path.join(ROOT, 'admin.html'), 'text/html; charset=utf-8', false, { 'Referrer-Policy': 'no-referrer', 'Cache-Control': 'no-store' });
     }
     if (pathname === '/api/admin/login' && req.method === 'POST') {
       if (!ADMIN_PASSWORD) return denyAdmin(res, true);
@@ -3449,15 +3543,31 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/upi-qr.jpg') {
       const qrPath = path.join(ROOT, 'upi-qr.jpg');
       if (fs.existsSync(qrPath)) {
-        res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'X-Content-Type-Options': 'nosniff' });
-        if (req.method === 'HEAD') return res.end();
-        return fs.createReadStream(qrPath).pipe(res);
+        return serveStaticFile(req, res, qrPath, 'image/jpeg');
+      }
+    }
+    if (/^\/[a-zA-Z0-9_\-\.]+\.(jpe?g|png|webp|svg|ico|css|js|woff2?)$/i.test(pathname)) {
+      const safeName = path.basename(pathname);
+      const staticPath = path.join(ROOT, safeName);
+      if (fs.existsSync(staticPath)) {
+        const ext = path.extname(safeName).toLowerCase();
+        const mimeTypes = {
+          '.jpg': 'image/jpeg',
+          '.jpeg': 'image/jpeg',
+          '.png': 'image/png',
+          '.webp': 'image/webp',
+          '.svg': 'image/svg+xml',
+          '.ico': 'image/x-icon',
+          '.css': 'text/css; charset=utf-8',
+          '.js': 'application/javascript; charset=utf-8',
+          '.woff2': 'font/woff2',
+          '.woff': 'font/woff',
+        };
+        return serveStaticFile(req, res, staticPath, mimeTypes[ext] || 'application/octet-stream');
       }
     }
     if (['/', '/index.html', '/profile', '/search', '/history', '/projects', '/library', '/artifacts', '/studio', '/plugins', '/settings', '/credits', '/plans', '/billing', '/login', '/signin', '/signup', '/auth', '/register', '/forgot', '/forgot-password', '/reset', '/reset-password'].includes(pathname)) {
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0', 'Pragma': 'no-cache', 'Expires': '0', 'X-Content-Type-Options': 'nosniff' });
-      if (req.method === 'HEAD') return res.end();
-      return fs.createReadStream(path.join(ROOT, 'index.html')).pipe(res);
+      return serveStaticFile(req, res, path.join(ROOT, 'index.html'), 'text/html; charset=utf-8');
     }
     res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8', 'X-Content-Type-Options': 'nosniff' }); return res.end('Not found');
   } catch (error) { return fail(res, error, requestId); }
