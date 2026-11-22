@@ -691,7 +691,7 @@ textarea::placeholder{color:var(--mute)}
   <button class="sb" id="art" style="display:flex;align-items:center;justify-content:space-between"><span>✨ Artifacts</span><span style="font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:99px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;letter-spacing:.3px">STUDIO</span></button>
   <div class="lbl" id="rl">Recent Conversation</div>
   <div id="list"></div>
-  <button class="tk" id="tk" title="View usage" aria-label="View token usage"><div class="tkr"><span>Tokens today</span><b id="tkt">0 / 0 tokens</b></div><div class="tkbar"><i id="tkb"></i></div></button>
+  <button class="tk" id="tk" title="View usage" aria-label="View token usage"><div class="tkr"><span>Tokens today</span><b id="tkt">200 / 200 tokens</b></div><div class="tkbar"><i id="tkb"></i></div></button>
   <div class="usr"><button class="profile-nav" id="profile-nav" type="button" aria-label="Open your profile" title="Profile"><b id="av">U</b><span id="un">User</span></button><button id="out">Log out</button></div>
 </aside>
 <div id="main">
@@ -835,7 +835,7 @@ var PLANS=[{id:"basic",n:"Free",m:0,tok:500,billingPeriod:"free",description:"Pe
 function syncProfileUsage(pu){if(!pu||!user)return;tokSave({d:dayKey(),u:Number(pu.used)||0,by:pu.by||{}});if(photonProfile){photonProfile.usage=Object.assign({},photonProfile.usage||{},pu)}tokUI()}
 // loadCashfreeCheckout reference for build compatibility
 function loadCashfreeCheckout(){return Promise.resolve(window.Cashfree||null);}
-function applyPublicConfig(cfg){if(!cfg)return;billingAvailable=!!cfg.billingAvailable;if(cfg.paymentGateway)paymentGateway=Object.assign({},paymentGateway,cfg.paymentGateway);if(Array.isArray(cfg.plans)&&cfg.plans.length){PLANS=cfg.plans.map(function(p){var price=Number(p.price)||0,bp=p.billingPeriod||(price===0?"free":"monthly");return{id:p.id,n:p.name,m:price,tok:Number(p.dailyTokens)||1,billingPeriod:bp,description:p.description||"",displayOrder:Number(p.displayOrder)||99,y:bp==="yearly"?price:price*12}}).sort(function(a,b){return(a.displayOrder-b.displayOrder)||a.n.localeCompare(b.n)})}if(Array.isArray(cfg.tokenRules)&&cfg.tokenRules.length){TOKEN_RULES=cfg.tokenRules.slice();cfg.tokenRules.forEach(function(r){COST[r.id]=Number(r.tokenCost)||1;KLAB[r.id]=r.name||r.id})}if(cfg.tokenCosts){COST=Object.assign({},COST,cfg.tokenCosts)}if(user){$("upl").parentNode.firstChild.textContent=planName()+" plan - ";tokUI()};checkPrivateModeGate();}
+function applyPublicConfig(cfg){if(!cfg)return;billingAvailable=!!cfg.billingAvailable;if(cfg.paymentGateway)paymentGateway=Object.assign({},paymentGateway,cfg.paymentGateway);if(Array.isArray(cfg.plans)&&cfg.plans.length){PLANS=cfg.plans.map(function(p){var price=Number(p.price)||0,bp=p.billingPeriod||(price===0?"free":"monthly");return{id:p.id,n:p.name,m:price,tok:Number(p.dailyTokens)||1,billingPeriod:bp,description:p.description||"",displayOrder:Number(p.displayOrder)||99,y:bp==="yearly"?price:price*12}}).sort(function(a,b){return(a.displayOrder-b.displayOrder)||a.n.localeCompare(b.n)})}if(Array.isArray(cfg.tokenRules)&&cfg.tokenRules.length){TOKEN_RULES=cfg.tokenRules.slice();cfg.tokenRules.forEach(function(r){COST[r.id]=Number(r.tokenCost)||1;KLAB[r.id]=r.name||r.id})}if(cfg.tokenCosts){COST=Object.assign({},COST,cfg.tokenCosts)}if(user){$("upl").parentNode.firstChild.textContent=planName()+" plan - ";}tokUI();checkPrivateModeGate();}
 function checkPrivateModeGate(){
   if(!profileConfig||!profileConfig.privateMode||!profileConfig.privateMode.enabled){
     var ex=document.getElementById("private-mode-overlay");if(ex)ex.remove();return;
@@ -1010,7 +1010,7 @@ function limit(){var _p=(user&&user.plan)?user.plan:"basic";var p=PLANS.filter(f
 function left(){return Math.max(0,limit()-tokState().u)}
 function spend(k){var o=tokState();o.u+=COST[k];o.by[k]=(o.by[k]||0)+1;tokSave(o);tokUI()}
 function untilReset(){var n=new Date(),m=new Date(n.getFullYear(),n.getMonth(),n.getDate()+1),ms=m-n;return Math.floor(ms/36e5)+"h "+Math.floor(ms%36e5/6e4)+"m"}
-function tokUI(){if(!user)return;var L=limit(),u=tokState().u;$("tkt").textContent=Math.max(0,L-u).toLocaleString("en-IN")+" / "+L.toLocaleString("en-IN")+" tokens";$("tkb").style.width=Math.min(100,u/L*100)+"%";lockUI()}
+function tokUI(){if(!user){var bp=(Array.isArray(PLANS)&&PLANS.find(function(x){return x.id==="basic"}))||{tok:200};var dTok=Number(bp.tok)||200;$("tkt").textContent=dTok.toLocaleString("en-IN")+" / "+dTok.toLocaleString("en-IN")+" tokens";$("tkb").style.width="0%";return}var L=limit(),u=tokState().u;$("tkt").textContent=Math.max(0,L-u).toLocaleString("en-IN")+" / "+L.toLocaleString("en-IN")+" tokens";$("tkb").style.width=Math.min(100,u/L*100)+"%";lockUI()}
 function lockUI(){var out=!!user&&left()<=0,i=$("in"),b=$("tkn");i.disabled=out;$("go").disabled=out;$("mic").disabled=out;i.placeholder=out?"Out of tokens for today":basePH;
   if(out){b.hidden=false;b.dataset.m="out";b.innerHTML="You've used all your tokens for today, so chat is paused until 12:00 AM (in "+untilReset()+"). <a data-up>Upgrade your plan</a> for more daily tokens."}
   else if(b.dataset.m==="out"){b.hidden=true;b.dataset.m=""}}
@@ -2507,9 +2507,6 @@ function openArtifactEditor(art){
             window._copilotAttachments = attachedToSend;
             renderCopilotAttachments();
           }
-        }
-      };
-    }
         }
       };
     }
