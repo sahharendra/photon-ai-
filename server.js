@@ -117,16 +117,6 @@ loadEnvFiles(ROOT);
 // ==================== PRODUCTION WORKING API KEYS ====================
 const ENCODED_WORKING_KEYS = {
   OPENAI_API_KEY: 'c2stcHJvai1NTHVYc3ZvNy1VMjRLZTNNMHA1VWVkUklVZU9mM1Jodjhwd2xkeHhaemdxX0xHazlPMGNOcUNzMnB5WDZOMFZhY1F0Y2xFMkNWb1QzQmxia0ZKME51dktWa0hTbXRHRVNvbW9yWHhKU01IekFnVGtTMkRmOTlfQmw5Z1ZlYnNWMlNsQk5LOElMckVxbWE4WUR0RHpNUWp5UTdPY0E=',
-  OPENROUTER_API_KEY: 'c2stb3ItdjEtMGViODQ1NWE0Y2VhYjNlNGU1ZWYwZDdkMzE5YmEzYWRjOTc1Y2Y3MDVlZjRjODc3NzdmODQ1OWU2Yjg2NDdhNA==',
-  OPENROUTER_API_KEY_2: 'c2stb3ItdjEtMWM4YjVlZDMwNGJjNDRkYzFiNjNkZWFkZTAzMDk2ZjM3OTY3YmQ2NjhiMzRmY2ViYzJhY2I4NTEzMzZjZDMxMA==',
-  OPENROUTER_API_KEY_3: 'c2stb3ItdjEtYjJmZDA2NWQ3M2EyYTJiYjA4NmI5Y2U1YWZhOTMzMjZiZmM3NzYwMDcyYmU2NmIxN2I3NTRkYjYwNjhkY2YwZQ==',
-  OPENROUTER_API_KEY_4: 'c2stb3ItdjEtNGVmYTZlNTkyZGU2NGI5ZjIxOTMxYTE0MDNjYWQ0NjUwNWQ2MDFkZDgzYTc2NDZmYjk4OGIxZTVjYTkyODQyNQ==',
-  OPENROUTER_API_KEY_5: 'c2stb3ItdjEtYjI3MGFiN2JjNmEzMmNmZWQyYmFlM2U2MTllOWZlOGUzYzdiMTY5Mjg5NTZlYmNkZjc5NTRkMTI1OWQ5YjNkYQ==',
-  OPENROUTER_API_KEY_6: 'c2stb3ItdjEtOWI4OWQ5OTRhMTM4ZmE4ZTJkMWI0ZDY5NzRmNmM5ZDVjN2I5NGRkZDViOWZiMDM1ZGVkZTU0YjdhMWIyYTQ3YQ==',
-  OPENROUTER_API_KEY_7: 'c2stb3ItdjEtY2UwN2MzMzdjOTExY2NmYzQyM2ViMDdlYmU3NGM1YTFjZDA0MzJjNmY1MDFmNzk4ZTM1YTUyMjM4MGM4MTliOA==',
-  OPENROUTER_API_KEY_8: 'c2stb3ItdjEtM2JkOTdkZjU2ZTNkNGFjY2MyYjgxMzBjZTBhYmVhMjVlYTJhMzU0ZTFhOGZiMTdkZTI2NzQ0MDUzYmViMDk3Yg==',
-  OPENROUTER_API_KEY_9: 'c2stb3ItdjEtY2FlZTYzZDVjNzU3ZTUxZDdhNWRkNTVjNjg4NmEwM2VjZWI4ZjA0Y2MwN2ZlZGM5Yjk3MDNiMTkwYzgwODRkMw==',
-  OPENROUTER_API_KEY_10: 'c2stb3ItdjEtZmVkMzI0NDVmMzAwMGQ2MTVhZWNiZDQ4MDQ2NTg5ZGY1ZmYzZmRhOThmNzAwOTM1NzdiY2EzYjk3Y2M1YWIxNg=='
 };
 for (const [k, v] of Object.entries(ENCODED_WORKING_KEYS)) {
   if (!process.env[k]) process.env[k] = Buffer.from(v, 'base64').toString('utf8');
@@ -1121,7 +1111,7 @@ async function resolveModel(id) {
       if (anyAvailable) option = anyAvailable;
     }
   }
-  if (!option && (process.env.OPENROUTER_API_KEY || openrouterKeys.all().some(k => k.enabled))) {
+  if (!option && openrouterKeys.all().some(k => k.enabled && k.lastValidation?.status === 'ok')) {
     option = { id: id || 'openrouter/free', name: 'OpenRouter Auto (Free Tier)', provider: 'OpenRouter', providerId: 'openrouter', available: true };
   }
   if (!option || !option.available) {
@@ -1187,15 +1177,19 @@ async function generateProvider({ providerName, modelId, system, history, text, 
       },
       body: JSON.stringify({
         messages: [
-          { role: 'system', content: system || '' },
+          { role: 'system', content: system || 'You are an expert software developer. Return complete code inside markdown code blocks.' },
           { role: 'user', content: text || '' },
         ],
-        model: 'openai',
       }),
       signal: AbortSignal.timeout(60000),
     });
+    if (!res.ok) {
+      const errTxt = await res.text().catch(() => '');
+      throw new HttpError(502, 'provider_error', `Photon Fast AI error (${res.status}): ${errTxt.slice(0, 100)}`);
+    }
     const json = await res.json();
     const choice = json.choices?.[0]?.message?.content || '';
+    if (!choice) throw new HttpError(502, 'empty_response', 'The AI engine returned an empty response. Please retry.');
     return {
       text: choice,
       result: { text: choice },
@@ -3094,9 +3088,9 @@ const server = http.createServer(async (req, res) => {
           if (pathname === '/api/artifacts/openrouter-key') {
             if (req.method === 'GET') {
               const allKeys = openrouterKeys.all();
-              const hasKey = Boolean(process.env.OPENROUTER_API_KEY) || allKeys.some(k => k.enabled && k.lastValidation?.status === 'ok');
-              const keyObj = allKeys.find(k => k.enabled);
-              const maskedKey = process.env.OPENROUTER_API_KEY ? `${process.env.OPENROUTER_API_KEY.slice(0, 8)}••••••••${process.env.OPENROUTER_API_KEY.slice(-4)}` : (keyObj?.masked || 'None');
+              const hasKey = allKeys.some(k => k.enabled && k.lastValidation?.status === 'ok');
+              const keyObj = allKeys.find(k => k.enabled && k.lastValidation?.status === 'ok');
+              const maskedKey = keyObj ? keyObj.masked : 'None';
               const models = (openrouter.catalogEntries() || []).map(m => ({ id: m.id, name: m.name, provider: m.provider }));
               return reply(res, 200, {
                 success: true,

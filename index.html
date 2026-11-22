@@ -1485,7 +1485,7 @@ function renderArtifactDashboard(artifacts){
     btn.disabled=true;
     btn.textContent="Generating Artifact (50 tokens)...";
     try{
-      var activeModel=($("ad-model-select")&&$("ad-model-select").value)||(cur&&cur.model)||(user&&user.defaultModel)||"openrouter/free";
+      var activeModel=($("ad-model-select")&&$("ad-model-select").value)||(cur&&cur.model)||(user&&user.defaultModel)||"photon-fast";
       var res=await profileApi('/api/artifacts/generate',{
         method:'POST',
         body:{prompt:promptText,type:chosenType,model:activeModel}
@@ -2069,7 +2069,7 @@ function openArtifactEditor(art){
     function renderModelList(filterText) {
       var listEl = $("awe-model-list");
       if(!listEl) return;
-      var curId = art.model || localStorage.getItem('photon_artifacts_model') || (copilotModels[0] && copilotModels[0].id) || 'openrouter/free';
+      var curId = art.model || localStorage.getItem('photon_artifacts_model') || (copilotModels[0] && copilotModels[0].id) || 'photon-fast';
       var query = String(filterText || '').toLowerCase().trim();
 
       var filtered = copilotModels.filter(function(m){
@@ -2413,7 +2413,7 @@ function openArtifactEditor(art){
         var errEl=$("awe-copilot-err");
         if(errEl){errEl.textContent="";errEl.style.display="none";}
 
-        var activeModel=art.model||localStorage.getItem('photon_artifacts_model')||(cur&&cur.model)||(user&&user.defaultModel)||"openrouter/free";
+        var activeModel=art.model||localStorage.getItem('photon_artifacts_model')||(copilotModels[0]&&copilotModels[0].id)||(cur&&cur.model)||(user&&user.defaultModel)||"photon-fast";
         var curModelObj = copilotModels.find(function(m){ return m.id === activeModel; });
 
         // Check if attachments require vision model

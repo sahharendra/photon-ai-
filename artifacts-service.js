@@ -155,7 +155,7 @@ function isVisionCapableModel(model = {}) {
  * Filter available models to return only valid coding/text models for Copilot
  */
 function getEligibleCopilotModels(models = []) {
-  return (models || [])
+  const result = (models || [])
     .filter(m => {
       if (m.creditsExhausted === true || m.available === false) return false;
       const cat = String(m.category || '').toLowerCase();
@@ -180,6 +180,23 @@ function getEligibleCopilotModels(models = []) {
       contextLength: m.contextLength || 32768,
       pricingVerified: Boolean(m.pricingVerified),
     }));
+
+  if (result.length === 0) {
+    result.push({
+      id: 'photon-fast',
+      name: 'Photon Fast AI (Code Reasoning)',
+      provider: 'Photon AI',
+      providerId: 'photon_fast',
+      category: 'text',
+      free: true,
+      available: true,
+      hasVision: false,
+      contextLength: 32768,
+      pricingVerified: true,
+    });
+  }
+
+  return result;
 }
 
 /**
@@ -594,7 +611,7 @@ function createArtifactsService({
       throw new HttpError(403, 'feature_disabled', 'Artifact generation is currently disabled by the administrator.');
     }
 
-    const targetModelId = modelId || (profile && profile.defaultModel) || 'openrouter/free';
+    const targetModelId = modelId || (profile && profile.defaultModel) || 'photon-fast';
     const option = await resolveModel(targetModelId);
     const pKey = providerKey(option);
 
@@ -817,7 +834,7 @@ RULES:
       throw new HttpError(403, 'feature_disabled', 'AI artifact editing is currently disabled by the administrator.');
     }
 
-    const targetModelId = modelId || art.model || (profile && profile.defaultModel) || 'openrouter/free';
+    const targetModelId = modelId || art.model || (profile && profile.defaultModel) || 'photon-fast';
     const option = await resolveModel(targetModelId);
     const pKey = providerKey(option);
 
