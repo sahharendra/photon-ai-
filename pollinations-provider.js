@@ -118,6 +118,8 @@ function createPollinationsProvider({ HttpError, env = process.env, fetchImpl = 
       model: chosenModel,
       nologo: 'true',
       nofeed: 'true',
+      logo: 'false',
+      watermark: 'false',
     });
     if (seed) params.set('seed', String(seed));
     if (activeKey) params.set('key', activeKey);

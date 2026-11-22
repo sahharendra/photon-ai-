@@ -1355,6 +1355,7 @@ const artifactsService = createArtifactsService({
   commitTokenTransaction,
   refundTokenTransaction,
   addActivity,
+  availableModels: () => availableModels(),
   HttpError,
   logger: console,
 });
@@ -2857,6 +2858,11 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && pathname === '/api/images/models') {
       return reply(res, 200, { success: true, data: cloudflare.imageCatalogEntries() });
     }
+    if (req.method === 'GET' && pathname === '/api/artifacts/models') {
+      const allAvail = availableModels();
+      const eligible = artifactsService.getEligibleCopilotModels(allAvail);
+      return reply(res, 200, { success: true, data: eligible });
+    }
     if (req.method === 'POST' && pathname === '/api/private-access/verify') {
       const body = await readBody(req);
       const data = loadStore();
@@ -3120,6 +3126,11 @@ const server = http.createServer(async (req, res) => {
               });
             }
           }
+          if (req.method === 'GET' && pathname === '/api/artifacts/models') {
+            const allAvail = availableModels();
+            const eligible = artifactsService.getEligibleCopilotModels(allAvail);
+            return reply(res, 200, { success: true, data: eligible });
+          }
           if (req.method === 'GET' && pathname === '/api/artifacts') {
             return reply(res, 200, { success: true, data: artifactsService.listArtifacts(claims.sub) });
           }
@@ -3135,6 +3146,7 @@ const server = http.createServer(async (req, res) => {
               prompt: body.prompt,
               type: body.type,
               modelId: body.model,
+              attachments: body.attachments,
               profile,
               requestId: body.request_id || requestId,
             });
@@ -3173,6 +3185,8 @@ const server = http.createServer(async (req, res) => {
               id,
               instruction: body.instruction,
               modelId: body.model,
+              attachments: body.attachments,
+              activeFile: body.activeFile,
               profile,
               requestId: body.request_id || requestId,
             });
@@ -3519,9 +3533,16 @@ const server = http.createServer(async (req, res) => {
             let targetModel = requestedModel;
 
             // Automatically resolve targetModel and provider:
+            // Prefer Cloudflare Workers AI whenever configured to deliver pristine, watermark-free images
             if (isPollinationsRequested) {
-              usePollinations = true;
-              targetModel = (requestedModel === 'sana' || requestedModel === 'turbo' || requestedModel === 'flux') ? requestedModel : 'flux';
+              if (cfImageConfigured && !cfExhausted && (requestedModel === 'flux' || !requestedModel)) {
+                // Route generic FLUX requests to Cloudflare Workers AI FLUX Schnell for watermark-free output
+                usePollinations = false;
+                targetModel = '@cf/black-forest-labs/flux-1-schnell';
+              } else {
+                usePollinations = true;
+                targetModel = (requestedModel === 'sana' || requestedModel === 'turbo' || requestedModel === 'flux') ? requestedModel : 'flux';
+              }
             } else if (isCfRequested) {
               if (cfExhausted) {
                 usePollinations = true;
@@ -3536,9 +3557,12 @@ const server = http.createServer(async (req, res) => {
               if (optimal.provider === 'Cloudflare Workers AI' && cfImageConfigured && !cfExhausted) {
                 usePollinations = false;
                 targetModel = optimal.modelId;
+              } else if (cfImageConfigured && !cfExhausted) {
+                usePollinations = false;
+                targetModel = '@cf/black-forest-labs/flux-1-schnell';
               } else {
                 usePollinations = true;
-                targetModel = optimal.modelId === 'flux' ? 'flux' : 'flux';
+                targetModel = 'flux';
               }
             } else {
               usePollinations = false;
