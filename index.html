@@ -532,11 +532,16 @@ textarea::placeholder{color:var(--mute)}
 .profile-model-row.selected .model-state-badge{background:var(--nude);color:#161616;border-color:var(--nude);font-weight:700}
 .profile-dialog.models-modal{width:min(880px,100%);display:flex;flex-direction:column;gap:12px;max-height:88vh}
 .models-modal-head-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.profile-model-toolbar{display:grid;grid-template-columns:minmax(0,1fr) 210px;gap:10px;align-items:center}
-.profile-model-toolbar input,.profile-model-toolbar select{margin:0;height:38px;font-size:13px}
+.profile-model-toolbar{display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:10px;align-items:center;position:relative;z-index:5}
+.profile-model-toolbar input{margin:0;height:40px;font-size:13px;background:rgba(255,255,255,0.04);border:1px solid rgba(227,219,204,0.18);border-radius:8px;color:var(--ink);padding:0 12px;outline:none;transition:border-color .15s}
+.profile-model-toolbar input:focus{border-color:rgba(227,219,204,0.45);background:rgba(255,255,255,0.07)}
+.profile-model-toolbar select#models-provider-filter{margin:0;height:40px;font-size:13px;font-weight:500;background:#121217 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23e3dbcc' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat calc(100% - 12px) center;background-size:14px;-webkit-appearance:none;-moz-appearance:none;appearance:none;border:1px solid rgba(227,219,204,0.22);border-radius:8px;color:var(--ink);padding:0 34px 0 12px;cursor:pointer;outline:none;position:relative;z-index:6;pointer-events:auto;transition:border-color .15s,box-shadow .15s}
+.profile-model-toolbar select#models-provider-filter:hover{border-color:rgba(227,219,204,0.38)}
+.profile-model-toolbar select#models-provider-filter:focus{border-color:rgba(227,219,204,0.55);box-shadow:0 0 0 2px rgba(227,219,204,0.12)}
+.profile-model-toolbar select#models-provider-filter option{background:#121217;color:#e3dbcc;padding:8px 12px}
 .models-modal-list-wrap{overflow:auto;max-height:60vh;padding-right:2px}
 @media(max-width:980px){.profile-overview{grid-template-columns:1fr}.profile-tabs{flex-direction:row;overflow-x:auto;scrollbar-width:thin}.profile-tabs button{min-height:44px}.profile-content{max-width:none}}
-@media(max-width:600px){.profile-page{padding:14px 12px 32px}.profile-top{padding-bottom:12px;margin-bottom:14px}.profile-wave{min-height:108px;padding:19px 17px;margin-bottom:14px}.profile-wave p{font-size:12px}.profile-card{padding:16px}.profile-card-head{gap:10px}.profile-info-grid{column-gap:0}.profile-info{min-height:40px}.profile-columns,.profile-lower{gap:12px;margin-bottom:12px}.profile-activity li{padding:9px 0}.profile-delete .profile-card-head{flex-direction:column}.profile-model-row{grid-template-columns:34px minmax(0,1fr);gap:10px;padding:10px 6px}.profile-model-row .model-action-col{grid-column:2;justify-self:start;margin-top:4px}.profile-model-toolbar{grid-template-columns:1fr}}
+@media(max-width:600px){.profile-page{padding:14px 12px 32px}.profile-top{padding-bottom:12px;margin-bottom:14px}.profile-wave{min-height:108px;padding:19px 17px;margin-bottom:14px}.profile-wave p{font-size:12px}.profile-card{padding:16px}.profile-card-head{gap:10px}.profile-info-grid{column-gap:0}.profile-info{min-height:40px}.profile-columns,.profile-lower{gap:12px;margin-bottom:12px}.profile-activity li{padding:9px 0}.profile-delete .profile-card-head{flex-direction:column}.profile-model-row{grid-template-columns:34px minmax(0,1fr);gap:10px;padding:10px 6px}.profile-model-row .model-action-col{grid-column:2;justify-self:start;margin-top:4px}.profile-model-toolbar{grid-template-columns:1fr;gap:8px}.profile-model-toolbar select#models-provider-filter{width:100%}}
 /* PHOTON AI Dedicated Artifacts Workspace — Lovable.dev Grade Studio */
 #pv{position:absolute;inset:0;z-index:50;background:#09090d;overflow-y:auto}
 .art-ws{position:fixed;inset:0;z-index:99;background:#09090d;color:#e2e2ec;display:flex;flex-direction:column;overflow:hidden;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
@@ -3411,6 +3416,7 @@ async function saveProfileModel(model,afterSave){
 }
 function showAllModels(initialCategory){
   var currentCat = initialCategory || activeGenCat || "text";
+  var SAVED_PROVIDER_KEY = "photon_profile_provider_filter";
   var d=document.createElement("div");
   d.className="profile-dialog-bg";
   d.innerHTML='<section class="profile-dialog models-modal" role="dialog" aria-modal="true" aria-labelledby="all-models-title">'+
@@ -3421,7 +3427,7 @@ function showAllModels(initialCategory){
       '<button type="button" class="category-tab'+(currentCat==="image"?" active":"")+'" data-modal-cat="image">🎨 IMAGE <span class="category-tab-count" id="count-image">0</span></button>'+
       '<button type="button" class="category-tab'+(currentCat==="video"?" active":"")+'" data-modal-cat="video">🎬 VIDEO <span class="category-tab-count" id="count-video">0</span></button>'+
     '</div>'+
-    '<div class="profile-model-toolbar"><input id="models-search" type="search" placeholder="Search by model name, ID, provider, or capability..." aria-label="Search models"><select id="models-provider-filter" aria-label="Filter by provider"><option value="all">All providers</option></select></div>'+
+    '<div class="profile-model-toolbar"><input id="models-search" type="search" placeholder="Search by model name, ID, provider, or capability..." aria-label="Search models"><select id="models-provider-filter" aria-label="Filter by provider"><option value="all">All enabled providers (0)</option></select></div>'+
     '<div class="models-modal-list-wrap" id="models-modal-list"></div>'+
   '</section>';
   $("ovc").appendChild(d);
@@ -3439,6 +3445,46 @@ function showAllModels(initialCategory){
     return "text";
   }
 
+  function getCanonicalProvider(m) {
+    if (!m) return { id: "other", name: "Other" };
+    var raw = String(m.provider_id || m.providerId || m.provider || "").trim().toLowerCase();
+    if (raw === "google" || raw === "gemini" || raw.indexOf("google") > -1 || raw.indexOf("gemini") > -1) {
+      return { id: "google", name: "Google" };
+    }
+    if (raw === "groq" || raw.indexOf("groq") > -1) {
+      return { id: "groq", name: "Groq" };
+    }
+    if (raw === "nvidia" || raw.indexOf("nvidia") > -1) {
+      return { id: "nvidia", name: "NVIDIA" };
+    }
+    if (raw === "openrouter" || raw.indexOf("openrouter") > -1) {
+      return { id: "openrouter", name: "OpenRouter" };
+    }
+    if (raw === "cloudflare" || raw.indexOf("cloudflare") > -1) {
+      return { id: "cloudflare", name: "Cloudflare" };
+    }
+    if (raw === "ollama" || raw.indexOf("ollama") > -1) {
+      return { id: "ollama", name: "Ollama" };
+    }
+    if (raw === "codecraft" || raw.indexOf("codecraft") > -1) {
+      return { id: "codecraft", name: "CodeCraft" };
+    }
+    if (raw === "llmtr" || raw.indexOf("llmtr") > -1 || raw.indexOf("freellmapi") > -1) {
+      return { id: "llmtr", name: "LLMTR" };
+    }
+    if (raw === "pollinations" || raw.indexOf("pollinations") > -1) {
+      return { id: "pollinations", name: "Pollinations AI" };
+    }
+    if (raw === "edenai" || raw.indexOf("eden") > -1) {
+      return { id: "edenai", name: "Eden AI" };
+    }
+    if (raw === "agnes" || raw.indexOf("agnes") > -1) {
+      return { id: "agnes", name: "Agnes AI" };
+    }
+    var disp = m.provider_name || m.provider || "Other";
+    return { id: raw.replace(/[^a-z0-9_-]/g, "") || "other", name: disp };
+  }
+
   function updateCategoryCounts() {
     var catalog=profileModelCatalog((profileConfig&&profileConfig.allModels)||(profileConfig&&profileConfig.models)||[]);
     var counts={text:0, image:0, video:0};
@@ -3452,18 +3498,46 @@ function showAllModels(initialCategory){
     if(elV) elV.textContent=counts.video;
   }
 
-  function populateProviders(){
+  function populateProviders(preserveSelectedId){
     var catalog=profileModelCatalog((profileConfig&&profileConfig.allModels)||(profileConfig&&profileConfig.models)||[]).filter(function(m){ return getModelCat(m) === currentCat; });
     var counts={};
-    catalog.forEach(function(m){var p=String(m.provider||"Other").trim();counts[p]=(counts[p]||0)+1});
-    var currentVal=String(providerEl.value||"all").trim();
-    providerEl.innerHTML='<option value="all">All enabled providers ('+catalog.length+')</option>'+Object.keys(counts).sort().map(function(p){
-      return '<option value="'+profileEscape(p)+'"'+(p.toLowerCase()===currentVal.toLowerCase()?' selected':'')+'>'+profileEscape(p)+' ('+counts[p]+')</option>';
-    }).join("");
-    if(currentVal!=="all"){
-      var matchKey=Object.keys(counts).find(function(k){return k.toLowerCase()===currentVal.toLowerCase()});
-      if(matchKey) providerEl.value=matchKey;
-      else providerEl.value="all";
+    var names={};
+    catalog.forEach(function(m){
+      var cp = getCanonicalProvider(m);
+      counts[cp.id] = (counts[cp.id] || 0) + 1;
+      names[cp.id] = cp.name;
+    });
+
+    var preferredOrder = ["google", "groq", "nvidia", "openrouter", "cloudflare", "ollama", "codecraft", "llmtr", "pollinations", "edenai", "agnes"];
+    var availableIds = Object.keys(counts);
+    availableIds.sort(function(a, b){
+      var idxA = preferredOrder.indexOf(a);
+      var idxB = preferredOrder.indexOf(b);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return (names[a] || a).localeCompare(names[b] || b);
+    });
+
+    var targetId = preserveSelectedId || providerEl.value || (function(){
+      try { return localStorage.getItem(SAVED_PROVIDER_KEY) || "all"; } catch(e){ return "all"; }
+    })();
+    targetId = String(targetId).trim().toLowerCase();
+
+    var optionsHtml = '<option value="all">All enabled providers ('+catalog.length+')</option>';
+    availableIds.forEach(function(pid){
+      var pName = names[pid] || pid;
+      var isSel = (pid === targetId);
+      optionsHtml += '<option value="'+profileEscape(pid)+'"'+(isSel ? ' selected' : '')+'>'+profileEscape(pName)+' ('+counts[pid]+')</option>';
+    });
+
+    providerEl.innerHTML = optionsHtml;
+
+    if (targetId !== "all" && counts[targetId]) {
+      providerEl.value = targetId;
+    } else {
+      providerEl.value = "all";
+      try { localStorage.setItem(SAVED_PROVIDER_KEY, "all"); } catch(e){}
     }
   }
 
@@ -3472,14 +3546,15 @@ function showAllModels(initialCategory){
     var catalog=profileModelCatalog((profileConfig&&profileConfig.allModels)||(profileConfig&&profileConfig.models)||[]);
     var inCat = catalog.filter(function(m){ return getModelCat(m) === currentCat; });
     var q=String(searchEl.value||"").trim().toLowerCase().replace(/cloudfare/g,"cloudflare");
-    var prov=String(providerEl.value||"all").trim().toLowerCase();
+    var selectedProvId=String(providerEl.value||"all").trim().toLowerCase();
     var activeId=(cur&&cur.model)||(photonProfile?photonProfile.defaultModel:(user&&user.defaultModel||""));
     var planId=photonProfile&&photonProfile.plan?photonProfile.plan.id:(user&&user.plan||"basic");
 
     var filtered=inCat.filter(function(m){
-      if(prov!=="all" && String(m.provider||"").trim().toLowerCase() !== prov && String(m.providerId||"").toLowerCase() !== prov) return false;
-      if(!q)return true;
-      var hay=(String(m.name||"")+" "+String(m.id||"")+" "+String(m.provider||"")+" "+String(m.category||"")+" "+String(m.task||"")+" "+String(m.description||"")).toLowerCase();
+      var cp = getCanonicalProvider(m);
+      if(selectedProvId!=="all" && cp.id !== selectedProvId) return false;
+      if(!q) return true;
+      var hay=(String(m.name||"")+" "+String(m.id||"")+" "+cp.name+" "+cp.id+" "+String(m.provider||"")+" "+String(m.category||"")+" "+String(m.task||"")+" "+String(m.description||"")).toLowerCase();
       return hay.indexOf(q)>-1;
     });
 
@@ -3495,15 +3570,20 @@ function showAllModels(initialCategory){
       return;
     }
 
-    // Group models by provider inside category
+    // Group models by canonical provider name
     var groups={};
+    var groupOrder=[];
     filtered.forEach(function(m){
-      var p=m.provider||"AI Provider";
-      if(!groups[p])groups[p]=[];
-      groups[p].push(m);
+      var cp = getCanonicalProvider(m);
+      var gName = cp.name;
+      if(!groups[gName]) {
+        groups[gName] = [];
+        groupOrder.push(gName);
+      }
+      groups[gName].push(m);
     });
 
-    var groupHtml=Object.keys(groups).sort().map(function(provName){
+    var groupHtml=groupOrder.map(function(provName){
       var items=groups[provName];
       return '<div class="models-provider-group">'+
         '<div class="models-provider-header"><span>'+profileEscape(provName)+'</span><span class="models-provider-count">'+items.length+' model'+(items.length===1?'':'s')+'</span></div>'+
@@ -3530,8 +3610,8 @@ function showAllModels(initialCategory){
       d.querySelectorAll(".category-tab").forEach(function(t){t.classList.remove("active")});
       tabBtn.classList.add("active");
       currentCat = tabBtn.dataset.modalCat;
-      providerEl.value = "all";
-      populateProviders();
+      var curProv = providerEl.value;
+      populateProviders(curProv);
       renderModalList();
     };
   });
@@ -3540,8 +3620,14 @@ function showAllModels(initialCategory){
   renderModalList();
   searchEl.addEventListener("input", renderModalList);
   searchEl.addEventListener("change", renderModalList);
-  providerEl.addEventListener("change", renderModalList);
-  providerEl.addEventListener("input", renderModalList);
+  providerEl.addEventListener("change", function(){
+    try { localStorage.setItem(SAVED_PROVIDER_KEY, providerEl.value); } catch(e){}
+    renderModalList();
+  });
+  providerEl.addEventListener("input", function(){
+    try { localStorage.setItem(SAVED_PROVIDER_KEY, providerEl.value); } catch(e){}
+    renderModalList();
+  });
 
   refreshBtn.onclick=async function(){
     refreshBtn.disabled=true;

@@ -619,10 +619,14 @@ const providerCreditStatus = {
   groq: { exhausted: false },
   nvidia: { exhausted: false },
   gemini: { exhausted: false },
+  google: { exhausted: false },
   openrouter: { exhausted: false },
   ollama: { exhausted: false },
   llmtr: { exhausted: false },
   cloudflare: { exhausted: false },
+  pollinations: { exhausted: false },
+  edenai: { exhausted: false },
+  agnes: { exhausted: false },
 };
 
 function normalizeProviderKey(name) {
@@ -633,9 +637,13 @@ function normalizeProviderKey(name) {
   if (s.includes('ollama')) return 'ollama';
   if (s.includes('groq')) return 'groq';
   if (s.includes('nvidia')) return 'nvidia';
-  if (s.includes('gemini') || s.includes('google')) return 'gemini';
+  if (s.includes('gemini') || s.includes('google')) return 'google';
   if (s.includes('llmtr') || s.includes('freellmapi')) return 'llmtr';
   if (s.includes('cloudflare')) return 'cloudflare';
+  if (s.includes('pollinations')) return 'pollinations';
+  if (s.includes('edenai') || s.includes('eden')) return 'edenai';
+  if (s.includes('agnes')) return 'agnes';
+  if (s.includes('anthropic') || s.includes('claude')) return 'anthropic';
   return s;
 }
 
@@ -787,9 +795,19 @@ function availableModels() {
       : (item.reason || '');
     const quotaStatus = !qmProv.available ? qmProv.status : (qmModel.status || (exhausted ? 'QUOTA_EXHAUSTED' : 'HEALTHY'));
     const caps = classifyModelCapabilities(item);
+    const pId = item.providerId || item.provider_id || normProv;
     out.push({
       ...item,
+      provider_id: pId,
+      providerId: pId,
+      provider_name: item.provider,
+      model_id: item.id,
+      model_name: item.name,
+      enabled: item.enabled !== false,
       available,
+      availability_status: available ? 'available' : (exhausted ? 'quota_exhausted' : 'unavailable'),
+      capability_status: caps.category,
+      pricing_eligibility: item.free ? 'free' : 'paid',
       creditsExhausted: exhausted,
       quotaStatus,
       resetAt: qmModel.resetAt || qmProv.resetAt || null,
@@ -2521,6 +2539,7 @@ const server = http.createServer(async (req, res) => {
         ollama.refreshModels(forceRefresh),
         cloudflare.refreshModels(forceRefresh),
         edenai.refreshModels(forceRefresh),
+        agnes.refreshModels(forceRefresh),
       ]);
       const data = loadStore();
       const gwStatus = getActiveGatewayService(data).getGatewayStatus(data);
@@ -2579,6 +2598,32 @@ const server = http.createServer(async (req, res) => {
             message: data.settings?.privateMode?.message || 'Photon AI is currently in private preview & maintenance. Public access will reopen in a few days!',
           },
           refreshedAt: new Date().toISOString(),
+        },
+      });
+    }
+    if (req.method === 'GET' && pathname === '/api/profile/models') {
+      const data = loadStore();
+      const allAvail = availableModels();
+      const activeAvail = allAvail.filter(m => !m.creditsExhausted && m.available !== false);
+      let planModels = activeAvail;
+      const auth = req.headers.authorization || '';
+      const pParam = parsedUrl.searchParams.get('plan');
+      if (auth.startsWith('Bearer ')) {
+        try {
+          const claims = await verifyToken(auth.slice(7).trim());
+          const prof = data.profiles[claims.sub];
+          const planId = prof ? userEffectivePlanId(prof) : 'basic';
+          planModels = filterModelsForPlan(activeAvail, planId).filter(m => !m.creditsExhausted && m.available !== false);
+        } catch {}
+      } else if (pParam) {
+        planModels = filterModelsForPlan(activeAvail, pParam).filter(m => !m.creditsExhausted && m.available !== false);
+      }
+      return reply(res, 200, {
+        success: true,
+        data: {
+          models: planModels,
+          allModels: activeAvail,
+          total: planModels.length,
         },
       });
     }
