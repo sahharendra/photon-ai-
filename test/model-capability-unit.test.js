@@ -258,6 +258,45 @@ test('Scenario 13: Zero fake video models - VIDEO category is strictly 0 when no
   assert.equal(stats.video.total, 0, 'Category stats video count must be 0');
 });
 
+test('Agnes Video 2.5 Flash requires verified free account access, not a billable generation test', () => {
+  const svc = createModelCapabilityService();
+  svc.registerModels([
+    {
+      id: 'agnes-video-2.5-flash',
+      name: 'Agnes Video 2.5 Flash',
+      provider: 'Agnes AI',
+      providerId: 'agnes',
+      category: 'video',
+      task: 'text-to-video',
+      video_output: true,
+      capabilities: { text_to_video: true, image_to_video: true },
+      available: true,
+      free: true,
+      pricingVerified: true,
+    },
+    {
+      id: 'agnes-unverified-model',
+      name: 'Unverified Agnes model',
+      provider: 'Agnes AI',
+      providerId: 'agnes',
+      category: 'video',
+      task: 'text-to-video',
+      video_output: true,
+      available: false,
+      free: false,
+      pricingVerified: true,
+    },
+  ]);
+
+  const videoModels = svc.getModelsByCategory('video', { availableOnly: true });
+  assert.deepEqual(videoModels.map(model => model.id), ['agnes-video-2.5-flash']);
+  assert.equal(videoModels[0].video_test_status, 'NOT_TESTED');
+  assert.equal(videoModels[0].image_input, true);
+  assert(videoModels[0].supported_tasks.includes('text-to-video'));
+  assert(videoModels[0].supported_tasks.includes('image-to-video'));
+  assert.equal(svc.assertModelCapability('agnes-video-2.5-flash', 'video'), true);
+});
+
 test('Scenario 14: Comprehensive model capability report generates full matrix without leaks', () => {
   const svc = createModelCapabilityService();
   svc.registerModels([

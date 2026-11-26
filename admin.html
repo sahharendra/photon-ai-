@@ -522,7 +522,7 @@
 <div class="head" style="margin-top:34px">
   <div>
     <h2>Agnes AI (Video Generation Provider)</h2>
-    <small>High-speed 720P video generation via official Agnes AI API. Dedicated video model with $0/sec free promotion.</small>
+    <small>Agnes Video 2.5 Flash · 720P · $0.025/sec list price. The $0/sec trial applies only to eligible default accounts.</small>
   </div>
   <div class="actions">
     <button id="agnes-test-connection" type="button">Test connection</button>
@@ -539,7 +539,7 @@
         <input id="agnes-key-input" type="password" autocomplete="new-password" placeholder="Enter Agnes AI API key (Bearer token)">
         <button type="button" id="agnes-key-eye" style="padding:0 12px;background:#17213a;border:1px solid #2e4063;border-radius:7px;color:#c4ccdc;cursor:pointer" title="Show/Hide key">👁</button>
       </div>
-      <small class="muted" style="margin-top:4px">API Base URL: <code>https://apihub.agnes-ai.com/v1</code> · Documentation: <a href="https://apihub.agnes-ai.com/v1" target="_blank" rel="noopener" style="color:#60a5fa;text-decoration:underline">apihub.agnes-ai.com</a>.</small>
+      <small class="muted" style="margin-top:4px">API Base URL: <code>https://apihub.agnes-ai.com/v1</code> · Documentation: <a href="https://wiki.agnes-ai.com/en/docs/agnes-video-25-flash" target="_blank" rel="noopener" style="color:#60a5fa;text-decoration:underline">Agnes Video 2.5 Flash API</a>.</small>
     </div>
     <div class="field">
       <label>Configured Status &amp; Key Details</label>
@@ -561,12 +561,15 @@
     <div class="field">
       <label for="agnes-spending-policy">Spending Policy (Free-Only Protection)</label>
       <select id="agnes-spending-policy">
-        <option value="strict_free_only">Strict Free-Only ($0/sec Promotion Active)</option>
-        <option value="allow_all">Allow All Configured Requests</option>
+        <option value="strict_free_only">Strict Free-Only (block unless trial eligibility is verified)</option>
         <option value="block">Block All Requests</option>
       </select>
     </div>
   </div>
+  <label style="display:flex;align-items:flex-start;gap:8px;margin-top:12px;color:#cbd5e1;font-size:12px">
+    <input id="agnes-free-verified" type="checkbox" style="margin-top:2px">
+    <span>I confirmed in the Agnes account dashboard that this API key is on the eligible Angel User Trial ($0/sec) and not the billed Agent Plan. This is an admin attestation; generation remains blocked until checked.</span>
+  </label>
   <div class="save-row" style="margin-top:12px;display:flex;gap:8px">
     <button id="agnes-save-settings" type="submit">Save Agnes AI Settings</button>
     <button id="agnes-delete-key" type="button" style="background:#2a1515;border:1px solid #5a2525;color:#f87171">Remove Key</button>
@@ -576,8 +579,8 @@
 <!-- Dedicated Video Model Verification Section -->
 <div class="head" style="margin-top:28px">
   <div>
-    <h2>Agnes AI Video Model Verification (Real End-to-End Test)</h2>
-    <small>Executes real asynchronous video creation, status polling, and validation of playable 720P video output.</small>
+    <h2>Agnes AI Video Model Test</h2>
+    <small>Connection and model availability checks do not generate videos. The real generation test below creates one video and must only be run after free-trial eligibility is confirmed.</small>
   </div>
 </div>
 <div style="background:#0e1526;border:1px solid #233352;border-radius:10px;padding:16px;margin-top:10px">
@@ -585,7 +588,7 @@
     <div>
       <label style="font-size:12px;color:#94a3b8">Model ID</label>
       <select id="agnes-test-video-model" style="width:100%;margin-top:2px;padding:6px;background:#151d30;border:1px solid #2d3b55;border-radius:6px;color:#fff">
-        <option value="agnes-video-2.5-flash">agnes-video-2.5-flash (720P · Free Promotion)</option>
+        <option value="agnes-video-2.5-flash">agnes-video-2.5-flash (720P)</option>
       </select>
     </div>
     <div>
@@ -593,7 +596,7 @@
       <input id="agnes-test-video-prompt" type="text" value="Generate a short cinematic video of a red apple rotating slowly on a clean white background." style="width:100%;margin-top:2px;padding:6px;background:#151d30;border:1px solid #2d3b55;border-radius:6px;color:#fff">
     </div>
   </div>
-  <button id="agnes-test-video-btn" type="button" style="margin-top:12px;padding:8px 18px;background:linear-gradient(135deg,#3b82f6,#2563eb);border:0;border-radius:6px;color:#fff;cursor:pointer;font-weight:600">🎬 Run Real Agnes Video Generation Test</button>
+  <button id="agnes-test-video-btn" type="button" style="margin-top:12px;padding:8px 18px;background:linear-gradient(135deg,#3b82f6,#2563eb);border:0;border-radius:6px;color:#fff;cursor:pointer;font-weight:600">Create one real test video</button>
   <div id="agnes-test-video-result" style="margin-top:12px;font-size:12px;display:none;background:#131c31;padding:12px;border-radius:6px"></div>
 </div>
 
@@ -601,7 +604,7 @@
 <div class="head" style="margin-top:28px">
   <div>
     <h2>Agnes AI Video Catalogue</h2>
-    <small>Documented video models. Category strictly VIDEO; text/image generation prohibited.</small>
+    <small>Documented video model and account-specific availability. Text/image generation is not offered by this integration.</small>
   </div>
 </div>
 <div class="table-wrap" style="margin-top:10px">
@@ -3718,7 +3721,9 @@ async function load(forceSettings=false){if(refreshing)return;refreshing=true;st
         rowItem(diag, 'Agnes AI Provider Status', st.enabled ? (st.configured ? 'Active & Ready' : 'Key Required') : 'Disabled', orBadge(st.enabled && st.configured ? 'Active' : (st.configured ? 'Disabled' : 'Missing Key'), st.enabled && st.configured));
         rowItem(diag, 'Encrypted API Key', st.hasKey ? `Configured (${st.maskedKey || 'ag-••••'}) · AES-256 encrypted` : 'None configured', orBadge(st.hasKey ? 'Saved' : 'Not Set', st.hasKey));
         rowItem(diag, 'Spending Policy', st.spendingPolicyDescription || 'Strict Free-Only ($0/sec Promotion)', orBadge(st.spendingPolicy || 'strict_free_only', true));
-        rowItem(diag, 'Free Promotion Status', '$0/sec Free Promotion verified for Flash model (720P output)', orBadge('$0/sec Active', true));
+        rowItem(diag, 'Free Trial Eligibility', st.freePromotionVerified ? 'Admin-confirmed eligible default account; strict free-only mode remains active.' : 'Unverified for this API key; all generation is blocked.', orBadge(st.freePromotionVerified ? 'Confirmed' : 'Unverified', Boolean(st.freePromotionVerified)));
+        const flashModel = (st.models || []).find(m => m.id === 'agnes-video-2.5-flash');
+        rowItem(diag, 'Flash Model Availability', flashModel?.apiAvailable ? 'Listed by Agnes for this API key.' : (flashModel?.availabilityReason || 'Not verified; use Test connection or Discover / Refresh models.'), orBadge(flashModel?.apiAvailable ? 'Available' : 'Unavailable', Boolean(flashModel?.apiAvailable)));
       }
 
       const keyBadge = $('agnes-key-badge');
@@ -3736,6 +3741,14 @@ async function load(forceSettings=false){if(refreshing)return;refreshing=true;st
       if ($('agnes-spending-policy')) {
         $('agnes-spending-policy').value = st.spendingPolicy || 'strict_free_only';
       }
+      if ($('agnes-free-verified')) {
+        const flashModel = (st.models || []).find(m => m.id === 'agnes-video-2.5-flash');
+        $('agnes-free-verified').checked = Boolean(flashModel?.freePromotionVerified);
+      }
+      if ($('agnes-test-video-btn')) {
+        $('agnes-test-video-btn').disabled = !st.freePromotionVerified;
+        $('agnes-test-video-btn').title = st.freePromotionVerified ? 'Creates a real video using the verified free trial.' : 'Confirm free-trial eligibility and model access before running a real generation test.';
+      }
 
       agnesCachedModels = st.models || [];
       renderAgnesModels(agnesCachedModels);
@@ -3748,7 +3761,7 @@ async function load(forceSettings=false){if(refreshing)return;refreshing=true;st
           `<strong>Completed Videos:</strong> ${u.completedVideos || 0} · ` +
           `<strong>Failed:</strong> ${u.failedVideos || 0} · ` +
           `<strong>Total Rendered Seconds:</strong> ${u.totalSeconds || 0}s<br>` +
-          `<small class="muted" style="display:inline-block;margin-top:4px">Pricing: $0.00 / sec under free promotion. Strict free-only policy prevents any unexpected charges.</small>`;
+          `<small class="muted" style="display:inline-block;margin-top:4px">Pricing: $0.025/sec list; $0/sec only for eligible default trial accounts. Paid generation is blocked.</small>`;
       }
 
       // Render recent errors
@@ -3798,15 +3811,17 @@ async function load(forceSettings=false){if(refreshing)return;refreshing=true;st
       row.appendChild(catCell);
 
       const resCell = document.createElement('td');
-      resCell.innerHTML = `<code>${esc(m.resolution || '720p')}</code>`;
+      resCell.innerHTML = `<code>${esc(m.resolution || '720P')}</code>`;
       row.appendChild(resCell);
 
       const priceCell = document.createElement('td');
-      priceCell.innerHTML = `<span style="color:#4ade80;font-weight:600">${esc(m.pricing || '$0.00 / sec')}</span><br><small class="muted">Free Promotion Active</small>`;
+      priceCell.innerHTML = `<span style="font-weight:600">${esc(m.pricing || '$0.025 / second list price')}</span><br><small class="muted">${m.freePromotionVerified ? 'Trial eligibility admin-confirmed' : 'Trial eligibility unverified'}</small>`;
       row.appendChild(priceCell);
 
       const statusCell = document.createElement('td');
-      statusCell.appendChild(orBadge(m.enabled ? 'Enabled' : 'Disabled', m.enabled));
+      statusCell.appendChild(orBadge(m.enabled && m.apiAvailable ? 'API available' : (m.enabled ? 'Unavailable' : 'Disabled'), m.enabled && m.apiAvailable));
+      statusCell.appendChild(document.createElement('br'));
+      statusCell.appendChild(orBadge(m.freePromotionVerified ? 'Trial confirmed' : 'Trial unverified', Boolean(m.freePromotionVerified)));
       row.appendChild(statusCell);
 
       const actCell = document.createElement('td');
@@ -3839,13 +3854,14 @@ async function load(forceSettings=false){if(refreshing)return;refreshing=true;st
     const key = $('agnes-key-input').value.trim();
     const enabled = $('agnes-enabled').value === 'true';
     const spendingPolicy = $('agnes-spending-policy').value;
+    const freePromotionVerified = $('agnes-free-verified').checked;
 
     try {
       if (key) {
         await request('/api/admin/agnes/key', 'POST', { key });
         $('agnes-key-input').value = '';
       }
-      await request('/api/admin/agnes', 'PUT', { enabled, spendingPolicy });
+      await request('/api/admin/agnes', 'PUT', { enabled, spendingPolicy, freePromotionVerified });
       alert('✓ Agnes AI settings saved successfully!');
       await loadAgnesAI();
     } catch (err) {
@@ -3888,7 +3904,10 @@ async function load(forceSettings=false){if(refreshing)return;refreshing=true;st
     try {
       const res = await request('/api/admin/agnes/refresh', 'POST', {});
       const r = (res && res.data) || res || {};
-      alert(r.ok ? `✓ Agnes AI video model catalogue refreshed!` : `Notice: ${r.message || 'Updated'}`);
+      const result = r.result || r;
+      alert(result.ok
+        ? `✓ Agnes model availability check completed. ${result.modelAvailable ? 'Agnes Video 2.5 Flash is listed for this key.' : 'Agnes Video 2.5 Flash is not listed for this key.'}`
+        : `Notice: ${result.message || 'Model availability could not be verified.'}`);
       await loadAgnesAI();
     } catch (err) {
       alert(`Agnes AI model refresh failed: ${err.message}`);
@@ -3927,7 +3946,7 @@ async function load(forceSettings=false){if(refreshing)return;refreshing=true;st
       out.innerHTML = `<span style="color:#f87171;font-weight:600">✗ Test Error</span><br><small style="color:#fca5a5">${esc(err.message)}</small>`;
     } finally {
       btn.disabled = false;
-      btn.textContent = '🎬 Run Real Agnes Video Generation Test';
+      btn.textContent = 'Create one real test video';
       loadAgnesAI();
     }
   });

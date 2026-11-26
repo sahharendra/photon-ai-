@@ -22,6 +22,9 @@ const MODEL_ID = /^[A-Za-z0-9][A-Za-z0-9._:/-]{0,160}$/;
 // Known chat/completion models on Groq
 const NON_CHAT_ID = /(whisper|tts|embed|moderation|audio|transcribe)/i;
 
+// Default fallback models — updated to current Groq production lineup (Nov 2026).
+// mixtral-8x7b-32768 and gemma2-9b-it were deprecated; keeping them disabled as
+// fallbacks so the admin panel can still re-enable them if the account still has access.
 const DEFAULT_GROQ_MODELS = Object.freeze({
   'llama-3.3-70b-versatile': {
     id: 'llama-3.3-70b-versatile',
@@ -30,6 +33,7 @@ const DEFAULT_GROQ_MODELS = Object.freeze({
     created: 1730000000,
     enabled: true,
     contextWindow: 131072,
+    maxCompletionTokens: 32768,
   },
   'llama-3.1-8b-instant': {
     id: 'llama-3.1-8b-instant',
@@ -38,21 +42,24 @@ const DEFAULT_GROQ_MODELS = Object.freeze({
     created: 1730000000,
     enabled: true,
     contextWindow: 131072,
+    maxCompletionTokens: 131072,
   },
   'mixtral-8x7b-32768': {
     id: 'mixtral-8x7b-32768',
-    name: 'Mixtral 8x7B (Groq)',
+    name: 'Mixtral 8x7B (Groq) [Legacy]',
     ownedBy: 'Groq',
-    created: 1730000000,
-    enabled: true,
+    created: 1700000000,
+    // Disabled by default — model is deprecated; re-enable in admin panel if still accessible
+    enabled: false,
     contextWindow: 32768,
   },
   'gemma2-9b-it': {
     id: 'gemma2-9b-it',
-    name: 'Gemma 2 9B (Groq)',
+    name: 'Gemma 2 9B (Groq) [Legacy]',
     ownedBy: 'Groq',
-    created: 1730000000,
-    enabled: true,
+    created: 1700000000,
+    // Disabled by default — model is deprecated; re-enable in admin panel if still accessible
+    enabled: false,
     contextWindow: 8192,
   },
 });

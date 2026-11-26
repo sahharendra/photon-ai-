@@ -6,7 +6,7 @@
 // - Reads AGNES_API_KEY from environment or secure encrypted config file.
 // - Never exposes raw API keys to the frontend or in status endpoints.
 // - Maintains the dedicated Agnes Video 2.5 Flash video model with 720P limitation.
-// - Enforces strict free-only spending protection ($0/sec promotion).
+// - Enforces strict free-only spending protection with explicit account eligibility verification.
 // - Tracks request counts, token usage, errors, and spending policies.
 // - Supports API key rotation and model enable/disable toggling.
 
@@ -17,7 +17,7 @@ const crypto = require('node:crypto');
 const CONFIG_VERSION = 1;
 const CONFIG_FILE = '.photon-agnes-config.json';
 const MAX_RECENT_ERRORS = 25;
-const SPENDING_POLICIES = Object.freeze(['strict_free_only', 'allow_all', 'block']);
+const SPENDING_POLICIES = Object.freeze(['strict_free_only', 'block']);
 
 // Agnes AI Documented Video Model
 const DEFAULT_AGNES_MODELS = Object.freeze({
@@ -27,25 +27,28 @@ const DEFAULT_AGNES_MODELS = Object.freeze({
     provider: 'Agnes AI',
     category: 'Video Generation',
     task: 'text-to-video',
-    resolution: '720p',
-    maxSeconds: 5,
+    resolution: '720P',
+    maxSeconds: 12,
+    minSeconds: 4,
     defaultSeconds: 5,
-    aspectRatios: ['16:9', '9:16', '1:1'],
+    aspectRatios: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'],
     enabled: true,
     freePromotion: true,
-    pricing: '$0.00 / sec (Free Promotion)',
+    freePromotionVerified: false,
+    apiAvailable: false,
+    pricing: '$0.025 / second list price; $0 / second for eligible Angel User Trial accounts',
     spendingPolicy: 'strict_free_only',
     capabilities: {
-      text: false,
-      image_output: false,
+      text_to_video: true,
+      image_to_video: true,
+      keyframe_control: true,
       video_output: true,
-      keyframes: true,
       reference_image: true,
-      resolution: '720p',
+      resolution: '720P',
     },
-    supportedParameters: ['model', 'prompt', 'mode', 'seconds', 'size', 'aspect_ratio', 'n', 'reference_image'],
-    description: 'Agnes AI Video 2.5 Flash - High speed 720P video generation with $0/sec free promotion.',
-    priceStatus: 'FREE_PROMOTION',
+    supportedParameters: ['model', 'prompt', 'mode', 'seconds', 'size', 'aspect_ratio', 'n', 'first_frame', 'last_frame', 'images'],
+    description: 'Agnes Video 2.5 Flash. The limited-time $0 trial rate applies only to eligible default accounts.',
+    priceStatus: 'ACCOUNT_ELIGIBILITY_UNVERIFIED',
   },
 });
 
@@ -129,13 +132,19 @@ function createAgnesConfig({ dir = process.cwd(), env = process.env, logger = co
       provider: 'Agnes AI',
       providerSlug: 'agnes',
       website: 'https://apihub.agnes-ai.com/',
-      documentation: 'https://apihub.agnes-ai.com/v1',
+      documentation: 'https://wiki.agnes-ai.com/en/docs/agnes-video-25-flash',
       enabled: true,
       spendingPolicy: 'strict_free_only',
       encryptedKey: null,
       maskedKey: null,
       keyFingerprint: null,
-      models: { ...DEFAULT_AGNES_MODELS },
+      models: Object.fromEntries(Object.entries(DEFAULT_AGNES_MODELS).map(([id, model]) => [id, {
+        ...model,
+        aspectRatios: [...model.aspectRatios],
+        capabilities: { ...model.capabilities },
+        supportedParameters: [...model.supportedParameters],
+      }])),
+      videoJobs: {},
       usage: {
         requests: 0,
         failures: 0,
@@ -148,6 +157,7 @@ function createAgnesConfig({ dir = process.cwd(), env = process.env, logger = co
       },
       lastTestResults: {
         connection: null,
+        availability: null,
         video: null,
       },
       recentErrors: [],
@@ -172,29 +182,44 @@ function createAgnesConfig({ dir = process.cwd(), env = process.env, logger = co
           provider: 'Agnes AI',
           category: 'Video Generation',
           task: 'text-to-video',
-          resolution: String(m.resolution || '720p'),
-          maxSeconds: safeInteger(m.maxSeconds, 5),
+          resolution: '720P',
+          maxSeconds: 12,
+          minSeconds: 4,
           defaultSeconds: safeInteger(m.defaultSeconds, 5),
-          aspectRatios: Array.isArray(m.aspectRatios) ? m.aspectRatios : ['16:9', '9:16', '1:1'],
+          aspectRatios: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'],
           enabled: m.enabled !== false,
-          freePromotion: m.freePromotion !== false,
-          pricing: String(m.pricing || '$0.00 / sec (Free Promotion)'),
-          spendingPolicy: SPENDING_POLICIES.includes(m.spendingPolicy) ? m.spendingPolicy : 'strict_free_only',
-          priceStatus: String(m.priceStatus || 'FREE_PROMOTION'),
+          freePromotion: true,
+          freePromotionVerified: m.freePromotionVerified === true,
+          apiAvailable: m.apiAvailable === true,
+          availabilityReason: String(m.availabilityReason || ''),
+          pricing: '$0.025 / second list price; $0 / second for eligible Angel User Trial accounts',
+          spendingPolicy: 'strict_free_only',
+          priceStatus: m.freePromotionVerified === true ? 'ACCOUNT_TRIAL_CONFIRMED_BY_ADMIN' : 'ACCOUNT_ELIGIBILITY_UNVERIFIED',
           capabilities: {
-            text: false,
-            image_output: false,
+            text_to_video: true,
+            image_to_video: true,
+            keyframe_control: true,
             video_output: true,
-            keyframes: Boolean(m.capabilities?.keyframes !== false),
-            reference_image: Boolean(m.capabilities?.reference_image !== false),
-            resolution: String(m.capabilities?.resolution || '720p'),
+            reference_image: true,
+            resolution: '720P',
           },
-          supportedParameters: Array.isArray(m.supportedParameters) ? m.supportedParameters : ['model', 'prompt', 'mode', 'seconds', 'size', 'aspect_ratio', 'n', 'reference_image'],
-          description: String(m.description || 'Agnes Video 2.5 Flash'),
+          supportedParameters: ['model', 'prompt', 'mode', 'seconds', 'size', 'aspect_ratio', 'n', 'first_frame', 'last_frame', 'images'],
+          description: 'Agnes Video 2.5 Flash. The limited-time $0 trial rate applies only to eligible default accounts.',
           lastTestedAt: m.lastTestedAt || null,
           testStatus: m.testStatus || null,
         };
       }
+    }
+
+    if (src.videoJobs && typeof src.videoJobs === 'object') {
+      const cutoff = now() - 24 * 60 * 60 * 1000;
+      base.videoJobs = Object.fromEntries(Object.entries(src.videoJobs)
+        .filter(([id, job]) => /^[A-Za-z0-9_.-]{1,256}$/.test(id) &&
+          job && typeof job.userId === 'string' && job.userId.length <= 256 &&
+          job.modelId === 'agnes-video-2.5-flash' &&
+          Number.isFinite(Date.parse(job.createdAt)) && Date.parse(job.createdAt) >= cutoff)
+        .slice(-500)
+        .map(([id, job]) => [id, { userId: job.userId, modelId: job.modelId, createdAt: job.createdAt }]));
     }
 
     // Guarantee default documented model is always present
@@ -220,6 +245,7 @@ function createAgnesConfig({ dir = process.cwd(), env = process.env, logger = co
     if (src.lastTestResults && typeof src.lastTestResults === 'object') {
       base.lastTestResults = {
         connection: src.lastTestResults.connection || null,
+        availability: src.lastTestResults.availability || null,
         video: src.lastTestResults.video || null,
       };
     }
@@ -283,10 +309,53 @@ function createAgnesConfig({ dir = process.cwd(), env = process.env, logger = co
   }
 
   function setSpendingPolicy(policy) {
-    if (SPENDING_POLICIES.includes(policy)) {
-      config.spendingPolicy = policy;
-      persist();
-    }
+    if (!SPENDING_POLICIES.includes(policy)) return false;
+    config.spendingPolicy = policy;
+    persist();
+    return true;
+  }
+
+  function setFreePromotionVerified(id, verified) {
+    const model = config.models[id];
+    if (!model) return false;
+    model.freePromotionVerified = Boolean(verified);
+    model.priceStatus = model.freePromotionVerified ? 'ACCOUNT_TRIAL_CONFIRMED_BY_ADMIN' : 'ACCOUNT_ELIGIBILITY_UNVERIFIED';
+    persist();
+    return true;
+  }
+
+  function setModelAvailability(id, available, reason = '') {
+    const model = config.models[id];
+    if (!model) return false;
+    model.apiAvailable = Boolean(available);
+    model.availabilityReason = String(reason || '');
+    config.lastTestResults.availability = {
+      ok: model.apiAvailable,
+      model: id,
+      reason: model.availabilityReason,
+      testedAt: new Date(now()).toISOString(),
+    };
+    persist();
+    return true;
+  }
+
+  function recordVideoJob(id, userId, modelId = 'agnes-video-2.5-flash') {
+    const cleanId = String(id || '').trim();
+    const cleanUserId = String(userId || '').trim();
+    if (!/^[A-Za-z0-9_.-]{1,256}$/.test(cleanId) || !cleanUserId || cleanUserId.length > 256 || modelId !== 'agnes-video-2.5-flash') return false;
+    config.videoJobs[cleanId] = { userId: cleanUserId, modelId, createdAt: new Date(now()).toISOString() };
+    const cutoff = now() - 24 * 60 * 60 * 1000;
+    config.videoJobs = Object.fromEntries(Object.entries(config.videoJobs)
+      .filter(([, job]) => Date.parse(job.createdAt) >= cutoff)
+      .slice(-500));
+    persist();
+    return true;
+  }
+
+  function getVideoJobOwner(id) {
+    const job = config.videoJobs[String(id || '').trim()];
+    if (!job || !Number.isFinite(Date.parse(job.createdAt)) || now() - Date.parse(job.createdAt) > 24 * 60 * 60 * 1000) return null;
+    return job.userId;
   }
 
   function getKey() {
@@ -402,7 +471,7 @@ function createAgnesConfig({ dir = process.cwd(), env = process.env, logger = co
     const masked = getMaskedKey();
     const models = getModels();
     const videoModels = models.filter(m => m.category === 'Video Generation');
-    const freeModels = models.filter(m => m.freePromotion);
+    const verifiedFreeModels = models.filter(m => m.freePromotionVerified && m.apiAvailable);
 
     return {
       provider: 'Agnes AI',
@@ -415,22 +484,22 @@ function createAgnesConfig({ dir = process.cwd(), env = process.env, logger = co
       hasKey,
       spendingPolicy: getSpendingPolicy(),
       spendingPolicyDescription: getSpendingPolicy() === 'strict_free_only'
-        ? 'Strict Free-Only ($0/sec Promotion active. Paid generations strictly blocked.)'
-        : (getSpendingPolicy() === 'allow_all' ? 'All tiers allowed' : 'Blocked'),
+        ? 'Strict Free-Only (generation blocked until free account eligibility is verified)'
+        : 'Blocked',
       modelsCount: models.length,
       videoModelsCount: videoModels.length,
-      freeModelsCount: freeModels.length,
+      freeModelsCount: verifiedFreeModels.length,
       models,
       usage: config.usage,
       lastTestResults: config.lastTestResults,
       recentErrors: config.recentErrors,
-      freePromotionVerified: true,
+      freePromotionVerified: verifiedFreeModels.length > 0,
       freePromotionDetails: {
         model: 'agnes-video-2.5-flash',
-        rate: '$0.00 / sec',
-        maxDuration: '5 seconds',
-        resolution: '720P (1280x720)',
-        creditCardRequired: false,
+        listPrice: '$0.025 / second',
+        trialPrice: '$0 / second for eligible default accounts only',
+        accountEligibilityVerified: verifiedFreeModels.length > 0,
+        accountEligibilityNote: 'Angel User Trial and limited-time offers are account-tier dependent; Agent Plan usage is billed at list price.',
       },
     };
   }
@@ -441,6 +510,10 @@ function createAgnesConfig({ dir = process.cwd(), env = process.env, logger = co
     setEnabled,
     getSpendingPolicy,
     setSpendingPolicy,
+    setFreePromotionVerified,
+    setModelAvailability,
+    recordVideoJob,
+    getVideoJobOwner,
     getKey,
     setKey,
     getMaskedKey,

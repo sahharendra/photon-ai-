@@ -221,6 +221,8 @@ test('Artifacts Service: CRUD operations and user ownership isolation', () => {
   assert.ok(art1.id);
   assert.strictEqual(art1.title, 'Landing Page');
   assert.strictEqual(art1.files.length, 2);
+  assert.strictEqual(art1.version, 1);
+  const initialArtifactVersion = art1.version;
 
   // User 1 can list their artifact
   const list1 = service.listArtifacts('user_1');
@@ -238,6 +240,7 @@ test('Artifacts Service: CRUD operations and user ownership isolation', () => {
 
   // User 1 updates artifact
   const updated = service.updateArtifact('user_1', art1.id, {
+    version: initialArtifactVersion,
     title: 'Updated Landing Page',
     files: [
       { name: 'index.html', content: '<h1>Updated</h1>' },
@@ -248,10 +251,20 @@ test('Artifacts Service: CRUD operations and user ownership isolation', () => {
 
   assert.strictEqual(updated.title, 'Updated Landing Page');
   assert.strictEqual(updated.versions.length, 2);
+  assert.strictEqual(updated.version, 2);
+  assert.throws(() => service.updateArtifact('user_1', art1.id, {
+    title: 'Update without a version',
+  }), { code: 'artifact_version_required' });
+  assert.throws(() => service.updateArtifact('user_1', art1.id, {
+    version: initialArtifactVersion,
+    title: 'Stale update',
+  }), { code: 'artifact_version_conflict' });
+  assert.throws(() => service.restoreVersion('user_1', art1.id, 1), { code: 'artifact_version_required' });
 
   // User 1 restores version 1
-  const restored = service.restoreVersion('user_1', art1.id, 1);
+  const restored = service.restoreVersion('user_1', art1.id, 1, updated.version);
   assert.strictEqual(restored.files[0].content, '<h1>Home</h1>');
+  assert.strictEqual(restored.version, 3);
 
   // User 1 exports ZIP
   const { filename, zipBuffer } = service.exportZip('user_1', art1.id);

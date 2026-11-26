@@ -160,7 +160,12 @@ function createGroqProvider({
       if (/content.*filter|safety/i.test(detail)) {
         return new HttpError(502, 'content_filtered', validationMessage('content_filtered'));
       }
-      return new HttpError(400, 'invalid_request', 'Groq rejected this request. Try simplifying the prompt.');
+      // Preserve the actual Groq error message so users can see what went wrong
+      const groqDetail = String(error?.error?.message || error?.message || '').slice(0, 300);
+      const readableMsg = groqDetail
+        ? `Groq rejected this request: ${groqDetail}`
+        : 'Groq rejected this request. Check the selected model and request parameters.';
+      return new HttpError(400, 'invalid_request', readableMsg);
     }
     if (status === 503 || status === 529 || /overloaded/i.test(detail)) {
       return new HttpError(503, 'provider_overloaded', validationMessage('provider_overloaded'));
@@ -375,7 +380,8 @@ function createGroqProvider({
     const payload = {
       model: chosenModel,
       messages,
-      max_tokens: Math.max(1, Math.min(Number(maxTokens) || MAX_OUTPUT_TOKENS, 32768)),
+      // Groq uses max_completion_tokens (max_tokens is deprecated per Groq docs Nov 2026)
+      max_completion_tokens: Math.max(1, Math.min(Number(maxTokens) || MAX_OUTPUT_TOKENS, 32768)),
       temperature: 0.7,
     };
 
@@ -446,7 +452,8 @@ function createGroqProvider({
     const payload = {
       model: chosenModel,
       messages,
-      max_tokens: Math.max(1, Math.min(Number(maxTokens) || MAX_OUTPUT_TOKENS, 32768)),
+      // Groq uses max_completion_tokens (max_tokens is deprecated per Groq docs Nov 2026)
+      max_completion_tokens: Math.max(1, Math.min(Number(maxTokens) || MAX_OUTPUT_TOKENS, 32768)),
       temperature: 0.7,
       stream: true,
     };

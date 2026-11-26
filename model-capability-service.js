@@ -14,7 +14,8 @@
 //    - A model that understands video is NOT a video generation model (video_output must be true).
 //    - A text model that writes SVG/image prompts is NOT an image/video model.
 //    - Only models with image_output: true can be displayed or executed in IMAGE mode.
-//    - Only models with video_output: true AND verified test status can be displayed or executed in VIDEO mode.
+//    - Video models need a passed generation test, except providers whose exact
+//      model access and free-account eligibility are independently verified.
 //    - If no verified video model is available, VIDEO mode shows 0 models and "No video generation models are currently available."
 //
 // 3. Model-by-Model Capability Testing & Registry:
@@ -113,8 +114,10 @@ function classifyModelCapabilities(model = {}) {
     image_output = false;
     category = CATEGORY_VIDEO;
     text_input = true;
-    image_input = task === 'image-to-video' || /img2vid|image-to-video/i.test(id);
-    supported_tasks.push(image_input ? 'image-to-video' : 'text-to-video', 'video-generation');
+    image_input = task === 'image-to-video' || rawCaps.image_to_video === true || /img2vid|image-to-video/i.test(id);
+    if (rawCaps.text_to_video !== false && task !== 'image-to-video') supported_tasks.push('text-to-video');
+    if (image_input) supported_tasks.push('image-to-video');
+    supported_tasks.push('video-generation');
     return {
       text_input,
       text_output,
@@ -230,6 +233,11 @@ function enrichModelWithCapabilities(model = {}, quotaStatus = 'HEALTHY') {
   };
 }
 
+function hasVerifiedFreeAgnesAccess(model) {
+  return model.provider_id === 'agnes' && model.video_output === true &&
+    model.available === true && model.free === true && model.pricingVerified === true;
+}
+
 class ModelCapabilityService {
   constructor({ quotaMonitor = null, logger = console } = {}) {
     this.quotaMonitor = quotaMonitor;
@@ -291,8 +299,7 @@ class ModelCapabilityService {
         return m.image_output && m.image_test_status !== STATUS_FAILED;
       }
       if (normCat === CATEGORY_VIDEO) {
-        // Strict: only return if video_output is true AND video test passed
-        return m.video_output && m.video_test_status === STATUS_PASSED;
+        return m.video_output && (m.video_test_status === STATUS_PASSED || hasVerifiedFreeAgnesAccess(m));
       }
       return m.category === normCat;
     });
@@ -344,7 +351,7 @@ class ModelCapabilityService {
         stats[CATEGORY_IMAGE].models.push({ id: m.id, name: m.name, provider: m.provider, available: isAvail, free: m.free });
       }
 
-      if (m.video_output && m.video_test_status === STATUS_PASSED) {
+      if (m.video_output && (m.video_test_status === STATUS_PASSED || hasVerifiedFreeAgnesAccess(m))) {
         stats[CATEGORY_VIDEO].total += 1;
         if (isAvail) stats[CATEGORY_VIDEO].available += 1;
         stats[CATEGORY_VIDEO].models.push({ id: m.id, name: m.name, provider: m.provider, available: isAvail, free: m.free });
@@ -382,7 +389,7 @@ class ModelCapabilityService {
     }
 
     if (normReq === CATEGORY_VIDEO) {
-      if (!m.video_output || m.video_test_status !== STATUS_PASSED) {
+      if (!m.video_output || (m.video_test_status !== STATUS_PASSED && !hasVerifiedFreeAgnesAccess(m))) {
         const err = new Error(`Model '${m.name}' does not support video generation or has not passed video generation testing.`);
         err.code = 'unsupported_capability';
         err.status = 400;
@@ -645,7 +652,7 @@ class ModelCapabilityService {
       });
       if (m.text_output) matrix[p].text_models_count += 1;
       if (m.image_output) matrix[p].image_models_count += 1;
-      if (m.video_output && m.video_test_status === STATUS_PASSED) matrix[p].video_models_count += 1;
+      if (m.video_output && (m.video_test_status === STATUS_PASSED || hasVerifiedFreeAgnesAccess(m))) matrix[p].video_models_count += 1;
     }
 
     const out = {};

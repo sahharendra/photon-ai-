@@ -362,6 +362,9 @@ function createArtifactsService({
     const s = getFreshStore();
     if (!s.artifacts) s.artifacts = {};
     if (!s.artifacts[uid]) s.artifacts[uid] = [];
+    for (const artifact of s.artifacts[uid]) {
+      if (!Number.isInteger(artifact.version) || artifact.version < 1) artifact.version = 1;
+    }
     return s.artifacts[uid];
   }
 
@@ -375,6 +378,7 @@ function createArtifactsService({
         description: art.description || '',
         model: art.model || '',
         provider: art.provider || '',
+        version: Number(art.version) || 1,
         fileCount: Array.isArray(art.files) ? art.files.length : 0,
         files: (art.files || []).map(f => ({ name: f.name, path: f.path, language: f.language, size: (f.content || '').length })),
         versionCount: Array.isArray(art.versions) ? art.versions.length : 1,
@@ -437,6 +441,7 @@ function createArtifactsService({
       provider,
       createdAt: nowIso,
       updatedAt: nowIso,
+      version: 1,
       chatHistory: Array.isArray(chatHistory) ? chatHistory : [
         {
           role: 'assistant',
@@ -466,11 +471,17 @@ function createArtifactsService({
     if (idx === -1) throw new HttpError(404, 'artifact_not_found', 'Artifact not found.');
 
     const current = list[idx];
+    if (updates.version === undefined) throw new HttpError(428, 'artifact_version_required', 'Artifact version is required to save changes.');
+    if (Number(updates.version) !== (Number(current.version) || 1)) {
+      throw new HttpError(409, 'artifact_version_conflict', 'This artifact changed on another device. Reload it before saving.');
+    }
     const nowIso = new Date().toISOString();
 
     if (updates.title) current.title = String(updates.title).trim().slice(0, 100);
     if (updates.description !== undefined) current.description = String(updates.description || '').trim().slice(0, 300);
     if (updates.activeFile) current.activeFile = sanitizeZipPath(updates.activeFile);
+    if (updates.model !== undefined) current.model = String(updates.model || '');
+    if (updates.provider !== undefined) current.provider = String(updates.provider || '');
 
     if (Array.isArray(updates.files)) {
       current.files = updates.files.map(f => ({
@@ -483,6 +494,7 @@ function createArtifactsService({
     }
 
     current.updatedAt = nowIso;
+    current.version = (Number(current.version) || 1) + 1;
 
     // Append version if requested
     if (updates.createVersion) {
@@ -495,8 +507,6 @@ function createArtifactsService({
         summary: String(updates.versionSummary || 'Updated project code'),
         files: current.files.map(f => ({ ...f })),
       });
-      // Cap at 20 versions
-      if (current.versions.length > 20) current.versions.shift();
     }
 
     if (Array.isArray(updates.chatHistory)) {
@@ -531,6 +541,7 @@ function createArtifactsService({
       files: cloneFiles,
       createdAt: nowIso,
       updatedAt: nowIso,
+      version: 1,
       chatHistory: Array.isArray(original.chatHistory) ? JSON.parse(JSON.stringify(original.chatHistory)) : [
         {
           role: 'assistant',
@@ -555,8 +566,12 @@ function createArtifactsService({
     return clone;
   }
 
-  function restoreVersion(uid, id, versionNumber) {
+  function restoreVersion(uid, id, versionNumber, expectedVersion) {
     const art = getArtifact(uid, id);
+    if (expectedVersion === undefined) throw new HttpError(428, 'artifact_version_required', 'Artifact version is required to restore a version.');
+    if (Number(expectedVersion) !== (Number(art.version) || 1)) {
+      throw new HttpError(409, 'artifact_version_conflict', 'This artifact changed on another device. Reload it before restoring a version.');
+    }
     const targetVer = (art.versions || []).find(v => v.version === Number(versionNumber));
     if (!targetVer) throw new HttpError(404, 'version_not_found', 'Specified version was not found.');
 
@@ -564,6 +579,7 @@ function createArtifactsService({
     art.files = targetVer.files.map(f => ({ ...f }));
     art.type = inferProjectType(art.files);
     art.updatedAt = nowIso;
+    art.version = (Number(art.version) || 1) + 1;
 
     art.versions.push({
       version: art.versions.length + 1,
@@ -813,8 +829,13 @@ RULES:
     activeFile,
     profile,
     requestId,
+    version,
   }) {
     const art = getArtifact(uid, id);
+    if (version === undefined) throw new HttpError(428, 'artifact_version_required', 'Artifact version is required to edit this artifact.');
+    if (Number(version) !== (Number(art.version) || 1)) {
+      throw new HttpError(409, 'artifact_version_conflict', 'This artifact changed on another device. Reload it before editing.');
+    }
     const cleanInstruction = String(instruction || '').trim();
     if (!cleanInstruction) throw new HttpError(400, 'invalid_instruction', 'Please enter an editing instruction.');
 
@@ -962,6 +983,11 @@ ${cleanInstruction}`;
       saveStore();
       throw new HttpError(502, 'invalid_code', 'Could not parse updated code from the AI response. Please retry.');
     }
+    if (version !== undefined && (Number(getArtifact(uid, id).version) || 1) !== Number(version)) {
+      refundTokenTransaction(store, reserved.transaction.id, 'artifact_version_conflict');
+      saveStore();
+      throw new HttpError(409, 'artifact_version_conflict', 'This artifact changed on another device. Reload it before applying this edit.');
+    }
 
     // Merge updated files into existing files
     const fileMap = new Map();
@@ -1020,15 +1046,15 @@ ${cleanInstruction}`;
       }
     ];
 
-    art.model = option.id;
-    art.provider = option.provider;
-
     const updatedArtifact = updateArtifact(uid, id, {
       files: mergedFiles,
       createVersion: true,
       versionPrompt: cleanInstruction,
       versionSummary: summary,
       chatHistory: newChatHistory,
+      version,
+      model: option.id,
+      provider: option.provider,
     });
 
     return {

@@ -72,6 +72,20 @@ test('without provider keys: Gemini, Claude, GPT and Llama are listed as not con
   } finally { s.child.kill(); }
 });
 
+test('conversation search and retrieval require authentication', async () => {
+  const s = await start({}, 34571);
+  try {
+    const search = await get(s.port, '/api/conversations/search?q=hello');
+    const conversation = await get(s.port, '/api/conversations/c123');
+    const workspace = await get(s.port, '/api/sync/workspace');
+    const attachment = await get(s.port, '/api/attachments/att-private');
+    assert.strictEqual(search.status, 401);
+    assert.strictEqual(conversation.status, 401);
+    assert.strictEqual(workspace.status, 401);
+    assert.strictEqual(attachment.status, 401);
+  } finally { s.child.kill(); }
+});
+
 test('without OPENROUTER_API_KEY: free models listed as not configured', async () => {
   const s = await start({}, 34565);
   try {
