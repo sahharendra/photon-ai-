@@ -89,7 +89,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 #main{flex:1;position:relative;display:flex;flex-direction:column;min-width:0;height:100%;background:radial-gradient(circle at 50% 15%,rgba(227,219,204,.04) 0%,transparent 65%),var(--bg)}
 #topo{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 #top{position:absolute;top:12px;right:14px;display:flex;gap:8px;align-items:center;z-index:5}
-#workspace-sync-status{font-size:11px;color:var(--mute);white-space:nowrap}#workspace-sync-status[data-state="error"]{color:#fca5a5}#workspace-sync-status[data-state="saving"]{color:#fcd34d}
+#workspace-sync-status{display:none !important}
 #plan{background:rgba(20,20,20,.85);border:1px solid rgba(227,219,204,.2);backdrop-filter:blur(8px);padding:4px 10px;font-size:11.5px;border-radius:2px;box-shadow:0 2px 12px rgba(0,0,0,.4);color:var(--ivory)}
 #plan a,.up{color:var(--nude);text-decoration:none;font-weight:600;cursor:pointer;transition:color .2s}
 #plan a:hover,.up:hover{color:var(--ink);text-shadow:0 0 8px rgba(227,219,204,.5)}
@@ -835,7 +835,7 @@ textarea::placeholder{color:var(--mute)}
   <canvas id="topo"></canvas>
   <div id="pbar" hidden></div>
   <div id="pv" hidden></div>
-  <div id="top"><div id="plan">Free plan - <a id="upl">Upgrade</a></div><span id="workspace-sync-status" role="status" aria-live="polite" hidden></span>
+  <div id="top"><div id="plan">Free plan - <a id="upl">Upgrade</a></div><span id="workspace-sync-status" role="status" aria-live="polite" style="display:none !important;" hidden></span>
     <button id="tog" aria-label="Toggle sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button></div>
   <div id="hero">
     <h1 id="greet">Good Morning, User</h1>
@@ -1258,7 +1258,7 @@ var CAP=60000,TEXTEXT=".txt,.md,.markdown,.csv,.tsv,.json,.js,.jsx,.ts,.tsx,.py,
 function loadProj(){try{return JSON.parse(localStorage.getItem("photon-projects-"+user.email)||localStorage.getItem("orca-projects-"+user.email)||"[]")}catch(e){return[]}}
 function projectSyncSignature(p){return compactWorkspaceSignature({name:p.name,desc:p.desc,instr:p.instr,files:p.files||[]})}
 function saveProj(){try{if(!workspaceApplying){Object.keys(workspaceProjectSnapshots).forEach(function(id){if(!projs.some(function(p){return p.id===id}))workspaceDeletedProjectIds.add(id)});projs.forEach(function(p){var sig=projectSyncSignature(p),prev=workspaceProjectSnapshots[p.id];if(p.version==null)p.version=1;else if(prev!==undefined&&prev!==sig)p.version=(Number(p.version)||1)+1;workspaceProjectSnapshots[p.id]=sig})}localStorage.setItem("photon-projects-"+user.email,JSON.stringify(projs));localStorage.setItem("photon-workspace-project-versions-"+workspaceStorageKey(),JSON.stringify(workspaceProjectSnapshots));localStorage.setItem("photon-deleted-projects-"+workspaceStorageKey(),JSON.stringify(Array.from(workspaceDeletedProjectIds)))}catch(e){toast("Couldn't save: browser storage is full")}if(!workspaceApplying)queueWorkspaceSync()}
-function setWorkspaceSyncStatus(state,message){var status=$("workspace-sync-status");if(!status)return;status.textContent=message||"";status.dataset.state=state||"";status.hidden=!message}
+function setWorkspaceSyncStatus(state,message){var status=$("workspace-sync-status");if(!status)return;status.textContent="";status.dataset.state="";status.hidden=true;status.style.display="none";}
 function getProj(id){return projs.filter(function(x){return x.id===id})[0]}
 function curProj(){return cur&&cur.pid?getProj(cur.pid):null}
 function touchProj(c){c=c||cur;if(c)c.t=Date.now();var p=c&&c.pid&&getProj(c.pid);if(p){p.last=Date.now();saveProj()}}
