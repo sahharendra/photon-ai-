@@ -44,9 +44,39 @@ button{font:inherit;color:inherit;cursor:pointer}
 #side.hide{margin-left:-205px}
 .logo{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.08em;font-size:13.5px;padding:3px 6px 10px;color:var(--ink)}
 .logo img,.brand-logo-img{width:22px;height:22px;display:block;object-fit:contain;mix-blend-mode:screen;filter:brightness(1.2) contrast(1.1)}
-.search-chat-btn{text-align:center}.chat-search-input{width:100%;margin:3px 0 6px;padding:8px 9px;border:1px solid rgba(227,219,204,.22);border-radius:4px;background:#111;color:var(--ink);font:inherit;font-size:12px}.chat-search-input:focus{outline:1px solid var(--cream)}
 .sb{border:1px solid rgba(227,219,204,.15);background:var(--btn);color:var(--ink);border-radius:2px;padding:6px 8px;font-size:11.5px;width:100%;transition:all .2s;font-weight:500}
 .sb:hover{background:var(--btn2);border-color:rgba(227,219,204,.35);box-shadow:0 2px 8px rgba(0,0,0,.5)}
+.sb-search-trigger{display:flex;align-items:center;gap:8px;text-align:left}
+.sb-search-trigger svg{width:15px;height:15px;flex-shrink:0;color:var(--ivory)}
+.sb-search-shortcut{margin-left:auto;padding:2px 5px;border:1px solid rgba(227,219,204,.16);border-radius:2px;background:rgba(0,0,0,.2);color:var(--mute);font:10px system-ui,sans-serif}
+#conversation-search-overlay{position:fixed;inset:0;z-index:30;display:flex;justify-content:center;align-items:flex-start;padding:9vh 14px 14px;background:rgba(0,0,0,.68);backdrop-filter:blur(4px)}
+#conversation-search-overlay[hidden]{display:none}
+.conversation-search-backdrop{position:absolute;inset:0}
+.conversation-search-dialog{position:relative;z-index:1;width:min(640px,100%);max-height:78vh;display:flex;flex-direction:column;overflow:hidden;background:#171615;border:1px solid rgba(227,219,204,.26);border-radius:5px;box-shadow:0 24px 80px rgba(0,0,0,.8)}
+.conversation-search-head{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid rgba(227,219,204,.14)}
+.conversation-search-head h2{margin:0;font:600 16px system-ui,sans-serif;color:var(--ink)}
+.conversation-search-close{width:30px;height:30px;border:1px solid transparent;border-radius:3px;background:transparent;color:var(--mute);font-size:20px;line-height:1}
+.conversation-search-close:hover,.conversation-search-close:focus-visible{background:rgba(227,219,204,.1);border-color:rgba(227,219,204,.2);color:var(--ink)}
+.conversation-search-form{display:flex;align-items:center;gap:10px;margin:14px 16px 8px;padding:0 10px;border:1px solid rgba(227,219,204,.26);border-radius:3px;background:#101010}
+.conversation-search-form:focus-within{border-color:var(--nude);box-shadow:0 0 0 2px rgba(227,219,204,.12)}
+.conversation-search-form svg{width:17px;height:17px;flex-shrink:0;color:var(--mute)}
+.conversation-search-form input{flex:1;min-width:0;height:42px;border:0;outline:0;background:transparent;color:var(--ink);font:inherit;font-size:13px}
+.conversation-search-form button{border:0;background:transparent;color:var(--mute);font-size:11px;padding:5px}
+.conversation-search-form button:disabled{visibility:hidden}
+.conversation-search-status{min-height:20px;padding:0 18px 8px;color:var(--mute);font-size:11.5px}
+.conversation-search-retry{margin-left:4px;padding:2px 7px;border:1px solid rgba(227,219,204,.2);border-radius:2px;background:#20201e;color:var(--ink);font:inherit}
+.conversation-search-results{overflow-y:auto;padding:0 10px 10px}
+.conversation-search-result{display:block;width:100%;padding:11px 10px;border:1px solid transparent;border-radius:3px;background:transparent;text-align:left;color:var(--ink);cursor:pointer}
+.conversation-search-result:hover,.conversation-search-result:focus-visible{outline:0;background:rgba(227,219,204,.08);border-color:rgba(227,219,204,.18)}
+.conversation-search-result strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px;font-weight:600}
+.conversation-search-result span{display:-webkit-box;overflow:hidden;color:var(--mute);font-size:11.5px;line-height:1.45;margin-top:3px;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.conversation-search-result mark{background:rgba(227,219,204,.22);color:var(--ink);border-radius:2px}
+.conversation-search-more{display:flex;justify-content:center;padding:0 16px 16px}
+.conversation-search-more[hidden]{display:none}
+.conversation-search-more button{padding:7px 14px;border:1px solid rgba(227,219,204,.2);border-radius:3px;background:#20201e;color:var(--ink);font-size:11.5px}
+.conversation-search-more button:hover{border-color:var(--nude);background:#292825}
+.conversation-search-empty{padding:34px 16px;text-align:center;color:var(--mute);font-size:12px}
+@media(max-width:600px){#conversation-search-overlay{padding:7vh 8px 8px}.conversation-search-dialog{max-height:84vh}.conversation-search-head{padding:12px 14px}}
 #upg{background:linear-gradient(135deg,#e3dbcc 0%,#c8bea9 100%);border:0;border-radius:2px;color:#101010;font-weight:700;box-shadow:0 2px 10px rgba(0,0,0,.5);transition:filter .2s,box-shadow .2s}
 #upg:hover{filter:brightness(1.08);box-shadow:0 3px 14px rgba(227,219,204,.25)}
 .lbl{font-size:11px;color:var(--mute);padding:10px 6px 4px;letter-spacing:.04em;text-transform:uppercase}
@@ -59,6 +89,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 #main{flex:1;position:relative;display:flex;flex-direction:column;min-width:0;height:100%;background:radial-gradient(circle at 50% 15%,rgba(227,219,204,.04) 0%,transparent 65%),var(--bg)}
 #topo{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 #top{position:absolute;top:12px;right:14px;display:flex;gap:8px;align-items:center;z-index:5}
+#workspace-sync-status{font-size:11px;color:var(--mute);white-space:nowrap}#workspace-sync-status[data-state="error"]{color:#fca5a5}#workspace-sync-status[data-state="saving"]{color:#fcd34d}
 #plan{background:rgba(20,20,20,.85);border:1px solid rgba(227,219,204,.2);backdrop-filter:blur(8px);padding:4px 10px;font-size:11.5px;border-radius:2px;box-shadow:0 2px 12px rgba(0,0,0,.4);color:var(--ivory)}
 #plan a,.up{color:var(--nude);text-decoration:none;font-weight:600;cursor:pointer;transition:color .2s}
 #plan a:hover,.up:hover{color:var(--ink);text-shadow:0 0 8px rgba(227,219,204,.5)}
@@ -447,9 +478,113 @@ textarea::placeholder{color:var(--mute)}
 .usr .profile-nav{border:0;background:none;color:inherit;padding:0;display:flex;align-items:center;gap:8px;min-width:0;flex:1;text-align:left;cursor:pointer;border-radius:20px}
 .usr .profile-nav:hover{color:var(--nude)}.usr .profile-nav:focus-visible{outline:2px solid var(--nude);outline-offset:3px}
 
-/* PHOTON PROFILE POLISH */
-.profile-page{width:min(100%,1800px);margin:0 auto;padding:clamp(20px,2.5vw,42px) clamp(20px,3vw,56px) 64px;background-image:radial-gradient(ellipse at 55% 0%,rgba(227,219,204,.065),transparent 45%),repeating-radial-gradient(ellipse 145% 78% at 50% -24%,transparent 0 17px,rgba(243,240,233,.012) 18px 19px,transparent 20px 31px)}
-.profile-top{padding:0 0 15px;border-bottom:1px solid rgba(227,219,204,.12);margin-bottom:20px}.profile-top h1{font-size:clamp(28px,2.2vw,36px);letter-spacing:-.02em}.profile-crumb{font-size:12px;letter-spacing:.015em}.profile-crumb button:hover{color:var(--nude)}.profile-top-actions button{transition:background .18s,border-color .18s,transform .18s}.profile-top-actions button:hover:not(:disabled){transform:translateY(-1px)}.profile-wave{min-height:132px;padding:27px clamp(24px,3vw,48px);border-radius:13px;box-shadow:inset 0 1px rgba(255,255,255,.035),0 12px 34px rgba(0,0,0,.22)}.profile-wave h2{letter-spacing:-.025em}.profile-wave p{font-size:14px;color:#d5d0c5}.profile-overview{grid-template-columns:minmax(230px,280px) minmax(0,1fr);gap:18px;margin-bottom:18px}.profile-tabs,.profile-card{border-color:rgba(227,219,204,.3);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.2)}.profile-tabs{padding:10px;background:linear-gradient(160deg,#141414,#0d0d0d)}.profile-tabs button{border-radius:7px;transition:background .18s,color .18s,transform .18s}.profile-tabs button:hover{transform:translateX(2px)}.profile-tabs button.active{background:linear-gradient(120deg,#e7dfd0,#d2c8b6);box-shadow:0 2px 10px rgba(227,219,204,.11)}.profile-card{padding:22px 24px;background:linear-gradient(145deg,rgba(20,20,20,.98),rgba(12,12,12,.98))}.profile-card-head{padding-bottom:12px;margin-bottom:12px}.profile-card h2{font-size:20px;letter-spacing:-.015em}.profile-sub{font-size:13px;color:#bcb6aa;line-height:1.6}.profile-info-grid{column-gap:40px}.profile-info{min-height:42px;border-bottom-color:rgba(255,255,255,.075)}.profile-info strong{color:#f4f1e9}.profile-columns,.profile-lower{gap:18px;margin-bottom:18px}.profile-plan-title{letter-spacing:-.02em}.profile-plan-meta>div{padding:2px 14px}.profile-plan-meta small{font-size:12px;letter-spacing:.025em}.profile-plan-meta b{font-size:15px}.profile-usage{gap:20px}.profile-ring{box-shadow:0 4px 20px rgba(0,0,0,.25)}.profile-model{border-radius:8px;background:linear-gradient(150deg,#151515,#0e0e0e);min-height:120px}.profile-model:hover:not(:disabled){transform:translateY(-2px)}.profile-model,.profile-action{transition:all .18s ease}.profile-action{border-radius:7px}.profile-action:focus-visible,.profile-tabs button:focus-visible,.profile-model:focus-visible,.profile-crumb button:focus-visible{outline:2px solid var(--nude);outline-offset:3px}.profile-activity li{padding:12px 0}.profile-activity .activity-icon{border-radius:10px;background:rgba(227,219,204,.1)}.profile-delete{background:linear-gradient(145deg,rgba(32,16,16,.65),rgba(14,12,12,.98));border-color:rgba(190,90,90,.4)}.profile-dialog{border-radius:12px}
+/* PHOTON PROFILE POLISH — Classic Elegant Two-Column Layout */
+.profile-page{min-height:100vh;width:100%;padding:10px clamp(34px,1.8vw,48px) 48px clamp(22px,4.5vw,100px);background-color:#090909;background-image:radial-gradient(ellipse at 52% 0%,rgba(227,219,204,.05),transparent 48%),repeating-radial-gradient(ellipse 145% 78% at 50% -24%,transparent 0 17px,rgba(243,240,233,.01) 18px 19px,transparent 20px 31px);color:var(--ink);font-family:Inter,Arial,sans-serif}
+.profile-page *,.profile-dialog *{box-sizing:border-box}
+.profile-page button,.profile-dialog button{font-family:inherit}
+.profile-page svg{max-width:100%;box-sizing:border-box}
+.profile-top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 18px}
+.profile-top h1{margin:0;font:600 30px Georgia,serif}
+.profile-crumb{margin-top:5px;color:var(--mute);font-size:13px}
+.profile-crumb button{border:0;background:none;color:var(--ivory);padding:0;cursor:pointer}
+.profile-crumb button:hover{color:var(--nude)}
+.profile-top-actions{display:flex;gap:10px;align-items:center}
+.profile-top-actions button{min-height:42px;border:1px solid rgba(227,219,204,.35);background:#111;color:var(--ink);border-radius:9px;padding:9px 14px;cursor:pointer;font-weight:600;transition:background .18s,border-color .18s}
+.profile-top-actions button:hover:not(:disabled){border-color:var(--nude);background:#1b1b1b}
+.profile-top-actions button:disabled{opacity:.55;cursor:not-allowed}
+.profile-top-actions .profile-back-icon{width:42px;height:42px;padding:0;display:grid;place-items:center;font-size:20px}
+.profile-back-icon svg{width:20px !important;height:20px !important;max-width:20px;max-height:20px;display:block}
+.profile-wave{position:relative;overflow:hidden;margin:0 0 18px;padding:22px 40px;border:1px solid var(--nude);border-radius:16px;min-height:116px;background:linear-gradient(105deg,rgba(0,0,0,.9),rgba(10,10,10,.48)),repeating-radial-gradient(ellipse at 94% 20%,transparent 0 13px,rgba(227,219,204,.10) 14px 15px,transparent 16px 23px)}
+.profile-wave:after{content:"";position:absolute;width:53%;height:100px;right:-2%;bottom:-30px;border-top:2px solid rgba(243,240,233,.76);border-radius:50%;transform:rotate(-11deg);filter:drop-shadow(0 0 8px #e3dbcc);pointer-events:none}
+.profile-wave h2{position:relative;z-index:1;margin:0 0 5px;font:600 clamp(23px,2.4vw,32px) Georgia,serif}
+.profile-wave p{position:relative;z-index:1;margin:0;color:var(--ivory)}
+.profile-content{margin:0;width:100%}
+.profile-overview{display:grid;grid-template-columns:302px minmax(0,1fr);gap:16px;margin-bottom:16px}
+.profile-tabs,.profile-card{border:1px solid rgba(227,219,204,.72);border-radius:14px;background:linear-gradient(145deg,rgba(19,19,19,.96),rgba(12,12,12,.96));box-shadow:0 8px 30px rgba(0,0,0,.16)}
+.profile-tabs{padding:12px;display:flex;flex-direction:column;gap:5px;align-self:stretch}
+.profile-tabs button{border:0;background:transparent;color:var(--ivory);text-align:left;border-radius:9px;padding:12px 14px;font-size:15px;cursor:pointer;display:flex;gap:13px;align-items:center;min-height:46px;width:100%;transition:background .18s,color .18s}
+.profile-tabs button .pi{font-size:20px;width:24px;height:24px;flex:0 0 24px;display:inline-grid;place-items:center}
+.profile-tabs button .pi svg{width:22px !important;height:22px !important;max-width:22px;max-height:22px;display:block;stroke:currentColor}
+.profile-tabs button:hover{background:rgba(227,219,204,.09)}
+.profile-tabs button.active{background:var(--nude);color:#161616;font-weight:700}
+.profile-tabs button.active .pi svg{stroke:#161616 !important;color:#161616 !important}
+.profile-card{padding:18px 20px;scroll-margin-top:16px}
+.profile-card h2,.profile-card h3{margin:0;color:var(--ink)}
+.profile-card h2{font-size:21px;display:flex;align-items:center}
+.profile-card h3{font-size:18px}
+.profile-sub{color:var(--ivory);font-size:13px;margin:5px 0 13px}
+.profile-card-head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding-bottom:9px;margin-bottom:8px;border-bottom:1px solid var(--line)}
+.profile-heading-icon{display:inline-flex;width:24px;height:24px;vertical-align:-4px;margin-right:8px;color:var(--ivory);align-items:center;justify-content:center;flex:0 0 24px}
+.profile-heading-icon svg{width:22px !important;height:22px !important;max-width:22px;max-height:22px;display:block}
+.profile-action{border:1px solid rgba(227,219,204,.2);border-radius:8px;background:var(--nude);color:#161616;padding:9px 15px;font-weight:700;cursor:pointer;font-size:13px;transition:filter .18s}
+.profile-action:hover{filter:brightness(1.06)}
+.profile-action.secondary{background:#121212;color:var(--ivory)}
+.profile-action.danger{background:#241313;border-color:#6e3737;color:#ffdede}
+.profile-action:disabled{opacity:.55;cursor:not-allowed}
+.profile-info-grid{position:relative;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(4,minmax(34px,auto));grid-auto-flow:column;column-gap:52px}
+.profile-info-grid:after{content:"";position:absolute;left:calc(50% - .5px);top:9px;bottom:9px;width:1px;background:rgba(227,219,204,.2)}
+.profile-info{display:grid;grid-template-columns:28px minmax(105px,150px) minmax(0,1fr) 24px;align-items:center;gap:9px;padding:5px 2px;border-bottom:1px solid rgba(255,255,255,.09);font-size:14px;min-width:0}
+.profile-info .pi{color:var(--ivory);font-size:17px;width:22px;height:22px;display:grid;place-items:center;flex:0 0 22px}
+.profile-info .pi svg{width:20px !important;height:20px !important;max-width:20px;max-height:20px;display:block}
+.profile-info span:nth-child(2){color:var(--ivory)}
+.profile-info strong{font-weight:500;overflow-wrap:anywhere}
+.profile-info .copy-id{border:0;background:none;color:var(--mute);cursor:pointer;padding:3px;display:grid;place-items:center;width:24px;height:24px}
+.profile-info .copy-id svg{width:18px !important;height:18px !important;max-width:18px;max-height:18px;display:block}
+.profile-info .copy-id:hover{color:var(--nude)}
+.profile-columns{display:grid;grid-template-columns:1.23fr 1fr;gap:16px;margin-bottom:16px}
+.profile-plan{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:14px}
+.profile-plan-title{font-size:22px;font-weight:700}
+.profile-current{display:inline-block;background:var(--nude);color:#171717;border-radius:20px;padding:4px 10px;font-size:11px;margin-left:10px;vertical-align:middle}
+.profile-plan-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;border-top:1px solid var(--line);padding-top:14px;margin-top:14px}
+.profile-plan-meta>div{padding:0 10px;border-right:1px solid var(--line)}
+.profile-plan-meta>div:last-child{border:0}
+.profile-plan-meta small{display:block;color:var(--mute);margin-bottom:5px}
+.profile-plan-meta b{font-size:14px}
+.profile-usage{display:grid;grid-template-columns:155px 1fr;align-items:center;gap:14px}
+.profile-ring{width:154px;height:154px;margin:auto;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--nude) var(--pct),#3b3b3b 0);position:relative}
+.profile-ring:before{content:"";position:absolute;inset:11px;border-radius:50%;background:#111}
+.profile-ring>div{z-index:1;text-align:center}
+.profile-ring strong{display:block;font:700 28px Georgia,serif}
+.profile-ring small{color:var(--ivory)}
+.profile-usage-stats div{padding:9px 4px;border-bottom:1px solid var(--line)}
+.profile-usage-stats small{display:block;color:var(--ivory);margin-bottom:5px}
+.profile-usage-stats b{font:600 21px Georgia,serif}
+.profile-lower{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.profile-models{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.profile-model{min-height:112px;background:#111;border:1px solid rgba(227,219,204,.28);border-radius:10px;color:var(--ivory);padding:12px 8px;text-align:center;cursor:pointer;transition:border-color .18s,background .18s,box-shadow .18s}
+.profile-model:hover:not(:disabled),.profile-model.selected{border-color:var(--nude);background:linear-gradient(145deg,rgba(227,219,204,.14),#111);box-shadow:0 0 0 1px rgba(227,219,204,.22)}
+.profile-model:disabled{opacity:.72;cursor:not-allowed}
+.profile-model .pm-icon{display:grid;place-items:center;height:30px;margin:0 auto 8px}
+.profile-model .pm-icon svg{width:30px;height:30px}
+.profile-model .pm-radio{display:block;width:18px;height:18px;margin:10px auto 0;border:1.5px solid rgba(243,240,233,.75);border-radius:50%;position:relative}
+.profile-model.selected .pm-radio{border-color:var(--nude)}
+.profile-model.selected .pm-radio:after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--nude)}
+.profile-model strong{display:block;font-size:13px}
+.profile-model small{display:block;color:var(--mute);font-size:10px;margin-top:5px}
+.profile-activity{list-style:none;padding:0;margin:0}
+.profile-activity li{display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.profile-activity li:last-child{border-bottom:0}
+.profile-activity .activity-icon{width:38px;height:38px;border-radius:10px;background:rgba(227,219,204,.1);display:grid;place-items:center;flex:0 0 38px}
+.profile-activity .activity-icon svg{width:20px !important;height:20px !important;max-width:20px;max-height:20px;display:block}
+.profile-activity .activity-desc{min-width:0;color:var(--ivory);font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.profile-activity .activity-desc b{color:var(--ink)}
+.profile-activity time{color:var(--mute);font-size:12px;white-space:nowrap}
+.profile-empty{padding:24px 0;color:var(--mute);text-align:center}
+.profile-delete{border-color:rgba(180,50,50,.4);background:linear-gradient(145deg,rgba(30,12,12,.95),rgba(15,8,8,.95))}
+.profile-delete .profile-card-head{border-bottom-color:rgba(180,50,50,.2)}
+.profile-state{margin-top:14px;padding:12px 16px;border:1px solid var(--line);border-radius:8px;background:#151515;color:var(--ivory);font-size:13px}
+.profile-state.error{border-color:#804747;color:#ffdede}
+.profile-loading{padding:80px 20px;text-align:center;color:var(--ivory)}
+.profile-dialog-bg{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.75);display:grid;place-items:center;padding:16px}
+.profile-dialog{width:min(520px,100%);max-height:90vh;overflow:auto;background:#151515;border:1px solid var(--nude);border-radius:14px;padding:22px;box-shadow:0 20px 70px #000}
+.profile-dialog h2{margin:0 0 5px;font:600 23px Georgia,serif}
+.profile-dialog label{display:block;margin:13px 0 5px;color:var(--ivory);font-size:12px}
+.profile-dialog input,.profile-dialog select{width:100%;height:42px;padding:0 11px;border:1px solid rgba(227,219,204,.28);border-radius:7px;background:#0e0e0e;color:var(--ink)}
+.profile-dialog-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:18px}
+.profile-footnote{font-size:11px;color:var(--mute);margin-top:10px}
+@media(max-width:980px){.profile-overview{grid-template-columns:1fr}.profile-tabs{flex-direction:row;overflow-x:auto;scrollbar-width:thin;padding:8px;gap:8px}.profile-tabs button{white-space:nowrap;min-height:42px;padding:8px 14px;font-size:14px;flex:0 0 auto;width:auto}.profile-tabs button .pi svg{width:20px !important;height:20px !important}.profile-columns,.profile-lower{grid-template-columns:1fr}.profile-content{max-width:none}}
+@media(max-width:600px){.profile-page{padding:14px 12px 30px}.profile-top{align-items:flex-start}.profile-top h1{font-size:25px}.profile-top-actions button{padding:8px;min-height:38px}.profile-wave{padding:19px;border-radius:12px}.profile-info-grid{grid-template-columns:1fr;grid-template-rows:none;grid-auto-flow:row}.profile-info-grid:after{display:none}.profile-card{padding:15px}.profile-info{grid-template-columns:24px 100px minmax(0,1fr) 20px;font-size:12px}.profile-plan{grid-template-columns:1fr}.profile-plan-meta{grid-template-columns:1fr}.profile-plan-meta>div{padding:8px 2px;border-right:0;border-bottom:1px solid var(--line)}.profile-usage{grid-template-columns:115px 1fr;gap:8px}.profile-ring{width:108px;height:108px}.profile-ring:before{inset:9px}.profile-ring strong{font-size:23px}.profile-models{grid-template-columns:repeat(2,minmax(0,1fr))}.profile-activity li{grid-template-columns:34px minmax(0,1fr)}.profile-activity time{grid-column:2}.profile-card-head{align-items:flex-start}.profile-card-head .profile-action{padding:8px;font-size:12px}}
+
 .profile-model-list{list-style:none;padding:0;margin:0}
 .profile-model-row{display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;padding:12px 10px;border:0;border-bottom:1px solid var(--line);border-radius:8px;background:transparent;color:var(--ivory);text-align:left;cursor:pointer;transition:background .15s,border-color .15s}
 .profile-model-row:hover:not(:disabled){background:rgba(227,219,204,.07)}
@@ -520,7 +655,7 @@ textarea::placeholder{color:var(--mute)}
 .profile-model-toolbar select#models-provider-filter:focus{border-color:rgba(227,219,204,0.55);box-shadow:0 0 0 2px rgba(227,219,204,0.12)}
 .profile-model-toolbar select#models-provider-filter option{background:#121217;color:#e3dbcc;padding:8px 12px}
 .models-modal-list-wrap{overflow:auto;max-height:60vh;padding-right:2px}
-@media(max-width:980px){.profile-overview{grid-template-columns:1fr}.profile-tabs{flex-direction:row;overflow-x:auto;scrollbar-width:thin}.profile-tabs button{min-height:44px}.profile-content{max-width:none}}
+@media(max-width:980px){.profile-content{max-width:none}}
 @media(max-width:600px){.profile-page{padding:14px 12px 32px}.profile-top{padding-bottom:12px;margin-bottom:14px}.profile-wave{min-height:108px;padding:19px 17px;margin-bottom:14px}.profile-wave p{font-size:12px}.profile-card{padding:16px}.profile-card-head{gap:10px}.profile-info-grid{column-gap:0}.profile-info{min-height:40px}.profile-columns,.profile-lower{gap:12px;margin-bottom:12px}.profile-activity li{padding:9px 0}.profile-delete .profile-card-head{flex-direction:column}.profile-model-row{grid-template-columns:34px minmax(0,1fr);gap:10px;padding:10px 6px}.profile-model-row .model-action-col{grid-column:2;justify-self:start;margin-top:4px}.profile-model-toolbar{grid-template-columns:1fr;gap:8px}.profile-model-toolbar select#models-provider-filter{width:100%}}
 /* PHOTON AI Dedicated Artifacts Workspace — Lovable.dev Grade Studio */
 #pv{position:absolute;inset:0;z-index:50;background:#09090d;overflow-y:auto}
@@ -684,8 +819,10 @@ textarea::placeholder{color:var(--mute)}
     <span>Photon</span>
   </div>
   <button class="sb" id="new">+ New Conversation</button>
-  <button class="sb search-chat-btn" id="search-chats" style="display:none;" type="button" aria-expanded="false" aria-controls="chat-search-input">⌘ &nbsp; Search chats</button>
-  <input class="chat-search-input" id="chat-search-input" type="search" placeholder="Search conversations..." aria-label="Search conversations" hidden>
+  <button class="sb sb-search-trigger" id="search-conversations" type="button" title="Search" aria-label="Search conversations" aria-keyshortcuts="Control+K Meta+K" aria-haspopup="dialog" aria-expanded="false" aria-controls="conversation-search-overlay">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>
+    <span>Search</span><kbd class="sb-search-shortcut" id="search-shortcut">Ctrl K</kbd>
+  </button>
   <button class="sb" id="upg">Upgrade</button>
   <button class="sb" id="proj">Projects</button>
   <button class="sb" id="art" style="display:flex;align-items:center;justify-content:space-between"><span>✨ Artifacts</span><span style="font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:99px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;letter-spacing:.3px">STUDIO</span></button>
@@ -698,7 +835,7 @@ textarea::placeholder{color:var(--mute)}
   <canvas id="topo"></canvas>
   <div id="pbar" hidden></div>
   <div id="pv" hidden></div>
-  <div id="top"><div id="plan">Free plan - <a id="upl">Upgrade</a></div>
+  <div id="top"><div id="plan">Free plan - <a id="upl">Upgrade</a></div><span id="workspace-sync-status" role="status" aria-live="polite" hidden></span>
     <button id="tog" aria-label="Toggle sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button></div>
   <div id="hero">
     <h1 id="greet">Good Morning, User</h1>
@@ -714,6 +851,39 @@ textarea::placeholder{color:var(--mute)}
           <button type="button" class="gen-mode-btn on" id="gen-mode-text" data-gen-cat="text" role="tab" aria-selected="true" title="Text chat, reasoning, coding and document analysis"><span class="gen-mode-icon">💬</span> TEXT</button>
           <button type="button" class="gen-mode-btn" id="gen-mode-image" data-gen-cat="image" role="tab" aria-selected="false" title="High-speed text-to-image synthesis (FLUX &amp; SDXL)"><span class="gen-mode-icon">🎨</span> IMAGE</button>
           <button type="button" class="gen-mode-btn" id="gen-mode-video" data-gen-cat="video" role="tab" aria-selected="false" title="Text-to-video synthesis"><span class="gen-mode-icon">🎬</span> VIDEO</button>
+        </div>
+        <div id="video-generation-settings" hidden style="padding:8px 12px;border-top:1px solid rgba(148,163,184,.16);display:flex;flex-wrap:wrap;gap:8px;align-items:end">
+          <label style="font-size:11px;color:#aab5c7">Mode
+            <select id="video-generation-mode" style="display:block;margin-top:3px">
+              <option value="text">Text to video</option>
+              <option value="keyframe">Keyframe image to video</option>
+              <option value="reference">Reference image to video</option>
+            </select>
+          </label>
+          <label style="font-size:11px;color:#aab5c7">Duration
+            <select id="video-generation-seconds" style="display:block;margin-top:3px">
+              <option value="4">4 seconds</option><option value="5" selected>5 seconds</option>
+              <option value="6">6 seconds</option><option value="7">7 seconds</option>
+              <option value="8">8 seconds</option><option value="9">9 seconds</option>
+              <option value="10">10 seconds</option><option value="11">11 seconds</option><option value="12">12 seconds</option>
+            </select>
+          </label>
+          <label style="font-size:11px;color:#aab5c7">Aspect ratio
+            <select id="video-generation-aspect" style="display:block;margin-top:3px">
+              <option>21:9</option><option selected>16:9</option><option>4:3</option>
+              <option>1:1</option><option>3:4</option><option>9:16</option>
+            </select>
+          </label>
+          <span style="font-size:11px;color:#aab5c7">Resolution: 720P</span>
+          <label id="video-reference-image-field" hidden style="font-size:11px;color:#aab5c7;flex:1;min-width:220px">Public reference image URL
+            <input id="video-reference-image" type="url" placeholder="https://... (must be publicly reachable)" style="display:block;width:100%;margin-top:3px">
+          </label>
+          <label id="video-first-frame-field" hidden style="font-size:11px;color:#aab5c7;flex:1;min-width:220px">First-frame image URL
+            <input id="video-first-frame" type="url" placeholder="https://... (optional)" style="display:block;width:100%;margin-top:3px">
+          </label>
+          <label id="video-last-frame-field" hidden style="font-size:11px;color:#aab5c7;flex:1;min-width:220px">Last-frame image URL
+            <input id="video-last-frame" type="url" placeholder="https://... (optional)" style="display:block;width:100%;margin-top:3px">
+          </label>
         </div>
         <div id="chat-file-list" class="chat-file-list" hidden></div>
         <textarea id="in" rows="1" placeholder="How can I help you today?"></textarea>
@@ -736,22 +906,45 @@ textarea::placeholder{color:var(--mute)}
   <div id="msgs" hidden></div>
 </div>
 <div id="ov"><div id="ovc"></div></div>
+<div id="conversation-search-overlay" hidden aria-hidden="true">
+  <div class="conversation-search-backdrop" data-search-close></div>
+  <section class="conversation-search-dialog" role="dialog" aria-modal="true" aria-labelledby="conversation-search-title">
+    <header class="conversation-search-head">
+      <h2 id="conversation-search-title">Search conversations</h2>
+      <button class="conversation-search-close" id="conversation-search-close" type="button" aria-label="Close search" title="Close search">×</button>
+    </header>
+    <div class="conversation-search-form">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>
+      <input id="conversation-search-input" type="search" maxlength="120" placeholder="Search titles and messages..." aria-label="Search conversation titles and messages" aria-controls="conversation-search-results" autocomplete="off">
+      <button id="conversation-search-clear" type="button" aria-label="Clear search" title="Clear search" disabled>Clear</button>
+    </div>
+    <div class="conversation-search-status" id="conversation-search-status" role="status" aria-live="polite">Search your conversations by title or message.</div>
+    <div class="conversation-search-results" id="conversation-search-results" role="list" aria-label="Search results"></div>
+    <div class="conversation-search-more" id="conversation-search-more" hidden><button type="button" id="conversation-search-more-button">Load more</button></div>
+  </section>
+</div>
 <div id="vo"><i></i><span id="vs">Listening...</span><button id="ve">End voice</button></div>
 <div id="toast"></div>
 <script>
 (function(){
+var $=function(i){return document.getElementById(i)};
 var MODES={general:["Chat","General reasoning and writing."],image:["Create image","image"],video:["Create video","video"],code:["Code","Write clean, production-grade code with language-tagged code blocks and brief explanations."],architecture:["Architecture","Design system architecture: components, data flow, trade-offs, and databases."],srs:["SRS document","Produce an IEEE 830 style Software Requirements Specification."]};
 var SYS="You are Photon, an AI assistant for general reasoning, coding and software architecture. Always respond in English unless the user explicitly requests another language. Answer with clean Markdown: headings, bullets, and language-tagged code blocks. When the user asks for a file (a web page, script, config, data file and so on), write the complete file in one code block whose opening fence has the language and then the file name, for example ```html index.html. Never say you cannot create files: the app shows a Download button on every code block and a Preview button for HTML. If a project needs several files, use one code block per file, each with its own file name.";
-var WAVE=document.getElementById("wave").outerHTML;var basePH="How can I help you today?",tokDay="",projs=[],user=null,vm=false,speaking=false,chats=[],cur=null,mode="general",busy=false,ctl=null,rec=null,pendingChatFiles=[],chatSearch="",photonProfile=null,profileConfig=null,profileConfigFetchedAt=0,profileActivities=[],billingAvailable=false,presenceTimer=null,presenceVisibilityHandler=null;
+var WAVE=document.getElementById("wave").outerHTML;var basePH="How can I help you today?",tokDay="",projs=[],user=null,vm=false,speaking=false,chats=[],cur=null,mode="general",busy=false,ctl=null,rec=null,pendingChatFiles=[],photonProfile=null,profileConfig=null,profileConfigFetchedAt=0,profileActivities=[],billingAvailable=false,presenceTimer=null,presenceVisibilityHandler=null;
+var conversationSearchTimer=null,conversationSearchRequest=null,conversationSearchGeneration=0,conversationSearchNextCursor=null,conversationSearchBusy=false,conversationSearchError=false,conversationSearchResults=[],conversationSearchQuery="",conversationSearchFocusReturn=null,conversationOpenRequest=null,conversationOpenGeneration=0;
 var activeGenCat="text";
 function getModelCat(m) {
   if (!m) return "text";
   if (m.category === "image" || m.task === "text-to-image" || m.category === "Image Generation" || m.image_output || (m.id && m.id.indexOf("@cf/") === 0 && (m.id.indexOf("flux") > -1 || m.id.indexOf("stable-diffusion") > -1)) || m.id === "flux" || m.id === "sana" || m.id === "turbo" || (m.provider && m.provider.toLowerCase().indexOf("pollinations") > -1)) return "image";
-  if (m.category === "video" && m.video_output && m.video_test_status === "PASSED") return "video";
+  if (m.category === "video" && m.video_output && (m.video_test_status === "PASSED" || (m.providerId === "agnes" && m.id === "agnes-video-2.5-flash"))) return "video";
   return "text";
 }
 function setGenCategory(cat){
+  var previousCategory=activeGenCat;
   activeGenCat=cat;
+  if(previousCategory!==cat)queueWorkspaceSync();
+  var videoSettings=$("video-generation-settings");
+  if(videoSettings)videoSettings.hidden=cat!=="video";
   document.querySelectorAll(".gen-mode-btn").forEach(function(b){
     var on=b.dataset.genCat===cat;
     b.classList.toggle("on",on);
@@ -763,12 +956,28 @@ function setGenCategory(cat){
   else if(cat==="video"){
     var catalog=(profileConfig&&(profileConfig.allModels||profileConfig.models))||[];
     var hasVid=catalog.some(function(m){return getModelCat(m)==="video" && m.available!==false && !m.creditsExhausted});
-    inp.placeholder=hasVid?"Describe the video you want to generate...":"No verified free video-generation model is currently available.";
+    var unavailableAgnes=catalog.find(function(m){return m.id==="agnes-video-2.5-flash"&&m.available===false});
+    inp.placeholder=hasVid?"Describe the video you want to generate...":(unavailableAgnes?"Agnes Video 2.5 Flash unavailable: "+(unavailableAgnes.reason||"free API access is not verified."):"No verified free video-generation model is currently available.");
   }
   else{inp.placeholder=hasMsgs?"Message Photon...":"How can I help you today?";}
   ensureCompatibleModelForCategory(cat);
   updateModelPickerBtn();
   if(typeof closeComposerModelPop==="function")closeComposerModelPop();
+}
+function updateVideoReferenceFields(){
+  var mode=$("video-generation-mode")&&$("video-generation-mode").value;
+  var reference=$("video-reference-image-field"),first=$("video-first-frame-field"),last=$("video-last-frame-field");
+  if(reference)reference.hidden=mode!=="reference";
+  if(first)first.hidden=mode!=="keyframe";
+  if(last)last.hidden=mode!=="keyframe";
+}
+$("video-generation-mode")?.addEventListener("change",updateVideoReferenceFields);
+function updateVideoSettingsVisibility(){
+  var panel=$("video-generation-settings");
+  if(!panel)return;
+  var id=(cur&&cur.model)||(user&&user.defaultModel)||(photonProfile&&photonProfile.defaultModel)||"";
+  var current=((profileConfig&&(profileConfig.allModels||profileConfig.models))||[]).find(function(m){return m.id===id});
+  panel.hidden=activeGenCat!=="video"||Boolean(current&&current.providerId&&current.providerId!=="agnes");
 }
 function ensureCompatibleModelForCategory(cat){
   var catalog=(profileConfig&&(profileConfig.allModels||profileConfig.models))||[];
@@ -786,14 +995,16 @@ function ensureCompatibleModelForCategory(cat){
     }
   }
 }
-var $=function(i){return document.getElementById(i)};
 function toast(t){var e=$("toast");e.textContent=t;e.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(function(){e.classList.remove("on")},2200)}
 function CK(){return"photon-chats-"+(user?user.email:"")}
 function AK(){return"photon-active-chat-"+(user?user.email:"")}
+function workspaceStorageKey(){return user&&(user.uid||user.email)||""}
 function load(){try{chats=JSON.parse(localStorage.getItem(CK())||"[]")}catch(e){chats=[]}}
 var attDB=null;
 function getAttDB(){if(attDB)return Promise.resolve(attDB);return new Promise(function(resolve){if(!window.indexedDB)return resolve(null);try{var req=indexedDB.open("photon_chat_attachments",1);req.onupgradeneeded=function(e){var db=e.target.result;if(!db.objectStoreNames.contains("attachments"))db.createObjectStore("attachments",{keyPath:"id"})};req.onsuccess=function(e){attDB=e.target.result;resolve(attDB)};req.onerror=function(){resolve(null)}}catch(_){resolve(null)}})}
 var attMemCache=new Map();
+var workspaceSyncReady=false,workspaceSyncBusy=false,workspaceSyncPromise=null,workspaceSyncTimer=null,workspacePollTimer=null,workspaceApplying=false,workspaceDirty=false,workspaceLastSyncAt=0,workspaceInitializationPromise=null,workspaceSyncIdentity=null,workspaceEventsInstalled=false;
+var workspaceDeletedConversationIds=new Set(),workspaceDeletedProjectIds=new Set(),workspaceConversationSnapshots={},workspaceProjectSnapshots={};
 async function saveAttachmentData(att){if(!att||!att.id)return;attMemCache.set(att.id,att);var db=await getAttDB();if(db){try{var tx=db.transaction("attachments","readwrite");tx.objectStore("attachments").put(att)}catch(_){}}}
 async function getAttachmentData(id){if(!id)return null;if(attMemCache.has(id))return attMemCache.get(id);var db=await getAttDB();if(!db)return null;return new Promise(function(resolve){try{var tx=db.transaction("attachments","readonly");var req=tx.objectStore("attachments").get(id);req.onsuccess=function(){var res=req.result;if(res)attMemCache.set(id,res);resolve(res||null)};req.onerror=function(){resolve(null)}}catch(_){resolve(null)}})}
 function makeImageThumbnail(dataUrl,maxDim,quality){maxDim=maxDim||400;quality=quality||0.7;return new Promise(function(resolve){var img=new Image();img.onload=function(){var w=img.width,h=img.height;if(w>maxDim||h>maxDim){if(w>h){h=Math.round(h*(maxDim/w));w=maxDim}else{w=Math.round(w*(maxDim/h));h=maxDim}}try{var canvas=document.createElement("canvas");canvas.width=w;canvas.height=h;var ctx=canvas.getContext("2d");ctx.drawImage(img,0,0,w,h);resolve(canvas.toDataURL("image/jpeg",quality))}catch(_){resolve(dataUrl)}};img.onerror=function(){resolve(dataUrl)};img.src=dataUrl})}
@@ -825,9 +1036,12 @@ function cleanImageWatermark(dataUrl){
     img.src=dataUrl;
   });
 }
-async function downloadChatAttachment(att){var name=att.name||"download";var data=null;if(att.id){var stored=await getAttachmentData(att.id);if(stored){data=stored.dataUrl||(stored.data?("data:"+(stored.mimeType||"application/octet-stream")+";base64,"+stored.data):null)||(stored.text?("data:text/plain;charset=utf-8,"+encodeURIComponent(stored.text)):null)}}if(!data){data=att.dataUrl||att.preview||(att.data?("data:"+(att.mimeType||"application/octet-stream")+";base64,"+att.data):null)||(att.text?("data:text/plain;charset=utf-8,"+encodeURIComponent(att.text)):null)}if(!data){toast("Attachment content is unavailable for download.");return}var a=document.createElement("a");a.href=data;a.download=name;document.body.appendChild(a);a.click();a.remove()}
-async function previewChatImage(att){var data=null;if(att.id){var stored=await getAttachmentData(att.id);if(stored&&stored.dataUrl)data=stored.dataUrl}if(!data)data=att.dataUrl||att.preview;if(!data)return;modal('<div style="text-align:center"><img src="'+esc(data)+'" style="max-width:100%;max-height:78vh;border-radius:6px;box-shadow:0 12px 48px rgba(0,0,0,0.85);display:block;margin:0 auto 14px"/><div style="display:flex;justify-content:center;gap:10px"><button class="pv-btn" id="att-dl-modal">⬇ Download '+esc(att.name||"image")+'</button><button class="pv-btn ghost" id="att-close-modal">Close</button></div></div>',function(close){$("att-close-modal").onclick=close;$("att-dl-modal").onclick=function(){downloadChatAttachment(att)}})}
-function save(){try{var list=chats.filter(function(c){return c.pin}).concat(chats.filter(function(c){return!c.pin})).slice(0,40);var toStore=list.map(function(c){return Object.assign({},c,{msgs:(c.msgs||[]).map(function(m){if(!m.attachments||!m.attachments.length)return m;return Object.assign({},m,{attachments:m.attachments.map(function(a){return{id:a.id,name:a.name,mimeType:a.mimeType,size:a.size,kind:a.kind,preview:a.preview||null}})})})})});localStorage.setItem(CK(),JSON.stringify(toStore));if(cur)localStorage.setItem(AK(),cur.id)}catch(e){console.warn("Storage save error:",e)}}
+async function downloadChatAttachment(att){var name=att.name||"download";var data=null;if(att.id){var stored=await getAttachmentData(att.id);if(!stored||(!stored.dataUrl&&!stored.data&&!stored.text)){try{stored=await profileApi("/api/attachments/"+encodeURIComponent(att.id));await saveAttachmentData(stored)}catch(e){}}if(stored){data=stored.dataUrl||(stored.data?("data:"+(stored.mimeType||"application/octet-stream")+";base64,"+stored.data):null)||(stored.text?("data:text/plain;charset=utf-8,"+encodeURIComponent(stored.text)):null)}}if(!data){data=att.dataUrl||att.preview||(att.data?("data:"+(att.mimeType||"application/octet-stream")+";base64,"+att.data):null)||(att.text?("data:text/plain;charset=utf-8,"+encodeURIComponent(att.text)):null)}if(!data){toast("Attachment content is unavailable for download.");return}var a=document.createElement("a");a.href=data;a.download=name;document.body.appendChild(a);a.click();a.remove()}
+async function previewChatImage(att){var data=null;if(att.id){var stored=await getAttachmentData(att.id);if(!stored||(!stored.dataUrl&&!stored.data)){try{stored=await profileApi("/api/attachments/"+encodeURIComponent(att.id));await saveAttachmentData(stored)}catch(e){}}if(stored)data=stored.dataUrl||(stored.data?("data:"+(stored.mimeType||att.mimeType||"image/png")+";base64,"+stored.data):null)}if(!data)data=att.dataUrl||att.preview;if(!data)return;modal('<div style="text-align:center"><img src="'+esc(data)+'" style="max-width:100%;max-height:78vh;border-radius:6px;box-shadow:0 12px 48px rgba(0,0,0,0.85);display:block;margin:0 auto 14px"/><div style="display:flex;justify-content:center;gap:10px"><button class="pv-btn" id="att-dl-modal">⬇ Download '+esc(att.name||"image")+'</button><button class="pv-btn ghost" id="att-close-modal">Close</button></div></div>',function(close){$("att-close-modal").onclick=close;$("att-dl-modal").onclick=function(){downloadChatAttachment(att)}})}
+function compactWorkspaceSignature(value){var text=JSON.stringify(value),a=2166136261,b=2246822519;for(var i=0;i<text.length;i++){a=Math.imul(a^text.charCodeAt(i),16777619);b=Math.imul(b^text.charCodeAt(i),3266489917)}return(text.length+":"+((a>>>0).toString(36))+":"+((b>>>0).toString(36)))}
+function conversationSyncSignature(c){return compactWorkspaceSignature({title:c.title,model:c.model||null,pin:!!c.pin,pid:c.pid||null,msgs:(c.msgs||[]).map(function(m){return{id:m.id||null,request_id:m.request_id||null,role:m.role,content:m.content||"",timestamp:m.timestamp||null,kind:m.kind||null,imageAssetId:m.imageAssetId||null,videoUrl:m.videoUrl||null,attachments:(m.attachments||[]).map(function(a){return a.id||a.name})}})})}
+function bumpWorkspaceVersions(){if(workspaceApplying)return;chats.forEach(function(c){if(!c||!c.id)return;var sig=conversationSyncSignature(c),prev=workspaceConversationSnapshots[c.id];if(c.version==null)c.version=1;else if(prev!==undefined&&prev!==sig)c.version=(Number(c.version)||1)+1;workspaceConversationSnapshots[c.id]=sig})}
+function save(){try{bumpWorkspaceVersions();var list=chats.filter(function(c){return c.pin}).concat(chats.filter(function(c){return!c.pin}));var toStore=list.map(function(c){return Object.assign({},c,{msgs:(c.msgs||[]).map(function(m){var copy=Object.assign({},m);if(copy.imageAssetId)delete copy.image;if(copy.attachments&&copy.attachments.length)copy.attachments=copy.attachments.map(function(a){return{id:a.id,name:a.name,mimeType:a.mimeType,size:a.size,kind:a.kind}});return copy})})});localStorage.setItem(CK(),JSON.stringify(toStore));if(cur)localStorage.setItem(AK(),cur.id);localStorage.setItem("photon-workspace-conversation-versions-"+workspaceStorageKey(),JSON.stringify(workspaceConversationSnapshots))}catch(e){console.warn("Storage save error:",e)}if(!workspaceApplying)queueWorkspaceSync()}
 function users(){try{return JSON.parse(localStorage.getItem("photon-users")||localStorage.getItem("orca-users")||"{}")}catch(e){return{}}}
 function putUsers(u){try{localStorage.setItem("photon-users",JSON.stringify(u))}catch(e){}}
 async function hash(t){try{var b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,"0")}).join("")}catch(e){var h=5381;for(var i=0;i<t.length;i++)h=(h*33)^t.charCodeAt(i);return"x"+(h>>>0)}}
@@ -985,16 +1199,21 @@ function chatMenu(c,btn){closeMenu();var r=btn.getBoundingClientRect(),m=documen
     closeMenu();
     if(a.indexOf("mv:")===0){var id=a.slice(3);if(id)c.pid=id;else delete c.pid;touchProj(c);save();render();return}
     if(a==="pin"){c.pin=!c.pin;save();render()}
-    else if(a==="del"){chats=chats.filter(function(k){return k!==c});if(cur===c){cur=null;newChat()}else{save();render()}}
+    else if(a==="del"){workspaceDeletedConversationIds.add(c.id);chats=chats.filter(function(k){return k!==c});if(cur===c){cur=null;newChat()}else{save();render()}}
     else renameChat(c)}}
 function renameChat(c){
   var el=Array.prototype.filter.call($("list").children,function(x){return x._c===c})[0];if(!el)return;
   var sp=el.querySelector("span"),inp=document.createElement("input");inp.className="rn";inp.value=c.title;inp.maxLength=60;inp.setAttribute("aria-label","Rename chat");
   sp.replaceWith(inp);inp.focus();inp.select();var done=false;
-  var fin=function(ok){if(done)return;done=true;var v=inp.value.trim();if(ok&&v){c.title=v;save()}render()};
+  var fin=function(ok){if(done)return;done=true;var v=inp.value.trim(),changed=v&&v!==c.title;if(ok&&v){c.title=v;save();if(changed&&c.msgs.length)syncConversationTitle(c,v)}render()};
   inp.onclick=function(e){e.stopPropagation()};
   inp.onkeydown=function(e){e.stopPropagation();if(e.key==="Enter")fin(true);else if(e.key==="Escape")fin(false)};
   inp.onblur=function(){fin(true)}}
+function syncConversationTitle(conversation,title){
+  profileApi("/api/conversations/"+encodeURIComponent(conversation.id),{method:"PUT",body:{title:title}}).catch(function(error){
+    if(error.status!==404)toast("Couldn't sync conversation title: "+profileApiError(error));
+  });
+}
 var COST={text:1,voice:1,image:2,video:5,code:50},KLAB={text:"Text Generation",voice:"Voice Generation",image:"Image Generation",video:"Video Generation",code:"Code Generation"};
 function activityEnabled(k){var r=TOKEN_RULES.filter(function(x){return x.id===k})[0];return !r||r.enabled!==false}
 function kindOf(t){if(mode==="image"||mode==="video"||mode==="code")return mode;
@@ -1006,7 +1225,7 @@ function dayKey(){var t=new Date();return t.getFullYear()+"-"+(t.getMonth()+1)+"
 function tokState(){var _em=(user&&user.email)?user.email:"guest";var o=null;try{o=JSON.parse(localStorage.getItem("photon-tok-"+_em)||localStorage.getItem("orca-tok-"+_em)||"null")}catch(e){}
   if(!o||o.d!==dayKey())o={d:dayKey(),u:0,by:{text:0,voice:0,image:0,video:0,code:0}};if(!o.by)o.by={text:0,voice:0,image:0,video:0,code:0};return o}
 function tokSave(o){var _em=(user&&user.email)?user.email:"guest";try{localStorage.setItem("photon-tok-"+_em,JSON.stringify(o))}catch(e){}}
-function limit(){var _p=(user&&user.plan)?user.plan:"basic";var p=PLANS.filter(function(x){return x.id===_p})[0];return p?p.tok:500}
+function limit(){var _p=(user&&user.plan)?user.plan:"basic";var p=PLANS.filter(function(x){return x.id===_p})[0];var val=p&&Number(p.tok)>0?Number(p.tok):500;return Math.max(1,val);}
 function left(){return Math.max(0,limit()-tokState().u)}
 function spend(k){var o=tokState();o.u+=COST[k];o.by[k]=(o.by[k]||0)+1;tokSave(o);tokUI()}
 function untilReset(){var n=new Date(),m=new Date(n.getFullYear(),n.getMonth(),n.getDate()+1),ms=m-n;return Math.floor(ms/36e5)+"h "+Math.floor(ms%36e5/6e4)+"m"}
@@ -1037,7 +1256,9 @@ function drawUsage(){
 var FOLD='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.5h8.5A1.5 1.5 0 0 1 21 9v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18z"/></svg>';
 var CAP=60000,TEXTEXT=".txt,.md,.markdown,.csv,.tsv,.json,.js,.jsx,.ts,.tsx,.py,.html,.css,.java,.go,.rs,.php,.sql,.yml,.yaml,.xml,.log,.c,.cpp,.h,.cs,.rb,.sh,.ini,.toml,text/*";
 function loadProj(){try{return JSON.parse(localStorage.getItem("photon-projects-"+user.email)||localStorage.getItem("orca-projects-"+user.email)||"[]")}catch(e){return[]}}
-function saveProj(){try{localStorage.setItem("photon-projects-"+user.email,JSON.stringify(projs))}catch(e){toast("Couldn't save: browser storage is full")}}
+function projectSyncSignature(p){return compactWorkspaceSignature({name:p.name,desc:p.desc,instr:p.instr,files:p.files||[]})}
+function saveProj(){try{if(!workspaceApplying){Object.keys(workspaceProjectSnapshots).forEach(function(id){if(!projs.some(function(p){return p.id===id}))workspaceDeletedProjectIds.add(id)});projs.forEach(function(p){var sig=projectSyncSignature(p),prev=workspaceProjectSnapshots[p.id];if(p.version==null)p.version=1;else if(prev!==undefined&&prev!==sig)p.version=(Number(p.version)||1)+1;workspaceProjectSnapshots[p.id]=sig})}localStorage.setItem("photon-projects-"+user.email,JSON.stringify(projs));localStorage.setItem("photon-workspace-project-versions-"+workspaceStorageKey(),JSON.stringify(workspaceProjectSnapshots));localStorage.setItem("photon-deleted-projects-"+workspaceStorageKey(),JSON.stringify(Array.from(workspaceDeletedProjectIds)))}catch(e){toast("Couldn't save: browser storage is full")}if(!workspaceApplying)queueWorkspaceSync()}
+function setWorkspaceSyncStatus(state,message){var status=$("workspace-sync-status");if(!status)return;status.textContent=message||"";status.dataset.state=state||"";status.hidden=!message}
 function getProj(id){return projs.filter(function(x){return x.id===id})[0]}
 function curProj(){return cur&&cur.pid?getProj(cur.pid):null}
 function touchProj(c){c=c||cur;if(c)c.t=Date.now();var p=c&&c.pid&&getProj(c.pid);if(p){p.last=Date.now();saveProj()}}
@@ -2480,6 +2701,7 @@ function openArtifactEditor(art){
             body:{
               instruction:promptVal,
               model:activeModel,
+              version:art.version,
               attachments:attachmentsPayload,
               activeFile:activeFileObj?activeFileObj.name:'index.html'
             }
@@ -2518,7 +2740,7 @@ function openArtifactEditor(art){
           try{
             var restored=await profileApi('/api/artifacts/'+art.id+'/restore',{
               method:'POST',
-              body:{version:vNum}
+              body:{version:vNum,expectedVersion:art.version}
             });
             art=restored;
             currentFiles=art.files||currentFiles;
@@ -2555,7 +2777,7 @@ function openArtifactEditor(art){
     try{
       var updated=await profileApi('/api/artifacts/'+art.id,{
         method:'PUT',
-        body:{title:art.title,files:currentFiles}
+        body:{title:art.title,files:currentFiles,version:art.version}
       });
       art=updated;
       return true;
@@ -2664,7 +2886,7 @@ async function handleChatFiles(event){
 }
 function render(){
   var L=$("list");L.innerHTML="";
-  var query=chatSearch.trim().toLowerCase(),vis=chats.filter(function(c){if(!c.msgs.length)return false;if(!query)return true;return String(c.title||"").toLowerCase().includes(query)||c.msgs.some(function(m){return String(m.content||"").toLowerCase().includes(query)})}),pins=vis.filter(function(c){return c.pin}),rest=vis.filter(function(c){return!c.pin});
+  var vis=chats.filter(function(c){return c.msgs&&c.msgs.length}),pins=vis.filter(function(c){return c.pin}),rest=vis.filter(function(c){return!c.pin});
   function lbl(t){var e=document.createElement("div");e.className="lbl";e.textContent=t;L.append(e)}
   function item(c){var d=document.createElement("div");d.className="ci"+(c===cur?" on":"");d._c=c;
     var s=document.createElement("span");s.textContent=c.title;
@@ -2677,7 +2899,6 @@ function render(){
   $("rl").style.display=pins.length?"none":"";
   if(pins.length){lbl("Pinned");pins.forEach(item);if(rest.length)lbl("Recent Conversation")}
   rest.forEach(item);
-  if(query&&!vis.length){var empty=document.createElement("div");empty.className="lbl";empty.textContent="No matching conversations";L.append(empty)}
   var has=cur.msgs.length>0,main=$("main");
   main.classList.toggle("chat",has);basePH=has?"Message Photon...":"How can I help you today?";$("in").placeholder=basePH;$("hero").hidden=has;$("msgs").hidden=!has;
   $("greet").textContent=greet();
@@ -2691,6 +2912,157 @@ function render(){
   updateModelPickerBtn();
 }
 
+function conversationSearchExcerpt(text,query){
+  var content=String(text||"").replace(/\s+/g," ").trim(),index=content.toLowerCase().indexOf(query.toLowerCase());
+  if(index<0)return content.slice(0,180);
+  var start=Math.max(0,index-60),end=Math.min(content.length,index+query.length+100);
+  return(start?"…":"")+content.slice(start,end)+(end<content.length?"…":"");
+}
+function localConversationSearch(query){
+  var needle=query.toLowerCase();
+  return chats.filter(function(c){return c&&Array.isArray(c.msgs)&&c.msgs.length>0}).map(function(c){
+    var title=String(c.title||"Conversation"),titleMatch=title.toLowerCase().includes(needle);
+    var message=titleMatch?null:c.msgs.find(function(m){return m&&String(m.content||"").toLowerCase().includes(needle)});
+    if(!titleMatch&&!message)return null;
+    var stamp=Number(c.updatedAt)||Date.parse(c.updatedAt||"")||Number(String(c.id||"").replace(/^c/,""))||0;
+    return{id:c.id,title:title,excerpt:titleMatch?title:conversationSearchExcerpt(message.content,query),matchType:titleMatch?"title":"message",updatedAt:stamp,local:true};
+  }).filter(Boolean).sort(function(a,b){return b.updatedAt-a.updatedAt});
+}
+function appendSearchHighlight(element,text,query){
+  var value=String(text||""),needle=String(query||"").toLowerCase(),lower=value.toLowerCase(),index=lower.indexOf(needle);
+  if(index<0||!needle){element.textContent=value;return}
+  element.appendChild(document.createTextNode(value.slice(0,index)));
+  var mark=document.createElement("mark");mark.textContent=value.slice(index,index+needle.length);element.appendChild(mark);
+  element.appendChild(document.createTextNode(value.slice(index+needle.length)));
+}
+function setConversationSearchStatus(text,retry){
+  var status=$("conversation-search-status");status.textContent=text;
+  if(retry){var button=document.createElement("button");button.type="button";button.textContent="Retry";button.className="conversation-search-retry";button.onclick=function(){runConversationSearch(conversationSearchQuery,false)};status.appendChild(document.createTextNode(" "));status.appendChild(button)}
+}
+function renderConversationSearchResults(){
+  var list=$("conversation-search-results"),query=conversationSearchQuery;
+  list.innerHTML="";
+  conversationSearchResults.forEach(function(item){
+    var row=document.createElement("div");row.setAttribute("role","listitem");
+    var button=document.createElement("button");button.type="button";button.className="conversation-search-result";
+    var title=document.createElement("strong"),excerpt=document.createElement("span");
+    appendSearchHighlight(title,item.title,query);appendSearchHighlight(excerpt,item.excerpt,query);
+    button.append(title,excerpt);button.onclick=function(){openConversationSearchResult(item)};
+    row.appendChild(button);list.appendChild(row);
+  });
+  var more=$("conversation-search-more");
+  more.hidden=!conversationSearchNextCursor;
+  var moreButton=$("conversation-search-more-button");
+  moreButton.disabled=conversationSearchBusy;moreButton.textContent=conversationSearchBusy?"Loading...":"Load more";
+  if(!conversationSearchResults.length&&query&&!conversationSearchBusy&&!conversationSearchError){
+    var empty=document.createElement("div");empty.className="conversation-search-empty";empty.textContent="No conversations found for “"+query+"”.";list.appendChild(empty);
+  }else if(!conversationSearchResults.length&&!query){
+    var prompt=document.createElement("div");prompt.className="conversation-search-empty";prompt.textContent="Type a word or phrase to find a conversation.";list.appendChild(prompt);
+  }
+}
+function runConversationSearch(query,append){
+  query=String(query||"").trim();
+  if(!query){conversationSearchResults=[];conversationSearchNextCursor=null;conversationSearchError=false;setConversationSearchStatus("Search your conversations by title or message.");renderConversationSearchResults();return}
+  if(append&&(conversationSearchBusy||!conversationSearchNextCursor||query!==conversationSearchQuery))return;
+  if(!append){
+    if(conversationSearchRequest)conversationSearchRequest.abort();
+    conversationSearchGeneration++;
+    conversationSearchQuery=query;
+    conversationSearchNextCursor=null;conversationSearchError=false;
+    conversationSearchResults=localConversationSearch(query);
+  }
+  var generation=conversationSearchGeneration,cursor=append?conversationSearchNextCursor:null;
+  conversationSearchBusy=true;setConversationSearchStatus("Searching conversations…");renderConversationSearchResults();
+  var request=new AbortController();conversationSearchRequest=request;
+  var params=new URLSearchParams({q:query,limit:"20"});
+  if(cursor)params.set("cursor",cursor);
+  profileApi("/api/conversations/search?"+params.toString(),{signal:request.signal}).then(function(data){
+    if(generation!==conversationSearchGeneration)return;
+    var seen=new Set(conversationSearchResults.map(function(item){return item.id}));
+    (data.items||[]).forEach(function(item){if(!seen.has(item.id)){conversationSearchResults.push(item);seen.add(item.id)}});
+    conversationSearchResults.sort(function(a,b){
+      var timeA=typeof a.updatedAt==="number"?a.updatedAt:Date.parse(a.updatedAt||"")||0;
+      var timeB=typeof b.updatedAt==="number"?b.updatedAt:Date.parse(b.updatedAt||"")||0;
+      return timeB-timeA;
+    });
+    conversationSearchNextCursor=data.nextCursor||null;conversationSearchBusy=false;conversationSearchError=false;
+    setConversationSearchStatus(conversationSearchResults.length?"Showing "+conversationSearchResults.length+" matching conversation"+(conversationSearchResults.length===1?"":"s")+".":"No matches found.");
+    renderConversationSearchResults();
+  }).catch(function(error){
+    if(generation!==conversationSearchGeneration||error.name==="AbortError")return;
+    conversationSearchBusy=false;conversationSearchError=true;
+    setConversationSearchStatus("Search failed: "+profileApiError(error),true);
+    renderConversationSearchResults();
+  });
+}
+function queueConversationSearch(){
+  clearTimeout(conversationSearchTimer);
+  var input=$("conversation-search-input"),query=input.value.trim();
+  $("conversation-search-clear").disabled=!input.value;
+  if(!query){
+    if(conversationSearchRequest)conversationSearchRequest.abort();
+    if(conversationOpenRequest)conversationOpenRequest.abort();
+    conversationSearchGeneration++;conversationOpenGeneration++;conversationSearchBusy=false;conversationSearchQuery="";
+    conversationSearchResults=[];conversationSearchNextCursor=null;conversationSearchError=false;
+    setConversationSearchStatus("Search your conversations by title or message.");renderConversationSearchResults();return;
+  }
+  if(query!==conversationSearchQuery){
+    if(conversationSearchRequest)conversationSearchRequest.abort();
+    if(conversationOpenRequest)conversationOpenRequest.abort();
+    conversationSearchGeneration++;conversationOpenGeneration++;conversationSearchBusy=false;
+    conversationSearchQuery=query;conversationSearchNextCursor=null;conversationSearchError=false;conversationSearchResults=localConversationSearch(query);
+    setConversationSearchStatus("Searching conversations…");renderConversationSearchResults();
+  }
+  conversationSearchTimer=setTimeout(function(){runConversationSearch(query,false)},250);
+}
+function openConversationSearch(){
+  if(!user){showAuth("login");return}
+  var overlay=$("conversation-search-overlay");
+  if(!overlay.hidden){$("conversation-search-input").focus();return}
+  conversationSearchFocusReturn=document.activeElement;
+  overlay.hidden=false;overlay.setAttribute("aria-hidden","false");
+  $("search-conversations").setAttribute("aria-expanded","true");
+  $("conversation-search-input").value="";$("conversation-search-clear").disabled=true;
+  conversationSearchQuery="";conversationSearchResults=[];conversationSearchNextCursor=null;conversationSearchBusy=false;conversationSearchError=false;
+  setConversationSearchStatus("Search your conversations by title or message.");renderConversationSearchResults();
+  $("conversation-search-input").focus();
+}
+function closeConversationSearch(restoreFocus){
+  var overlay=$("conversation-search-overlay");if(overlay.hidden)return;
+  clearTimeout(conversationSearchTimer);
+  if(conversationSearchRequest)conversationSearchRequest.abort();
+  if(conversationOpenRequest)conversationOpenRequest.abort();
+  conversationOpenGeneration++;
+  conversationSearchGeneration++;conversationSearchBusy=false;
+  overlay.hidden=true;overlay.setAttribute("aria-hidden","true");
+  $("search-conversations").setAttribute("aria-expanded","false");
+  if(restoreFocus!==false){
+    var target=conversationSearchFocusReturn&&conversationSearchFocusReturn.isConnected?conversationSearchFocusReturn:$("search-conversations");
+    if(target&&typeof target.focus==="function")target.focus();
+  }
+}
+async function openConversationSearchResult(item){
+  if(conversationOpenRequest)conversationOpenRequest.abort();
+  var openGeneration=++conversationOpenGeneration;
+  var conversation=chats.find(function(c){return c&&c.id===item.id});
+  if(conversation){
+    cur=conversation;closeConversationSearch(false);save();$("side").classList.remove("show");render();$("in").focus();return;
+  }
+  setConversationSearchStatus("Opening conversation…");
+  var request=new AbortController();conversationOpenRequest=request;
+  try{
+    var data=await profileApi("/api/conversations/"+encodeURIComponent(item.id),{signal:request.signal});
+    if(openGeneration!==conversationOpenGeneration)return;
+    var messages=(data.msgs||data.messages||[]).map(function(message){return Object.assign({},message,{role:message.role==="user"?"user":"assistant",content:String(message.content||"")})});
+    conversation={id:data.id,title:data.title||item.title||"Conversation",msgs:messages,model:data.model||null,version:data.version||1,createdAt:data.createdAt||null,updatedAt:data.updatedAt||Date.now()};
+    chats=[conversation].concat(chats.filter(function(c){return c&&c.id!==conversation.id}));
+    await hydrateWorkspaceAssets();
+    cur=conversation;closeConversationSearch(false);save();$("side").classList.remove("show");render();$("in").focus();
+  }catch(error){
+    if(openGeneration!==conversationOpenGeneration||error.name==="AbortError")return;
+    setConversationSearchStatus("Could not open conversation: "+profileApiError(error),true);
+  }
+}
 function updateModelPickerBtn(){
   var btn=$("model-picker-btn"),nameEl=$("model-picker-name");
   if(!btn||!nameEl)return;
@@ -2715,6 +3087,7 @@ function updateModelPickerBtn(){
   if(label.length>22)label=label.slice(0,20)+"…";
   nameEl.textContent=icon + label;
   btn.title="Category: "+activeGenCat.toUpperCase()+" · Model: "+(found?(found.name+" ("+found.id+")"):currentModelId||"Default")+" — click to change";
+  updateVideoSettingsVisibility();
 }
 
 function positionComposerModelPop(){
@@ -2733,7 +3106,9 @@ function positionComposerModelPop(){
 function renderComposerModelPop(){
   var pop=$("composer-model-pop");
   if(!pop)return;
-  var catalog=profileModelCatalog((profileConfig&&(profileConfig.allModels||profileConfig.models))||[]);
+  var rawCatalog=(profileConfig&&(profileConfig.allModels||profileConfig.models))||[];
+  var catalog=profileModelCatalog(rawCatalog);
+  rawCatalog.forEach(function(m){if(m&&m.providerId==="agnes"&&m.id==="agnes-video-2.5-flash"&&!catalog.some(function(x){return x.id===m.id}))catalog.push(m)});
   var planId=(photonProfile&&photonProfile.plan?photonProfile.plan.id:(user&&user.plan||"basic"));
 
   var eligible=catalog.filter(function(m){
@@ -2742,6 +3117,7 @@ function renderComposerModelPop(){
     if(!profileModelTierAllowed(m,planId))return false;
     return true;
   });
+  var unavailableAgnes=activeGenCat==="video"?catalog.filter(function(m){return m.providerId==="agnes"&&m.id==="agnes-video-2.5-flash"&&(m.available===false||m.creditsExhausted===true)}):[];
 
   var currentModelId=(cur&&cur.model)||(user&&user.defaultModel)||(photonProfile&&photonProfile.defaultModel)||"";
   var searchInp=pop.querySelector("#model-pop-search");
@@ -2764,7 +3140,7 @@ function renderComposerModelPop(){
 
   var listHtml="";
   if(!filtered.length){
-    listHtml='<div style="padding:18px 12px;text-align:center;color:var(--mute);font-size:11.5px">'+
+    listHtml=unavailableAgnes.length?unavailableAgnes.map(function(m){return '<div class="model-pop-item" aria-disabled="true" title="'+profileEscape(m.reason||"Unavailable under strict free-only mode.")+'" style="opacity:.58;cursor:not-allowed"><div class="model-pop-item-main"><div class="model-pop-item-name">'+profileEscape(m.name||m.id)+'</div><div class="model-pop-item-sub"><span>Unavailable · '+profileEscape(m.reason||"Free API eligibility is unverified.")+'</span></div></div></div>'}).join(""):'<div style="padding:18px 12px;text-align:center;color:var(--mute);font-size:11.5px">'+
       (searchVal?'No models match "<b>'+profileEscape(searchVal)+'</b>"':(activeGenCat==='video'?'No verified free video-generation model is currently available.':'No eligible '+activeGenCat.toUpperCase()+' models available.'))+
     '</div>';
   }else{
@@ -2792,6 +3168,11 @@ function renderComposerModelPop(){
         itemsHtml+
       '</div>';
     }).join("");
+    if(unavailableAgnes.length){
+      listHtml+='<div class="model-pop-group"><div class="model-pop-group-header"><span>Unavailable</span><span>'+unavailableAgnes.length+'</span></div>'+
+        unavailableAgnes.map(function(m){return '<div class="model-pop-item" aria-disabled="true" title="'+profileEscape(m.reason||"Unavailable under strict free-only mode.")+'" style="opacity:.58;cursor:not-allowed"><div class="model-pop-item-main"><div class="model-pop-item-name">'+profileEscape(m.name||m.id)+'</div><div class="model-pop-item-sub"><span>Unavailable · '+profileEscape(m.reason||"Free API eligibility is unverified.")+'</span></div></div></div>'}).join("")+
+      '</div>';
+    }
   }
 
   pop.innerHTML='<div class="model-pop-head">'+
@@ -2840,29 +3221,20 @@ function openComposerModelPop(){
   if(!pop||!btn)return;
   var modesPop=$("pop");
   if(modesPop)modesPop.classList.remove("on");
-  if(!profileConfig){
-    loadProfileConfigData(false).then(function(){
-      renderComposerModelPop();
-      positionComposerModelPop();
-      pop.hidden=false;
-      btn.classList.add("open");
-      btn.setAttribute("aria-expanded","true");
-    }).catch(function(){
-      renderComposerModelPop();
-      positionComposerModelPop();
-      pop.hidden=false;
-      btn.classList.add("open");
-      btn.setAttribute("aria-expanded","true");
-    });
-    return;
-  }
-  renderComposerModelPop();
-  positionComposerModelPop();
   pop.hidden=false;
   btn.classList.add("open");
   btn.setAttribute("aria-expanded","true");
-  var searchInp=pop.querySelector("#model-pop-search");
-  if(searchInp)searchInp.focus();
+  pop.innerHTML='<div style="padding:18px 12px;text-align:center;color:var(--mute);font-size:12px">Loading available models...</div>';
+  positionComposerModelPop();
+  loadProfileConfigData(false).then(function(){
+    renderComposerModelPop();
+    positionComposerModelPop();
+    var searchInp=pop.querySelector("#model-pop-search");
+    if(searchInp)searchInp.focus();
+  }).catch(function(){
+    renderComposerModelPop();
+    positionComposerModelPop();
+  });
 }
 
 function closeComposerModelPop(){
@@ -3032,10 +3404,13 @@ async function send(retry){
     inp.value="";inp.style.height="auto";updFlow();
     pendingChatFiles=[];renderChatFileList();
     if(!cur.msgs.length&&cur.title==="New chat")cur.title=text.slice(0,30)+(text.length>30?"...":"");
+    var messageRequestId=crypto.randomUUID();
     cur.msgs.push({
+      id:messageRequestId+":user",
       role:"user",
       content:text,
-      request_id:crypto.randomUUID(),
+      request_id:messageRequestId,
+      timestamp:new Date().toISOString(),
       attachments:requestFiles.map(function(f){
         return{
           id:f.id,
@@ -3058,9 +3433,11 @@ async function send(retry){
   var isVidModel = Boolean(activeModelM && getModelCat(activeModelM) === "video");
   var userMsg=cur.msgs.filter(function(m){return m.role==="user"}).slice(-1)[0],
       kind=activeGenCat==="image"||isImgModel?"image":(activeGenCat==="video"||isVidModel?"video":(!requestFiles.length&&(k0==="image"||k0==="video")?k0:""));
-  cur.updatedAt=Date.now();render();var out=addRow("assistant","");out.innerHTML=kind?'<div class="gen"><div class="gv"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="sh"></i></div><div class="gt">Creating '+kind+'<span class="dots"><u></u><u></u><u></u></span></div></div>':'<span class="think">Thinking...</span>';
-  ctl=new AbortController();busy=true;upd();var got="",failure="",failureCode="",serverSynced=false;
+  cur.updatedAt=Date.now();save();render();var out=addRow("assistant","");out.innerHTML=kind?'<div class="gen"><div class="gv"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="sh"></i></div><div class="gt">Creating '+kind+'<span class="dots"><u></u><u></u><u></u></span></div></div>':'<span class="think">Thinking...</span>';
+  ctl=new AbortController();busy=true;upd();var got="",failure="",failureCode="",serverSynced=false,pendingVideoHistoryEntry=null;
   try{
+    if(workspaceInitializationPromise)await workspaceInitializationPromise;
+    if(workspaceSyncReady)await syncWorkspaceNow();
     if(kind==="video"){
       var allM=(profileConfig&&(profileConfig.allModels||profileConfig.models))||[];
       var activeModelId=(cur&&cur.model)||(user&&user.defaultModel)||"";
@@ -3072,11 +3449,23 @@ async function send(retry){
       }
       var token=await getAuthToken();
       if(!token)throw {code:"auth_required",message:"Sign in again to continue."};
+      var videoRequestBody={prompt:text,model:chosenVidModel};
+      if(chosenVidModel==="agnes-video-2.5-flash"){
+        Object.assign(videoRequestBody,{
+          mode:$("video-generation-mode").value,
+          seconds:Number($("video-generation-seconds").value),
+          size:"720P",
+          aspect_ratio:$("video-generation-aspect").value,
+          reference_image:$("video-reference-image").value.trim(),
+          first_frame:$("video-first-frame").value.trim(),
+          last_frame:$("video-last-frame").value.trim()
+        });
+      }
 
       var genRes=await fetch("/api/video/generate",{
         method:"POST",
         headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
-        body:JSON.stringify({prompt:text,model:chosenVidModel}),
+        body:JSON.stringify(videoRequestBody),
         signal:ctl.signal
       }).then(function(res){return res.json()});
 
@@ -3084,7 +3473,11 @@ async function send(retry){
 
       var vJobId=genRes.data.jobId||genRes.data.videoId||genRes.data.predictionId;
       var curSt=genRes.data.status||"queued";
-      var vidProvName=(activeM&&activeM.provider)||"AI";
+      var selectedVideoModel=allM.find(function(m){return m.id===chosenVidModel});
+      var vidProvName=(selectedVideoModel&&selectedVideoModel.provider)||"AI";
+      pendingVideoHistoryEntry={id:userMsg.request_id+":assistant",role:"assistant",timestamp:new Date().toISOString(),content:"[Video generation "+curSt+": "+text+"]",kind:"video-job",prompt:text,videoJobId:vJobId,status:curSt,model:chosenVidModel};
+      cur.msgs.push(pendingVideoHistoryEntry);
+      save();
       if(out.isConnected){
         out.innerHTML='<div class="gen"><div class="gv"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="sh"></i></div><div class="gt">'+esc(vidProvName)+' rendering video ('+esc(curSt)+')...<span class="dots"><u></u><u></u><u></u></span></div></div>';
       }
@@ -3095,10 +3488,10 @@ async function send(retry){
         if(ctl.signal.aborted)throw {code:"aborted",message:"Video generation cancelled."};
         await new Promise(function(resolve){setTimeout(resolve,3000)});
         pollCount++;
-        var checkRes=await fetch("/api/video/jobs/"+encodeURIComponent(vJobId),{
+        var checkRes=await fetch("/api/video/jobs/"+encodeURIComponent(vJobId)+"?model="+encodeURIComponent(chosenVidModel),{
           headers:{"Authorization":"Bearer "+token},
           signal:ctl.signal
-        }).then(function(res){return res.json()}).catch(function(){return null;});
+        }).then(async function(res){var data=await res.json();if(!res.ok||!data.success){var error=new Error(data.error&&data.error.message||"Video status check failed.");error.code=data.error&&data.error.code||"provider_error";throw error}return data;});
 
         if(checkRes&&checkRes.success&&checkRes.data){
           var jd=checkRes.data;
@@ -3120,14 +3513,12 @@ async function send(retry){
         throw {code:"timeout",message:"Video generation timed out. Please try again."};
       }
 
-      cur.msgs.push({
-        role:"assistant",
+      Object.assign(pendingVideoHistoryEntry,{
         content:"[Video created: "+text+"]",
         kind:"video",
-        prompt:text,
+        status:"completed",
         videoUrl:videoResultUrl,
-        video:videoResultUrl,
-        model:chosenVidModel
+        video:videoResultUrl
       });
       got="created";
     }
@@ -3145,14 +3536,14 @@ async function send(retry){
       if(imgData){
         imgData=await cleanImageWatermark(imgData);
         if(r.profileUsage)serverSynced=true;
-        cur.msgs.push({role:"assistant",content:"["+kind+" created: "+text+"]",image:imgData,cleaned:true,kind:kind,prompt:text,originalPrompt:r.originalPrompt,enhancedPrompt:r.enhancedPrompt,wasEnhanced:r.wasEnhanced,aspectRatio:r.aspectRatio,dimensions:r.dimensions,model:r.model});
+        cur.msgs.push({id:userMsg.request_id+":assistant",role:"assistant",timestamp:new Date().toISOString(),content:"["+kind+" created: "+text+"]",image:imgData,cleaned:true,kind:kind,prompt:text,originalPrompt:r.originalPrompt,enhancedPrompt:r.enhancedPrompt,wasEnhanced:r.wasEnhanced,aspectRatio:r.aspectRatio,dimensions:r.dimensions,model:r.model});
         got="created";
       }else{
         throw {code:"empty_response",message:"Image service did not return an image."};
       }
     }
-    else{var history=cur.msgs.slice(0,-1).slice(-20).filter(function(m){return (m.role==="user"||m.role==="assistant")&&typeof m.content==="string"&&m.content.trim().length>0}).map(function(m){return{role:m.role,content:m.content.trim()}});var answer=await photonStream({conversation_id:cur.id,message:text,history:history,system_instruction:SYS+projCtx()+"\nMode: "+MODES[mode][1],request_id:userMsg.request_id,attachments:requestFiles.map(function(f){return f.kind==="text"?{name:f.name,mimeType:f.mimeType,kind:"text",text:f.text}:{name:f.name,mimeType:f.mimeType,kind:"inline",data:f.data||(f.dataUrl?String(f.dataUrl).split(",")[1]:"")}}),model:cur.model||user.defaultModel||null,activity_type:vm?"voice":k0==="code"?"code":"chat",token_cost_type:billKind},{signal:ctl.signal},function(delta,full){if(out.isConnected){out.innerHTML=md(full);$("msgs").scrollTop=$("msgs").scrollHeight}});got=answer.text;if(answer.profileUsage)serverSynced=true;cur.msgs.push({role:"assistant",content:got});if(answer.fallback){var fb=answer.fallback;toast("Your selected model was temporarily unavailable, so this reply used "+fb.provider+" ("+fb.to+")"+(fb.paid?". Estimated provider cost applies.":"."))}}
-  }catch(er){failureCode=er&&er.code||"";failure=er&&er.message||"The AI request failed. Please try again.";if(er&&er.code==="auth_required"){failure="Your sign-in session expired. Sign in again, then retry this message."}}
+    else{var history=cur.msgs.slice(0,-1).slice(-20).filter(function(m){return (m.role==="user"||m.role==="assistant")&&typeof m.content==="string"&&m.content.trim().length>0}).map(function(m){return{role:m.role,content:m.content.trim()}});var answer=await photonStream({conversation_id:cur.id,title:cur.title,message:text,history:history,system_instruction:SYS+projCtx()+"\nMode: "+MODES[mode][1],request_id:userMsg.request_id,attachments:requestFiles.map(function(f){return f.kind==="text"?{name:f.name,mimeType:f.mimeType,kind:"text",text:f.text}:{name:f.name,mimeType:f.mimeType,kind:"inline",data:f.data||(f.dataUrl?String(f.dataUrl).split(",")[1]:"")}}),model:cur.model||user.defaultModel||null,activity_type:vm?"voice":k0==="code"?"code":"chat",token_cost_type:billKind},{signal:ctl.signal},function(delta,full){if(out.isConnected){out.innerHTML=md(full);$("msgs").scrollTop=$("msgs").scrollHeight}});got=answer.text;if(answer.profileUsage)serverSynced=true;cur.msgs.push({id:userMsg.request_id+":assistant",role:"assistant",timestamp:new Date().toISOString(),content:got});if(answer.fallback){var fb=answer.fallback;toast("Your selected model was temporarily unavailable, so this reply used "+fb.provider+" ("+fb.to+")"+(fb.paid?". Estimated provider cost applies.":"."))}}
+  }catch(er){failureCode=er&&er.code||"";failure=er&&er.message||"The AI request failed. Please try again.";if(pendingVideoHistoryEntry&&!got){pendingVideoHistoryEntry.status="failed";pendingVideoHistoryEntry.content="[Video generation failed: "+failure+"]"}if(er&&er.code==="auth_required"){failure="Your sign-in session expired. Sign in again, then retry this message."}}
   finally{busy=false;ctl=null;if(got&&!serverSynced)spend(billKind);pendingChatFiles=[];renderChatFileList();save();render();if(failure){var row=addRow("assistant","");var canSwitchFree=["billing_required","billing_blocked","quota_or_rate_limit","model_unavailable","provider_forbidden","invalid_model","invalid_api_key"].indexOf(failureCode)!==-1;var nonRetryableCodes=["trial_restricted","invalid_api_key","auth_required","billing_blocked","quota_exhausted","billing_unauthorized","provider_forbidden","invalid_key","paid_credit_required"];var isTransient=failureCode&&nonRetryableCodes.indexOf(failureCode)===-1&&["network_error","provider_timeout","timeout","provider_unavailable","stream_error","internal_error","rate_limit_exceeded"].indexOf(failureCode)!==-1;var retryBtn=isTransient?' <button class="retry" data-retry="1">Retry</button>':'';row.innerHTML='<span class="err">'+esc(failure)+'</span>'+retryBtn+(canSwitchFree?' <button class="retry" data-switch-free="1">Switch to Free Model &amp; Retry</button>':'')}if(vm){if(got)speak(got,listen);else listen()}}
 }
 function plain(t){return t.replace(/```[\s\S]*?```/g," code block omitted. ").replace(/`([^`]+)`/g,"$1").replace(/[*#>_]/g,"").replace(/\s+/g," ").trim().slice(0,1800)}
@@ -3196,8 +3587,18 @@ $("upg").onclick=$("upl").onclick=function(){showPlans()};
 $("proj").onclick=showProjects;
 $("art").onclick=showArtifacts;
 $("tog").onclick=function(){var s=$("side");if(window.innerWidth<=720)s.classList.toggle("show");else s.classList.toggle("hide")};
-$("search-chats").onclick=function(){var input=$("chat-search-input"),open=input.hidden;input.hidden=!open;this.setAttribute("aria-expanded",String(open));if(open){input.focus()}else{input.value="";chatSearch="";render()}};
-$("chat-search-input").addEventListener("input",function(){chatSearch=this.value;render()});
+$("search-conversations").onclick=openConversationSearch;
+$("conversation-search-close").onclick=function(){closeConversationSearch(true)};
+$("conversation-search-overlay").querySelector("[data-search-close]").onclick=function(){closeConversationSearch(true)};
+$("conversation-search-input").addEventListener("input",queueConversationSearch);
+$("conversation-search-input").addEventListener("keydown",function(e){
+  if(e.key==="Enter"){e.preventDefault();clearTimeout(conversationSearchTimer);runConversationSearch(this.value,false)}
+});
+$("conversation-search-clear").onclick=function(){
+  $("conversation-search-input").value="";$("conversation-search-input").focus();queueConversationSearch();
+};
+$("conversation-search-more-button").onclick=function(){runConversationSearch(conversationSearchQuery,true)};
+if(/Mac|iPhone|iPad/.test(navigator.platform||""))$("search-shortcut").textContent="⌘ K";
 $("plus").onclick=function(e){e.stopPropagation();closeComposerModelPop();$("pop").classList.toggle("on")};
 var mpb=$("model-picker-btn");if(mpb)mpb.onclick=toggleComposerModelPop;
 ["text","image","video"].forEach(function(cat){var btn=$("gen-mode-"+cat);if(btn){btn.onclick=function(){setGenCategory(cat)}}});
@@ -3209,7 +3610,20 @@ document.addEventListener("click",function(e){
   if(wrap&&!wrap.contains(e.target))closeComposerModelPop();
 });
 document.addEventListener("keydown",function(e){
+  if((e.ctrlKey||e.metaKey)&&String(e.key).toLowerCase()==="k"){
+    e.preventDefault();openConversationSearch();return;
+  }
+  var searchOverlay=$("conversation-search-overlay");
+  if(e.key==="Tab"&&!searchOverlay.hidden){
+    var focusables=Array.from(searchOverlay.querySelectorAll("button:not([disabled]),input:not([disabled])")).filter(function(el){return!el.closest("[hidden]")});
+    if(focusables.length){
+      var first=focusables[0],last=focusables[focusables.length-1];
+      if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}
+      else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
+    }
+  }
   if(e.key==="Escape"){
+    if(!searchOverlay.hidden){closeConversationSearch(true);return}
     closeComposerModelPop();
     var p=$("pop");if(p)p.classList.remove("on");
   }
@@ -3761,13 +4175,213 @@ async function checkRedirectAuth() {
 }
 function nameInitials(fullName){var parts=String(fullName||"").trim().split(/\s+/).filter(Boolean);if(!parts.length)return"U";var first=Array.from(parts[0])[0]||"U";if(parts.length===1)return first.toLocaleUpperCase();var last=Array.from(parts[parts.length-1])[0]||first;return(first+last).toLocaleUpperCase()}
 function renderUserAvatar(profile){var avatar=$("av"),name=profile.name||profile.email||"User",initials=nameInitials(name);avatar.textContent="";if(profile.photoURL){var img=document.createElement("img");img.alt=name;img.src=profile.photoURL;img.referrerPolicy="no-referrer";img.decoding="async";img.style.cssText="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block";img.onerror=function(){avatar.textContent=initials};avatar.appendChild(img)}else avatar.textContent=initials}
-async function profileApi(path,options){options=options||{};var auth=await ensureFirebaseAuth(),fb=auth&&auth.currentUser;if(!fb&&!options.token)throw{status:401,code:"auth_required",message:"Please sign in again."};var token=options.token||await fb.getIdToken();var headers=Object.assign({"Authorization":"Bearer "+token,"X-Client-Timezone":Intl.DateTimeFormat().resolvedOptions().timeZone||"Asia/Kolkata","X-Firebase-Created":fb&&fb.metadata&&fb.metadata.creationTime||""},options.body?{"Content-Type":"application/json"}:{});var response=await fetch(path,{method:options.method||"GET",headers:headers,body:options.body?JSON.stringify(options.body):undefined});var result=await response.json().catch(function(){return{}});if(!response.ok||!result.success){var error=new Error(result.error&&result.error.message||"Could not load your account data.");error.status=response.status;error.code=result.error&&result.error.code||"request_failed";throw error}return result.data}
+async function profileApi(path,options){options=options||{};var auth=await ensureFirebaseAuth(),fb=auth&&auth.currentUser;if(!fb&&!options.token)throw{status:401,code:"auth_required",message:"Please sign in again."};var token=options.token||await fb.getIdToken();var headers=Object.assign({"Authorization":"Bearer "+token,"X-Client-Timezone":Intl.DateTimeFormat().resolvedOptions().timeZone||"Asia/Kolkata","X-Firebase-Created":fb&&fb.metadata&&fb.metadata.creationTime||""},options.body?{"Content-Type":"application/json"}:{});var response=await fetch(path,{method:options.method||"GET",headers:headers,body:options.body?JSON.stringify(options.body):undefined,signal:options.signal});var result=await response.json().catch(function(){return{}});if(!response.ok||!result.success){var error=new Error(result.error&&result.error.message||"Could not load your account data.");error.status=response.status;error.code=result.error&&result.error.code||"request_failed";throw error}return result.data}
+function workspaceConversationSnapshot(){return chats.map(function(c){return Object.assign({},c,{msgs:(c.msgs||[]).map(function(m){var copy=Object.assign({},m);if(copy.imageAssetId&&String(copy.image||"").indexOf("data:image/")===0)delete copy.image;if(copy.attachments)copy.attachments=copy.attachments.map(function(a){return{id:a.id,name:a.name,mimeType:a.mimeType,size:a.size,kind:a.kind,url:a.url}});return copy})})})}
+async function persistWorkspaceAssets(syncIdentity){
+  for(var ci=0;ci<chats.length;ci++){
+    if(syncIdentity!==workspaceSyncIdentity)return;
+    var conversation=chats[ci];
+    for(var mi=0;mi<(conversation.msgs||[]).length;mi++){
+      var message=conversation.msgs[mi];
+      for(var ai=0;ai<(message.attachments||[]).length;ai++){
+        var attachment=message.attachments[ai];
+        if(!attachment||!attachment.id||attachment.serverStored)continue;
+        var stored=await getAttachmentData(attachment.id);
+        var source=stored||attachment;
+        var dataUrl=source.dataUrl||attachment.dataUrl||null;
+        var data=source.data||attachment.data||null;
+        var text=source.text||attachment.text||null;
+        if(!dataUrl&&!data&&!text)continue;
+        if(syncIdentity!==workspaceSyncIdentity)return;
+        var saved=await profileApi("/api/sync/attachments",{method:"POST",body:{
+          id:attachment.id,name:attachment.name,mimeType:attachment.mimeType||source.mimeType,
+          size:attachment.size||source.size,kind:attachment.kind||source.kind,
+          dataUrl:dataUrl,data:data,text:text,conversationId:conversation.id
+        }});
+        attachment.url=saved.url;
+        attachment.serverStored=true;
+      }
+      if(syncIdentity!==workspaceSyncIdentity)return;
+      if(message.image&&String(message.image).indexOf("data:image/")===0&&!message.imageAssetStored){
+        if(!message.imageAssetId)message.imageAssetId="img_"+crypto.randomUUID();
+        var imageParts=message.image.match(/^data:([^;,]+);base64,([\s\S]*)$/);
+        if(imageParts){
+          var imageData={id:message.imageAssetId,name:"generated-image",mimeType:imageParts[1],size:Math.floor(imageParts[2].length*3/4),kind:"generated-image",data:imageParts[2],conversationId:conversation.id};
+          await profileApi("/api/sync/attachments",{method:"POST",body:imageData});
+          if(syncIdentity!==workspaceSyncIdentity)return;
+          await saveAttachmentData({id:message.imageAssetId,name:imageData.name,mimeType:imageData.mimeType,size:imageData.size,kind:imageData.kind,data:imageParts[2],dataUrl:message.image});
+          message.imageAssetStored=true;
+        }
+      }
+    }
+  }
+}
+async function hydrateWorkspaceAssets(){
+  var failed=0;
+  for(var ci=0;ci<chats.length;ci++){
+    var conversation=chats[ci];
+    for(var mi=0;mi<(conversation.msgs||[]).length;mi++){
+      var message=conversation.msgs[mi];
+      for(var ai=0;ai<(message.attachments||[]).length;ai++){
+        var attachment=message.attachments[ai];
+        if(!attachment||!attachment.id)continue;
+          if(attachment.dataUrl||attachment.data||attachment.text){attachment.serverStored=true;continue}
+        var local=await getAttachmentData(attachment.id);
+        if(!local||(!local.dataUrl&&!local.data&&!local.text)){
+          try{local=await profileApi("/api/attachments/"+encodeURIComponent(attachment.id));await saveAttachmentData(local)}catch(e){failed++;continue}
+        }
+        if(local.dataUrl)attachment.dataUrl=local.dataUrl;
+        else if(local.data)attachment.dataUrl="data:"+(local.mimeType||attachment.mimeType||"application/octet-stream")+";base64,"+local.data;
+        else if(local.text)attachment.dataUrl="data:text/plain;charset=utf-8,"+encodeURIComponent(local.text);
+        attachment.serverStored=true;
+      }
+      if(message.imageAssetId&&!message.image){
+        var localImage=await getAttachmentData(message.imageAssetId);
+        if(!localImage||(!localImage.dataUrl&&!localImage.data)){
+          try{localImage=await profileApi("/api/attachments/"+encodeURIComponent(message.imageAssetId));await saveAttachmentData(localImage)}catch(e){failed++;continue}
+        }
+        message.image=localImage.dataUrl||(localImage.data?"data:"+(localImage.mimeType||"image/png")+";base64,"+localImage.data:null);
+      }
+    }
+  }
+  if(failed)toast(failed+" saved file(s) could not be loaded from the server.");
+}
+function mergeWorkspaceConversationAssets(remote,local){
+  if(!local)return remote;
+  var localMessages=new Map((local.msgs||[]).map(function(m){return[m.id||m.request_id,m]}));
+  remote.msgs=(remote.msgs||[]).map(function(message){
+    var previous=localMessages.get(message.id)||localMessages.get(message.request_id);
+    if(!previous)return message;
+    var merged=Object.assign({},previous,message);
+    if(message.imageAssetId&&previous.image)merged.image=previous.image;
+    if(message.attachments&&previous.attachments){
+      var oldAttachments=new Map(previous.attachments.filter(function(a){return a&&a.id}).map(function(a){return[a.id,a]}));
+      merged.attachments=message.attachments.map(function(a){return Object.assign({},oldAttachments.get(a.id)||{},a)});
+    }
+    return merged;
+  });
+  return remote;
+}
+async function applyWorkspaceSnapshot(data,conflictProjects,conflictConversations){
+  if(!data)return;
+  workspaceApplying=true;
+  try{
+    var priorChats=chats.slice(),priorById=new Map(priorChats.map(function(c){return[c.id,c]})),selectedId=(cur&&cur.id)||(data.preferences&&data.preferences.activeConversationId);
+    var conflictsById=new Map((conflictConversations||[]).map(function(c){return[c.id,c]}));
+    chats=(data.conversations||[]).map(function(c){
+      var local=priorById.get(c.id),merged=mergeWorkspaceConversationAssets(c,local),conflict=conflictsById.get(c.id);
+      if(conflict&&local){merged.title=local.title;merged.model=local.model;merged.pin=local.pin;merged.pid=local.pid;merged.version=c.version;merged.syncConflict=true}
+      return merged;
+    });
+    projs=(data.projects||[]).map(function(p){return Object.assign({},p)});
+    (conflictProjects||[]).forEach(function(local){
+      var index=projs.findIndex(function(p){return p.id===local.id}),remote=index>=0?projs[index]:null;
+      if(remote){local.version=remote.version;local.syncConflict=true;projs[index]=local}
+    });
+    if(data.preferences&&user){
+      user.defaultModel=data.preferences.defaultModel||user.defaultModel||null;
+      if(photonProfile&&data.preferences.defaultModel)photonProfile.defaultModel=data.preferences.defaultModel;
+      if(data.preferences.activeGenCat&&["text","image","video","code"].indexOf(data.preferences.activeGenCat)>=0)activeGenCat=data.preferences.activeGenCat;
+    }
+    await hydrateWorkspaceAssets();
+    workspaceConversationSnapshots={};chats.forEach(function(c){workspaceConversationSnapshots[c.id]=conversationSyncSignature(c)});
+    workspaceProjectSnapshots={};projs.forEach(function(p){workspaceProjectSnapshots[p.id]=projectSyncSignature(p)});
+    cur=chats.find(function(c){return c.id===selectedId})||chats.find(function(c){return c.msgs&&c.msgs.length})||chats[0]||null;
+    if(!cur&&location.pathname!=="/profile")cur={id:"c"+Date.now(),title:"New chat",msgs:[],model:user&&user.defaultModel||null};
+    setGenCategory(activeGenCat);
+    save();saveProj();
+    if(cur&&!chats.some(function(c){return c.id===cur.id})){chats.unshift(cur);save()}
+    if(location.pathname!=="/profile")render();
+  }finally{workspaceApplying=false}
+}
+function queueWorkspaceSync(){
+  if(!user||workspaceApplying)return;
+  workspaceDirty=true;
+  setWorkspaceSyncStatus("saving","Saving…");
+  try{
+    localStorage.setItem("photon-deleted-conversations-"+workspaceStorageKey(),JSON.stringify(Array.from(workspaceDeletedConversationIds)));
+    localStorage.setItem("photon-deleted-projects-"+workspaceStorageKey(),JSON.stringify(Array.from(workspaceDeletedProjectIds)));
+  }catch(e){}
+  if(!workspaceSyncReady)return;
+  clearTimeout(workspaceSyncTimer);
+  workspaceSyncTimer=setTimeout(function(){syncWorkspaceNow()},600);
+}
+async function syncWorkspaceNow(){
+  if(!user)return false;
+  if(workspaceSyncPromise)return workspaceSyncPromise;
+  var syncIdentity=workspaceSyncIdentity;
+  workspaceSyncBusy=true;
+  setWorkspaceSyncStatus("saving","Syncing…");
+  workspaceSyncPromise=(async function(){
+    if(syncIdentity!==workspaceSyncIdentity)return false;
+    await persistWorkspaceAssets(syncIdentity);
+    if(syncIdentity!==workspaceSyncIdentity)return false;
+    var body={
+      conversations:workspaceConversationSnapshot(),
+      deletedConversationIds:Array.from(workspaceDeletedConversationIds),
+      projects:projs,
+      deletedProjectIds:Array.from(workspaceDeletedProjectIds),
+      preferences:{activeConversationId:cur&&cur.id||null,activeGenCat:activeGenCat||"text",theme:"dark"},
+      lastSyncTime:workspaceLastSyncAt
+    };
+    var data=await profileApi("/api/sync/workspace",{method:"POST",body:body});
+    if(syncIdentity!==workspaceSyncIdentity)return false;
+    workspaceLastSyncAt=data.serverTime||Date.now();
+    var localProjects=new Map(projs.map(function(p){return[p.id,p]}));
+    var conflicts=(data.projectConflicts||[]).map(function(id){return localProjects.get(id)}).filter(Boolean);
+    var localConversations=new Map(chats.map(function(c){return[c.id,c]}));
+    var conversationConflicts=(data.conversationConflicts||[]).map(function(id){return localConversations.get(id)}).filter(Boolean);
+    await applyWorkspaceSnapshot(data,conflicts,conversationConflicts);
+    workspaceDeletedConversationIds.clear();workspaceDeletedProjectIds.clear();
+    workspaceDirty=false;
+    workspaceSyncErrorShown=false;
+    setWorkspaceSyncStatus("saved","Synced");
+    try{localStorage.removeItem("photon-deleted-conversations-"+workspaceStorageKey());localStorage.removeItem("photon-deleted-projects-"+workspaceStorageKey())}catch(e){}
+    if((data.projectConflicts&&data.projectConflicts.length)||(data.conversationConflicts&&data.conversationConflicts.length))toast("Some changes conflict with a newer version on another device. Your local changes were kept.");
+    return true;
+  })();
+  try{return await workspaceSyncPromise}catch(error){
+    workspaceDirty=true;
+    setWorkspaceSyncStatus("error","Not synced — saved on this device");
+    if(!workspaceSyncErrorShown){workspaceSyncErrorShown=true;toast("Changes are saved on this device but could not sync: "+profileApiError(error))}
+    return false;
+  }finally{workspaceSyncBusy=false;workspaceSyncPromise=null}
+}
+var workspaceSyncErrorShown=false;
+async function refreshWorkspaceNow(){
+  if(!user||!workspaceSyncReady)return;
+  if(workspaceDirty){await syncWorkspaceNow();return}
+  var syncIdentity=workspaceSyncIdentity;
+  try{var data=await profileApi("/api/sync/workspace");if(syncIdentity!==workspaceSyncIdentity)return;workspaceLastSyncAt=data.serverTime||Date.now();await applyWorkspaceSnapshot(data);workspaceSyncErrorShown=false;if($("workspace-sync-status").dataset.state==="error")setWorkspaceSyncStatus("saved","Synced")}
+  catch(error){setWorkspaceSyncStatus("error",workspaceDirty?"Not synced — saved on this device":"Offline");if(!workspaceSyncErrorShown){workspaceSyncErrorShown=true;toast("Workspace sync is temporarily unavailable: "+profileApiError(error))}}
+}
+async function initializeWorkspaceSync(){
+  if(!user)return;
+  if(workspaceSyncPromise)await workspaceSyncPromise;
+  workspaceSyncIdentity=user.uid||user.email;
+  try{workspaceDeletedConversationIds=new Set(JSON.parse(localStorage.getItem("photon-deleted-conversations-"+workspaceStorageKey())||"[]"));workspaceDeletedProjectIds=new Set(JSON.parse(localStorage.getItem("photon-deleted-projects-"+workspaceStorageKey())||"[]"))}catch(e){workspaceDeletedConversationIds=new Set();workspaceDeletedProjectIds=new Set()}
+  try{workspaceConversationSnapshots=JSON.parse(localStorage.getItem("photon-workspace-conversation-versions-"+workspaceStorageKey())||"{}");workspaceProjectSnapshots=JSON.parse(localStorage.getItem("photon-workspace-project-versions-"+workspaceStorageKey())||"{}")}catch(e){workspaceConversationSnapshots={};workspaceProjectSnapshots={}}
+  workspaceSyncReady=true;
+  var synced=await syncWorkspaceNow();
+  if(!synced)queueWorkspaceSync();
+  clearInterval(workspacePollTimer);
+  workspacePollTimer=setInterval(refreshWorkspaceNow,15000);
+  if(!workspaceEventsInstalled){
+    window.addEventListener("online",refreshWorkspaceNow);
+    document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")refreshWorkspaceNow()});
+    workspaceEventsInstalled=true;
+  }
+  return synced;
+}
+function stopWorkspaceSync(){
+  workspaceSyncReady=false;workspaceDirty=false;workspaceSyncIdentity=null;clearTimeout(workspaceSyncTimer);clearInterval(workspacePollTimer);setWorkspaceSyncStatus("","");
+}
 function stopPresenceTracking(){if(presenceTimer){clearInterval(presenceTimer);presenceTimer=null}}
 function startPresenceTracking(){stopPresenceTracking();var send=function(){if(!user)return;profileApi("/api/profile/presence",{method:"POST"}).catch(function(){})};if(!presenceVisibilityHandler){presenceVisibilityHandler=function(){send()};document.addEventListener("visibilitychange",presenceVisibilityHandler);window.addEventListener("focus",send);window.addEventListener("pageshow",send)}send();presenceTimer=setInterval(send,30000)}
 
 function profileEscape(v){return esc(String(v==null?"":v)).replace(/"/g,"&quot;").replace(/'/g,"&#39;")}
 function profileApiError(e){if(e&&e.status===401)return"Your session expired. Sign in again to continue.";return e&&e.message||"Something went wrong. Please try again."}
-function profileIconText(type){var p={person:'<circle cx="12" cy="8" r="3.2"/><path d="M5 21v-1.6a6.8 6.8 0 0 1 13.6 0V21z"/>',card:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/>',usage:'<path d="M4 19V11h4v8zM10 19V5h4v14zM16 19v-9h4v9z"/>',delete:'<path d="M4 7h16M10 11v7M14 11v7M5 7l1 14h12l1-14M9 7V4h6v3"/>',model:'<path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l1 2.5 2.5 1-2.5 1L19 23l-1-2.5-2.5-1 2.5-1z"/>',activity:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/>',phone:'<path d="M7 3H4a1 1 0 0 0-1 1c0 9.4 7.6 17 17 17a1 1 0 0 0 1-1v-3l-5-2-2 3a14 14 0 0 1-6-6l3-2z"/>',calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M8 14h3M8 17h3"/>',world:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',id:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="11" r="2"/><path d="M5.5 16c.5-2 5.5-2 6 0M14 10h4M14 14h4"/>',copy:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>',chat:'<path d="M20 11.5a7.5 7.5 0 0 1-8 7.5 9 9 0 0 1-4-.9L4 20l1.3-3.4A7.2 7.2 0 0 1 4 12c0-4.1 3.6-7.5 8-7.5s8 3.1 8 7z"/>',image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m4 17 5-5 3 3 3-4 5 6"/>',video:'<rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3z"/>',voice:'<rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/>',code:'<path d="m8 8-4 4 4 4M16 8l4 4-4 4M14 5l-4 14"/>'};return'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(p[type]||p.activity)+'</svg>'}
+function profileIconText(type){var p={person:'<circle cx="12" cy="8" r="3.2"/><path d="M5 21v-1.6a6.8 6.8 0 0 1 13.6 0V21z"/>',card:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/>',usage:'<path d="M4 19V11h4v8zM10 19V5h4v14zM16 19v-9h4v9z"/>',chart:'<path d="M4 19V11h4v8zM10 19V5h4v14zM16 19v-9h4v9z"/>',delete:'<path d="M4 7h16M10 11v7M14 11v7M5 7l1 14h12l1-14M9 7V4h6v3"/>',trash:'<path d="M4 7h16M10 11v7M14 11v7M5 7l1 14h12l1-14M9 7V4h6v3"/>',model:'<path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l1 2.5 2.5 1-2.5 1L19 23l-1-2.5-2.5-1 2.5-1z"/>',sparkle:'<path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l1 2.5 2.5 1-2.5 1L19 23l-1-2.5-2.5-1 2.5-1z"/>',activity:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/>',phone:'<path d="M7 3H4a1 1 0 0 0-1 1c0 9.4 7.6 17 17 17a1 1 0 0 0 1-1v-3l-5-2-2 3a14 14 0 0 1-6-6l3-2z"/>',calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M8 14h3M8 17h3"/>',world:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',id:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="11" r="2"/><path d="M5.5 16c.5-2 5.5-2 6 0M14 10h4M14 14h4"/>',copy:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>',chat:'<path d="M20 11.5a7.5 7.5 0 0 1-8 7.5 9 9 0 0 1-4-.9L4 20l1.3-3.4A7.2 7.2 0 0 1 4 12c0-4.1 3.6-7.5 8-7.5s8 3.1 8 7z"/>',image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m4 17 5-5 3 3 3-4 5 6"/>',video:'<rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3z"/>',voice:'<rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/>',code:'<path d="m8 8-4 4 4 4M16 8l4 4-4 4M14 5l-4 14"/>'};return'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(p[type]||p.activity)+'</svg>'}
 function profileModelIcon(id,provider){var p=String(provider||"").toLowerCase(),s=String(id||"").toLowerCase();if(s.indexOf("flux")>-1||s.indexOf("sdxl")>-1||s.indexOf("stable-diffusion")>-1)return profileIconText("image");if(p==="ollama"||s.indexOf("ollama")>-1)return'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="9" cy="11" r="1.5" fill="currentColor"/><circle cx="15" cy="11" r="1.5" fill="currentColor"/><path d="M9 16c1.5 1 4.5 1 6 0"/></svg>';if(p==="llmtr"||s.indexOf("llmtr")>-1||s.indexOf("creekside")>-1)return'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>';
 if(p==="cloudflare"||s.indexOf("cloudflare")>-1||p==="cloudflare_workers_ai")return'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>';
 if(p==="nvidia"||s.indexOf("nvidia/")===0||s.indexOf("nemotron")>-1)return'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12c2.5-4.5 6.5-6.5 11-5.5 3.5.8 6 3.5 7 5.5-1.5 3-4.5 5.5-8.5 5.5-4.5 0-7.5-2.5-9.5-5.5Z"/><circle cx="12.5" cy="12" r="2.2"/></svg>';if(p==="groq")return'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg>';if(p==="codecraft")return'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 8-4 4 4 4M16 8l4 4-4 4M14 5l-4 14"/></svg>';if(s.indexOf("gemini")===0||p==="google")return'<svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M16 1.5c2.7 8.1 6.4 11.8 14.5 14.5C22.4 18.7 18.7 22.4 16 30.5 13.3 22.4 9.6 18.7 1.5 16 9.6 13.3 13.3 9.6 16 1.5z"/></svg>';if(s.indexOf("gpt")===0||p==="openai")return'<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M16 4.5a6 6 0 0 1 5.2 3l2.1 3.6a6 6 0 0 1 0 6l-2.1 3.6a6 6 0 0 1-5.2 3h-4.1a6 6 0 0 1-5.2-3l-2.1-3.6a6 6 0 0 1 0-6l2.1-3.6a6 6 0 0 1 5.2-3z"/><path d="m10 9 12 14M22 9 10 23M6 13h20M8 21l16-10"/></svg>';if(s.indexOf("claude")===0||p==="anthropic")return'<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M16 4v24M4 16h24M7.5 7.5l17 17M24.5 7.5l-17 17"/></svg>';if(s.indexOf("llama")>-1)return'<svg viewBox="0 0 40 30" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M3 15C8 2 15 2 20 15s12 13 17 0C32 2 25 2 20 15S8 28 3 15z"/></svg>';return'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M9 12h6M12 9v6"/></svg>'}
@@ -3833,7 +4447,7 @@ function openProfileConversation(id){var conversation=chats.find(function(c){ret
 function showProfileMessage(text,error){var s=$("profile-state");if(!s)return;s.textContent=text;s.classList.toggle("error",!!error);s.hidden=!text}
 function drawProfile(){if(!photonProfile||!profileConfig)return;var p=photonProfile,plan=p.plan,usage=p.usage||{used:0,limit:plan.dailyTokens,remaining:plan.dailyTokens,percent:0},allCatalog=profileModelCatalog(profileConfig.models||[]),featured=featuredProfileModels(allCatalog),billingInterval=plan.id==="basic"?"none":(p.subscriptionInterval||user.planInterval||"monthly"),billingPrice=Number(plan.price)*(billingInterval==="yearly"?12:1),name=p.fullName||user.name||"Photon user",featuredMarkup=featured.length?'<ul class="profile-model-list">'+featured.map(function(m){return profileModelRowMarkup(m,p.defaultModel,plan.id)}).join("")+'</ul>':'<div class="profile-empty">No enabled AI models are available yet. Ask an administrator to verify a provider key.</div>',activeOption=allCatalog.find(function(m){return m.id===p.defaultModel}),activeNote=activeOption?'Active default: <b>'+profileEscape(activeOption.name)+'</b> ('+profileEscape(activeOption.provider)+') · ':'',providerCount={};allCatalog.forEach(function(m){if(m.provider)providerCount[m.provider]=true});
   ov('<main class="profile-page"><div class="profile-top"><div><h1>Profile</h1><div class="profile-crumb"><button type="button" data-home>Home</button> > Profile</div></div><div class="profile-top-actions"><button type="button" data-upgrade>'+profileEscape(plan.name)+' plan — Upgrade</button><button type="button" class="profile-back-icon" data-home aria-label="Back to chat" title="Back to chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5"/></svg></button></div></div>'+ 
-  '<div class="profile-wave"><h2>Hello, '+profileEscape(name)+' 👋</h2><p>Manage your account, subscription, usage and preferences.</p></div><div id="profile-state" class="profile-state" hidden></div><div class="profile-content"><div class="profile-overview"><nav class="profile-tabs" aria-label="Profile sections"><button class="active" data-jump="personal"><span class="pi">'+profileIconText("person")+'</span>Personal Information</button><button data-jump="billing"><span class="pi">'+profileIconText("card")+'</span>Subscription &amp; Billing</button><button data-jump="usage"><span class="pi">'+profileIconText("usage")+'</span>Usage &amp; Activity</button><button data-jump="delete-account"><span class="pi">'+profileIconText("delete")+'</span>Delete Account</button></nav><section class="profile-card" id="personal"><div class="profile-card-head"><div><h2>Personal Information</h2><p class="profile-sub">Update your personal details and profile information.</p></div><button type="button" class="profile-action" data-edit>✎ Edit Profile</button></div><div class="profile-info-grid">'+
+  '<div class="profile-wave"><h2>Hello, '+profileEscape(name)+' 👋</h2><p>Manage your account, subscription, usage and preferences.</p></div><div id="profile-state" class="profile-state" hidden></div><div class="profile-content"><div class="profile-overview"><nav class="profile-tabs" aria-label="Profile sections"><button class="active" data-jump="personal"><span class="pi">'+profileIconText("person")+'</span>Personal Information</button><button data-jump="billing"><span class="pi">'+profileIconText("card")+'</span>Subscription &amp; Billing</button><button data-jump="usage"><span class="pi">'+profileIconText("usage")+'</span>Today\'s Usage</button><button data-jump="models"><span class="pi">'+profileIconText("model")+'</span>AI Models</button><button data-jump="activity"><span class="pi">'+profileIconText("activity")+'</span>Recent Activity</button><button data-jump="delete-account"><span class="pi">'+profileIconText("delete")+'</span>Delete Account</button></nav><section class="profile-card" id="personal"><div class="profile-card-head"><div><h2><span class="profile-heading-icon">'+profileIconText("person")+'</span>Personal Information</h2><p class="profile-sub">Update your personal details and profile information.</p></div><button type="button" class="profile-action" data-edit>✎ Edit Profile</button></div><div class="profile-info-grid">'+
   [['person','Full Name',p.fullName],['person','Username',p.username],['mail','Email',p.email],['phone','Phone',p.phone||'Not added'],['id','Account ID',p.accountId],['calendar','Joined On',new Date(p.joinedOn).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'})],['world','Timezone',p.timezone]].map(function(x){return'<div class="profile-info"><span class="pi" aria-hidden="true">'+profileIconText(x[0])+'</span><span>'+x[1]+'</span><strong>'+profileEscape(x[2])+'</strong>'+(x[0]==="id"?'<button type="button" class="copy-id" aria-label="Copy account ID" title="Copy account ID">'+profileIconText("copy")+'</button>':'')+'</div>'}).join("")+'</div></section></div>'+ 
   '<div class="profile-columns"><section class="profile-card" id="billing"><div class="profile-card-head"><h2><span class="profile-heading-icon">'+profileIconText("card")+'</span>Subscription &amp; Billing</h2></div><div class="profile-plan"><div><div class="profile-plan-title">'+profileEscape(plan.name)+' Plan <span class="profile-current">Current Plan</span></div><p class="profile-sub">'+(plan.id==="basic"?"Free plan for everyday AI use.":p.billingStatus==="active"?"Active verified paid subscription.":"Subscription details synced with server.")+'</p></div><button type="button" class="profile-action" data-upgrade>Upgrade Plan</button></div><div class="profile-plan-meta"><div><small>Price</small><b>'+ (plan.price===0?"₹0 (Free)":"₹"+billingPrice.toLocaleString("en-IN")+(billingInterval==="yearly"?"/year":"/month"))+'</b></div><div><small>Daily Limit</small><b>'+Number(plan.dailyTokens).toLocaleString("en-IN")+' tokens/day</b></div><div><small>Billing Cycle</small><b>'+(plan.id==="basic"?"Forever":billingInterval==="yearly"?"Yearly":"Monthly")+'</b></div></div><div class="profile-footnote">'+(p.billingStatus==="active"?"Billing is managed through Cashfree Checkout ("+(p.subscription&&p.subscription.methodDetails?profileEscape(p.subscription.methodDetails):"verified payment")+").":profileConfig.billingAvailable?"Upgrade anytime using Credit Card or UPI via Cashfree Checkout.":"Cashfree Checkout can be enabled by the administrator for paid upgrades.")+'</div></section>'+ 
   '<section class="profile-card" id="usage"><div class="profile-card-head"><h2><span class="profile-heading-icon">'+profileIconText("usage")+'</span>Today\'s Usage</h2><button type="button" class="profile-action secondary" data-jump="activity">View Usage &amp; Activity →</button></div><div class="profile-usage"><div class="profile-ring" style="--pct:'+Number(usage.percent)+'%"><div><strong>'+Number(usage.percent)+'%</strong><small>Used Today</small></div></div><div class="profile-usage-stats"><div><small>Tokens Used Today</small><b>'+Number(usage.used).toLocaleString("en-IN")+' / '+Number(usage.limit).toLocaleString("en-IN")+'</b></div><div><small>Tokens Remaining</small><b>'+Number(usage.remaining).toLocaleString("en-IN")+'</b></div></div></div></section></div>'+ 
@@ -4158,9 +4772,9 @@ async function deletePhotonAccount(){
   }finally{var current=document.querySelector("[data-delete]");if(current){current.disabled=false;current.textContent=original||"Delete Account"}}
 }
 window.addEventListener("popstate",function(){if(location.pathname==="/profile"){if(user)openProfile(false);else showAuth("login")}else if($("ov").classList.contains("auth")){closeOv();if(user){if(!cur)newChat();else render()}}});
-function enter(em){var U=users();if(!U[em]){showAuth("login");return}var u=U[em],pl=u.plan||"basic";if(!PLANS.some(function(x){return x.id===pl})){pl="basic";var UU=users();UU[em].plan=pl;putUsers(UU)}user={email:em,name:u.name,plan:pl,planInterval:u.planInterval||"monthly",photoURL:u.photoURL||"",defaultModel:u.defaultModel||null};startPresenceTracking();syncAuthenticatedAccount();tokDay=dayKey();closeOv();$("un").textContent=u.name;renderUserAvatar(user);$("upl").parentNode.firstChild.textContent=planName()+" plan - ";projs=loadProj();load();var activeId="";try{activeId=localStorage.getItem(AK())||""}catch(e){}cur=chats.find(function(c){return c.id===activeId})||chats.find(function(c){return c.msgs&&c.msgs.length})||chats[0]||null;if(location.pathname==="/profile"){openProfile(false);return}if(!cur)newChat();else render()}
+function enter(em){stopWorkspaceSync();var U=users();if(!U[em]){showAuth("login");return}var u=U[em],pl=u.plan||"basic";if(!PLANS.some(function(x){return x.id===pl})){pl="basic";var UU=users();UU[em].plan=pl;putUsers(UU)}user={uid:u.uid||"",email:em,name:u.name,plan:pl,planInterval:u.planInterval||"monthly",photoURL:u.photoURL||"",defaultModel:u.defaultModel||null};startPresenceTracking();syncAuthenticatedAccount();tokDay=dayKey();closeOv();$("un").textContent=u.name;renderUserAvatar(user);$("upl").parentNode.firstChild.textContent=planName()+" plan - ";projs=loadProj();load();var activeId="";try{activeId=localStorage.getItem(AK())||""}catch(e){}cur=chats.find(function(c){return c.id===activeId})||chats.find(function(c){return c.msgs&&c.msgs.length})||chats[0]||null;if(!cur&&location.pathname!=="/profile")newChat();else if(location.pathname!=="/profile")render();workspaceInitializationPromise=initializeWorkspaceSync();if(location.pathname==="/profile"){openProfile(false);return}}
 $("profile-nav").onclick=function(){openProfile(true)};
-$("out").onclick=async function(){stopPresenceTracking();endVoice();closePv();try{await profileApi("/api/profile/sign-out",{method:"POST"})}catch(e){}try{var auth=await ensureFirebaseAuth();if(auth)await signOut(auth);}catch(e){}try{localStorage.removeItem("photon-session");sessionStorage.removeItem("photon-session");localStorage.removeItem("orca-session");sessionStorage.removeItem("orca-session")}catch(e){}user=null;chats=[];projs=[];cur=null;showAuth("login");toast("Signed out of PHOTON AI.")};
+$("out").onclick=async function(){stopWorkspaceSync();stopPresenceTracking();endVoice();closePv();try{await profileApi("/api/profile/sign-out",{method:"POST"})}catch(e){}try{var auth=await ensureFirebaseAuth();if(auth)await signOut(auth);}catch(e){}try{localStorage.removeItem("photon-session");sessionStorage.removeItem("photon-session");localStorage.removeItem("orca-session");sessionStorage.removeItem("orca-session")}catch(e){}user=null;chats=[];projs=[];cur=null;showAuth("login");toast("Signed out of PHOTON AI.")};
 var SPI={bolt:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>',crown:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/></svg>',layers:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>',build:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg>',check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>',box:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l9 4.5v9L12 21l-9-4.5v-9z"/><path d="M3 7.5l9 4.5 9-4.5M12 12v9"/></svg>'};
 var TAG={basic:"Get started with everyday AI chat.",pro:"More daily tokens for creators and professionals.",premium:"Maximum daily tokens for heavy creators and developers."},ICN={basic:"bolt",pro:"crown",premium:"layers"};
 function topBar(back){return'<div class="sp-top"><div class="logo" style="padding:0;font-size:15px">'+document.querySelector(".logo").innerHTML+'</div><button class="sp-back" id="spb">← '+back+'</button></div>'}
