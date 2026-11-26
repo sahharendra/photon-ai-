@@ -7,7 +7,7 @@
 // - Asynchronous job submission (POST /v1/videos) with video_id tracking.
 // - Status polling via GET https://apihub.agnes-ai.com/agnesapi?video_id={VIDEO_ID}&model_name={MODEL_NAME}.
 // - Download and verification of completed video files (MIME type, content length, video integrity).
-// - Strict Free-Only Spending Protection ($0/sec promotion verification; zero-billing enforcement).
+// - Strict Free-Only Spending Protection: block requests until account trial eligibility is verified.
 // - Real Model Test function verifying authentication, job creation, polling, and playable video output.
 // - AES-256 encrypted credential management and zero secret leakage.
 
@@ -15,9 +15,10 @@ const { createAgnesConfig, maskKey } = require('./agnes-config');
 
 const API_BASE_URL = 'https://apihub.agnes-ai.com/v1';
 const POLLING_BASE_URL = 'https://apihub.agnes-ai.com/agnesapi';
-const DEFAULT_TIMEOUT_MS = 180000; // 3 minutes for video generation
-const POLLING_INTERVAL_MS = 3000;
+const DEFAULT_TIMEOUT_MS = 180000;
+const POLLING_INTERVAL_MS = 1500;
 const FLASH_MODEL_ID = 'agnes-video-2.5-flash';
+const FLASH_ASPECT_RATIOS = Object.freeze(['21:9', '16:9', '4:3', '1:1', '3:4', '9:16']);
 
 function sleep(ms, signal) {
   return new Promise((resolve, reject) => {
@@ -75,60 +76,51 @@ function createAgnesProvider({
   }
 
   function catalogEntries() {
-    if (!configured() || !enabled()) {
-      return [{
-        id: FLASH_MODEL_ID,
-        name: 'Agnes Video 2.5 Flash',
+    return cfg.getModels().map(m => {
+      const eligibilityVerified = Boolean(m.freePromotion && m.freePromotionVerified);
+      const available = Boolean(configured() && enabled() && m.enabled && m.apiAvailable && eligibilityVerified);
+      const reason = !configured() ? 'Agnes AI API key is not configured.'
+        : !enabled() ? 'Agnes AI is disabled by the administrator.'
+          : !m.enabled ? 'Disabled by administrator.'
+            : !m.apiAvailable ? (m.availabilityReason || 'Agnes account has not confirmed access to this model.')
+              : !eligibilityVerified ? 'Free trial eligibility for this API key is unverified. Confirm an eligible default account in Agnes before enabling free generation.'
+                : '';
+      return {
+        id: m.id,
+        name: m.name,
         provider: 'Agnes AI',
         providerId: 'agnes',
         configured: configured(),
         supported: true,
-        available: false,
-        free: true,
-        category: 'Video Generation',
+        available,
+        enabled: Boolean(m.enabled),
+        free: available && eligibilityVerified,
+        pricingVerified: true,
+        pricing: '$0.025 / second list price; $0 / second for eligible Angel User Trial accounts',
+        category: 'video',
         task: 'text-to-video',
-        resolution: '720p',
-        description: 'Agnes Video 2.5 Flash - High speed 720P video generation ($0/sec Free Promotion).',
-        reason: !configured() ? 'Agnes AI API key is not configured.' : 'Agnes AI is disabled by the administrator.',
+        resolution: '720P',
+        spendingPolicy: cfg.getSpendingPolicy(),
         capabilities: {
-          text: false,
-          image_output: false,
+          text_to_video: true,
+          image_to_video: true,
+          keyframe_control: true,
           video_output: true,
-          keyframes: true,
           reference_image: true,
-          resolution: '720p',
+          resolution: '720P',
         },
-      }];
-    }
-
-    const models = cfg.getModels();
-    return models.map(m => ({
-      id: m.id,
-      name: m.name,
-      provider: 'Agnes AI',
-      providerId: 'agnes',
-      configured: true,
-      supported: true,
-      available: Boolean(m.enabled && enabled()),
-      enabled: Boolean(m.enabled),
-      free: Boolean(m.freePromotion),
-      category: 'Video Generation',
-      task: 'text-to-video',
-      resolution: m.resolution || '720p',
-      pricing: m.pricing || '$0.00 / sec (Free Promotion)',
-      spendingPolicy: m.spendingPolicy || cfg.getSpendingPolicy(),
-      capabilities: m.capabilities || {
-        text: false,
-        image_output: false,
-        video_output: true,
-        keyframes: true,
-        reference_image: true,
-        resolution: '720p',
-      },
-      supportedParameters: m.supportedParameters || ['model', 'prompt', 'mode', 'seconds', 'size', 'aspect_ratio', 'n'],
-      description: m.description || `${m.name} 720P video generation`,
-      reason: m.enabled ? '' : 'Disabled by administrator.',
-    }));
+        supportedParameters: m.supportedParameters,
+        supportedSettings: {
+          modes: ['text', 'keyframe', 'reference'],
+          minSeconds: 4,
+          maxSeconds: 12,
+          resolution: '720P',
+          aspectRatios: FLASH_ASPECT_RATIOS,
+        },
+        description: m.description,
+        reason,
+      };
+    });
   }
 
   function parseErrorResponse(status, bodyText) {
@@ -152,29 +144,60 @@ function createAgnesProvider({
     if (status === 429 || /rate limit|too many requests/i.test(message)) {
       return new HttpError(429, 'rate_limit_exceeded', message || 'Agnes AI rate limit reached. Please wait before retrying.');
     }
+    if (/queue.*full|retry later|server.*busy|capacity|busy/i.test(message)) {
+      return new HttpError(429, 'queue_full', 'The video rendering queue is currently busy due to high demand. Please try again in a few moments.');
+    }
     return new HttpError(status || 502, code || 'provider_error', message || `Agnes AI error (${status}).`);
   }
 
   /**
-   * Verify $0/sec free promotion eligibility and spending policy
+   * Never submit a billable request unless free account eligibility was explicitly verified.
    */
   function assertFreePromotionEligibility(modelId) {
     const policy = cfg.getSpendingPolicy();
-    const model = cfg.getModel(modelId) || { id: modelId, freePromotion: true };
+    const model = cfg.getModel(modelId);
 
     if (policy === 'block') {
       throw new HttpError(403, 'provider_disabled', 'Agnes AI provider is currently blocked by administrator spending policy.');
     }
-
-    if (policy === 'strict_free_only') {
-      if (!model.freePromotion && model.priceStatus !== 'FREE_PROMOTION') {
-        throw new HttpError(
-          402,
-          'billing_blocked',
-          `Model '${modelId}' is not verified under the $0/sec free promotion. Strict free-only spending policy prevents paid generation.`
-        );
-      }
+    if (policy !== 'strict_free_only') {
+      throw new HttpError(403, 'billing_blocked', 'Agnes AI paid requests are disabled.');
     }
+    if (!model || !model.enabled) {
+      throw new HttpError(503, 'model_unavailable', 'Agnes Video 2.5 Flash is disabled or not registered.');
+    }
+    if (!model.apiAvailable) {
+      throw new HttpError(503, 'model_unavailable', model.availabilityReason || 'Agnes has not confirmed model access for this API key.');
+    }
+    if (!model.freePromotion || !model.freePromotionVerified) {
+      throw new HttpError(402, 'billing_blocked', 'Free trial eligibility for this Agnes API key is unverified. Strict free-only mode blocks generation to prevent charges.');
+    }
+  }
+
+  async function fetchModelCatalog(key) {
+    const response = await fetchImpl(`${API_BASE_URL}/models`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${key}`,
+        'Accept': 'application/json',
+        'User-Agent': 'Photon-AI-Agnes/1.0',
+      },
+      signal: AbortSignal.timeout(15000),
+    });
+    const bodyText = await response.text();
+    if (!response.ok) throw parseErrorResponse(response.status, bodyText);
+
+    let parsed;
+    try { parsed = JSON.parse(bodyText); } catch {
+      throw new HttpError(502, 'invalid_response', 'Agnes model availability check returned invalid JSON.');
+    }
+    const entries = Array.isArray(parsed.data) ? parsed.data : Array.isArray(parsed.models) ? parsed.models : [];
+    if (!entries.length) {
+      throw new HttpError(502, 'model_catalog_unavailable', 'Agnes did not return a model catalog; model access cannot be verified.');
+    }
+    const model = entries.find(entry => String(entry.id || entry.model_name || '').trim() === FLASH_MODEL_ID);
+    cfg.setModelAvailability(FLASH_MODEL_ID, Boolean(model), model ? '' : 'Agnes did not list Agnes Video 2.5 Flash for this API key.');
+    return { entries, model };
   }
 
   /**
@@ -194,32 +217,18 @@ function createAgnesProvider({
     }
 
     try {
-      // Query documented models endpoint to verify auth
-      const response = await fetchImpl(`${API_BASE_URL}/models`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${key}`,
-          'Accept': 'application/json',
-          'User-Agent': 'Photon-AI-Agnes/1.0',
-        },
-        signal: AbortSignal.timeout(15000),
-      });
-
-      const bodyText = await response.text();
-      if (!response.ok) {
-        throw parseErrorResponse(response.status, bodyText);
-      }
-
-      let parsed = {};
-      try { parsed = JSON.parse(bodyText); } catch {}
+      const { entries, model } = await fetchModelCatalog(key);
 
       const durationMs = Date.now() - started;
       const result = {
         ok: true,
         durationMs,
-        message: `Successfully connected to Agnes AI API (${durationMs}ms). Authentication verified.`,
+        modelAvailable: Boolean(model),
+        message: model
+          ? `Agnes API key authenticated and ${FLASH_MODEL_ID} is listed. Free-trial eligibility still requires separate confirmation.`
+          : `Agnes API key authenticated, but ${FLASH_MODEL_ID} is not available to this key.`,
         testedAt: new Date().toISOString(),
-        modelsFound: Array.isArray(parsed.data || parsed.models) ? (parsed.data || parsed.models).length : 1,
+        modelsFound: entries.length,
       };
       cfg.setLastTestResult('connection', result);
       return result;
@@ -229,6 +238,7 @@ function createAgnesProvider({
         ok: false,
         durationMs,
         error: err.message,
+        code: err.code || 'connection_failed',
         message: `Agnes AI connection test failed: ${err.message}`,
         testedAt: new Date().toISOString(),
       };
@@ -241,48 +251,20 @@ function createAgnesProvider({
   /**
    * Refresh available models from Agnes AI
    */
-  async function refreshModels(force = false) {
+  async function refreshModels() {
     const key = getApiKey();
-    if (!key) return { ok: false, message: 'No API key configured.' };
+    if (!key) {
+      cfg.setModelAvailability(FLASH_MODEL_ID, false, 'Agnes AI API key is not configured.');
+      return { ok: false, modelAvailable: false, message: 'No API key configured.' };
+    }
 
     try {
-      const response = await fetchImpl(`${API_BASE_URL}/models`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${key}`,
-          'Accept': 'application/json',
-        },
-        signal: AbortSignal.timeout(15000),
-      });
-
-      if (!response.ok) {
-        // Fall back to documented default video model if /models is restricted
-        return { ok: true, models: cfg.getModels(), refreshed: false };
-      }
-
-      const json = await response.json();
-      const rawList = Array.isArray(json.data) ? json.data : (Array.isArray(json.models) ? json.models : []);
-
-      // If Agnes lists models, register verified video models
-      for (const m of rawList) {
-        const id = m.id || m.model_name || m.name;
-        if (!id) continue;
-        if (/video/i.test(id) || id.includes('flash')) {
-          cfg.updateModel(id, {
-            name: m.name || id,
-            category: 'Video Generation',
-            task: 'text-to-video',
-            resolution: '720p',
-            freePromotion: true,
-            pricing: '$0.00 / sec (Free Promotion)',
-          });
-        }
-      }
-
-      return { ok: true, models: cfg.getModels(), refreshed: true };
+      const { entries, model } = await fetchModelCatalog(key);
+      return { ok: true, modelAvailable: Boolean(model), modelsFound: entries.length, models: cfg.getModels(), refreshed: true };
     } catch (err) {
-      logger.warn('[AgnesProvider] Could not refresh models from API, keeping vetted defaults:', err.message);
-      return { ok: true, models: cfg.getModels(), refreshed: false };
+      cfg.setModelAvailability(FLASH_MODEL_ID, false, err.message);
+      logger.warn('[AgnesProvider] Model availability check failed:', err.message);
+      return { ok: false, modelAvailable: false, models: cfg.getModels(), refreshed: false, message: err.message, code: err.code || 'model_catalog_unavailable' };
     }
   }
 
@@ -293,12 +275,16 @@ function createAgnesProvider({
   async function createVideoJob({
     prompt,
     model = FLASH_MODEL_ID,
-    mode = 'standard',
+    mode = 'text',
     seconds = 5,
-    size = '720p',
+    size = '720P',
     aspect_ratio = '16:9',
     n = 1,
     referenceImage = null,
+    images = null,
+    firstFrame = null,
+    lastFrame = null,
+    userId = null,
     signal,
   } = {}) {
     if (!configured()) {
@@ -314,75 +300,148 @@ function createAgnesProvider({
     }
 
     const targetModel = String(model || FLASH_MODEL_ID).trim();
+    if (targetModel !== FLASH_MODEL_ID) {
+      throw new HttpError(400, 'unsupported_model', `Unsupported Agnes model: ${targetModel}`);
+    }
     assertFreePromotionEligibility(targetModel);
 
-    // Enforce 720P limitation and max 5 seconds for flash model
-    const durationSeconds = Math.min(5, Math.max(2, Number(seconds) || 5));
-    const targetSize = (size === '1080p' || size === '4k') ? '720p' : (size || '720p');
+    const durationSeconds = Number(seconds);
+    if (!Number.isInteger(durationSeconds) || durationSeconds < 4 || durationSeconds > 12) {
+      throw new HttpError(400, 'invalid_duration', 'Agnes Video 2.5 Flash supports whole-number durations from 4 to 12 seconds.');
+    }
+    const targetSize = String(size || '720P').toUpperCase();
+    if (targetSize !== '720P') {
+      throw new HttpError(400, 'invalid_resolution', 'Agnes Video 2.5 Flash supports 720P resolution only.');
+    }
+    if (Number(n) !== 1) {
+      throw new HttpError(400, 'invalid_count', 'Agnes Video 2.5 Flash supports one video per request.');
+    }
+    const targetAspectRatio = String(aspect_ratio || '16:9');
+    if (!FLASH_ASPECT_RATIOS.includes(targetAspectRatio)) {
+      throw new HttpError(400, 'invalid_aspect_ratio', 'Unsupported aspect ratio for Agnes Video 2.5 Flash.');
+    }
+    const targetMode = String(mode || 'text').toLowerCase();
+    if (!['text', 'keyframe', 'reference'].includes(targetMode)) {
+      throw new HttpError(400, 'invalid_mode', 'Agnes Video 2.5 Flash supports text, keyframe, and reference modes.');
+    }
+    const referenceImages = Array.isArray(images) ? images : referenceImage ? [referenceImage] : [];
+    if (referenceImages.some(image => typeof image !== 'string' || !/^https?:\/\//i.test(image))) {
+      throw new HttpError(400, 'invalid_reference_image', 'Image references must be publicly reachable HTTP or HTTPS URLs.');
+    }
+    if (referenceImages.length > 1) {
+      throw new HttpError(400, 'invalid_reference_image', 'PHOTON AI currently accepts one reference image for Agnes Video 2.5 Flash.');
+    }
+    if (firstFrame && !/^https?:\/\//i.test(String(firstFrame)) || lastFrame && !/^https?:\/\//i.test(String(lastFrame))) {
+      throw new HttpError(400, 'invalid_keyframe', 'Keyframe images must be publicly reachable HTTP or HTTPS URLs.');
+    }
+    if (targetMode !== 'keyframe' && (firstFrame || lastFrame)) {
+      throw new HttpError(400, 'invalid_mode', 'Keyframe images require keyframe mode.');
+    }
+    if (targetMode === 'keyframe' && !firstFrame && !lastFrame) {
+      throw new HttpError(400, 'missing_keyframe', 'Keyframe mode requires a first-frame image, a last-frame image, or both.');
+    }
+    if (targetMode === 'reference' && referenceImages.length === 0) {
+      throw new HttpError(400, 'missing_reference_image', 'Reference mode requires at least one publicly reachable reference image.');
+    }
+    if (targetMode !== 'reference' && referenceImages.length) {
+      throw new HttpError(400, 'invalid_mode', 'Reference images require reference mode.');
+    }
 
     const key = getApiKey();
     const payload = {
       model: targetModel,
       prompt: cleanPrompt,
-      mode: String(mode || 'standard'),
-      seconds: durationSeconds,
+      mode: targetMode,
+      seconds: String(durationSeconds),
       size: targetSize,
-      aspect_ratio: String(aspect_ratio || '16:9'),
-      n: Math.min(1, Math.max(1, Number(n) || 1)),
+      aspect_ratio: targetAspectRatio,
+      n: Number(n),
     };
 
-    if (referenceImage) {
-      payload.reference_image = referenceImage;
+    if (targetMode === 'keyframe') {
+      if (firstFrame) payload.first_frame = firstFrame;
+      if (lastFrame) payload.last_frame = lastFrame;
+    } else if (targetMode === 'reference') payload.images = referenceImages;
+
+    const maxAttempts = 3;
+    let lastErr = null;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const response = await fetchImpl(`${API_BASE_URL}/videos`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${key}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'User-Agent': 'Photon-AI-Agnes/1.0',
+          },
+          body: JSON.stringify(payload),
+          signal: signal || AbortSignal.timeout(30000),
+        });
+
+        const bodyText = await response.text();
+        if (!response.ok) {
+          const err = parseErrorResponse(response.status, bodyText);
+          cfg.recordError(err);
+          cfg.recordUsage({ success: false, error: err.message });
+          if (err.status === 402 || err.code === 'quota_exhausted' || err.code === 'billing_required') {
+            cfg.setFreePromotionVerified(targetModel, false);
+          }
+          if ((err.code === 'queue_full' || err.code === 'rate_limit_exceeded' || response.status === 429 || response.status === 503) && attempt < maxAttempts) {
+            logger.warn(`[Agnes AI] Video creation busy (${err.code}). Attempt ${attempt}/${maxAttempts}. Waiting ${attempt * 2}s before retry...`);
+            await new Promise(r => setTimeout(r, attempt * 2000));
+            continue;
+          }
+          throw err;
+        }
+
+        let parsed = {};
+        try {
+          parsed = JSON.parse(bodyText);
+        } catch {
+          throw new HttpError(502, 'invalid_response', 'Agnes AI returned non-JSON response on video creation.');
+        }
+
+        // Extract video_id according to official documentation
+        const videoId = parsed.video_id || parsed.data?.video_id;
+        if (typeof videoId !== 'string' || !/^[A-Za-z0-9_.-]{1,256}$/.test(videoId)) {
+          throw new HttpError(502, 'invalid_response', `Agnes AI did not return a valid video_id. Response: ${bodyText.slice(0, 150)}`);
+        }
+
+        const job = {
+          jobId: String(videoId),
+          videoId: String(videoId),
+          model: targetModel,
+          prompt: cleanPrompt,
+          seconds: durationSeconds,
+          resolution: targetSize,
+          status: ['queued', 'processing', 'completed', 'failed'].includes(String(parsed.status || '').toLowerCase()) ? String(parsed.status).toLowerCase() : 'queued',
+          usageRecorded: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          videoUrl: null,
+        };
+
+        if (userId) cfg.recordVideoJob(job.jobId, userId, targetModel);
+        activeVideoJobs.set(job.jobId, job);
+        cfg.recordUsage({ success: true });
+        return job;
+      } catch (err) {
+        lastErr = err;
+        if ((err.code === 'queue_full' || err.code === 'rate_limit_exceeded' || err.status === 429 || err.status === 503) && attempt < maxAttempts) {
+          logger.warn(`[Agnes AI] Video creation attempt ${attempt}/${maxAttempts} failed (${err.message}). Retrying in ${attempt * 2}s...`);
+          await new Promise(r => setTimeout(r, attempt * 2000));
+          continue;
+        }
+        throw err;
+      }
     }
+    throw lastErr || new HttpError(429, 'queue_full', 'The video rendering queue is currently busy due to high demand. Please try again in a few moments.');
+  }
 
-    const response = await fetchImpl(`${API_BASE_URL}/videos`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${key}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'User-Agent': 'Photon-AI-Agnes/1.0',
-      },
-      body: JSON.stringify(payload),
-      signal: signal || AbortSignal.timeout(30000),
-    });
-
-    const bodyText = await response.text();
-    if (!response.ok) {
-      const err = parseErrorResponse(response.status, bodyText);
-      cfg.recordError(err);
-      cfg.recordUsage({ success: false, error: err.message });
-      throw err;
-    }
-
-    let parsed = {};
-    try {
-      parsed = JSON.parse(bodyText);
-    } catch {
-      throw new HttpError(502, 'invalid_response', 'Agnes AI returned non-JSON response on video creation.');
-    }
-
-    // Extract video_id according to official documentation
-    const videoId = parsed.video_id || parsed.id || parsed.data?.video_id || parsed.data?.id || parsed.job_id;
-    if (!videoId) {
-      throw new HttpError(502, 'invalid_response', `Agnes AI did not return a valid video_id. Response: ${bodyText.slice(0, 150)}`);
-    }
-
-    const job = {
-      jobId: String(videoId),
-      videoId: String(videoId),
-      model: targetModel,
-      prompt: cleanPrompt,
-      seconds: durationSeconds,
-      resolution: targetSize,
-      status: parsed.status || 'queued',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      videoUrl: parsed.video_url || parsed.url || parsed.data?.video_url || null,
-    };
-
-    activeVideoJobs.set(job.jobId, job);
-    return job;
+  function ownsVideoJob(videoId, userId) {
+    const owner = cfg.getVideoJobOwner(videoId);
+    return Boolean(owner && String(userId || '') === owner);
   }
 
   /**
@@ -395,6 +454,7 @@ function createAgnesProvider({
 
     const cleanVideoId = String(videoId || '').trim();
     if (!cleanVideoId) throw new HttpError(400, 'invalid_id', 'Video ID is required.');
+    if (modelName !== FLASH_MODEL_ID) throw new HttpError(400, 'unsupported_model', 'Unsupported Agnes video model.');
 
     const url = `${POLLING_BASE_URL}?video_id=${encodeURIComponent(cleanVideoId)}&model_name=${encodeURIComponent(modelName)}`;
 
@@ -412,6 +472,9 @@ function createAgnesProvider({
     if (!response.ok) {
       const err = parseErrorResponse(response.status, bodyText);
       cfg.recordError(err);
+      if (err.status === 402 || err.code === 'quota_exhausted' || err.code === 'billing_required') {
+        cfg.setFreePromotionVerified(FLASH_MODEL_ID, false);
+      }
       throw err;
     }
 
@@ -423,7 +486,7 @@ function createAgnesProvider({
     }
 
     // Normalize status from Agnes API
-    const rawStatus = String(parsed.status || parsed.data?.status || (parsed.video_url || parsed.url ? 'completed' : 'processing')).toLowerCase();
+    const rawStatus = String(parsed.status || '').toLowerCase();
     let status = 'processing';
     if (['completed', 'succeeded', 'done', 'success'].includes(rawStatus)) {
       status = 'completed';
@@ -433,11 +496,29 @@ function createAgnesProvider({
       status = 'failed';
     }
 
-    const videoUrl = parsed.video_url || parsed.url || parsed.output_url || parsed.data?.video_url || parsed.data?.url || null;
+    const videoUrl = status === 'completed' && typeof parsed.url === 'string' ? parsed.url : null;
     const progress = Number(parsed.progress || parsed.data?.progress || (status === 'completed' ? 100 : 50));
-    const failureReason = parsed.error || parsed.message || parsed.fail_reason || parsed.data?.error || null;
+    const failureReason = parsed.error || parsed.message || parsed.fail_reason || null;
 
     const existing = activeVideoJobs.get(cleanVideoId) || {};
+    if (status === 'completed') {
+      if (!videoUrl) throw new HttpError(502, 'empty_video_url', 'Agnes marked the job complete but did not return the documented video URL.');
+      if (!existing.videoVerified) {
+        const validation = await validateVideoFile(videoUrl, { signal });
+        if (!validation.valid) {
+          cfg.recordUsage({ success: false, error: validation.message });
+          throw new HttpError(502, 'invalid_video_output', validation.message);
+        }
+        if (!existing.usageRecorded) cfg.recordUsage({ success: true, seconds: existing.seconds || 0 });
+        existing.videoVerified = true;
+        existing.usageRecorded = true;
+        existing.contentType = validation.contentType;
+        existing.validation = validation;
+      }
+    } else if (status === 'failed' && !existing.usageRecorded) {
+      cfg.recordUsage({ success: false, error: parsed.error || parsed.message || 'Video generation failed at provider.' });
+      existing.usageRecorded = true;
+    }
     const updated = {
       ...existing,
       jobId: cleanVideoId,
@@ -446,6 +527,9 @@ function createAgnesProvider({
       status,
       progress,
       videoUrl,
+      videoVerified: Boolean(existing.videoVerified),
+      contentType: existing.contentType || (status === 'completed' ? 'video/mp4' : null),
+      validation: existing.validation || null,
       failureReason,
       updatedAt: new Date().toISOString(),
     };
@@ -464,27 +548,52 @@ function createAgnesProvider({
 
     try {
       const res = await fetchImpl(videoUrl, {
-        method: 'HEAD',
+        method: 'GET',
+        headers: { Range: 'bytes=0-31' },
         signal: signal || AbortSignal.timeout(15000),
       });
 
-      if (!res.ok) {
+      if (!res.ok && res.status !== 206) {
         return { valid: false, status: res.status, message: `Video download returned HTTP ${res.status}` };
       }
 
-      const contentType = res.headers.get('content-type') || '';
+      const contentType = (res.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
       const contentLength = Number(res.headers.get('content-length')) || 0;
-
-      const isVideoMime = contentType.includes('video/') || contentType.includes('application/octet-stream') || videoUrl.endsWith('.mp4') || videoUrl.endsWith('.webm');
+      if (!['video/mp4', 'video/webm'].includes(contentType)) {
+        return { valid: false, contentType, message: `Unexpected content-type: ${contentType || 'missing'}` };
+      }
+      const reader = res.body?.getReader?.();
+      if (!reader) return { valid: false, contentType, message: 'Video response could not be inspected.' };
+      const chunks = [];
+      let totalBytes = 0;
+      while (totalBytes < 12) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const remaining = 12 - totalBytes;
+        chunks.push(value.subarray(0, remaining));
+        totalBytes += Math.min(value.byteLength, remaining);
+      }
+      await reader.cancel();
+      const header = new Uint8Array(totalBytes);
+      let offset = 0;
+      for (const chunk of chunks) {
+        header.set(chunk, offset);
+        offset += chunk.byteLength;
+      }
+      const isMp4 = contentType === 'video/mp4' && header.length >= 8
+        && String.fromCharCode(...header.subarray(4, 8)) === 'ftyp';
+      const isWebm = contentType === 'video/webm' && header.length >= 4
+        && header[0] === 0x1a && header[1] === 0x45 && header[2] === 0xdf && header[3] === 0xa3;
+      const valid = isMp4 || isWebm;
       return {
-        valid: isVideoMime,
-        contentType: contentType || 'video/mp4',
+        valid,
+        contentType,
         contentLength,
         url: videoUrl,
-        message: isVideoMime ? 'Playable video verified.' : `Unexpected content-type: ${contentType}`,
+        message: valid ? 'Video container signature verified.' : 'Video response does not contain a valid MP4 or WebM signature.',
       };
     } catch (err) {
-      return { valid: true, url: videoUrl, message: `Could not HEAD video file (${err.message}), assuming valid URL.` };
+      return { valid: false, url: videoUrl, message: `Video output verification failed: ${err.message}` };
     }
   }
 
@@ -494,12 +603,15 @@ function createAgnesProvider({
   async function generateVideo({
     prompt,
     model = FLASH_MODEL_ID,
-    mode = 'standard',
+    mode = 'text',
     seconds = 5,
-    size = '720p',
+    size = '720P',
     aspect_ratio = '16:9',
     n = 1,
     referenceImage = null,
+    images = null,
+    firstFrame = null,
+    lastFrame = null,
     signal,
     onProgress = null,
   } = {}) {
@@ -517,6 +629,9 @@ function createAgnesProvider({
       aspect_ratio,
       n,
       referenceImage,
+      images,
+      firstFrame,
+      lastFrame,
       signal,
     });
 
@@ -543,18 +658,21 @@ function createAgnesProvider({
           throw new HttpError(502, 'empty_video_url', 'Agnes AI marked job completed but returned no video URL.');
         }
 
-        // 3. Validate video file
-        const validation = await validateVideoFile(current.videoUrl, { signal });
+        const validation = current.validation || await validateVideoFile(current.videoUrl, { signal });
+        if (!validation.valid) {
+          cfg.recordUsage({ success: false, error: validation.message });
+          throw new HttpError(502, 'invalid_video_output', validation.message);
+        }
         const durationMs = Date.now() - started;
 
-        cfg.recordUsage({ success: true, seconds: job.seconds });
+        cfg.updateModel(targetModel, { lastTestedAt: new Date().toISOString(), testStatus: 'PASSED' });
         return {
           success: true,
           videoId,
           videoUrl: current.videoUrl,
           contentType: validation.contentType || 'video/mp4',
           durationSeconds: job.seconds,
-          resolution: job.resolution || '720p',
+          resolution: job.resolution || '720P',
           aspectRatio: aspect_ratio || '16:9',
           model: targetModel,
           provider: 'Agnes AI',
@@ -566,7 +684,6 @@ function createAgnesProvider({
 
       if (current.status === 'failed') {
         const errMsg = current.failureReason || 'Video generation failed at provider.';
-        cfg.recordUsage({ success: false, error: errMsg });
         throw new HttpError(500, 'generation_failed', `Agnes AI video generation failed: ${errMsg}`);
       }
     }
@@ -643,10 +760,12 @@ function createAgnesProvider({
     setApiKey,
     status,
     catalogEntries,
+    assertFreePromotionEligibility,
     testConnection,
     refreshModels,
     createVideoJob,
     getVideoJob,
+    ownsVideoJob,
     generateVideo,
     testVideoModel,
     validateVideoFile,

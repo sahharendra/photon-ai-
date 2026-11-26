@@ -33,6 +33,7 @@ const { createEdenAiConfig } = require('./edenai-config');
 const { createEdenAiProvider } = require('./edenai-provider');
 const { createAgnesConfig } = require('./agnes-config');
 const { createAgnesProvider } = require('./agnes-provider');
+const { cleanConversationTitle, conversationTitle, searchConversations } = require('./conversation-search');
 const { createReplicateConfig } = require('./replicate-config');
 const { createReplicateProvider } = require('./replicate-provider');
 const imageEditingService = require('./image-editing-service');
@@ -86,6 +87,7 @@ const {
   calculateArtifactTokenCost,
 } = require('./pricing-rules-service');
 const { createArtifactsService } = require('./artifacts-service');
+const { createSyncService } = require('./sync-service');
 const {
   PaymentError: CashfreePaymentError,
   createCashfreeService,
@@ -133,7 +135,18 @@ const ADMIN_PASSWORD = String(process.env.PHOTON_ADMIN_PASSWORD || 'photon-admin
 const ADMIN_EMAIL = String(process.env.PHOTON_ADMIN_EMAIL || 'admin@just4madam.com').trim().toLowerCase();
 const ADMIN_NO_AUTH = process.env.PHOTON_ADMIN_NO_AUTH === '1' || process.env.NODE_ENV === 'development';
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'photon-ai-e8b88';
-const DATA_FILE = path.join(ROOT, 'photon-profile-data.json');
+const dataDirectory = process.env.PHOTON_DATA_DIR || process.env.RENDER_DISK_PATH || ROOT;
+const DATA_FILE = path.resolve(process.env.PHOTON_DATA_FILE || path.join(dataDirectory, 'photon-profile-data.json'));
+fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
+if (process.env.PHOTON_MIGRATE_FROM && !fs.existsSync(DATA_FILE)) {
+  const migrationSource = path.resolve(process.env.PHOTON_MIGRATE_FROM);
+  if (migrationSource !== DATA_FILE && fs.existsSync(migrationSource)) {
+    fs.copyFileSync(migrationSource, DATA_FILE, fs.constants.COPYFILE_EXCL);
+  }
+}
+if (process.env.RENDER && !process.env.RENDER_DISK_PATH && !process.env.PHOTON_DATA_DIR && !process.env.PHOTON_DATA_FILE) {
+  console.error('Persistent storage is not configured: Render local files can be lost on restart. Set RENDER_DISK_PATH to a mounted persistent disk.');
+}
 const LOCK_FILE = path.join(ROOT, '.photon-server.lock');
 const MAX_BODY = 15 * 1024 * 1024;
 const MODEL_CATALOG = [
@@ -258,7 +271,7 @@ function fallbackModelId(profile) {
   if (cloudflare.configured()) return '@cf/meta/llama-3.1-8b-instruct';
   const openModel = availableModels().find(m => m.available && !m.creditsExhausted);
   if (openModel) return openModel.id;
-  return 'openrouter/free';
+  return 'photon-fast';
 }
 function requireModelId(profile, requested) {
   let id = requested || fallbackModelId(profile);
@@ -368,7 +381,10 @@ function storeVersion() {
   try {
     const stat = fs.statSync(DATA_FILE, { bigint: true });
     return stat.mtimeNs.toString() + ':' + stat.size.toString();
-  } catch { return 'missing'; }
+  } catch (error) {
+    if (error.code === 'ENOENT') return 'missing';
+    throw error;
+  }
 }
 function cloneJson(value) { return value == null ? value : JSON.parse(JSON.stringify(value)); }
 function sameJson(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
@@ -419,7 +435,12 @@ function loadStore() {
   try {
     const saved = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
     store = saved && saved.profiles ? saved : { profiles: {}, activities: {}, conversations: {}, deleted: {} };
-  } catch (e) { store = { profiles: {}, activities: {}, conversations: {}, deleted: {} }; }
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      throw new Error(`Could not read the PHOTON data store at ${DATA_FILE}.`, { cause: error });
+    }
+    store = { profiles: {}, activities: {}, conversations: {}, deleted: {} };
+  }
   store.settings = normalizeSettings(store.settings);
   ensureStoreSchema(store);
   storeIndexes = null;
@@ -458,7 +479,12 @@ function saveStore() {
       }
     }
     let latest = { profiles: {}, activities: {}, conversations: {}, deleted: {}, subscriptions: [], payments: [], paymentOrders: [], webhookEvents: [], tokenTransactions: [], pricingAuditLogs: [], loginHistory: [], tokenUsageLogs: [], adminAuditLogs: [], settings: normalizeSettings(null) };
-    try { latest = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); } catch {}
+    try { latest = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); }
+    catch (error) {
+      if (error.code !== 'ENOENT') {
+        throw new Error(`Could not read the PHOTON data store at ${DATA_FILE} before saving.`, { cause: error });
+      }
+    }
     latest.settings = normalizeSettings(latest.settings);
     ensureStoreSchema(latest);
     data = mergeStoreValue(storeSnapshot || latest, data, latest);
@@ -1078,8 +1104,19 @@ function recordConversation(body, uid) {
   if (typeof id !== 'string' || !/^[A-Za-z0-9_-]{1,120}$/.test(id)) throw new HttpError(400, 'invalid_conversation_id', 'A valid conversation ID is required.');
   const prior = s.conversations[id];
   if (prior && prior.owner !== uid) throw new HttpError(403, 'conversation_forbidden', 'You cannot access this conversation.');
-  if (!prior) s.conversations[id] = { owner: uid, messages: [], requests: {} };
-  return s.conversations[id];
+  const timestamp = new Date().toISOString();
+  if (!prior) s.conversations[id] = { owner: uid, messages: [], requests: {}, createdAt: timestamp, version: 1 };
+  const conversation = s.conversations[id];
+  const previousTitle = conversation.title;
+  const previousModel = conversation.model;
+  const title = cleanConversationTitle(body.title || body.message);
+  if (title && (body.title || !conversation.title)) conversation.title = title;
+  if (typeof body.model === 'string') conversation.model = body.model.slice(0, 200);
+  if (prior && (previousTitle !== conversation.title || previousModel !== conversation.model)) {
+    conversation.version = (Number(conversation.version) || 1) + 1;
+  }
+  conversation.updatedAt = timestamp;
+  return conversation;
 }
 function validateChatAttachments(input) {
   if (input === undefined) return [];
@@ -1120,7 +1157,7 @@ async function callGemini(model, contents, systemInstruction) {
 }
 async function resolveModel(id) {
   await Promise.allSettled([gemini.refreshModels(), openrouter.refreshModels(), codecraft.refreshModels(), groq.refreshModels(), nvidia.refreshModels(), openai.refreshModels(), llmtr.refreshModels(), ollama.refreshModels(), cloudflare.refreshModels(), cohere.refreshModels(), anthropic.refreshModels()]);
-  let option = availableModels().find(m => m.id === id);
+  let option = availableModels().find(m => m.id === id && m.available && !m.creditsExhausted);
   if (!option && PHOTON_MODEL_ALIASES[id]) {
     for (const cand of PHOTON_MODEL_ALIASES[id]) {
       const match = availableModels().find(m => m.id === cand && m.available && !m.creditsExhausted);
@@ -1196,19 +1233,25 @@ async function generateProvider({ providerName, modelId, system, history, text, 
     };
   }
   if (providerName === 'photon_fast') {
+    const pollinationsApiKey = process.env.POLLINATIONS_API_KEY || '';
+    const photonFastHeaders = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'User-Agent': 'Photon-AI-Server/2.0',
+    };
+    if (pollinationsApiKey) photonFastHeaders['Authorization'] = `Bearer ${pollinationsApiKey}`;
+    const photonFastBody = {
+      messages: [
+        { role: 'system', content: system || 'You are a helpful assistant.' },
+        { role: 'user', content: text || '' },
+      ],
+      model: 'openai',
+    };
+    if (pollinationsApiKey) photonFastBody.private = true;
     const res = await fetch('https://text.pollinations.ai/openai', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'User-Agent': 'Photon-AI-Server/2.0',
-      },
-      body: JSON.stringify({
-        messages: [
-          { role: 'system', content: system || 'You are an expert software developer. Return complete code inside markdown code blocks.' },
-          { role: 'user', content: text || '' },
-        ],
-      }),
+      headers: photonFastHeaders,
+      body: JSON.stringify(photonFastBody),
       signal: AbortSignal.timeout(60000),
     });
     if (!res.ok) {
@@ -1392,6 +1435,14 @@ const artifactsService = createArtifactsService({
   logger: console,
 });
 
+const syncService = createSyncService({
+  loadStore,
+  saveStore,
+  withStoreLock,
+  HttpError,
+  logger: console,
+});
+
 function normalizeProviderUsage(usage) {
   if (!usage) return null;
   const inputTokens = Number(usage.inputTokens ?? usage.input_tokens) || 0;
@@ -1484,8 +1535,14 @@ async function prepareChat(body, claims, profile) {
   return { uid: claims.sub, timezone: profile.timezone, profile, description: body.message, attachments, activityType: prep.activityType, tokens: prep.tokens, tokenTx: prep.tokenTx, chosenModel: modelOption.id, modelOption, providerName, conversation: prep.conversation, requestIdClient, history, userText, currentParts, systemInstruction, priorHistory: prep.priorHistory, contents: prep.contents, savedUserText, imageAttachment, isImageEdit, isVisionModel };
 }
 function saveChatResult(ctx, text, providerUsage, providerKey, meta = {}) {
-  ctx.conversation.messages.push({ role: 'user', content: ctx.savedUserText }, { role: 'model', content: text });
-  ctx.conversation.messages = ctx.conversation.messages.slice(-100);
+  const timestamp = new Date().toISOString();
+  const requestId = ctx.requestIdClient || `req_${crypto.randomUUID()}`;
+  ctx.conversation.messages.push(
+    { id: `${requestId}:user`, request_id: requestId, role: 'user', content: ctx.savedUserText, timestamp },
+    { id: `${requestId}:assistant`, reply_to_request_id: requestId, role: 'model', content: text, timestamp },
+  );
+  ctx.conversation.updatedAt = timestamp;
+  ctx.conversation.version = (Number(ctx.conversation.version) || 1) + 1;
   if (ctx.requestIdClient) ctx.conversation.requests[ctx.requestIdClient] = text;
   Object.keys(ctx.conversation.requests).slice(0, Math.max(0, Object.keys(ctx.conversation.requests).length - 50)).forEach(key => delete ctx.conversation.requests[key]);
   if (ctx.tokenTx) commitTokenTransaction(loadStore(), ctx.tokenTx.id, { provider: meta.provider || ctx.providerName, model: meta.model || ctx.chosenModel });
@@ -1499,6 +1556,8 @@ function saveChatResult(ctx, text, providerUsage, providerKey, meta = {}) {
     ...(meta.fallback ? { fallback: meta.fallback } : {}),
   });
   saveStore();
+  const savedConversation = syncService.listConversations(ctx.uid).find(conversation => conversation.id === ctx.conversation.id);
+  if (savedConversation) syncService.broadcast(ctx.uid, 'conversation_updated', { conversation: savedConversation });
 }
 function sseWrite(res, event, data) {
   if (res.writableEnded || res.destroyed) return false;
@@ -2285,7 +2344,13 @@ const server = http.createServer(async (req, res) => {
       if (pathname === '/api/admin/agnes' && req.method === 'PUT') {
         const body = await readBody(req);
         if (typeof body.enabled === 'boolean') agnes.setEnabled(body.enabled);
-        if (body.spendingPolicy) agnesConfig.setSpendingPolicy(body.spendingPolicy);
+        if (body.spendingPolicy && !agnesConfig.setSpendingPolicy(body.spendingPolicy)) {
+          throw new HttpError(400, 'invalid_spending_policy', 'Agnes supports only strict_free_only or block spending policies.');
+        }
+        if (typeof body.freePromotionVerified === 'boolean' &&
+            !agnesConfig.setFreePromotionVerified('agnes-video-2.5-flash', body.freePromotionVerified)) {
+          throw new HttpError(400, 'invalid_model', 'Agnes Video 2.5 Flash is not registered.');
+        }
         return reply(res, 200, { success: true, data: agnes.status() });
       }
       if (pathname === '/api/admin/agnes/key' && req.method === 'POST') {
@@ -2912,6 +2977,7 @@ const server = http.createServer(async (req, res) => {
       const allAvail = availableModels();
       // "if the credits of the api keys finish do not show the provider if the credits come back show it again"
       const activeAvail = allAvail.filter(m => !m.creditsExhausted && m.available !== false);
+      const displayCatalog = [...activeAvail, ...allAvail.filter(m => m.providerId === 'agnes' && m.category === 'video' && m.available === false)];
       let planModels = activeAvail;
       const auth = req.headers.authorization || '';
       const pParam = parsedUrl.searchParams.get('plan');
@@ -2935,7 +3001,7 @@ const server = http.createServer(async (req, res) => {
           allowancePolicy: data.settings.allowancePolicy,
           rulesVersion: data.settings.rulesVersion,
           models: planModels,
-          allModels: activeAvail,
+          allModels: displayCatalog,
           allCatalogModels: allAvail,
           capabilities: typeof capabilityService !== 'undefined' && capabilityService ? capabilityService.getCategoryStats({ planFilter: m => planModels.some(pm => pm.id === m.id) }) : {},
           providerMatrix: typeof capabilityService !== 'undefined' && capabilityService ? capabilityService.auditProviderMatrix() : {},
@@ -2970,6 +3036,7 @@ const server = http.createServer(async (req, res) => {
       const data = loadStore();
       const allAvail = availableModels();
       const activeAvail = allAvail.filter(m => !m.creditsExhausted && m.available !== false);
+      const displayCatalog = [...activeAvail, ...allAvail.filter(m => m.providerId === 'agnes' && m.category === 'video' && m.available === false)];
       let planModels = activeAvail;
       const auth = req.headers.authorization || '';
       const pParam = parsedUrl.searchParams.get('plan');
@@ -2987,7 +3054,7 @@ const server = http.createServer(async (req, res) => {
         success: true,
         data: {
           models: planModels,
-          allModels: activeAvail,
+          allModels: displayCatalog,
           total: planModels.length,
         },
       });
@@ -3010,9 +3077,143 @@ const server = http.createServer(async (req, res) => {
       }
       return reply(res, 200, { success: true, data: { authorized: true } });
     }
-    if (req.method.startsWith('POST') || req.method === 'PUT' || req.method === 'DELETE' || pathname.startsWith('/api/profile') || pathname.startsWith('/api/payments') || pathname.startsWith('/api/chat') || pathname.startsWith('/api/generate') || pathname.startsWith('/api/images') || pathname.startsWith('/api/artifacts')) {
+    if (req.method.startsWith('POST') || req.method === 'PUT' || req.method === 'DELETE' || pathname.startsWith('/api/profile') || pathname.startsWith('/api/payments') || pathname.startsWith('/api/chat') || pathname.startsWith('/api/conversations') || pathname.startsWith('/api/sync') || pathname.startsWith('/api/attachments') || pathname.startsWith('/api/projects') || pathname.startsWith('/api/generate') || pathname.startsWith('/api/images') || pathname.startsWith('/api/video') || pathname.startsWith('/api/artifacts')) {
       if (pathname.startsWith('/api/')) {
         const { claims, profile } = await authenticated(req); rateLimit(claims.sub);
+        if (req.method === 'GET' && pathname === '/api/sync/workspace') {
+          const preferences = syncService.getPreferences(claims.sub);
+          preferences.defaultModel = profile.defaultModel || preferences.defaultModel || null;
+          return reply(res, 200, { success: true, data: {
+            conversations: syncService.listConversations(claims.sub),
+            projects: syncService.listProjects(claims.sub),
+            preferences,
+            serverTime: Date.now(),
+          } });
+        }
+        if (req.method === 'POST' && pathname === '/api/sync/workspace') {
+          const body = await readBody(req);
+          if (body.conversations !== undefined && (!Array.isArray(body.conversations) || body.conversations.length > 2000)) {
+            throw new HttpError(400, 'invalid_conversations', 'Conversation sync must contain no more than 2,000 records.');
+          }
+          if (Array.isArray(body.conversations) && body.conversations.some(conversation => !conversation || typeof conversation.id !== 'string' || !/^[A-Za-z0-9_-]{1,120}$/.test(conversation.id) || (conversation.msgs !== undefined && !Array.isArray(conversation.msgs)) || (conversation.messages !== undefined && !Array.isArray(conversation.messages)))) {
+            throw new HttpError(400, 'invalid_conversations', 'A synced conversation is invalid.');
+          }
+          if (body.deletedConversationIds !== undefined && (!Array.isArray(body.deletedConversationIds) || body.deletedConversationIds.length > 2000 || body.deletedConversationIds.some(id => typeof id !== 'string' || !/^[A-Za-z0-9_-]{1,120}$/.test(id)))) {
+            throw new HttpError(400, 'invalid_conversations', 'Deleted conversation IDs are invalid.');
+          }
+          if (body.projects !== undefined && (!Array.isArray(body.projects) || body.projects.length > 500)) {
+            throw new HttpError(400, 'invalid_projects', 'Project sync must contain no more than 500 records.');
+          }
+          if (Array.isArray(body.projects) && body.projects.some(project => !project || typeof project.id !== 'string' || !/^[A-Za-z0-9_-]{1,120}$/.test(project.id) || !Array.isArray(project.files) || project.files.length > 100 || Buffer.byteLength(JSON.stringify(project), 'utf8') > 1024 * 1024)) {
+            throw new HttpError(400, 'invalid_projects', 'A synced project is invalid or too large.');
+          }
+          if (body.deletedProjectIds !== undefined && (!Array.isArray(body.deletedProjectIds) || body.deletedProjectIds.length > 500 || body.deletedProjectIds.some(id => typeof id !== 'string' || !/^[A-Za-z0-9_-]{1,120}$/.test(id)))) {
+            throw new HttpError(400, 'invalid_projects', 'Deleted project IDs are invalid.');
+          }
+          if (body.preferences !== undefined && (!body.preferences || typeof body.preferences !== 'object' || Array.isArray(body.preferences))) {
+            throw new HttpError(400, 'invalid_preferences', 'Workspace preferences are invalid.');
+          }
+          const conversationSync = await syncService.syncConversations(claims.sub, {
+            clientConversations: body.conversations || [],
+            deletedConversationIds: Array.isArray(body.deletedConversationIds) ? body.deletedConversationIds.slice(0, 2000) : [],
+            lastSyncTime: body.lastSyncTime || 0,
+          });
+          const projectSync = await syncService.syncProjects(claims.sub, {
+            projects: body.projects || [],
+            deletedProjectIds: Array.isArray(body.deletedProjectIds) ? body.deletedProjectIds.slice(0, 500) : [],
+          });
+          const preferences = body.preferences && typeof body.preferences === 'object'
+            ? await syncService.updatePreferences(claims.sub, body.preferences)
+            : syncService.getPreferences(claims.sub);
+          preferences.defaultModel = profile.defaultModel || preferences.defaultModel || null;
+          return reply(res, 200, { success: true, data: {
+            conversations: conversationSync.conversations,
+            deletedConversationIds: conversationSync.deletedIds,
+            conversationConflicts: conversationSync.conflicts,
+            projects: projectSync.projects,
+            projectConflicts: projectSync.conflicts,
+            preferences,
+            serverTime: conversationSync.serverTime,
+          } });
+        }
+        if (req.method === 'POST' && pathname === '/api/sync/attachments') {
+          const body = await readBody(req);
+          const attachment = await syncService.saveAttachment(claims.sub, body);
+          return reply(res, 200, { success: true, data: attachment });
+        }
+        const attachmentMatch = /^\/api\/attachments\/([^/]+)$/.exec(pathname);
+        if (req.method === 'GET' && attachmentMatch) {
+          let id;
+          try { id = decodeURIComponent(attachmentMatch[1]); } catch {
+            throw new HttpError(400, 'invalid_attachment_id', 'Attachment ID is invalid.');
+          }
+          if (!/^[A-Za-z0-9_-]{1,120}$/.test(id)) throw new HttpError(400, 'invalid_attachment_id', 'Attachment ID is invalid.');
+          const { owner, ...attachment } = syncService.getAttachment(claims.sub, id);
+          return reply(res, 200, { success: true, data: attachment });
+        }
+        const projectMatch = /^\/api\/projects\/([^/]+)$/.exec(pathname);
+        if (req.method === 'DELETE' && projectMatch) {
+          let id;
+          try { id = decodeURIComponent(projectMatch[1]); } catch {
+            throw new HttpError(400, 'invalid_project_id', 'Project ID is invalid.');
+          }
+          if (!/^[A-Za-z0-9_-]{1,120}$/.test(id)) throw new HttpError(400, 'invalid_project_id', 'Project ID is invalid.');
+          return reply(res, 200, { success: true, data: await syncService.deleteProject(claims.sub, id) });
+        }
+        if (req.method === 'GET' && pathname === '/api/conversations/search') {
+          const query = String(parsedUrl.searchParams.get('q') || '').trim();
+          const limitValue = parsedUrl.searchParams.get('limit') || '20';
+          const cursorValue = parsedUrl.searchParams.get('cursor') || '0';
+          if (!query || query.length > 120) throw new HttpError(400, 'invalid_search_query', 'Search text must contain 1 to 120 characters.');
+          if (!/^\d{1,2}$/.test(limitValue) || Number(limitValue) < 1 || Number(limitValue) > 50) throw new HttpError(400, 'invalid_search_limit', 'Search page size must be between 1 and 50.');
+          if (!/^\d{1,8}$/.test(cursorValue)) throw new HttpError(400, 'invalid_search_cursor', 'Search cursor is invalid.');
+          const data = searchConversations(loadStore().conversations, claims.sub, query, {
+            limit: Number(limitValue),
+            cursor: Number(cursorValue),
+          });
+          return reply(res, 200, { success: true, data });
+        }
+        const conversationMatch = /^\/api\/conversations\/([^/]+)$/.exec(pathname);
+        if (conversationMatch) {
+          let id;
+          try { id = decodeURIComponent(conversationMatch[1]); } catch {
+            throw new HttpError(400, 'invalid_conversation_id', 'Conversation ID is invalid.');
+          }
+          if (!/^[A-Za-z0-9_-]{1,120}$/.test(id)) throw new HttpError(400, 'invalid_conversation_id', 'Conversation ID is invalid.');
+          if (req.method === 'DELETE') {
+            return reply(res, 200, { success: true, data: await syncService.deleteConversation(claims.sub, id) });
+          }
+          const conversations = loadStore().conversations;
+          const conversation = conversations[id];
+          if (!conversation) throw new HttpError(404, 'conversation_not_found', 'Conversation was not found.');
+          if (conversation.owner !== claims.sub) throw new HttpError(403, 'conversation_forbidden', 'You cannot access this conversation.');
+          if (req.method === 'GET') {
+            const syncedConversation = syncService.getConversation(claims.sub, id);
+            return reply(res, 200, { success: true, data: {
+              id,
+              title: conversationTitle(conversation),
+              model: conversation.model || null,
+              createdAt: conversation.createdAt || null,
+              updatedAt: conversation.updatedAt || null,
+              version: syncedConversation.version,
+              msgs: syncedConversation.msgs,
+              messages: syncedConversation.msgs,
+            } });
+          }
+          if (req.method === 'PUT') {
+            const body = await readBody(req);
+            const title = cleanConversationTitle(body && body.title);
+            if (!title) throw new HttpError(400, 'invalid_conversation_title', 'Conversation title cannot be empty.');
+            conversation.title = title;
+            conversation.updatedAt = new Date().toISOString();
+            conversation.version = (Number(conversation.version) || 1) + 1;
+            saveStore();
+            syncService.broadcast(claims.sub, 'conversation_updated', { conversation: syncService.getConversation(claims.sub, id) });
+            return reply(res, 200, { success: true, data: { id, title } });
+          }
+          res.setHeader('Allow', 'GET, PUT, DELETE');
+          throw new HttpError(405, 'method_not_allowed', 'Method not allowed.');
+        }
         if (req.method === 'GET' && pathname === '/api/profile') return reply(res, 200, { success: true, data: profileResponse(profile, claims.sub) });
         if (req.method === 'POST' && pathname === '/api/profile/sign-in') {
           const body = await readBody(req).catch(() => ({}));
@@ -3055,6 +3256,7 @@ const server = http.createServer(async (req, res) => {
             if (!verified.ok) throw new HttpError(400, 'model_unavailable', verified.message || 'That OpenRouter model is not currently available.');
           }
           profile.defaultModel = option.id; saveStore();
+          await syncService.updatePreferences(claims.sub, { defaultModel: option.id });
           return reply(res, 200, { success: true, data: { defaultModel: profile.defaultModel } });
         }
         if (req.method === 'POST' && pathname === '/api/profile/demo-subscription') {
@@ -3322,6 +3524,7 @@ const server = http.createServer(async (req, res) => {
               id,
               instruction: body.instruction,
               modelId: body.model,
+              version: body.version,
               attachments: body.attachments,
               activeFile: body.activeFile,
               profile,
@@ -3345,7 +3548,7 @@ const server = http.createServer(async (req, res) => {
           if (req.method === 'POST' && artRestoreMatch) {
             const id = decodeURIComponent(artRestoreMatch[1]);
             const body = await readBody(req);
-            const restored = artifactsService.restoreVersion(claims.sub, id, body.version);
+            const restored = artifactsService.restoreVersion(claims.sub, id, body.version, body.expectedVersion);
             return reply(res, 200, { success: true, data: restored });
           }
 
@@ -3537,22 +3740,27 @@ const server = http.createServer(async (req, res) => {
           return reply(res, 200, { success: true, data: getModelQualityReport() });
         }
         if (req.method === 'GET' && pathname === '/api/video/models') {
-          const videoModels = capabilityService ? capabilityService.getModelsByCategory('video', { availableOnly: true }) : [];
+          const listed = availableModels();
+          const testedModels = capabilityService ? capabilityService.getModelsByCategory('video', { availableOnly: true }).filter(m => m.provider_id !== 'agnes') : [];
+          const verifiedAgnesModels = listed.filter(m => m.providerId === 'agnes' && m.category === 'video' && m.available && m.free);
+          const videoModels = [...testedModels, ...verifiedAgnesModels];
           return reply(res, 200, { success: true, data: videoModels });
         }
         const videoJobMatch = /^\/api\/video\/jobs\/([A-Za-z0-9_.-]+)$/.exec(pathname);
         if (req.method === 'GET' && videoJobMatch) {
           const jobId = videoJobMatch[1];
+          const requestedModel = new URL(req.url, 'http://localhost').searchParams.get('model');
+          if (requestedModel === 'agnes-video-2.5-flash' || agnes.ownsVideoJob(jobId, claims.sub)) {
+            if (!agnes.ownsVideoJob(jobId, claims.sub)) {
+              throw new HttpError(404, 'job_not_found', 'Video generation job was not found.');
+            }
+            const agnesJob = await agnes.getVideoJob(jobId);
+            return reply(res, 200, { success: true, data: agnesJob });
+          }
           if (replicate.configured()) {
             try {
               const repJob = await replicate.getVideoJob(jobId);
               if (repJob) return reply(res, 200, { success: true, data: repJob });
-            } catch (_) {}
-          }
-          if (agnes.configured()) {
-            try {
-              const agnesJob = await agnes.getVideoJob(jobId);
-              if (agnesJob) return reply(res, 200, { success: true, data: agnesJob });
             } catch (_) {}
           }
           if (edenai.configured()) {
@@ -3569,7 +3777,10 @@ const server = http.createServer(async (req, res) => {
           const body = await readBody(req);
           const prompt = String(body.prompt || '').trim();
           if (!prompt || prompt.length > 32000) throw new HttpError(400, 'invalid_prompt', 'Enter a prompt up to 32,000 characters.');
-          const videoModels = capabilityService ? capabilityService.getModelsByCategory('video', { availableOnly: true }) : [];
+          const listed = availableModels();
+          const testedModels = capabilityService ? capabilityService.getModelsByCategory('video', { availableOnly: true }).filter(m => m.provider_id !== 'agnes') : [];
+          const verifiedAgnesModels = listed.filter(m => m.providerId === 'agnes' && m.category === 'video' && m.available && m.free);
+          const videoModels = [...testedModels, ...verifiedAgnesModels];
           const targetModel = String(body.model || (videoModels[0]?.id || (agnes.configured() ? 'agnes-video-2.5-flash' : ''))).trim();
 
           const isReplicateVideo = (replicate.configured() && replicate.enabled()) && (targetModel.includes('minimax/') || targetModel.includes('seedance') || targetModel.includes('veo') || replicate.catalogEntries().some(m => m.id === targetModel));
@@ -3586,19 +3797,54 @@ const server = http.createServer(async (req, res) => {
             return reply(res, 200, { success: true, data: { jobId: repJob.jobId, predictionId: repJob.predictionId, model: targetModel, status: repJob.status, prompt } });
           }
 
-          const isAgnesVideo = (agnes.configured() && agnes.enabled()) && (targetModel.includes('agnes') || (!edenai.configured() && !replicate.configured() && agnes.configured()) || targetModel === 'agnes-video-2.5-flash');
+          const isAgnesVideo = (agnes.configured() && agnes.enabled()) && targetModel === 'agnes-video-2.5-flash';
           if (isAgnesVideo) {
-            const agnesJob = await agnes.createVideoJob({
-              prompt,
-              model: targetModel || 'agnes-video-2.5-flash',
-              mode: body.mode,
-              seconds: body.seconds,
-              size: body.size,
-              aspect_ratio: body.aspect_ratio || body.aspectRatio,
-              referenceImage: body.reference_image || body.referenceImage,
-              signal: req.signal,
-            });
-            return reply(res, 200, { success: true, data: { jobId: agnesJob.jobId, videoId: agnesJob.videoId, model: targetModel || 'agnes-video-2.5-flash', status: agnesJob.status, prompt } });
+            const agnesOption = agnes.catalogEntries().find(m => m.id === targetModel);
+            agnes.assertFreePromotionEligibility(targetModel);
+            assertPlanModel(agnesOption, userEffectivePlanId(profile));
+            try {
+              const agnesJob = await agnes.createVideoJob({
+                prompt,
+                model: targetModel || 'agnes-video-2.5-flash',
+                mode: body.mode,
+                seconds: body.seconds,
+                size: body.size,
+                aspect_ratio: body.aspect_ratio || body.aspectRatio,
+                referenceImage: body.reference_image || body.referenceImage,
+                images: body.images,
+                firstFrame: body.first_frame || body.firstFrame,
+                lastFrame: body.last_frame || body.lastFrame,
+                userId: claims.sub,
+                signal: req.signal,
+              });
+              return reply(res, 200, { success: true, data: { jobId: agnesJob.jobId, videoId: agnesJob.videoId, model: targetModel || 'agnes-video-2.5-flash', status: agnesJob.status, prompt } });
+            } catch (err) {
+              if (err.code === 'queue_full' || err.status === 429 || err.status === 503) {
+                if (replicate.configured() && replicate.enabled()) {
+                  try {
+                    const fallbackModel = 'minimax/video-01';
+                    const repJob = await replicate.createVideoJob({
+                      prompt,
+                      model: fallbackModel,
+                      mode: body.mode,
+                      seconds: body.seconds,
+                      aspectRatio: body.aspect_ratio || body.aspectRatio,
+                      referenceImage: body.reference_image || body.referenceImage,
+                      signal: req.signal,
+                    });
+                    return reply(res, 200, { success: true, data: { jobId: repJob.jobId, predictionId: repJob.predictionId, model: fallbackModel, status: repJob.status, prompt, fallback: true } });
+                  } catch (_) {}
+                }
+                if (edenai.configured()) {
+                  try {
+                    const fallbackModel = 'bytedance/seaweed';
+                    const edenJob = await edenai.createVideoJob({ prompt, model: fallbackModel, signal: req.signal });
+                    return reply(res, 200, { success: true, data: { jobId: edenJob.jobId, model: fallbackModel, status: edenJob.status, prompt, fallback: true } });
+                  } catch (_) {}
+                }
+              }
+              throw err;
+            }
           }
 
           const isEdenAiVideo = edenai.configured() && (targetModel.startsWith('bytedance/') || targetModel.startsWith('pruna/') || targetModel.startsWith('pixverse/') || edenai.catalogEntries().some(m => m.id === targetModel && m.category === 'Video Generation'));
@@ -3621,7 +3867,10 @@ const server = http.createServer(async (req, res) => {
           if (!prompt || prompt.length > 32000) throw new HttpError(400, 'invalid_prompt', 'Enter a prompt up to 32,000 characters.');
 
           if (kind === 'video') {
-            const videoModels = capabilityService ? capabilityService.getModelsByCategory('video', { availableOnly: true }) : [];
+            const listed = availableModels();
+            const testedModels = capabilityService ? capabilityService.getModelsByCategory('video', { availableOnly: true }).filter(m => m.provider_id !== 'agnes') : [];
+            const verifiedAgnesModels = listed.filter(m => m.providerId === 'agnes' && m.category === 'video' && m.available && m.free);
+            const videoModels = [...testedModels, ...verifiedAgnesModels];
             const targetModel = String(body.model || (videoModels[0]?.id || (agnes.configured() ? 'agnes-video-2.5-flash' : ''))).trim();
 
             const isReplicateVideo = (replicate.configured() && replicate.enabled()) && (targetModel.includes('minimax/') || targetModel.includes('seedance') || targetModel.includes('veo') || replicate.catalogEntries().some(m => m.id === targetModel));
@@ -3638,19 +3887,54 @@ const server = http.createServer(async (req, res) => {
             return reply(res, 200, { success: true, data: { jobId: repJob.jobId, predictionId: repJob.predictionId, model: targetModel, status: repJob.status, prompt } });
           }
 
-          const isAgnesVideo = (agnes.configured() && agnes.enabled()) && (targetModel.includes('agnes') || (!edenai.configured() && !replicate.configured() && agnes.configured()) || targetModel === 'agnes-video-2.5-flash');
+          const isAgnesVideo = (agnes.configured() && agnes.enabled()) && targetModel === 'agnes-video-2.5-flash';
             if (isAgnesVideo) {
-              const agnesJob = await agnes.createVideoJob({
-                prompt,
-                model: targetModel || 'agnes-video-2.5-flash',
-                mode: body.mode,
-                seconds: body.seconds,
-                size: body.size,
-                aspect_ratio: body.aspect_ratio || body.aspectRatio,
-                referenceImage: body.reference_image || body.referenceImage,
-                signal: req.signal,
-              });
-              return reply(res, 200, { success: true, data: { jobId: agnesJob.jobId, videoId: agnesJob.videoId, model: targetModel || 'agnes-video-2.5-flash', status: agnesJob.status, prompt } });
+              const agnesOption = agnes.catalogEntries().find(m => m.id === targetModel);
+              agnes.assertFreePromotionEligibility(targetModel);
+              assertPlanModel(agnesOption, userEffectivePlanId(profile));
+              try {
+                const agnesJob = await agnes.createVideoJob({
+                  prompt,
+                  model: targetModel || 'agnes-video-2.5-flash',
+                  mode: body.mode,
+                  seconds: body.seconds,
+                  size: body.size,
+                  aspect_ratio: body.aspect_ratio || body.aspectRatio,
+                  referenceImage: body.reference_image || body.referenceImage,
+                  images: body.images,
+                  firstFrame: body.first_frame || body.firstFrame,
+                  lastFrame: body.last_frame || body.lastFrame,
+                  userId: claims.sub,
+                  signal: req.signal,
+                });
+                return reply(res, 200, { success: true, data: { jobId: agnesJob.jobId, videoId: agnesJob.videoId, model: targetModel || 'agnes-video-2.5-flash', status: agnesJob.status, prompt } });
+              } catch (err) {
+                if (err.code === 'queue_full' || err.status === 429 || err.status === 503) {
+                  if (replicate.configured() && replicate.enabled()) {
+                    try {
+                      const fallbackModel = 'minimax/video-01';
+                      const repJob = await replicate.createVideoJob({
+                        prompt,
+                        model: fallbackModel,
+                        mode: body.mode,
+                        seconds: body.seconds,
+                        aspectRatio: body.aspect_ratio || body.aspectRatio,
+                        referenceImage: body.reference_image || body.referenceImage,
+                        signal: req.signal,
+                      });
+                      return reply(res, 200, { success: true, data: { jobId: repJob.jobId, predictionId: repJob.predictionId, model: fallbackModel, status: repJob.status, prompt, fallback: true } });
+                    } catch (_) {}
+                  }
+                  if (edenai.configured()) {
+                    try {
+                      const fallbackModel = 'bytedance/seaweed';
+                      const edenJob = await edenai.createVideoJob({ prompt, model: fallbackModel, signal: req.signal });
+                      return reply(res, 200, { success: true, data: { jobId: edenJob.jobId, model: fallbackModel, status: edenJob.status, prompt, fallback: true } });
+                    } catch (_) {}
+                  }
+                }
+                throw err;
+              }
             }
 
             const isEdenAiVideo = edenai.configured() && (targetModel.startsWith('bytedance/') || targetModel.startsWith('pruna/') || targetModel.startsWith('pixverse/') || edenai.catalogEntries().some(m => m.id === targetModel && m.category === 'Video Generation'));

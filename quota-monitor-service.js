@@ -603,12 +603,12 @@ class AgnesAiQuotaAdapter extends BaseQuotaAdapter {
         resetAt: null,
       };
     }
-    if (status === 429 || msg.includes('rate_limit') || msg.includes('rate limit') || msg.includes('too many requests')) {
+    if (status === 429 || msg.includes('rate_limit') || msg.includes('rate limit') || msg.includes('too many requests') || msg.includes('queue') || msg.includes('retry later') || msg.includes('busy') || msg.includes('capacity')) {
       return {
         status: STATUS_RATE_LIMITED,
         scope: 'provider',
-        reason: 'Agnes AI rate limit reached. Resets in 60 seconds.',
-        resetAt: Date.now() + 60000,
+        reason: 'Agnes AI video queue is busy. Please retry in a few moments.',
+        resetAt: Date.now() + 15000,
       };
     }
     return super.classifyError(opts);
