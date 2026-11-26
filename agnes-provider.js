@@ -145,7 +145,9 @@ function createAgnesProvider({
       return new HttpError(429, 'rate_limit_exceeded', message || 'Agnes AI rate limit reached. Please wait before retrying.');
     }
     if (/queue.*full|retry later|server.*busy|capacity|busy/i.test(message)) {
-      return new HttpError(429, 'queue_full', 'The video rendering queue is currently busy due to high demand. Please try again in a few moments.');
+      const reqIdMatch = /request id:\s*([A-Za-z0-9_-]+)/i.exec(message);
+      const reqIdSuffix = reqIdMatch ? ` (Agnes Request ID: ${reqIdMatch[1]})` : '';
+      return new HttpError(429, 'queue_full', `Agnes AI video queue is currently at capacity due to high global demand. No tokens were deducted from your account${reqIdSuffix}. Please retry in a few moments.`);
     }
     return new HttpError(status || 502, code || 'provider_error', message || `Agnes AI error (${status}).`);
   }
