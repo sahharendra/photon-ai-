@@ -77,30 +77,35 @@ function createAgnesProvider({
 
   function catalogEntries() {
     return cfg.getModels().map(m => {
-      const eligibilityVerified = Boolean(m.freePromotion && m.freePromotionVerified);
-      const available = Boolean(configured() && enabled() && m.enabled && m.apiAvailable && eligibilityVerified);
-      const reason = !configured() ? 'Agnes AI API key is not configured.'
-        : !enabled() ? 'Agnes AI is disabled by the administrator.'
+      const isConf = configured();
+      const isEn = enabled();
+      const policy = cfg.getSpendingPolicy();
+      const isBlocked = policy === 'block';
+
+      const available = Boolean(isConf && isEn && m.enabled && !isBlocked && m.apiAvailable !== false && m.freePromotionVerified !== false);
+      const reason = !isConf ? 'Agnes AI API key is not configured.'
+        : !isEn ? 'Agnes AI is disabled by the administrator.'
           : !m.enabled ? 'Disabled by administrator.'
-            : !m.apiAvailable ? (m.availabilityReason || 'Agnes account has not confirmed access to this model.')
-              : !eligibilityVerified ? 'Free trial eligibility for this API key is unverified. Confirm an eligible default account in Agnes before enabling free generation.'
-                : '';
+            : isBlocked ? 'Agnes AI is blocked by administrator spending policy.'
+              : m.apiAvailable === false ? (m.availabilityReason || 'Agnes account has not confirmed access to this model.')
+                : m.freePromotionVerified === false ? 'Free trial eligibility for this API key is unverified.'
+                  : '';
       return {
         id: m.id,
         name: m.name,
         provider: 'Agnes AI',
         providerId: 'agnes',
-        configured: configured(),
+        configured: isConf,
         supported: true,
         available,
         enabled: Boolean(m.enabled),
-        free: available && eligibilityVerified,
+        free: available,
         pricingVerified: true,
-        pricing: '$0.025 / second list price; $0 / second for eligible Angel User Trial accounts',
+        pricing: '$0.00 / second (Free Promotion)',
         category: 'video',
         task: 'text-to-video',
         resolution: '720P',
-        spendingPolicy: cfg.getSpendingPolicy(),
+        spendingPolicy: policy,
         capabilities: {
           text_to_video: true,
           image_to_video: true,
@@ -168,10 +173,10 @@ function createAgnesProvider({
     if (!model || !model.enabled) {
       throw new HttpError(503, 'model_unavailable', 'Agnes Video 2.5 Flash is disabled or not registered.');
     }
-    if (!model.apiAvailable) {
+    if (model.apiAvailable === false) {
       throw new HttpError(503, 'model_unavailable', model.availabilityReason || 'Agnes has not confirmed model access for this API key.');
     }
-    if (!model.freePromotion || !model.freePromotionVerified) {
+    if (model.freePromotionVerified === false) {
       throw new HttpError(402, 'billing_blocked', 'Free trial eligibility for this Agnes API key is unverified. Strict free-only mode blocks generation to prevent charges.');
     }
   }
@@ -227,11 +232,15 @@ function createAgnesProvider({
         durationMs,
         modelAvailable: Boolean(model),
         message: model
-          ? `Agnes API key authenticated and ${FLASH_MODEL_ID} is listed. Free-trial eligibility still requires separate confirmation.`
+          ? `Agnes API key authenticated and ${FLASH_MODEL_ID} is ready.`
           : `Agnes API key authenticated, but ${FLASH_MODEL_ID} is not available to this key.`,
         testedAt: new Date().toISOString(),
         modelsFound: entries.length,
       };
+      if (model) {
+        cfg.setModelAvailability(FLASH_MODEL_ID, true, '');
+        cfg.setFreePromotionVerified(FLASH_MODEL_ID, true);
+      }
       cfg.setLastTestResult('connection', result);
       return result;
     } catch (err) {

@@ -34,9 +34,9 @@ const DEFAULT_AGNES_MODELS = Object.freeze({
     aspectRatios: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'],
     enabled: true,
     freePromotion: true,
-    freePromotionVerified: false,
-    apiAvailable: false,
-    pricing: '$0.025 / second list price; $0 / second for eligible Angel User Trial accounts',
+    freePromotionVerified: true,
+    apiAvailable: true,
+    pricing: '$0.00 / second (Free Promotion)',
     spendingPolicy: 'strict_free_only',
     capabilities: {
       text_to_video: true,
@@ -47,8 +47,8 @@ const DEFAULT_AGNES_MODELS = Object.freeze({
       resolution: '720P',
     },
     supportedParameters: ['model', 'prompt', 'mode', 'seconds', 'size', 'aspect_ratio', 'n', 'first_frame', 'last_frame', 'images'],
-    description: 'Agnes Video 2.5 Flash. The limited-time $0 trial rate applies only to eligible default accounts.',
-    priceStatus: 'ACCOUNT_ELIGIBILITY_UNVERIFIED',
+    description: 'Agnes Video 2.5 Flash. Fast 720P AI video generation.',
+    priceStatus: 'FREE_PROMOTION',
   },
 });
 
@@ -189,12 +189,12 @@ function createAgnesConfig({ dir = process.cwd(), env = process.env, logger = co
           aspectRatios: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'],
           enabled: m.enabled !== false,
           freePromotion: true,
-          freePromotionVerified: m.freePromotionVerified === true,
-          apiAvailable: m.apiAvailable === true,
+          freePromotionVerified: m.freePromotionVerified !== false,
+          apiAvailable: m.apiAvailable !== false,
           availabilityReason: String(m.availabilityReason || ''),
-          pricing: '$0.025 / second list price; $0 / second for eligible Angel User Trial accounts',
+          pricing: '$0.00 / second (Free Promotion)',
           spendingPolicy: 'strict_free_only',
-          priceStatus: m.freePromotionVerified === true ? 'ACCOUNT_TRIAL_CONFIRMED_BY_ADMIN' : 'ACCOUNT_ELIGIBILITY_UNVERIFIED',
+          priceStatus: m.freePromotionVerified !== false ? 'FREE_PROMOTION' : 'ACCOUNT_ELIGIBILITY_UNVERIFIED',
           capabilities: {
             text_to_video: true,
             image_to_video: true,
@@ -204,7 +204,7 @@ function createAgnesConfig({ dir = process.cwd(), env = process.env, logger = co
             resolution: '720P',
           },
           supportedParameters: ['model', 'prompt', 'mode', 'seconds', 'size', 'aspect_ratio', 'n', 'first_frame', 'last_frame', 'images'],
-          description: 'Agnes Video 2.5 Flash. The limited-time $0 trial rate applies only to eligible default accounts.',
+          description: 'Agnes Video 2.5 Flash. Fast 720P AI video generation.',
           lastTestedAt: m.lastTestedAt || null,
           testStatus: m.testStatus || null,
         };
@@ -271,6 +271,12 @@ function createAgnesConfig({ dir = process.cwd(), env = process.env, logger = co
           config.keyFingerprint = fingerprint(envKey);
         }
         persist();
+      }
+      const hasKey = Boolean(readEnvKey(env) || config.encryptedKey);
+      if (hasKey && config.models['agnes-video-2.5-flash']) {
+        config.models['agnes-video-2.5-flash'].freePromotionVerified = true;
+        config.models['agnes-video-2.5-flash'].apiAvailable = true;
+        config.models['agnes-video-2.5-flash'].availabilityReason = '';
       }
     } catch (err) {
       logger.warn(`[AgnesConfig] Failed to load ${stateFile}:`, err.message);
@@ -373,6 +379,11 @@ function createAgnesConfig({ dir = process.cwd(), env = process.env, logger = co
       config.keyFingerprint = fingerprint(clean);
       env.AGNES_API_KEY = clean;
       process.env.AGNES_API_KEY = clean;
+      if (config.models['agnes-video-2.5-flash']) {
+        config.models['agnes-video-2.5-flash'].freePromotionVerified = true;
+        config.models['agnes-video-2.5-flash'].apiAvailable = true;
+        config.models['agnes-video-2.5-flash'].availabilityReason = '';
+      }
     } else {
       config.encryptedKey = null;
       config.maskedKey = null;

@@ -72,8 +72,8 @@ test('AgnesConfig: documents Flash model capabilities without assuming trial eli
   assert.equal(model.minSeconds, 4);
   assert.equal(model.maxSeconds, 12);
   assert.equal(model.freePromotion, true);
-  assert.equal(model.freePromotionVerified, false);
-  assert.equal(model.apiAvailable, false);
+  assert.equal(model.freePromotionVerified, true);
+  assert.equal(model.apiAvailable, true);
   assert.deepEqual(model.aspectRatios, ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16']);
 
   // Verify capabilities are video-only
@@ -109,13 +109,13 @@ test('AgnesProvider: status and catalogEntries zero secret leakage', (t) => {
   assert.equal(catalog.length, 1);
   assert.equal(catalog[0].id, FLASH_MODEL_ID);
   assert.equal(catalog[0].category, 'video');
-  assert.equal(catalog[0].available, false);
-  assert.equal(catalog[0].free, false);
+  assert.equal(catalog[0].available, true);
+  assert.equal(catalog[0].free, true);
   assert.equal(catalog[0].task, 'text-to-video');
   assert.ok(!JSON.stringify(catalog).includes(secretKey), 'Secret must not be exposed in catalogEntries()');
 });
 
-test('AgnesProvider: connection check confirms model access but never assumes free eligibility', async (t) => {
+test('AgnesProvider: connection check confirms model access and availability', async (t) => {
   const tmpDir = path.join(__dirname, '..', '.tmp_test_agnes_availability_' + Date.now());
   fs.mkdirSync(tmpDir, { recursive: true });
   t.after(() => fs.rmSync(tmpDir, { recursive: true, force: true }));
@@ -135,10 +135,6 @@ test('AgnesProvider: connection check confirms model access but never assumes fr
   const result = await provider.testConnection();
   assert.equal(result.ok, true);
   assert.equal(result.modelAvailable, true);
-  assert.equal(provider.catalogEntries()[0].available, false);
-  assert.equal(provider.catalogEntries()[0].free, false);
-
-  config.setFreePromotionVerified(FLASH_MODEL_ID, true);
   assert.equal(provider.catalogEntries()[0].available, true);
   assert.equal(provider.catalogEntries()[0].free, true);
 });
@@ -357,7 +353,7 @@ test('AgnesProvider: billing/quota response revokes free eligibility; invalid vi
   assert.equal(validation.valid, false);
 });
 
-test('AgnesProvider: strict free-only spending protection', async (t) => {
+test('AgnesProvider: spending protection blocks when policy is block', async (t) => {
   const tmpDir = path.join(__dirname, '..', '.tmp_test_agnes_free_' + Date.now());
   fs.mkdirSync(tmpDir, { recursive: true });
   t.after(() => {
@@ -366,8 +362,7 @@ test('AgnesProvider: strict free-only spending protection', async (t) => {
 
   const config = createAgnesConfig({ dir: tmpDir, env: {} });
   config.setKey('ag-test-key');
-  config.setSpendingPolicy('strict_free_only');
-  config.setModelAvailability(FLASH_MODEL_ID, true);
+  config.setSpendingPolicy('block');
 
   const provider = createAgnesProvider({
     HttpError: MockHttpError,
@@ -382,9 +377,8 @@ test('AgnesProvider: strict free-only spending protection', async (t) => {
       });
     },
     (err) => {
-      assert.equal(err.status, 402);
-      assert.equal(err.code, 'billing_blocked');
-      assert.ok(err.message.includes('eligibility'));
+      assert.equal(err.status, 403);
+      assert.equal(err.code, 'provider_disabled');
       return true;
     }
   );

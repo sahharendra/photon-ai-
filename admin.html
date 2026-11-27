@@ -3743,11 +3743,11 @@ async function load(forceSettings=false){if(refreshing)return;refreshing=true;st
       }
       if ($('agnes-free-verified')) {
         const flashModel = (st.models || []).find(m => m.id === 'agnes-video-2.5-flash');
-        $('agnes-free-verified').checked = Boolean(flashModel?.freePromotionVerified);
+        $('agnes-free-verified').checked = flashModel?.freePromotionVerified !== false;
       }
       if ($('agnes-test-video-btn')) {
-        $('agnes-test-video-btn').disabled = !st.freePromotionVerified;
-        $('agnes-test-video-btn').title = st.freePromotionVerified ? 'Creates a real video using the verified free trial.' : 'Confirm free-trial eligibility and model access before running a real generation test.';
+        $('agnes-test-video-btn').disabled = false;
+        $('agnes-test-video-btn').title = 'Creates a real video using Agnes Video 2.5 Flash.';
       }
 
       agnesCachedModels = st.models || [];
