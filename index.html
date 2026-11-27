@@ -850,40 +850,6 @@ textarea::placeholder{color:var(--mute)}
         <div id="gen-mode-bar" class="gen-mode-bar" role="tablist" aria-label="Generation category">
           <button type="button" class="gen-mode-btn on" id="gen-mode-text" data-gen-cat="text" role="tab" aria-selected="true" title="Text chat, reasoning, coding and document analysis"><span class="gen-mode-icon">💬</span> TEXT</button>
           <button type="button" class="gen-mode-btn" id="gen-mode-image" data-gen-cat="image" role="tab" aria-selected="false" title="High-speed text-to-image synthesis (FLUX &amp; SDXL)"><span class="gen-mode-icon">🎨</span> IMAGE</button>
-          <button type="button" class="gen-mode-btn" id="gen-mode-video" data-gen-cat="video" role="tab" aria-selected="false" title="Text-to-video synthesis"><span class="gen-mode-icon">🎬</span> VIDEO</button>
-        </div>
-        <div id="video-generation-settings" hidden style="padding:8px 12px;border-top:1px solid rgba(148,163,184,.16);display:flex;flex-wrap:wrap;gap:8px;align-items:end">
-          <label style="font-size:11px;color:#aab5c7">Mode
-            <select id="video-generation-mode" style="display:block;margin-top:3px">
-              <option value="text">Text to video</option>
-              <option value="keyframe">Keyframe image to video</option>
-              <option value="reference">Reference image to video</option>
-            </select>
-          </label>
-          <label style="font-size:11px;color:#aab5c7">Duration
-            <select id="video-generation-seconds" style="display:block;margin-top:3px">
-              <option value="4">4 seconds</option><option value="5" selected>5 seconds</option>
-              <option value="6">6 seconds</option><option value="7">7 seconds</option>
-              <option value="8">8 seconds</option><option value="9">9 seconds</option>
-              <option value="10">10 seconds</option><option value="11">11 seconds</option><option value="12">12 seconds</option>
-            </select>
-          </label>
-          <label style="font-size:11px;color:#aab5c7">Aspect ratio
-            <select id="video-generation-aspect" style="display:block;margin-top:3px">
-              <option>21:9</option><option selected>16:9</option><option>4:3</option>
-              <option>1:1</option><option>3:4</option><option>9:16</option>
-            </select>
-          </label>
-          <span style="font-size:11px;color:#aab5c7">Resolution: 720P</span>
-          <label id="video-reference-image-field" hidden style="font-size:11px;color:#aab5c7;flex:1;min-width:220px">Public reference image URL
-            <input id="video-reference-image" type="url" placeholder="https://... (must be publicly reachable)" style="display:block;width:100%;margin-top:3px">
-          </label>
-          <label id="video-first-frame-field" hidden style="font-size:11px;color:#aab5c7;flex:1;min-width:220px">First-frame image URL
-            <input id="video-first-frame" type="url" placeholder="https://... (optional)" style="display:block;width:100%;margin-top:3px">
-          </label>
-          <label id="video-last-frame-field" hidden style="font-size:11px;color:#aab5c7;flex:1;min-width:220px">Last-frame image URL
-            <input id="video-last-frame" type="url" placeholder="https://... (optional)" style="display:block;width:100%;margin-top:3px">
-          </label>
         </div>
         <div id="chat-file-list" class="chat-file-list" hidden></div>
         <textarea id="in" rows="1" placeholder="How can I help you today?"></textarea>
@@ -928,7 +894,7 @@ textarea::placeholder{color:var(--mute)}
 <script>
 (function(){
 var $=function(i){return document.getElementById(i)};
-var MODES={general:["Chat","General reasoning and writing."],image:["Create image","image"],video:["Create video","video"],code:["Code","Write clean, production-grade code with language-tagged code blocks and brief explanations."],architecture:["Architecture","Design system architecture: components, data flow, trade-offs, and databases."],srs:["SRS document","Produce an IEEE 830 style Software Requirements Specification."]};
+var MODES={general:["Chat","General reasoning and writing."],image:["Create image","image"],code:["Code","Write clean, production-grade code with language-tagged code blocks and brief explanations."],architecture:["Architecture","Design system architecture: components, data flow, trade-offs, and databases."],srs:["SRS document","Produce an IEEE 830 style Software Requirements Specification."]};
 var SYS="You are Photon, an AI assistant for general reasoning, coding and software architecture. Always respond in English unless the user explicitly requests another language. Answer with clean Markdown: headings, bullets, and language-tagged code blocks. When the user asks for a file (a web page, script, config, data file and so on), write the complete file in one code block whose opening fence has the language and then the file name, for example ```html index.html. Never say you cannot create files: the app shows a Download button on every code block and a Preview button for HTML. If a project needs several files, use one code block per file, each with its own file name.";
 var WAVE=document.getElementById("wave").outerHTML;var basePH="How can I help you today?",tokDay="",projs=[],user=null,vm=false,speaking=false,chats=[],cur=null,mode="general",busy=false,ctl=null,rec=null,pendingChatFiles=[],photonProfile=null,profileConfig=null,profileConfigFetchedAt=0,profileActivities=[],billingAvailable=false,presenceTimer=null,presenceVisibilityHandler=null;
 var conversationSearchTimer=null,conversationSearchRequest=null,conversationSearchGeneration=0,conversationSearchNextCursor=null,conversationSearchBusy=false,conversationSearchError=false,conversationSearchResults=[],conversationSearchQuery="",conversationSearchFocusReturn=null,conversationOpenRequest=null,conversationOpenGeneration=0;
@@ -936,15 +902,13 @@ var activeGenCat="text";
 function getModelCat(m) {
   if (!m) return "text";
   if (m.category === "image" || m.task === "text-to-image" || m.category === "Image Generation" || m.image_output || (m.id && m.id.indexOf("@cf/") === 0 && (m.id.indexOf("flux") > -1 || m.id.indexOf("stable-diffusion") > -1)) || m.id === "flux" || m.id === "sana" || m.id === "turbo" || (m.provider && m.provider.toLowerCase().indexOf("pollinations") > -1)) return "image";
-  if (m.category === "video" && m.video_output && (m.video_test_status === "PASSED" || (m.providerId === "agnes" && m.id === "agnes-video-2.5-flash"))) return "video";
   return "text";
 }
 function setGenCategory(cat){
+  if(cat!=="image")cat="text";
   var previousCategory=activeGenCat;
   activeGenCat=cat;
   if(previousCategory!==cat)queueWorkspaceSync();
-  var videoSettings=$("video-generation-settings");
-  if(videoSettings)videoSettings.hidden=cat!=="video";
   document.querySelectorAll(".gen-mode-btn").forEach(function(b){
     var on=b.dataset.genCat===cat;
     b.classList.toggle("on",on);
@@ -953,29 +917,12 @@ function setGenCategory(cat){
   var inp=$("in");
   var hasMsgs=cur&&cur.msgs&&cur.msgs.length>0;
   if(cat==="image"){inp.placeholder="Describe the image you want to generate...";}
-  else if(cat==="video"){
-    inp.placeholder="Describe the video you want to generate...";
-  }
   else{inp.placeholder=hasMsgs?"Message Photon...":"How can I help you today?";}
   ensureCompatibleModelForCategory(cat);
   updateModelPickerBtn();
   if(typeof closeComposerModelPop==="function")closeComposerModelPop();
 }
-function updateVideoReferenceFields(){
-  var mode=$("video-generation-mode")&&$("video-generation-mode").value;
-  var reference=$("video-reference-image-field"),first=$("video-first-frame-field"),last=$("video-last-frame-field");
-  if(reference)reference.hidden=mode!=="reference";
-  if(first)first.hidden=mode!=="keyframe";
-  if(last)last.hidden=mode!=="keyframe";
-}
-$("video-generation-mode")?.addEventListener("change",updateVideoReferenceFields);
-function updateVideoSettingsVisibility(){
-  var panel=$("video-generation-settings");
-  if(!panel)return;
-  var id=(cur&&cur.model)||(user&&user.defaultModel)||(photonProfile&&photonProfile.defaultModel)||"";
-  var current=((profileConfig&&(profileConfig.allModels||profileConfig.models))||[]).find(function(m){return m.id===id});
-  panel.hidden=activeGenCat!=="video"||Boolean(current&&current.providerId&&current.providerId!=="agnes");
-}
+function updateVideoSettingsVisibility(){/* video removed */}
 function ensureCompatibleModelForCategory(cat){
   var catalog=(profileConfig&&(profileConfig.allModels||profileConfig.models))||[];
   var currentModelId=(cur&&cur.model)||(user&&user.defaultModel)||"";
@@ -989,9 +936,6 @@ function ensureCompatibleModelForCategory(cat){
     if(eligible.length>0){
       if(cur)cur.model=eligible[0].id;
       if(user)user.defaultModel=eligible[0].id;
-    } else if(cat==="video"){
-      if(cur)cur.model="agnes-video-2.5-flash";
-      if(user&&!user.defaultModel)user.defaultModel="agnes-video-2.5-flash";
     }
   }
 }
@@ -3080,18 +3024,13 @@ function updateModelPickerBtn(){
       currentModelId=catMatch.id;
       if(cur)cur.model=catMatch.id;
       if(user && !user.defaultModel)user.defaultModel=catMatch.id;
-    } else if(activeGenCat==="video"){
-      found=catalog.find(function(m){return m.id==="agnes-video-2.5-flash"}) || { id:"agnes-video-2.5-flash", name:"Agnes Video 2.5 Flash", provider:"Agnes AI" };
-      currentModelId=found.id;
-      if(cur)cur.model=found.id;
     }
   }
-  var icon = activeGenCat === 'image' ? '🎨 ' : (activeGenCat === 'video' ? '🎬 ' : '✨ ');
-  var label=found?(found.name||found.id):(activeGenCat==='video'?'Agnes Video 2.5 Flash':(activeGenCat==='image'?'Image Model':'Model'));
+  var icon = activeGenCat === 'image' ? '🎨 ' : '✨ ';
+  var label=found?(found.name||found.id):(activeGenCat==='image'?'Image Model':'Model');
   if(label.length>22)label=label.slice(0,20)+"…";
   nameEl.textContent=icon + label;
   btn.title="Category: "+activeGenCat.toUpperCase()+" · Model: "+(found?(found.name+" ("+found.id+")"):currentModelId||"Default")+" — click to change";
-  updateVideoSettingsVisibility();
 }
 
 function positionComposerModelPop(){
@@ -3112,30 +3051,15 @@ function renderComposerModelPop(){
   if(!pop)return;
   var rawCatalog=(profileConfig&&(profileConfig.allModels||profileConfig.models))||[];
   var catalog=profileModelCatalog(rawCatalog);
-  rawCatalog.forEach(function(m){if(m&&m.providerId==="agnes"&&m.id==="agnes-video-2.5-flash"&&!catalog.some(function(x){return x.id===m.id}))catalog.push(m)});
   var planId=(photonProfile&&photonProfile.plan?photonProfile.plan.id:(user&&user.plan||"basic"));
 
   var eligible=catalog.filter(function(m){
     if(!m)return false;
     if(getModelCat(m)!==activeGenCat)return false;
-    if(m.id==="agnes-video-2.5-flash")return true;
     if(m.configured===false||m.available===false||m.creditsExhausted===true)return false;
     if(!profileModelTierAllowed(m,planId))return false;
     return true;
   });
-  if(activeGenCat==="video"&&!eligible.some(function(m){return m.id==="agnes-video-2.5-flash"})){
-    eligible.push({
-      id:"agnes-video-2.5-flash",
-      name:"Agnes Video 2.5 Flash",
-      provider:"Agnes AI",
-      providerId:"agnes",
-      available:true,
-      configured:true,
-      free:true,
-      category:"video",
-      task:"text-to-video"
-    });
-  }
 
   var currentModelId=(cur&&cur.model)||(user&&user.defaultModel)||(photonProfile&&photonProfile.defaultModel)||"";
   var searchInp=pop.querySelector("#model-pop-search");
@@ -3147,7 +3071,7 @@ function renderComposerModelPop(){
     return text.indexOf(searchVal)>-1;
   });
 
-  var catLabel=activeGenCat==='image'?'🎨 Image Models':(activeGenCat==='video'?'🎬 Video Models':'💬 Text Models');
+  var catLabel=activeGenCat==='image'?'🎨 Image Models':'💬 Text Models';
 
   var groups={};
   filtered.forEach(function(m){
@@ -3443,9 +3367,9 @@ async function send(retry){
   var activeModelId=(cur&&cur.model)||(user&&user.defaultModel)||"";
   var activeModelM=((profileConfig&&(profileConfig.allModels||profileConfig.models))||[]).find(function(m){return m.id===activeModelId});
   var isImgModel = Boolean(activeModelM && getModelCat(activeModelM) === "image");
-  var isVidModel = Boolean(activeModelM && getModelCat(activeModelM) === "video");
+  var isVidModel = false;
   var userMsg=cur.msgs.filter(function(m){return m.role==="user"}).slice(-1)[0],
-      kind=activeGenCat==="image"||isImgModel?"image":(activeGenCat==="video"||isVidModel?"video":(!requestFiles.length&&(k0==="image"||k0==="video")?k0:""));
+      kind=activeGenCat==="image"||isImgModel?"image":(!requestFiles.length&&k0==="image"?k0:"");
   cur.updatedAt=Date.now();save();render();var out=addRow("assistant","");out.innerHTML=kind?'<div class="gen"><div class="gv"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="sh"></i></div><div class="gt">Creating '+kind+'<span class="dots"><u></u><u></u><u></u></span></div></div>':'<span class="think">Thinking...</span>';
   ctl=new AbortController();busy=true;upd();var got="",failure="",failureCode="",serverSynced=false,pendingVideoHistoryEntry=null;
   try{
@@ -3630,7 +3554,7 @@ $("conversation-search-more-button").onclick=function(){runConversationSearch(co
 if(/Mac|iPhone|iPad/.test(navigator.platform||""))$("search-shortcut").textContent="⌘ K";
 $("plus").onclick=function(e){e.stopPropagation();closeComposerModelPop();$("pop").classList.toggle("on")};
 var mpb=$("model-picker-btn");if(mpb)mpb.onclick=toggleComposerModelPop;
-["text","image","video"].forEach(function(cat){var btn=$("gen-mode-"+cat);if(btn){btn.onclick=function(){setGenCategory(cat)}}});
+["text","image"].forEach(function(cat){var btn=$("gen-mode-"+cat);if(btn){btn.onclick=function(){setGenCategory(cat)}}});
 $("attach-files").onclick=function(){$("chat-file-input").click()};
 $("chat-file-input").addEventListener("change",handleChatFiles);
 document.addEventListener("click",function(e){
@@ -4310,7 +4234,8 @@ async function applyWorkspaceSnapshot(data,conflictProjects,conflictConversation
     if(data.preferences&&user){
       user.defaultModel=data.preferences.defaultModel||user.defaultModel||null;
       if(photonProfile&&data.preferences.defaultModel)photonProfile.defaultModel=data.preferences.defaultModel;
-      if(data.preferences.activeGenCat&&["text","image","video","code"].indexOf(data.preferences.activeGenCat)>=0)activeGenCat=data.preferences.activeGenCat;
+      if(data.preferences.activeGenCat&&["text","image","code"].indexOf(data.preferences.activeGenCat)>=0)activeGenCat=data.preferences.activeGenCat;
+      else activeGenCat="text";
     }
     await hydrateWorkspaceAssets();
     workspaceConversationSnapshots={};chats.forEach(function(c){workspaceConversationSnapshots[c.id]=conversationSyncSignature(c)});
