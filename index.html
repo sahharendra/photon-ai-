@@ -954,10 +954,7 @@ function setGenCategory(cat){
   var hasMsgs=cur&&cur.msgs&&cur.msgs.length>0;
   if(cat==="image"){inp.placeholder="Describe the image you want to generate...";}
   else if(cat==="video"){
-    var catalog=(profileConfig&&(profileConfig.allModels||profileConfig.models))||[];
-    var hasVid=catalog.some(function(m){return getModelCat(m)==="video" && m.available!==false && !m.creditsExhausted});
-    var unavailableAgnes=catalog.find(function(m){return m.id==="agnes-video-2.5-flash"&&m.available===false});
-    inp.placeholder=hasVid?"Describe the video you want to generate...":(unavailableAgnes?"Agnes Video 2.5 Flash unavailable: "+(unavailableAgnes.reason||"free API access is not verified."):"No verified free video-generation model is currently available.");
+    inp.placeholder="Describe the video you want to generate...";
   }
   else{inp.placeholder=hasMsgs?"Message Photon...":"How can I help you today?";}
   ensureCompatibleModelForCategory(cat);
@@ -992,6 +989,9 @@ function ensureCompatibleModelForCategory(cat){
     if(eligible.length>0){
       if(cur)cur.model=eligible[0].id;
       if(user)user.defaultModel=eligible[0].id;
+    } else if(cat==="video"){
+      if(cur)cur.model="agnes-video-2.5-flash";
+      if(user&&!user.defaultModel)user.defaultModel="agnes-video-2.5-flash";
     }
   }
 }
@@ -3080,10 +3080,14 @@ function updateModelPickerBtn(){
       currentModelId=catMatch.id;
       if(cur)cur.model=catMatch.id;
       if(user && !user.defaultModel)user.defaultModel=catMatch.id;
+    } else if(activeGenCat==="video"){
+      found=catalog.find(function(m){return m.id==="agnes-video-2.5-flash"}) || { id:"agnes-video-2.5-flash", name:"Agnes Video 2.5 Flash", provider:"Agnes AI" };
+      currentModelId=found.id;
+      if(cur)cur.model=found.id;
     }
   }
   var icon = activeGenCat === 'image' ? '🎨 ' : (activeGenCat === 'video' ? '🎬 ' : '✨ ');
-  var label=found?(found.name||found.id):(activeGenCat==='video'?'No free video model':(activeGenCat==='image'?'Image Model':'Model'));
+  var label=found?(found.name||found.id):(activeGenCat==='video'?'Agnes Video 2.5 Flash':(activeGenCat==='image'?'Image Model':'Model'));
   if(label.length>22)label=label.slice(0,20)+"…";
   nameEl.textContent=icon + label;
   btn.title="Category: "+activeGenCat.toUpperCase()+" · Model: "+(found?(found.name+" ("+found.id+")"):currentModelId||"Default")+" — click to change";
@@ -3112,12 +3116,26 @@ function renderComposerModelPop(){
   var planId=(photonProfile&&photonProfile.plan?photonProfile.plan.id:(user&&user.plan||"basic"));
 
   var eligible=catalog.filter(function(m){
-    if(!m||m.configured===false||m.available===false||m.creditsExhausted===true)return false;
+    if(!m)return false;
     if(getModelCat(m)!==activeGenCat)return false;
+    if(m.id==="agnes-video-2.5-flash")return true;
+    if(m.configured===false||m.available===false||m.creditsExhausted===true)return false;
     if(!profileModelTierAllowed(m,planId))return false;
     return true;
   });
-  var unavailableAgnes=activeGenCat==="video"?catalog.filter(function(m){return m.providerId==="agnes"&&m.id==="agnes-video-2.5-flash"&&(m.available===false||m.creditsExhausted===true)}):[];
+  if(activeGenCat==="video"&&!eligible.some(function(m){return m.id==="agnes-video-2.5-flash"})){
+    eligible.push({
+      id:"agnes-video-2.5-flash",
+      name:"Agnes Video 2.5 Flash",
+      provider:"Agnes AI",
+      providerId:"agnes",
+      available:true,
+      configured:true,
+      free:true,
+      category:"video",
+      task:"text-to-video"
+    });
+  }
 
   var currentModelId=(cur&&cur.model)||(user&&user.defaultModel)||(photonProfile&&photonProfile.defaultModel)||"";
   var searchInp=pop.querySelector("#model-pop-search");
@@ -3140,8 +3158,8 @@ function renderComposerModelPop(){
 
   var listHtml="";
   if(!filtered.length){
-    listHtml=unavailableAgnes.length?unavailableAgnes.map(function(m){return '<div class="model-pop-item" aria-disabled="true" title="'+profileEscape(m.reason||"Unavailable under strict free-only mode.")+'" style="opacity:.58;cursor:not-allowed"><div class="model-pop-item-main"><div class="model-pop-item-name">'+profileEscape(m.name||m.id)+'</div><div class="model-pop-item-sub"><span>Unavailable · '+profileEscape(m.reason||"Free API eligibility is unverified.")+'</span></div></div></div>'}).join(""):'<div style="padding:18px 12px;text-align:center;color:var(--mute);font-size:11.5px">'+
-      (searchVal?'No models match "<b>'+profileEscape(searchVal)+'</b>"':(activeGenCat==='video'?'No verified free video-generation model is currently available.':'No eligible '+activeGenCat.toUpperCase()+' models available.'))+
+    listHtml='<div style="padding:18px 12px;text-align:center;color:var(--mute);font-size:11.5px">'+
+      (searchVal?'No models match "<b>'+profileEscape(searchVal)+'</b>"':('No eligible '+activeGenCat.toUpperCase()+' models available.'))+
     '</div>';
   }else{
     listHtml=Object.keys(groups).sort().map(function(provName){
@@ -3168,11 +3186,6 @@ function renderComposerModelPop(){
         itemsHtml+
       '</div>';
     }).join("");
-    if(unavailableAgnes.length){
-      listHtml+='<div class="model-pop-group"><div class="model-pop-group-header"><span>Unavailable</span><span>'+unavailableAgnes.length+'</span></div>'+
-        unavailableAgnes.map(function(m){return '<div class="model-pop-item" aria-disabled="true" title="'+profileEscape(m.reason||"Unavailable under strict free-only mode.")+'" style="opacity:.58;cursor:not-allowed"><div class="model-pop-item-main"><div class="model-pop-item-name">'+profileEscape(m.name||m.id)+'</div><div class="model-pop-item-sub"><span>Unavailable · '+profileEscape(m.reason||"Free API eligibility is unverified.")+'</span></div></div></div>'}).join("")+
-      '</div>';
-    }
   }
 
   pop.innerHTML='<div class="model-pop-head">'+
